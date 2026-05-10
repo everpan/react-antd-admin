@@ -2,26 +2,26 @@ import type { MenuItemType } from "#src/api/system/menu";
 import type { ProColumns } from "@ant-design/pro-components";
 import type { TFunction } from "i18next";
 
-import { getBooleanOptions, getYesNoOptions } from "#src/constants/options";
+import { getYesNoOptions } from "#src/constants/options";
 
 import { Tag } from "antd";
 
 export function getMenuTypeOptions(t: TFunction<"translation", undefined>) {
 	return [
 		{
-			label: t("system.menu.menu"),
+			label: t("system:menu.menu"),
 			value: 0,
 		},
 		{
-			label: t("system.menu.iframe"),
+			label: t("system:menu.iframe"),
 			value: 1,
 		},
 		{
-			label: t("system.menu.externalLink"),
+			label: t("system:menu.externalLink"),
 			value: 2,
 		},
 		{
-			label: t("system.menu.button"),
+			label: t("system:menu.button"),
 			value: 3,
 		},
 	];
@@ -36,7 +36,7 @@ export function getConstantColumns(t: TFunction<"translation", undefined>): ProC
 			width: 80,
 		},
 		{
-			title: t("system.menu.name"),
+			title: t("system:menu.name"),
 			dataIndex: "name",
 			ellipsis: true,
 			width: 200,
@@ -53,7 +53,7 @@ export function getConstantColumns(t: TFunction<"translation", undefined>): ProC
 			},
 		},
 		{
-			title: t("system.menu.routePath"),
+			title: t("system:menu.routePath"),
 			dataIndex: "path",
 			width: 120,
 			filters: true,
@@ -61,13 +61,13 @@ export function getConstantColumns(t: TFunction<"translation", undefined>): ProC
 			ellipsis: true,
 		},
 		{
-			title: t("system.menu.menuOrder"),
+			title: t("system:menu.menuOrder"),
 			dataIndex: "order",
 			valueType: "digit",
 			width: 80,
 		},
 		{
-			title: t("system.menu.menuIcon"),
+			title: t("system:menu.menuIcon"),
 			dataIndex: "icon",
 			width: 130,
 		},
@@ -90,7 +90,7 @@ export function getConstantColumns(t: TFunction<"translation", undefined>): ProC
 			},
 		},
 		{
-			title: t("system.menu.menuType"),
+			title: t("system:menu.menuType"),
 			dataIndex: "menuType",
 			width: 100,
 			valueEnum: getMenuTypeOptions(t).reduce((acc, curr) => {
@@ -99,13 +99,13 @@ export function getConstantColumns(t: TFunction<"translation", undefined>): ProC
 			}, {} as Record<number, string>),
 		},
 		{
-			title: t("system.menu.componentUrl"),
+			title: t("system:menu.componentUrl"),
 			dataIndex: "component",
 			width: 120,
 			search: false,
 		},
 		{
-			title: t("system.menu.keepAlive"),
+			title: t("system:menu.keepAlive"),
 			dataIndex: "keepAlive",
 			valueType: "select",
 			width: 80,
@@ -118,7 +118,7 @@ export function getConstantColumns(t: TFunction<"translation", undefined>): ProC
 			}, new Map()),
 		},
 		{
-			title: t("system.menu.hideInMenu"),
+			title: t("system:menu.hideInMenu"),
 			dataIndex: "hideInMenu",
 			valueType: "select",
 			width: 120,
@@ -131,17 +131,17 @@ export function getConstantColumns(t: TFunction<"translation", undefined>): ProC
 			}, new Map()),
 		},
 		{
-			title: t("system.menu.currentActiveMenu"),
+			title: t("system:menu.currentActiveMenu"),
 			dataIndex: "currentActiveMenu",
 			width: 120,
 		},
 		{
-			title: t("system.menu.iframeLink"),
+			title: t("system:menu.iframeLink"),
 			dataIndex: "iframeLink",
 			width: 120,
 		},
 		{
-			title: t("system.menu.externalLink"),
+			title: t("system:menu.externalLink"),
 			dataIndex: "externalLink",
 			width: 120,
 		},

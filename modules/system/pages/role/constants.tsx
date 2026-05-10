@@ -13,7 +13,7 @@ export function getConstantColumns(t: TFunction<"translation", undefined>): ProC
 			width: 80,
 		},
 		{
-			title: t("system.role.name"),
+			title: t("system:role.name"),
 			dataIndex: "name",
 			disable: true,
 			ellipsis: true,
@@ -29,7 +29,7 @@ export function getConstantColumns(t: TFunction<"translation", undefined>): ProC
 		},
 		{
 			disable: true,
-			title: t("system.role.id"),
+			title: t("system:role.id"),
 			dataIndex: "code",
 			width: 120,
 			filters: true,

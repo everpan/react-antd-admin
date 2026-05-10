@@ -93,7 +93,7 @@ export function Detail({
 					buttonStyle: "solid",
 				}}
 				name="menuType"
-				label={t("system.menu.menuType")}
+				label={t("system:menu.menuType")}
 				radioType="button"
 				required
 				options={getMenuTypeOptions(t)}
@@ -101,7 +101,7 @@ export function Detail({
 
 			<ProFormCascader
 				name="parentId"
-				label={t("system.menu.parentMenu")}
+				label={t("system:menu.parentMenu")}
 				fieldProps={{
 					showSearch: true,
 					autoClearSearchValue: true,
@@ -131,7 +131,7 @@ export function Detail({
 									labelCol={{ md: 5, xl: 6 }}
 									colProps={{ md: 24, xl: 12 }}
 									name="name"
-									label={t("system.menu.name")}
+									label={t("system:menu.name")}
 									tooltip={t("form.length", { length: 24 })}
 								/>
 
@@ -145,7 +145,7 @@ export function Detail({
 									labelCol={{ md: 5, xl: 6 }}
 									colProps={{ md: 24, xl: 12 }}
 									name="path"
-									label={t("system.menu.routePath")}
+									label={t("system:menu.routePath")}
 								/>
 
 								<ProFormDigit
@@ -158,7 +158,7 @@ export function Detail({
 									labelCol={{ md: 5, xl: 6 }}
 									colProps={{ md: 24, xl: 12 }}
 									name="order"
-									label={t("system.menu.menuOrder")}
+									label={t("system:menu.menuOrder")}
 								/>
 
 								<ProFormText
@@ -171,7 +171,7 @@ export function Detail({
 									labelCol={{ md: 5, xl: 6 }}
 									colProps={{ md: 24, xl: 12 }}
 									name="icon"
-									label={t("system.menu.menuIcon")}
+									label={t("system:menu.menuIcon")}
 								/>
 
 								<ProFormText
@@ -184,7 +184,7 @@ export function Detail({
 									labelCol={{ md: 5, xl: 6 }}
 									colProps={{ md: 24, xl: 12 }}
 									name="component"
-									label={t("system.menu.componentUrl")}
+									label={t("system:menu.componentUrl")}
 								/>
 
 								<ProFormRadio.Group
@@ -207,7 +207,7 @@ export function Detail({
 
 								<ProFormRadio.Group
 									name="keepAlive"
-									label={t("system.menu.keepAlive")}
+									label={t("system:menu.keepAlive")}
 									radioType="button"
 									labelCol={{ md: 5, xl: 6 }}
 									colProps={{ md: 24, xl: 12 }}
@@ -225,7 +225,7 @@ export function Detail({
 
 								<ProFormRadio.Group
 									name="hideInMenu"
-									label={t("system.menu.hideInMenu")}
+									label={t("system:menu.hideInMenu")}
 									radioType="button"
 									labelCol={{ md: 5, xl: 6 }}
 									colProps={{ md: 24, xl: 12 }}
@@ -246,7 +246,7 @@ export function Detail({
 									labelCol={{ md: 5, xl: 6 }}
 									colProps={{ md: 24, xl: 12 }}
 									name="currentActiveMenu"
-									label={t("system.menu.currentActiveMenu")}
+									label={t("system:menu.currentActiveMenu")}
 								/>
 
 								<ProFormText
@@ -254,7 +254,7 @@ export function Detail({
 									labelCol={{ md: 5, xl: 6 }}
 									colProps={{ md: 24, xl: 12 }}
 									name="iframeLink"
-									label={t("system.menu.iframeLink")}
+									label={t("system:menu.iframeLink")}
 								/>
 
 								<ProFormText
@@ -262,7 +262,7 @@ export function Detail({
 									labelCol={{ md: 5, xl: 6 }}
 									colProps={{ md: 24, xl: 12 }}
 									name="externalLink"
-									label={t("system.menu.externalLink")}
+									label={t("system:menu.externalLink")}
 								/>
 
 							</>
