@@ -19,22 +19,22 @@ export default function About() {
 	const projectMessageItems = [
 		{
 			key: 1,
-			label: t("about.version"),
+			label: t("about:version"),
 			children: <Text code>{version}</Text>,
 		},
 		{
 			key: 2,
-			label: t("about.lastBuildTime"),
+			label: t("about:lastBuildTime"),
 			children: <Tag color="#55acee">{lastBuildTime}</Tag>,
 		},
 		{
 			key: 3,
-			label: t("about.license"),
+			label: t("about:license"),
 			children: <Tag color="green">{__APP_INFO__.pkg.license}</Tag>,
 		},
 		{
 			key: 4,
-			label: t("about.previewAddress"),
+			label: t("about:previewAddress"),
 			children: (
 				<Link
 					rel="noreferrer noopener"
@@ -48,7 +48,7 @@ export default function About() {
 		},
 		{
 			key: 5,
-			label: t("about.documentAddress"),
+			label: t("about:documentAddress"),
 			children: (
 				<Link
 					rel="noreferrer noopener"
@@ -76,7 +76,7 @@ export default function About() {
 		},
 		{
 			key: 7,
-			label: t("about.author"),
+			label: t("about:author"),
 			children: (
 				<Link
 					rel="noreferrer noopener"
@@ -95,12 +95,12 @@ export default function About() {
 				<Col span={24}>
 					<Row>
 						<Col>
-							<Card title={t("about.aboutProject")}>
+							<Card title={t("about:aboutProject")}>
 								<Descriptions
 									items={[
 										{
 											key: 1,
-											children: t("about.descriptions"),
+											children: t("about:descriptions"),
 										},
 									]}
 								/>
@@ -109,20 +109,20 @@ export default function About() {
 					</Row>
 				</Col>
 				<Col span={24}>
-					<Card title={t("about.projectMessage")}>
+					<Card title={t("about:projectMessage")}>
 						<Descriptions bordered items={projectMessageItems} />
 					</Card>
 				</Col>
 				<Col span={24}>
 					<Badge.Ribbon text={dependenciesItems.length} color="green">
-						<Card title={t("about.dependencies")}>
+						<Card title={t("about:dependencies")}>
 							<Descriptions bordered items={dependenciesItems} />
 						</Card>
 					</Badge.Ribbon>
 				</Col>
 				<Col span={24}>
 					<Badge.Ribbon text={devDependenciesItems.length} color="blue">
-						<Card title={t("about.devDependencies")}>
+						<Card title={t("about:devDependencies")}>
 							<Descriptions bordered items={devDependenciesItems} />
 						</Card>
 					</Badge.Ribbon>

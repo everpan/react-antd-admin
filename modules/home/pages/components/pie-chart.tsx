@@ -11,15 +11,15 @@ export default function PieChart() {
 	const { t } = useTranslation();
 	const [data, setData] = useState<PieDataType[]>([]);
 	const [value, setValue] = useState<string | number>(
-		t("home.allChannels"),
+		t("home:allChannels"),
 	);
 
 	const DATA_KEY = {
-		electronics: t("home.electronics"),
-		home_goods: t("home.homeGoods"),
-		apparel_accessories: t("home.apparelAccessories"),
-		food_beverages: t("home.foodBeverages"),
-		beauty_skincare: t("home.beautySkincare"),
+		electronics: t("home:electronics"),
+		home_goods: t("home:homeGoods"),
+		apparel_accessories: t("home:apparelAccessories"),
+		food_beverages: t("home:foodBeverages"),
+		beauty_skincare: t("home:beautySkincare"),
 	};
 
 	const option: EChartsOption = {
@@ -38,7 +38,7 @@ export default function PieChart() {
 		},
 		series: [
 			{
-				name: t("home.salesCategoryProportion"),
+				name: t("home:salesCategoryProportion"),
 				type: "pie",
 				radius: "55%",
 				center: ["50%", "60%"],
@@ -72,13 +72,13 @@ export default function PieChart() {
 
 	return (
 		<Card
-			title={t("home.salesCategoryProportion")}
+			title={t("home:salesCategoryProportion")}
 			extra={(
 				<Segmented
 					options={[
-						t("home.allChannels"),
-						t("home.online"),
-						t("home.site"),
+						t("home:allChannels"),
+						t("home:online"),
+						t("home:site"),
 					]}
 					value={value}
 					onChange={segmentedValue => setValue(segmentedValue)}

@@ -23,22 +23,22 @@ export default function CardList() {
 
 	const CARD_LIST = [
 		{
-			title: t("home.newVisits"),
+			title: t("home:newVisits"),
 			data: 102_400,
 			icon: <UserOutlined />,
 		},
 		{
-			title: t("home.messages"),
+			title: t("home:messages"),
 			data: 81212,
 			icon: <MessageOutlined />,
 		},
 		{
-			title: t("home.purchases"),
+			title: t("home:purchases"),
 			data: 9280,
 			icon: <MoneyCollectOutlined />,
 		},
 		{
-			title: t("home.shoppings"),
+			title: t("home:shoppings"),
 			data: 13600,
 			icon: <ShoppingCartOutlined />,
 		},

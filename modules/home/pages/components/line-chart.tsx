@@ -14,13 +14,13 @@ export default function LineChart() {
 
 	const DATA_KEYS = {
 		week: [
-			t("home.monday"),
-			t("home.thursday"),
-			t("home.wednesday"),
-			t("home.thursday"),
-			t("home.friday"),
-			t("home.saturday"),
-			t("home.sunday"),
+			t("home:monday"),
+			t("home:thursday"),
+			t("home:wednesday"),
+			t("home:thursday"),
+			t("home:friday"),
+			t("home:saturday"),
+			t("home:sunday"),
 		],
 	};
 
@@ -62,7 +62,7 @@ export default function LineChart() {
 
 	return (
 		<Card
-			title={t("home.sales")}
+			title={t("home:sales")}
 			extra={(
 				<Radio.Group
 					defaultValue="week"
@@ -70,9 +70,9 @@ export default function LineChart() {
 					value={value}
 					onChange={e => setValue(e.target.value)}
 				>
-					<Radio.Button value="week">{t("home.thisWeek")}</Radio.Button>
-					<Radio.Button value="month">{t("home.thisMonth")}</Radio.Button>
-					<Radio.Button value="year">{t("home.thisYear")}</Radio.Button>
+					<Radio.Button value="week">{t("home:thisWeek")}</Radio.Button>
+					<Radio.Button value="month">{t("home:thisMonth")}</Radio.Button>
+					<Radio.Button value="year">{t("home:thisYear")}</Radio.Button>
 				</Radio.Group>
 			)}
 		>

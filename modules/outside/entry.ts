@@ -1,3 +1,4 @@
+import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
 
 import { Iframe } from "#src/components/iframe";
@@ -71,4 +72,11 @@ const routes: AppRouteRecordRaw[] = [
 	},
 ];
 
-export default routes;
+const mod: ModuleDefinition = {
+	name: "outside",
+	description: "外部链接模块",
+	version: "1.0.0",
+	routes,
+};
+
+export default mod;
