@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
 
+import path from "node:path";
 import process from "node:process";
 import { cleanupSVG, isEmptyColor, parseColors, runSVGO, SVG } from "@iconify/tools";
 import tailwindcss from "@tailwindcss/vite";
@@ -26,6 +27,12 @@ const isDev = process.env.NODE_ENV === "development";
 export default defineConfig({
 
 	base: isDev ? "/" : "/react-antd-admin/",
+	resolve: {
+		alias: {
+			"#src": path.resolve("src"),
+			"#modules": path.resolve("modules"),
+		},
+	},
 	plugins: [
 		vitePluginFakeServer({
 			basename: "/api",
