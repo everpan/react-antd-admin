@@ -14,7 +14,8 @@
 - [5. 运维模式](#5-运维模式)
 - [6. 模块接口参考](#6-模块接口参考)
 - [7. 约定与规范](#7-约定与规范)
-- [8. 常见问题](#8-常见问题)
+- [8. 已知问题与注意事项](#8-已知问题与注意事项)
+- [9. 常见问题](#9-常见问题)
 
 ---
 
@@ -51,6 +52,15 @@ react-antd-admin/
   → 校验 name/version → 拓扑排序 → beforeInit → onInit
   → 注册 i18n/store → 注册路由 → AuthGuard 权限校验
   → 用户导航时触发 onActivate/onDeactivate
+```
+
+**路由合并顺序**（auth-guard 中，模块路由优先于后端/前端路由）:
+
+```
+1. 模块路由（loadAllModules → getModuleRoutes）
+2. 后端路由（generateRoutesFromBackend）
+3. 前端路由（generateRoutesByFrontend）
+→ removeDuplicateRoutes → setAccessStore
 ```
 
 ---
@@ -162,21 +172,24 @@ pnpm dev
 import { BasicContent } from "#src/components/basic-content";
 import { BasicTable } from "#src/components/basic-table";
 
-// Hooks
-import { useAccess } from "#src/hooks/use-access";
 // 布局组件
 import ContainerLayout from "#src/layout/container-layout";
-
 import ParentLayout from "#src/layout/parent-layout";
-
-// 路由常量
-import { mymodule } from "#src/router/extra-info";
 
 // Store
 import { useUserStore } from "#src/store/user";
 
+// Hooks
+import { useAccess } from "#src/hooks/use-access";
+
 // 工具
 import { request } from "#src/utils/request";
+
+// 路由常量
+import { mymodule } from "#src/router/extra-info";
+
+// 翻译
+import { $t } from "#src/locales";
 ```
 
 #### 引用第三方库
@@ -200,9 +213,14 @@ const MyPage = lazy(() => import("./pages/my-page"));
 使用相对路径 `./`：
 
 ```ts
-import myStore from "./stores/my-store";
 // 页面
-import { myHelper } from "./utils/helper";     const                  // 工具 MyPage = lazy(() => import("./pages/my-page")); // Store
+const MyPage = lazy(() => import("./pages/my-page"));
+
+// 工具
+import { myHelper } from "./utils/helper";
+
+// Store
+import myStore from "./stores/my-store";
 ```
 
 ### 3.3 添加页面
@@ -258,7 +276,7 @@ const routes: AppRouteRecordRaw[] = [
 		children: [
 			{
 				path: "/my-module/sub",
-				Component: ParentLayout,    // 嵌套父路由
+				Component: ParentLayout,
 				children: [
 					{ path: "/my-module/sub/a", Component: SubA, handle: { ... } },
 					{ path: "/my-module/sub/b", Component: SubB, handle: { ... } },
@@ -282,14 +300,14 @@ const routes: AppRouteRecordRaw[] = [
 }
 ```
 
-**页面中使用**:
+**页面中使用**（必须使用 `模块名:key` 的 namespace 语法）:
 
 ```tsx
 import { useTranslation } from "react-i18next";
 
 export default function MyPage() {
 	const { t } = useTranslation();
-	// 注意 namespace 前缀 "my-module:"
+	// 使用 namespace 前缀 "my-module:"
 	return <div>{t("my-module:title")}</div>;
 }
 ```
@@ -297,7 +315,6 @@ export default function MyPage() {
 **公共翻译**（`common.json`）不需要 namespace 前缀：
 
 ```tsx
-// 直接使用全局 namespace
 <div>{t("common.view")}</div>;
 ```
 
@@ -422,7 +439,6 @@ pnpm build:module -- --module=system
 修改 `manifest.json` 中的 `version` 和 `entry` 指向旧版本：
 
 ```json
-// 从 v1.1.0 回退到 v1.0.0
 {
 	"name": "system",
 	"version": "1.0.0",
@@ -457,9 +473,9 @@ pnpm build:module -- --module=system
 - 控制台输出详细错误信息（dev 模式）
 
 ```
-[module-loader] ✗ report@2.1.0 failed: NetworkError
+[module-loader] Loading 8 modules from manifest...
 [module-loader] ✓ home@1.0.0 loaded in 45ms
-[module-loader] ✓ system@1.2.0 loaded in 82ms
+[module-loader] ✗ report@2.1.0 failed: NetworkError
 ```
 
 ### 5.5 模块级权限控制
@@ -501,13 +517,13 @@ pnpm preview
 import type { ModuleDefinition } from "#src/module-loader/types";
 
 const mod: ModuleDefinition = {
-	name: "my-module",           // kebab-case，必须与 manifest.json 一致
-	description: "我的模块",      // 模块描述
-	version: "1.0.0",            // 语义化版本号，必须与 package.json/manifest.json 一致
-	routes: [],                   // AppRouteRecordRaw[] — 路由定义
-	lifecycle: { ... },           // 可选 — 生命周期钩子
-	i18n: { ... },               // 可选 — 国际化资源
-	config: { ... },             // 可选 — 模块配置
+	name: "my-module",
+	description: "我的模块",
+	version: "1.0.0",
+	routes: [],
+	lifecycle: { ... },
+	i18n: { ... },
+	config: { ... },
 };
 
 export default mod;
@@ -522,18 +538,16 @@ export default mod;
 	path: "/my-module/user",
 	Component: UserPage,
 	handle: {
-		title: "用户管理",           // 菜单和页面标题
-		icon: "UserOutlined",       // 菜单图标（字符串或 createElement()）
-		order: 10,                  // 子菜单排序
-		roles: ["admin"],           // 路由级角色（OR 关系）
-		permissions: [              // 路由级权限（AND 关系）
-			"permission:button:add",
-		],
-		keepAlive: true,            // 是否缓存页面（默认 true）
-		hideInMenu: false,          // 是否在菜单中隐藏
-		iframeLink: "https://...",  // iframe 嵌入链接
-		externalLink: "https://...", // 外部链接（新窗口打开）
-		ignoreAccess: false,        // 忽略权限校验
+		title: "用户管理",
+		icon: "UserOutlined",
+		order: 10,
+		roles: ["admin"],
+		permissions: ["permission:button:add"],
+		keepAlive: true,
+		hideInMenu: false,
+		iframeLink: "https://...",
+		externalLink: "https://...",
+		ignoreAccess: false,
 	},
 }
 ```
@@ -552,9 +566,9 @@ export default mod;
 
 ```ts
 {
-	module: { name, version },          // 模块元信息
-	utils: { request },                 // 框架工具
-	register: { store, apiPrefix },     // 注册器
+	module: { name, version },
+	utils: { request },
+	register: { store, apiPrefix },
 }
 ```
 
@@ -596,7 +610,93 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 
 ---
 
-## 8. 常见问题
+## 8. 已知问题与注意事项
+
+### 8.1 Bug 记录与经验教训
+
+以下问题在实际开发中出现过，新模块开发时需注意避免。
+
+#### P3-3: i18n namespace 语法错误
+
+| 项目 | 内容 |
+|------|------|
+| **现象** | 页面显示原始 i18n key（如 `exception.404SubTitle`），而非翻译后的文本 |
+| **根因** | 迁移模块时遗漏了 namespace 替换。旧代码 `t("exception.404SubTitle")` 使用点号分隔（全局 namespace 查找），迁移后应改为 `t("exception:404SubTitle")` 使用冒号分隔（i18next namespace 限定） |
+| **影响** | 所有使用旧语法的翻译 key 无法解析 |
+| **修复** | 全局替换 `t("moduleName.xxx")` → `t("moduleName:xxx")`，测试防护在 `tests/module-i18n-consistency.test.ts` |
+| **如何避免** | 模块页面中的 `t()` 调用必须使用 **`模块名:key`** 格式（冒号分隔）。只有 `common.xxx` 等全局 namespace 的 key 不需要冒号。见 [7.1 命名约定](#71-命名约定) |
+
+#### P3-4: 模块未注册到 manifest.json
+
+| 项目 | 内容 |
+|------|------|
+| **现象** | 模块加载器跳过该模块，菜单中不显示，控制台无错误（静默失败） |
+| **根因** | exception 模块从 `core` 路由迁移而非 `routes/modules/`，导致按标准流程注册时被遗漏 |
+| **影响** | 模块完全不可用 |
+| **修复** | 在 `manifest.json` 中补充注册条目 |
+| **如何避免** | 创建模块后必须检查：**`manifest.json` 是否有对应条目、`entry.ts` 是否存在、`order.ts` 是否有排序常量**。CLI（`pnpm create:module`）会自动完成这些步骤，手动创建时容易遗漏。测试防护在 `tests/module-i18n-consistency.test.ts` |
+
+#### P3-5: 路由合并顺序导致所有页面显示"未知组件"
+
+| 项目 | 内容 |
+|------|------|
+| **现象** | 所有模块页面显示"未知组件"错误页面，终端日志打印 `[Frontend component not found]: /src/pages/home/index.tsx` |
+| **根因** | 页面迁移到 `modules/` 后，`generate-routes-from-backend.ts` 的 `import.meta.glob` 仅搜索 `/src/pages/`，找不到已迁移的页面，将所有后端路由的 Component 回退为 `ExceptionUnknownComponent`。且后端路由先于模块路由 push 到 routes 数组，`removeDuplicateRoutes` 保留了错误的后端版本 |
+| **影响** | **全站所有模块页面不可用**（这是最高优先级的 bug） |
+| **修复** | (1) `generate-routes-from-backend.ts` 的 glob 扩展为搜索 `/src/pages/` 和 `/modules/*/pages/` 两个目录；(2) auth-guard 中模块路由加载移至后端/前端路由之前。测试防护在 `tests/module-route-priority.test.ts` |
+| **如何避免** | **模块路由必须优先于后端/前端路由注册**，否则 `removeDuplicateRoutes` 会丢弃正确组件的路由版本。如果新增路由来源，注意 push 顺序。新增页面目录时，同步更新 `generate-routes-from-backend.ts` 的 glob 模式 |
+
+#### P1-2: `#src/` 路径在模块目录下无法解析
+
+| 项目 | 内容 |
+|------|------|
+| **现象** | dev 启动报错 `Failed to resolve import "#src/layout/container-layout" from "modules/system/entry.ts"` |
+| **根因** | 模块目录有自己的 `package.json`，但没有 `#*` subpath imports 映射，导致 Node.js 解析 `#src` 失败 |
+| **影响** | dev 启动失败 |
+| **修复** | 在 `vite.config.ts` 添加 `resolve.alias: { "#src": ..., "#modules": ... }` |
+| **如何避免** | 模块通过 `#src/` 引用框架资源时，确保 `vite.config.ts` 中有对应 alias。不要在模块的 `package.json` 中重复声明 `imports` |
+
+#### P5-3: 构建时模块引入了框架内部实现
+
+| 项目 | 内容 |
+|------|------|
+| **现象** | `pnpm build` 报错 `Rollup failed to resolve import "~icons/svg/embedded"` |
+| **根因** | 模块构建时 `#src` alias 被解析为框架内部文件，导致 unplugin-icons 生成的虚拟模块被引入模块产物 |
+| **影响** | 构建失败 |
+| **修复** | 模块构建脚本中将 `#src/` 和 `#modules/` 加入 external 列表 |
+| **如何避免** | 模块构建配置中，`#src/` 和 `#modules/` 必须被 external 化，不能被解析为实际文件路径 |
+
+### 8.2 迁移检查清单
+
+迁移一个新模块时，按以下清单逐项确认：
+
+- [ ] `modules/<name>/entry.ts` 存在，且导出 `ModuleDefinition`
+- [ ] `modules/<name>/package.json` 存在，且 `version` 与 entry.ts 一致
+- [ ] `manifest.json` 中有对应条目，`name`、`version`、`entry` 路径正确
+- [ ] `src/router/extra-info/order.ts` 有排序常量
+- [ ] 所有页面文件已迁移到 `modules/<name>/pages/`
+- [ ] 页面中 `t()` 调用使用 `模块名:key` 冒号语法
+- [ ] `entry.ts` 中 `$t()` 用于菜单标题（全局 namespace），`t()` 用于页面内容（模块 namespace）
+- [ ] 原页面目录已清理（`src/pages/<name>/` 已删除）
+- [ ] `pnpm typecheck` 通过
+- [ ] `pnpm dev` 启动后页面功能正常
+- [ ] `pnpm test` 通过（含 i18n 一致性和路由优先级测试）
+
+### 8.3 开发注意事项
+
+1. **namespace 语法**：页面内翻译必须用 `t("module-name:key")`（冒号），不能用 `t("module-name.key")`（点号）。点号语法会在全局 namespace 下查找，迁移到独立 namespace 后会找不到 key。
+
+2. **路由合并顺序**：`auth-guard.tsx` 中的 routes push 顺序至关重要 —— 模块路由必须最先 push，后端路由次之，前端路由最后。这样 `removeDuplicateRoutes` 才会保留模块路由（含正确组件）而丢弃后端路由（可能含错误组件回退）。
+
+3. **manifest 三处一致**：`package.json`、`entry.ts`、`manifest.json` 三处的 `name` 和 `version` 必须一致，否则加载器会拒绝加载。
+
+4. **`#src/` vs 相对路径**：引用框架资源用 `#src/`，引用模块内部资源用 `./`。不要在模块内使用绝对路径引用其他模块。
+
+5. **构建 external**：模块构建时 `#src/`、`#modules/` 和所有共享库必须 external 化。如果构建产物中出现框架内部代码，检查 `scripts/build-modules.ts` 的 external 列表。
+
+---
+
+## 9. 常见问题
 
 ### Q: 新增模块后菜单不显示？
 
@@ -609,6 +709,17 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 ### Q: 模块页面报 `Failed to resolve import`？
 
 模块内引用框架资源需使用 `#src/` 前缀，引用模块内资源使用 `./` 相对路径。
+
+### Q: 页面显示原始 i18n key 而非翻译文本？
+
+确认 `t()` 调用使用了冒号 namespace 语法：`t("module-name:key")` 而非点号 `t("module-name.key")`。检查模块的 `locales/` 目录是否有对应的翻译文件。
+
+### Q: 页面显示"未知组件"错误？
+
+可能原因：
+1. 后端路由返回了该路径但找不到组件 → 检查 `generate-routes-from-backend.ts` 的 glob 是否包含模块页面目录
+2. 模块路由未正确注册 → 检查浏览器控制台的 `[module-loader]` 日志
+3. 路由合并顺序错误 → 检查 `auth-guard.tsx` 中模块路由是否先于后端路由 push
 
 ### Q: 构建时模块产物很大？
 
