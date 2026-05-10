@@ -8,23 +8,45 @@ import { addRouteIdByPath } from "./add-route-id-by-path";
 const ExceptionUnknownComponent = lazy(() => import("#modules/exception/pages/unknown-component"));
 
 /**
- * @zh 异步获取页面组件
- * @en Async load page components
+ * @zh 异步获取页面组件（包含框架 pages 和模块 pages）
+ * @en Async load page components (from both framework and modules)
  */
 const pageModules = import.meta.glob([
 	"/src/pages/**/*.tsx",
+	"/modules/*/pages/**/*.tsx",
 ]);
 
 /**
- * @zh 根据路由获取组件路径
- * @en Get component path based on route
+ * @zh 根据路由获取组件路径（先查 src/pages，再查 modules/<name>/pages）
+ * @en Get component path based on route (search src/pages first, then modules/<name>/pages)
  */
 export function getComponentPathByRoute(route: AppRouteRecordRaw & { component?: string }) {
+	const pageModulePaths = Object.keys(pageModules);
+	const routePath = route.path ?? "/";
+
 	if (route.component) {
-		return `/src/pages${route.component}`;
+		const srcPath = `/src/pages${route.component}`;
+		if (pageModulePaths.includes(srcPath)) {
+			return srcPath;
+		}
+		// 尝试在 modules/ 中查找
+		const routeBase = routePath.split("/").slice(0, 2).join("/");
+		const moduleGlobPath = `/modules${routeBase}/pages${route.component}`;
+		if (pageModulePaths.includes(moduleGlobPath)) {
+			return moduleGlobPath;
+		}
+		return srcPath;
 	}
 	else {
-		return `/src/pages${route.path}/index.tsx`;
+		const srcPath = `/src/pages${routePath}/index.tsx`;
+		if (pageModulePaths.includes(srcPath)) {
+			return srcPath;
+		}
+		// 尝试在 modules/ 中查找
+		const routeBase = routePath.split("/").slice(0, 2).join("/");
+		const subPath = routePath.slice(routeBase.length);
+		const moduleGlobPath = `/modules${routeBase}/pages${subPath}/index.tsx`;
+		return moduleGlobPath;
 	}
 }
 
