@@ -154,3 +154,4 @@ Phase 1 基础设施搭建已完成。新增 3 个文件（`src/module-loader/ty
 | 编号 | 问题 | 分类 | 解决方案 |
 |------|------|------|----------|
 | P1-1 | `typeof import("#src/utils/request")` 类型与 KyInstance 不匹配 | 常规 | 改为 `typeof import("#src/utils/request").request` 引用具体导出 |
+| P1-2 | `pnpm dev` 报错 `Failed to resolve import "#src/layout/container-layout" from "modules/system/entry.ts"` | 运行时 BUG | 模块目录下有独立 `package.json`，Vite 解析 `#src` 时查找最近的 `package.json` 的 `imports` 字段，模块目录下无 `#*` 映射。在 `vite.config.ts` 添加 `resolve.alias: { "#src": path.resolve("src"), "#modules": path.resolve("modules") }` 显式指定路径 |
