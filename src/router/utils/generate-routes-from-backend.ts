@@ -5,7 +5,7 @@ import { lazy } from "react";
 import { Outlet } from "react-router";
 import { addRouteIdByPath } from "./add-route-id-by-path";
 
-const ExceptionUnknownComponent = lazy(() => import("#src/pages/exception/unknown-component"));
+const ExceptionUnknownComponent = lazy(() => import("#modules/exception/pages/unknown-component"));
 
 /**
  * @zh 异步获取页面组件
@@ -13,8 +13,6 @@ const ExceptionUnknownComponent = lazy(() => import("#src/pages/exception/unknow
  */
 const pageModules = import.meta.glob([
 	"/src/pages/**/*.tsx",
-	// Exclude exception pages from lazy loading
-	"!/src/pages/exception/**/*.tsx",
 ]);
 
 /**

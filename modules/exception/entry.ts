@@ -1,3 +1,4 @@
+import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
 
 import { ServerErrorIcon } from "#src/icons";
@@ -13,10 +14,10 @@ import {
 } from "@ant-design/icons";
 import { createElement, lazy } from "react";
 
-const Exception403 = lazy(() => import("#src/pages/exception/403"));
-const Exception404 = lazy(() => import("#src/pages/exception/404"));
-const Exception500 = lazy(() => import("#src/pages/exception/500"));
-const ExceptionUnknownComponent = lazy(() => import("#src/pages/exception/unknown-component"));
+const Exception403 = lazy(() => import("./pages/403"));
+const Exception404 = lazy(() => import("./pages/404"));
+const Exception500 = lazy(() => import("./pages/500"));
+const ExceptionUnknownComponent = lazy(() => import("./pages/unknown-component"));
 
 const routes: AppRouteRecordRaw[] = [
 	{
@@ -24,7 +25,6 @@ const routes: AppRouteRecordRaw[] = [
 		Component: ContainerLayout,
 		handle: {
 			order: exception,
-			// hideInMenu: true,
 			title: $t("common.menu.exception"),
 			icon: createElement(IssuesCloseOutlined),
 		},
@@ -65,4 +65,15 @@ const routes: AppRouteRecordRaw[] = [
 	},
 ];
 
-export default routes;
+const mod: ModuleDefinition = {
+	name: "exception",
+	description: "异常页面模块",
+	version: "1.0.0",
+	routes,
+	i18n: {
+		"zh-CN": () => import("./locales/zh-CN.json"),
+		"en-US": () => import("./locales/en-US.json"),
+	},
+};
+
+export default mod;

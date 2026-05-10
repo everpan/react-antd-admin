@@ -9,8 +9,8 @@ export default function AccessMode() {
 		<Result
 			icon={<CloudOutlined />}
 			status="success"
-			title={t("access.accessMode.title")}
-			subTitle={t("access.accessMode.description")}
+			title={t("access:accessMode.title")}
+			subTitle={t("access:accessMode.description")}
 		/>
 	);
 }
