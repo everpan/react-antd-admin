@@ -28,20 +28,20 @@ export const DEFAULT_PREFERENCES = { builtinTheme: "blue" } satisfies Preference
 ::: details 内置主题类型列表
 
 ```ts
-export type BuiltinThemeType =
-  | "red"
-  | "volcano"
-  | "orange"
-  | "gold"
-  | "yellow"
-  | "lime"
-  | "green"
-  | "cyan"
-  | "blue"
-  | "geekblue"
-  | "purple"
-  | "magenta"
-  | "gray";
+export type BuiltinThemeType
+	= | "red"
+	  | "volcano"
+	  | "orange"
+	  | "gold"
+	  | "yellow"
+	  | "lime"
+	  | "green"
+	  | "cyan"
+	  | "blue"
+	  | "geekblue"
+	  | "purple"
+	  | "magenta"
+	  | "gray";
 ```
 
 :::

@@ -2,7 +2,7 @@ import { i18n } from "#src/locales";
 import { usePreferencesStore } from "#src/store/preferences";
 import { isDarkTheme } from "#src/utils/is-dark-theme";
 
-import { loadingContainerId, loadingId } from './loading'
+import { loadingContainerId, loadingId } from "./loading";
 /**
  * Preview loading page.
  * https://github.com/user-attachments/assets/41074b13-9bfb-4654-b1e4-95aab868e2c9
@@ -13,7 +13,7 @@ export function setupLoading2() {
 	 * @see https://github.com/mineadmin/MineAdmin/blob/9e011a75178073aef15d58366920e83879f45fd4/web/index.html#L18-L63
 	 * This CSS code from https://github.com/mineadmin/MineAdmin
 	 * @author MineAdmin
-	*/
+	 */
 	const loading = `
 <style>
 #${loadingContainerId} {

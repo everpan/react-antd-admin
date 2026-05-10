@@ -86,6 +86,7 @@
 
 ```tsx
 import { useTranslation } from "react-i18next";
+
 export default function About() {
 	const { t } = useTranslation();
 
@@ -129,6 +130,7 @@ function About() {
 // 	"sendText": "{{ second }} 秒后重新获取",
 // }
 import { useTranslation } from "react-i18next";
+
 export default function Login() {
 	const { t } = useTranslation();
 	return (
@@ -149,6 +151,7 @@ Trans 组件特别适合自定义 HTML 标签，例如：
 // 	"agree": "我已阅读并同意《<0>隐私政策</0>》和《<1>服务条款</1>》",
 // }
 import { Trans } from "react-i18next";
+
 export default function Login() {
 	return (
 		<Trans
@@ -180,6 +183,7 @@ export function $t(path: string) {
 
 ```js
 import { $t } from "#src/locales";
+
 const title = $t("common.menu.about");
 // 在 VSCode 中，`$t("common.menu.about")` 渲染为 $t(关于),
 ```

@@ -28,6 +28,7 @@
 
 ```jsx
 import classes from "./example.module.css";
+
 document.getElementById("foo").className = classes.red;
 ```
 
