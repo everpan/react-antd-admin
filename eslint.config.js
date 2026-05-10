@@ -2,6 +2,7 @@ import antfu from "@antfu/eslint-config";
 
 export default antfu({
 	react: true,
+	markdown: false,
 	rules: {
 		"style/quotes": ["error", "double"],
 		"style/semi": ["error", "always"],
