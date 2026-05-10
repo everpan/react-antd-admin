@@ -1,7 +1,7 @@
-import type { MenuItemType } from "#src/api/system/menu";
+import type { RoleItemType } from "#src/api/system/role";
 import type { ActionType, ProColumns, ProCoreActionType } from "@ant-design/pro-components";
 
-import { fetchDeleteMenuItem, fetchMenuList } from "#src/api/system/menu";
+import { fetchDeleteRoleItem, fetchMenuByRoleId, fetchRoleList, fetchRoleMenu } from "#src/api/system/role";
 import { BasicButton } from "#src/components/basic-button";
 import { BasicContent } from "#src/components/basic-content";
 import { BasicTable } from "#src/components/basic-table";
@@ -9,6 +9,7 @@ import { accessControlCodes, useAccess } from "#src/hooks/use-access";
 import { handleTree } from "#src/utils/tree";
 
 import { PlusCircleOutlined } from "@ant-design/icons";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button, Popconfirm } from "antd";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,24 +17,38 @@ import { useTranslation } from "react-i18next";
 import { Detail } from "./components/detail";
 import { getConstantColumns } from "./constants";
 
-export default function Menu() {
+export default function Role() {
 	const { t } = useTranslation();
 	const { hasAccessByCodes } = useAccess();
+	const { data: menuItems } = useQuery({
+		queryKey: ["role-menu"],
+		queryFn: async () => {
+			const responseData = await fetchRoleMenu();
+			return responseData?.result.map(item => ({
+				...item,
+				title: item.name,
+				key: item.id,
+			}));
+		},
+		initialData: [],
+	});
+	const deleteRoleItemMutation = useMutation({
+		mutationFn: fetchDeleteRoleItem,
+	});
 	/* Detail Data */
 	const [isOpen, setIsOpen] = useState(false);
 	const [title, setTitle] = useState("");
-	const [detailData, setDetailData] = useState<Partial<MenuItemType>>({});
-	const [flatParentMenus, setFlatParentMenus] = useState<MenuItemType[]>([]);
+	const [detailData, setDetailData] = useState<Partial<RoleItemType> & { menus?: string[] }>({});
 
 	const actionRef = useRef<ActionType>(null);
 
 	const handleDeleteRow = async (id: number, action?: ProCoreActionType<object>) => {
-		const responseData = await fetchDeleteMenuItem(id);
+		const responseData = await deleteRoleItemMutation.mutateAsync(id);
 		await action?.reload?.();
 		window.$message?.success(`${t("common.deleteSuccess")} id = ${responseData.result}`);
 	};
 
-	const columns: ProColumns<MenuItemType>[] = [
+	const columns: ProColumns<RoleItemType>[] = [
 		...getConstantColumns(t),
 		{
 			title: t("common.action"),
@@ -49,9 +64,11 @@ export default function Menu() {
 						size="small"
 						disabled={!hasAccessByCodes(accessControlCodes.update)}
 						onClick={async () => {
+							/* 请求角色菜单权限 */
+							const responseData = await fetchMenuByRoleId({ id: record.id });
 							setIsOpen(true);
-							setTitle(t("system.menu.editMenu"));
-							setDetailData({ ...record });
+							setTitle(t("system:role.editRole"));
+							setDetailData({ ...record, menus: responseData.result });
 						}}
 					>
 						{t("common.edit")}
@@ -78,32 +95,23 @@ export default function Menu() {
 	const refreshTable = () => {
 		actionRef.current?.reload();
 	};
-
 	return (
 		<BasicContent className="h-full">
-			<BasicTable<MenuItemType>
+			<BasicTable<RoleItemType>
 				adaptive
 				columns={columns}
 				actionRef={actionRef}
 				request={async (params) => {
 					// console.log(sort, filter);
-					const responseData = await fetchMenuList(params);
-					const menuTree = handleTree(responseData.result.list);
-					setFlatParentMenus(
-						responseData.result.list
-							.filter(
-								item => Number(item.menuType) === 0,
-							).map(item => ({ ...item, name: t(item.name) })),
-					);
+					const responseData = await fetchRoleList(params);
 					return {
 						...responseData,
-						data: menuTree,
+						data: responseData.result.list,
 						total: responseData.result.total,
 					};
 				}}
-				headerTitle={`${t("common.menu.menu")} （${t("common.demoOnly")}）`}
+				headerTitle={`${t("common.menu.role")} （${t("common.demoOnly")}）`}
 				toolBarRender={() => [
-
 					<Button
 						key="add-role"
 						icon={<PlusCircleOutlined />}
@@ -111,21 +119,20 @@ export default function Menu() {
 						disabled={!hasAccessByCodes(accessControlCodes.add)}
 						onClick={() => {
 							setIsOpen(true);
-							setTitle(t("system.menu.addMenu"));
+							setTitle(t("system:role.addRole"));
 						}}
 					>
 						{t("common.add")}
 					</Button>,
-
 				]}
 			/>
 			<Detail
 				title={title}
 				open={isOpen}
-				flatParentMenus={flatParentMenus}
 				onCloseChange={onCloseChange}
 				detailData={detailData}
 				refreshTable={refreshTable}
+				treeData={handleTree(menuItems || [])}
 			/>
 		</BasicContent>
 	);

@@ -97,7 +97,7 @@ export function Detail({ title, open, onCloseChange, detailData, treeData, refre
 				]}
 				width="md"
 				name="name"
-				label={t("system.role.name")}
+				label={t("system:role.name")}
 				tooltip={t("form.length", { length: 24 })}
 			/>
 
@@ -110,7 +110,7 @@ export function Detail({ title, open, onCloseChange, detailData, treeData, refre
 				]}
 				width="md"
 				name="code"
-				label={t("system.role.id")}
+				label={t("system:role.id")}
 			/>
 
 			<ProFormRadio.Group
@@ -136,7 +136,7 @@ export function Detail({ title, open, onCloseChange, detailData, treeData, refre
 				label={t("common.remark")}
 			/>
 
-			<Form.Item name="menus" label={t("system.role.assignMenu")}>
+			<Form.Item name="menus" label={t("system:role.assignMenu")}>
 				<FormTreeItem treeData={treeData} />
 			</Form.Item>
 		</DrawerForm>
