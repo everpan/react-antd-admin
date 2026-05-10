@@ -81,3 +81,4 @@
 | P3-2 | `#modules/` 路径解析依赖 package.json `imports` 的 `#*` 规则 | 设计决策 | 利用已有机制，无需额外配置 |
 | P3-3 | exception 模块迁移时遗漏 4 处 `t("exception.xxx")` → `t("exception:xxx")` 的 namespace 替换，导致菜单显示原始 i18n key | 迁移遗漏 BUG | Phase 3 迁移 exception 时未对页面文件执行 sed 替换。已修复并添加测试防护（`tests/module-i18n-consistency.test.ts`） |
 | P3-4 | exception 模块未注册到 `manifest.json`，导致模块加载器无法加载 | 迁移遗漏 BUG | exception 从 core 路由迁移而非 `src/router/routes/modules/`，导致 manifest 注册被遗漏。已补充注册条目 |
+| P3-5 | 页面迁移到 `modules/` 后，后端路由生成器 `generate-routes-from-backend.ts` 仍在 `/src/pages/` 查找组件，找不到则回退到 `ExceptionUnknownComponent`；且后端路由先于模块路由 push，`removeDuplicateRoutes` 保留了错误的后端路由版本 | 架构缺陷 BUG | 两处修复：(1) 模块路由加载移至后端/前端路由生成之前，确保 `removeDuplicateRoutes` 保留模块路由（含正确组件）；(2) `generate-routes-from-backend.ts` 的 `import.meta.glob` 新增 `/modules/*/pages/**/*.tsx` 搜索范围，`getComponentPathByRoute` 增加 `modules/` 回退查找。测试防护：`tests/module-route-priority.test.ts` |
