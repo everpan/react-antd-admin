@@ -38,6 +38,7 @@
 
 ```ts
 import { useMatches } from "react-router";
+
 const matches = useMatches();
 console.log(matches);
 // 输出：[{ pathname: '/path', params: {}, data: {} }, ...]
@@ -51,6 +52,7 @@ console.log(matches);
 
 ```ts
 import { useParams } from "react-router";
+
 const { id: templateId } = useParams<{ id: string }>();
 ```
 
@@ -60,6 +62,7 @@ const { id: templateId } = useParams<{ id: string }>();
 
 ```ts
 import { useNavigate } from "react-router";
+
 const navigate = useNavigate();
 navigate("/path");
 ```
@@ -70,6 +73,7 @@ navigate("/path");
 
 ```ts
 import { useLocation } from "react-router";
+
 const location = useLocation();
 console.log(location);
 // 输出：{ pathname: '/path', search: '?x=1&y=2', hash: '', state: null, key: 'default' }
@@ -81,6 +85,7 @@ console.log(location);
 
 ```ts
 import { useSearchParams } from "react-router";
+
 const [searchParams] = useSearchParams();
 console.log(searchParams.get("x")); // 输出 x 的值
 ```
@@ -89,6 +94,7 @@ console.log(searchParams.get("x")); // 输出 x 的值
 
 ```ts
 import { useQueryState } from "nuqs";
+
 const [hello, setHello] = useQueryState("hello", { defaultValue: "" });
 ```
 
@@ -98,6 +104,7 @@ const [hello, setHello] = useQueryState("hello", { defaultValue: "" });
 
 ```ts
 import { useOutlet } from "react-router";
+
 const outlet = useOutlet();
 console.log(outlet); // 输出：<div>...</div>
 ```

@@ -1,7 +1,7 @@
 {
 	"cSpell.words": [
-		"antd",
 		"ahooks",
+		"antd",
 		"Cascader",
 		"clsx",
 		"lokalise",
@@ -9,9 +9,10 @@
 		"reduxjs",
 		"sider",
 		"svgr",
-		"vitepress",
-		"vite",
+		"tabbar",
 		"taze",
+		"vite",
+		"vitepress",
 		"zustand"
 	],
 	// Disable the default formatter, use eslint instead

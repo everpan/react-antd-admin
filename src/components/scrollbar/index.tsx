@@ -1,13 +1,12 @@
 import type { Props as SimplebarProps } from "simplebar-react";
 
 import { cn } from "#src/utils/cn";
-import { forwardRef } from "react";
 import SimpleBar from "simplebar-react";
 
 /**
  * @see https://github.com/Grsmto/simplebar/tree/master/packages/simplebar-react
  */
-export const Scrollbar = forwardRef<HTMLElement, SimplebarProps>(({ children, ...other }, ref) => {
+export function Scrollbar({ ref, children, ...other }: SimplebarProps & { ref?: React.RefObject<HTMLElement | null> }) {
 	return (
 		<SimpleBar
 			autoHide={true}
@@ -19,4 +18,4 @@ export const Scrollbar = forwardRef<HTMLElement, SimplebarProps>(({ children, ..
 			{children}
 		</SimpleBar>
 	);
-});
+}
