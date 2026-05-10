@@ -79,3 +79,5 @@
 |------|------|------|----------|
 | P3-1 | exception 页面被 fallback.ts 和 generate-routes-from-backend.ts 引用 | 非预期依赖 | 更新引用路径为 `#modules/exception/pages/...` |
 | P3-2 | `#modules/` 路径解析依赖 package.json `imports` 的 `#*` 规则 | 设计决策 | 利用已有机制，无需额外配置 |
+| P3-3 | exception 模块迁移时遗漏 4 处 `t("exception.xxx")` → `t("exception:xxx")` 的 namespace 替换，导致菜单显示原始 i18n key | 迁移遗漏 BUG | Phase 3 迁移 exception 时未对页面文件执行 sed 替换。已修复并添加测试防护（`tests/module-i18n-consistency.test.ts`） |
+| P3-4 | exception 模块未注册到 `manifest.json`，导致模块加载器无法加载 | 迁移遗漏 BUG | exception 从 core 路由迁移而非 `src/router/routes/modules/`，导致 manifest 注册被遗漏。已补充注册条目 |
