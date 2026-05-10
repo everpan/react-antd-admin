@@ -1,5 +1,6 @@
 import { fetchAsyncRoutes } from "#src/api/user";
 import { useCurrentRoute } from "#src/hooks/use-current-route";
+import { getRoutes as getModuleRoutes, loadAll as loadAllModules } from "#src/module-loader";
 import { hideLoading } from "#src/plugins/hide-loading";
 import { setupLoading } from "#src/plugins/loading";
 import { exception403Path, exception404Path, exception500Path, loginPath } from "#src/router/extra-info";
@@ -110,6 +111,24 @@ export function AuthGuard({ children }: AuthGuardProps) {
 			 */
 			if (enableFrontendAceess) {
 				routes.push(...generateRoutesByFrontend(accessRoutes, latestRoles));
+			}
+
+			/**
+			 * @zh 加载 manifest.json 中声明的模块，合并模块路由
+			 * @en Load modules declared in manifest.json and merge module routes
+			 */
+			try {
+				const manifest = await import("#manifest.json");
+				await loadAllModules(manifest.default);
+				const moduleRoutes = getModuleRoutes();
+				if (moduleRoutes.length > 0) {
+					routes.push(...moduleRoutes);
+				}
+			}
+			catch (error) {
+				if (import.meta.env.DEV) {
+					console.warn("[module-loader] Failed to load modules:", error);
+				}
 			}
 
 			const uniqueRoutes = removeDuplicateRoutes(routes);
