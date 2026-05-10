@@ -24,6 +24,7 @@
 		"build:framework": "vite build",
 		"build:modules": "npx tsx scripts/build-modules.ts",
 		"build:module": "npx tsx scripts/build-modules.ts",
+		"create:module": "npx tsx scripts/create-module.ts",
 		"preview": "vite preview",
 		"typecheck": "tsc --noEmit",
 		"analyzer": "vite-bundle-visualizer --output analyzer/stats.html",
