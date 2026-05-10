@@ -20,7 +20,10 @@
 	},
 	"scripts": {
 		"dev": "vite --host",
-		"build": "NODE_OPTIONS=--max-old-space-size=8192 vite build",
+		"build": "NODE_OPTIONS=--max-old-space-size=8192 vite build && npx tsx scripts/build-modules.ts",
+		"build:framework": "vite build",
+		"build:modules": "npx tsx scripts/build-modules.ts",
+		"build:module": "npx tsx scripts/build-modules.ts",
 		"preview": "vite preview",
 		"typecheck": "tsc --noEmit",
 		"analyzer": "vite-bundle-visualizer --output analyzer/stats.html",

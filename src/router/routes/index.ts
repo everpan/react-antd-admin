@@ -12,18 +12,10 @@ export const externalRouteFiles: RouteFileModule = import.meta.glob("./external/
 export const staticRouteFiles: RouteFileModule = import.meta.glob("./static/**/*.ts", { eager: true });
 
 /**
- * 后端动态路由文件
- */
-export const dynamicRouteFiles: RouteFileModule = import.meta.glob("./modules/**/*.ts", { eager: true });
-
-/**
  * 外部路由 1. 不进行权限校验， 2. 不会触发请求，例如用户信息接口
  * @example "privacy-policy", "terms-of-service" 等
  */
 export const externalRoutes: AppRouteRecordRaw[] = mergeRouteModules(externalRouteFiles);
-
-/** 动态路由 */
-export const dynamicRoutes: AppRouteRecordRaw[] = mergeRouteModules(dynamicRouteFiles);
 
 /** 静态路由 */
 export const staticRoutes: AppRouteRecordRaw[] = mergeRouteModules(staticRouteFiles);
@@ -36,9 +28,8 @@ const baseRoutes = ascending([
 	...externalRoutes,
 ]);
 
-/** 权限路由列表，包含动态路由和静态路由 */
+/** 权限路由列表（静态路由，模块路由由 module-loader 动态提供） */
 const accessRoutes = [
-	...dynamicRoutes,
 	...staticRoutes,
 ];
 
