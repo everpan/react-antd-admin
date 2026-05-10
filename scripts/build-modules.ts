@@ -95,13 +95,12 @@ async function buildModule(moduleDir: string) {
 			outDir: getOutputDir(moduleName, version),
 			emptyOutDir: true,
 			rollupOptions: {
-				external: id => isExternal(id),
-			},
-		},
-		resolve: {
-			alias: {
-				"#src": path.resolve("src"),
-				"#modules": path.resolve("modules"),
+				external: (id) => {
+					if (id.startsWith("#src/") || id.startsWith("#modules/")) {
+						return true;
+					}
+					return isExternal(id);
+				},
 			},
 		},
 		plugins: [react()],
