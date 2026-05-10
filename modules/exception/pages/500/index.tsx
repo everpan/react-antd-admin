@@ -11,7 +11,7 @@ export default function Exception500() {
 		<Result
 			status="500"
 			title="500"
-			subTitle={t("exception.500SubTitle")}
+			subTitle={t("exception:500SubTitle")}
 			extra={(
 				<Button
 					icon={<ArrowLeftOutlined />}

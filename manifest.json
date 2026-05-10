@@ -37,6 +37,12 @@
 			"enabled": true
 		},
 		{
+			"name": "exception",
+			"version": "1.0.0",
+			"entry": "/modules/exception/entry.ts",
+			"enabled": true
+		},
+		{
 			"name": "system",
 			"version": "1.0.0",
 			"entry": "/modules/system/entry.ts",
