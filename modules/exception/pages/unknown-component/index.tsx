@@ -15,7 +15,7 @@ export default function UnknownComponent() {
 			status="warning"
 			icon={<AppstoreOutlined />}
 			title={t("common.menu.exceptionUnknownComponent")}
-			subTitle={t("exception.unknownComponentSubTitle")}
+			subTitle={t("exception:unknownComponentSubTitle")}
 			extra={(
 				<div>
 					<Paragraph code copyable={{ text: location.href }}>

@@ -11,7 +11,7 @@ export default function Exception404() {
 		<Result
 			status="404"
 			title="404"
-			subTitle={t("exception.404SubTitle")}
+			subTitle={t("exception:404SubTitle")}
 			extra={(
 				<Button
 					icon={<ArrowLeftOutlined />}
