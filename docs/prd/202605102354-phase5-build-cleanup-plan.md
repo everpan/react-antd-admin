@@ -68,3 +68,4 @@ Phase 5 完成。旧代码已清理，构建脚本已就绪。
 |------|------|------|----------|
 | P5-1 | ESLint `node/prefer-global/process` 禁止使用全局 process | 常规 | 改为 `import process from "node:process"` |
 | P5-2 | ESLint `antfu/consistent-list-newline` 要求单行数组展开 | 常规 | `eslint --fix` 自动修复 |
+| P5-3 | `pnpm build` 报错 `Rollup failed to resolve import "~icons/svg/embedded"` | 构建时 BUG | 模块构建时 `#src` alias 导致 Rollup 追踪进入框架内部代码（layout、icons 等），解析到 `~icons/` 虚拟模块。将 `#src/` 和 `#modules/` 开头的 import 加入 external 列表，使模块产物仅包含模块自身代码，移除 `resolve.alias` 配置 |
