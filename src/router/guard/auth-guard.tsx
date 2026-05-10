@@ -91,6 +91,24 @@ export function AuthGuard({ children }: AuthGuardProps) {
 				latestRoles.push(...userInfoResult.value?.roles ?? []);
 			}
 			/**
+			 * @zh 加载 manifest.json 中声明的模块，合并模块路由（优先于后端/前端路由）
+			 * @en Load modules declared in manifest.json (takes priority over backend/frontend routes)
+			 */
+			try {
+				const manifest = await import("#manifest.json");
+				await loadAllModules(manifest.default);
+				const moduleRoutes = getModuleRoutes();
+				if (moduleRoutes.length > 0) {
+					routes.push(...moduleRoutes);
+				}
+			}
+			catch (error) {
+				if (import.meta.env.DEV) {
+					console.warn("[module-loader] Failed to load modules:", error);
+				}
+			}
+
+			/**
 			 * @zh 启用了后端路由且路由从用户接口中获取
 			 * @en If backend routing is enabled and the route is obtained from the user interface
 			 */
@@ -111,24 +129,6 @@ export function AuthGuard({ children }: AuthGuardProps) {
 			 */
 			if (enableFrontendAceess) {
 				routes.push(...generateRoutesByFrontend(accessRoutes, latestRoles));
-			}
-
-			/**
-			 * @zh 加载 manifest.json 中声明的模块，合并模块路由
-			 * @en Load modules declared in manifest.json and merge module routes
-			 */
-			try {
-				const manifest = await import("#manifest.json");
-				await loadAllModules(manifest.default);
-				const moduleRoutes = getModuleRoutes();
-				if (moduleRoutes.length > 0) {
-					routes.push(...moduleRoutes);
-				}
-			}
-			catch (error) {
-				if (import.meta.env.DEV) {
-					console.warn("[module-loader] Failed to load modules:", error);
-				}
 			}
 
 			const uniqueRoutes = removeDuplicateRoutes(routes);
