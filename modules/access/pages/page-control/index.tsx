@@ -74,26 +74,26 @@ export default function PageControl() {
 			});
 			return;
 		}
-		window.$message?.warning(t("access.pageControl.warningMessage"));
+		window.$message?.warning(t("access:pageControl.warningMessage"));
 	}
 
 	return (
 		<BasicContent className="flex flex-col gap-4">
-			<Alert type="info" title={t("access.pageControl.alertMessage")} description={t("access.pageControl.alertDescription")}></Alert>
-			<Card title={t("access.pageControl.cardTitle")}>
+			<Alert type="info" title={t("access:pageControl.alertMessage")} description={t("access:pageControl.alertDescription")}></Alert>
+			<Card title={t("access:pageControl.cardTitle")}>
 				<Alert
 					type="warning"
 					className={clsx(
 						"mb-4",
 						{ hidden: enableFrontendAceess !== enableBackendAccess },
 					)}
-					description={t("access.pageControl.warningMessage")}
+					description={t("access:pageControl.warningMessage")}
 				/>
 				<div className="flex items-center gap-4">
-					{t("access.pageControl.currentPermissionMode")}
+					{t("access:pageControl.currentPermissionMode")}
 					{enableFrontendAceess
 						? (
-							<Typography.Text code>{t("access.pageControl.frontendControl")}</Typography.Text>
+							<Typography.Text code>{t("access:pageControl.frontendControl")}</Typography.Text>
 						)
 						: (
 							""
@@ -101,7 +101,7 @@ export default function PageControl() {
 
 					{enableBackendAccess
 						? (
-							<Typography.Text code>{t("access.pageControl.backendControl")}</Typography.Text>
+							<Typography.Text code>{t("access:pageControl.backendControl")}</Typography.Text>
 						)
 						: (
 							""
@@ -114,7 +114,7 @@ export default function PageControl() {
 								type="primary"
 								onClick={() => toggleAccessMode()}
 							>
-								{t("access.pageControl.switchToFrontend")}
+								{t("access:pageControl.switchToFrontend")}
 							</Button>
 						)
 						: null}
@@ -125,19 +125,19 @@ export default function PageControl() {
 								type="primary"
 								onClick={() => toggleAccessMode()}
 							>
-								{t("access.pageControl.switchToBackend")}
+								{t("access:pageControl.switchToBackend")}
 							</Button>
 						)
 						: null}
 				</div>
 			</Card>
-			<Card title={t("access.pageControl.accountSwitching")}>
+			<Card title={t("access:pageControl.accountSwitching")}>
 				<div className="flex gap-4">
 					<Button type={roleButtonType(AccessControlRoles.admin)} onClick={() => changeAccount(AccessControlRoles.admin)}>
-						{t("access.pageControl.switchAdmin")}
+						{t("access:pageControl.switchAdmin")}
 					</Button>
 					<Button type={roleButtonType(AccessControlRoles.common)} onClick={() => changeAccount(AccessControlRoles.common)}>
-						{t("access.pageControl.switchCommon")}
+						{t("access:pageControl.switchCommon")}
 					</Button>
 				</div>
 			</Card>

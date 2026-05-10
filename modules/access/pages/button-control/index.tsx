@@ -49,11 +49,11 @@ export default function ButtonControl() {
 
 	return (
 		<BasicContent className="flex flex-col gap-4">
-			<Alert title={t("access.buttonControl.alertMessage")} description={t("access.buttonControl.alertDescription")}></Alert>
+			<Alert title={t("access:buttonControl.alertMessage")} description={t("access:buttonControl.alertDescription")}></Alert>
 			<Card
 				title={(
 					<>
-						{t("access.buttonControl.currentRole")}
+						{t("access:buttonControl.currentRole")}
 						&nbsp;&nbsp;
 						<Typography.Text mark code>{userRoles}</Typography.Text>
 					</>
@@ -61,14 +61,14 @@ export default function ButtonControl() {
 			>
 				<div className="flex gap-4">
 					<Button type={roleButtonType(AccessControlRoles.admin)} onClick={() => changeAccount(AccessControlRoles.admin)}>
-						{t("access.buttonControl.switchAdmin")}
+						{t("access:buttonControl.switchAdmin")}
 					</Button>
 					<Button type={roleButtonType(AccessControlRoles.common)} onClick={() => changeAccount(AccessControlRoles.common)}>
-						{t("access.buttonControl.switchCommon")}
+						{t("access:buttonControl.switchCommon")}
 					</Button>
 				</div>
 			</Card>
-			<Card title={t("access.buttonControl.componentControlPermissionCodes")}>
+			<Card title={t("access:buttonControl.componentControlPermissionCodes")}>
 				<div className="flex items-center gap-4">
 					<AccessControl codes={accessControlCodes.get}>
 						<Typography.Text code>
@@ -95,30 +95,30 @@ export default function ButtonControl() {
 					</AccessControl>
 				</div>
 			</Card>
-			<Card title={t("access.buttonControl.componentControlRoles")}>
+			<Card title={t("access:buttonControl.componentControlRoles")}>
 				<div className="flex items-center gap-4">
 					<AccessControl type="role" codes={[AccessControlRoles.admin, AccessControlRoles.common]}>
 						<Typography.Text code>
-							{t("access.adminVisible.title")}
+							{t("access:adminVisible.title")}
 							&nbsp;&&nbsp;
-							{t("access.commonVisible.title")}
+							{t("access:commonVisible.title")}
 						</Typography.Text>
 					</AccessControl>
 
 					<AccessControl type="role" codes={AccessControlRoles.admin}>
 						<Typography.Text code>
-							{t("access.adminVisible.title")}
+							{t("access:adminVisible.title")}
 						</Typography.Text>
 					</AccessControl>
 
 					<AccessControl type="role" codes={AccessControlRoles.common}>
 						<Typography.Text code>
-							{t("access.commonVisible.title")}
+							{t("access:commonVisible.title")}
 						</Typography.Text>
 					</AccessControl>
 				</div>
 			</Card>
-			<Card title={t("access.buttonControl.functionControlPermissionCodes")}>
+			<Card title={t("access:buttonControl.functionControlPermissionCodes")}>
 				<div className="flex items-center gap-4">
 					{
 						hasAccessByCodes(accessControlCodes.get) && (
@@ -154,28 +154,28 @@ export default function ButtonControl() {
 
 				</div>
 			</Card>
-			<Card title={t("access.buttonControl.functionControlRoles")}>
+			<Card title={t("access:buttonControl.functionControlRoles")}>
 				<div className="flex items-center gap-4">
 					{
 						hasAccessByRoles([AccessControlRoles.admin, AccessControlRoles.common]) && (
 							<Typography.Text code>
-								{t("access.adminVisible.title")}
+								{t("access:adminVisible.title")}
 								&nbsp;&&nbsp;
-								{t("access.commonVisible.title")}
+								{t("access:commonVisible.title")}
 							</Typography.Text>
 						)
 					}
 					{
 						hasAccessByRoles([AccessControlRoles.admin]) && (
 							<Typography.Text code>
-								{t("access.adminVisible.title")}
+								{t("access:adminVisible.title")}
 							</Typography.Text>
 						)
 					}
 					{
 						hasAccessByRoles(AccessControlRoles.common) && (
 							<Typography.Text code>
-								{t("access.commonVisible.title")}
+								{t("access:commonVisible.title")}
 							</Typography.Text>
 						)
 					}
