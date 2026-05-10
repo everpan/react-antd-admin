@@ -1,12 +1,14 @@
+import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
-import ContainerLayout from "#src/layout/container-layout";
 
+import ContainerLayout from "#src/layout/container-layout";
 import { $t } from "#src/locales";
 import { home } from "#src/router/extra-info";
+
 import { HomeOutlined } from "@ant-design/icons";
 import { createElement, lazy } from "react";
 
-const Home = lazy(() => import("#src/pages/home"));
+const Home = lazy(() => import("./pages/index"));
 
 const routes: AppRouteRecordRaw[] = [
 	{
@@ -30,4 +32,15 @@ const routes: AppRouteRecordRaw[] = [
 	},
 ];
 
-export default routes;
+const mod: ModuleDefinition = {
+	name: "home",
+	description: "首页模块",
+	version: "1.0.0",
+	routes,
+	i18n: {
+		"zh-CN": () => import("./locales/zh-CN.json"),
+		"en-US": () => import("./locales/en-US.json"),
+	},
+};
+
+export default mod;

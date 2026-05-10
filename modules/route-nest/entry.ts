@@ -1,10 +1,11 @@
+import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
+
 import ContainerLayout from "#src/layout/container-layout";
 import ParentLayout from "#src/layout/parent-layout";
-
 import { $t } from "#src/locales";
-
 import { routeNest } from "#src/router/extra-info";
+
 import {
 	NodeExpandOutlined,
 	SisternodeOutlined,
@@ -12,9 +13,9 @@ import {
 } from "@ant-design/icons";
 import { createElement, lazy } from "react";
 
-const Menu1And1 = lazy(() => import("#src/pages/route-nest/menu1/menu1-1"));
-const Menu1And2 = lazy(() => import("#src/pages/route-nest/menu1/menu1-2"));
-const Menu2 = lazy(() => import("#src/pages/route-nest/menu2"));
+const Menu1And1 = lazy(() => import("./pages/menu1/menu1-1"));
+const Menu1And2 = lazy(() => import("./pages/menu1/menu1-2"));
+const Menu2 = lazy(() => import("./pages/menu2"));
 
 const routes: AppRouteRecordRaw[] = [
 	{
@@ -64,4 +65,11 @@ const routes: AppRouteRecordRaw[] = [
 	},
 ];
 
-export default routes;
+const mod: ModuleDefinition = {
+	name: "route-nest",
+	description: "嵌套路由模块",
+	version: "1.0.0",
+	routes,
+};
+
+export default mod;
