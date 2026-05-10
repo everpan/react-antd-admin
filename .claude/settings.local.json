@@ -1,0 +1,25 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(python3 *)",
+			"Bash(pnpm typecheck *)",
+			"Bash(pnpm lint *)",
+			"Bash(npx eslint *)",
+			"Bash(timeout 15 pnpm dev)",
+			"Bash(pnpm build *)",
+			"Bash(pnpm test *)",
+			"Bash(pnpm dev *)",
+			"Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3333/)",
+			"Bash(lsof -iTCP -sTCP:LISTEN -P)",
+			"Bash(curl -s http://localhost:3333/)",
+			"Bash(curl -s http://localhost:3333/manifest.json)",
+			"Bash(curl -s \"http://localhost:3333/manifest.json\")",
+			"Bash(curl -s \"http://localhost:3333/src/router/guard/auth-guard.tsx\")",
+			"Bash(curl *)",
+			"Bash(npx tsc *)",
+			"Bash(pnpm eslint *)",
+			"Bash(grep -v \"error\\\\|^--$\")",
+			"Bash(node *)"
+		]
+	}
+}
