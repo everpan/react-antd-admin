@@ -26,8 +26,33 @@ react-antd-admin is a middle and back-office solution based on React Hooks, Vite
 - Code formatting: [ESLint Flat Config](https://eslint.org/docs/latest/use/configure/configuration-files-new/)
 - Route-level component caching: [keepalive-for-react](https://github.com/irychen/keepalive-for-react)
 - API Mocking: [vite-plugin-fake-server](https://github.com/condorheroblog/vite-plugin-fake-server)
-- Permission Routing: Supports both frontend static routing and backend dynamic routing
+- **Modular Architecture**: Feature pages are self-contained modules that can be developed and released independently
+- Permission Routing: Supports both frontend static routing and backend dynamic routing, with three-level access control (route / menu / button)
 - Theme Configuration: Built-in multiple theme configurations, supports dark theme, and unified color system for Ant Design and Tailwind CSS
+
+## Modular Architecture
+
+Feature pages are organized as independent modules under `modules/`. Each module is self-contained with its own routes, pages, i18n resources, and lifecycle hooks.
+
+```
+modules/
+├── home/              # Home page
+│   ├── entry.ts       # Single source of truth: name, version, routes, i18n
+│   ├── pages/         # Page components
+│   └── locales/       # i18n resources (zh-CN.json, en-US.json)
+├── system/            # System management (user, role, menu, dept)
+├── access/            # Permission demo pages
+├── about/             # About page
+└── ...
+```
+
+**Key benefits:**
+
+- **Independent development** — Modules are decoupled from the framework and from each other
+- **Independent release** — Each module can be built and published separately via `pnpm build:modules`
+- **Dynamic registration** — Enable/disable modules via `manifest.json` without code changes
+- **Route priority** — Module routes take precedence over backend dynamic routes; overlapping paths are automatically filtered
+- **Quick scaffolding** — Run `pnpm create-module` to generate a new module with an interactive wizard
 
 ## Preview
 
@@ -72,6 +97,22 @@ pnpm run dev
 ```
 
 Open your browser and enter [http://localhost:3333](http://localhost:3333) to see the page.
+
+### Create a new module
+
+```bash
+pnpm create-module
+```
+
+This launches an interactive wizard that scaffolds a new module under `modules/` with entry.ts, pages directory, and i18n resources.
+
+### Build modules independently
+
+```bash
+pnpm build:modules
+```
+
+Builds each enabled module from `manifest.json` into the `dist-modules/` directory.
 
 ## Build
 

@@ -26,8 +26,33 @@ react-antd-admin 是一个基于 React Hooks、Vite 和 TypeScript 的中后台�
 - 代码格式化：[ESLint Flat Config](https://eslint.org/docs/latest/use/configure/configuration-files-new/)
 - 路由级别组件缓存：[keepalive-for-react](https://github.com/irychen/keepalive-for-react)
 - API 模拟：[vite-plugin-fake-server](https://github.com/condorheroblog/vite-plugin-fake-server)
-- 权限路由：支持前端静态路由和后端动态路由
+- **模块化架构**：业务页面以独立模块组织，可独立开发、独立发布
+- 权限路由：支持前端静态路由和后端动态路由，提供路由/菜单/按钮三级权限控制
 - 主题配置：内置多种主题配置，支持暗黑主题，统一了 antd 和 Tailwind CSS 的颜色体系
+
+## 模块化架构
+
+业务页面以独立模块的形式组织在 `modules/` 目录下。每个模块自包含路由、页面、国际化资源和生命周期钩子。
+
+```
+modules/
+├── home/              # 首页模块
+│   ├── entry.ts       # 唯一真实来源：名称、版本、路由、国际化
+│   ├── pages/         # 页面组件
+│   └── locales/       # 国际化资源 (zh-CN.json, en-US.json)
+├── system/            # 系统管理（用户、角色、菜单、部门）
+├── access/            # 权限演示页面
+├── about/             # 关于页面
+└── ...
+```
+
+**核心优势：**
+
+- **独立开发** — 模块与框架、模块与模块之间完全解耦
+- **独立发布** — 每个模块可通过 `pnpm build:modules` 单独构建和发布
+- **动态注册** — 通过 `manifest.json` 启用/禁用模块，无需修改代码
+- **路由优先级** — 模块路由优先于后端动态路由，重复路径自动过滤
+- **快速脚手架** — 运行 `pnpm create-module` 通过交互式向导生成新模块
 
 ## 预览
 
@@ -72,6 +97,22 @@ pnpm run dev
 ```
 
 打开浏览器输入 [http://localhost:3333](http://localhost:3333) 即可看到页面。
+
+### 创建新模块
+
+```bash
+pnpm create-module
+```
+
+启动交互式向导，在 `modules/` 下自动生成包含 entry.ts、pages 目录和国际化资源的新模块。
+
+### 独立构建模块
+
+```bash
+pnpm build:modules
+```
+
+将 `manifest.json` 中启用的每个模块构建到 `dist-modules/` 目录。
 
 ## 构建
 
