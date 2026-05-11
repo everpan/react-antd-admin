@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import type { MenuProps } from "antd";
 import { useTabsStore } from "#src/store/tabs";
 import {
