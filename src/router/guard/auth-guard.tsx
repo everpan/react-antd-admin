@@ -7,6 +7,7 @@ import { setupLoading } from "#src/plugins/loading";
 import { exception403Path, exception404Path, exception500Path, loginPath } from "#src/router/extra-info";
 import { accessRoutes, whiteRouteNames } from "#src/router/routes";
 import { isSendRoutingRequest } from "#src/router/routes/config";
+import { addRouteIdByPath } from "#src/router/utils/add-route-id-by-path";
 import { generateRoutesFromBackend } from "#src/router/utils/generate-routes-from-backend";
 import { generateRoutesByFrontend } from "#src/router/utils/generate-routes-from-frontend";
 import { useAccessStore } from "#src/store/access";
@@ -98,7 +99,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 			try {
 				const manifest = await import("#manifest.json");
 				await loadAllModules(manifest.default);
-				const moduleRoutes = getModuleRoutes();
+				const moduleRoutes = addRouteIdByPath(getModuleRoutes());
 				if (moduleRoutes.length > 0) {
 					routes.push(...moduleRoutes);
 				}

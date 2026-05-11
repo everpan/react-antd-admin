@@ -52,6 +52,45 @@ function collectModuleFiles(moduleName: string): Map<string, string> {
 	return files;
 }
 
+/**
+ * 收集模块源码中所有 t("moduleName:xxx.yyy") 的 key
+ */
+function collectTranslationKeys(moduleName: string): Map<string, string[]> {
+	const usedKeys = new Map<string, string[]>();
+	const files = collectModuleFiles(moduleName);
+
+	for (const [filePath, fileContent] of files) {
+		if (filePath.endsWith("entry.ts")) {
+			continue;
+		}
+
+		const pattern = new RegExp(`t\\("${moduleName}:([^".]+\\.[^"]+)"\\)`, "g");
+		for (const match of fileContent.matchAll(pattern)) {
+			const key = match[1];
+			const locations = usedKeys.get(key) ?? [];
+			locations.push(path.relative(PROJECT_ROOT, filePath));
+			usedKeys.set(key, locations);
+		}
+	}
+
+	return usedKeys;
+}
+
+/**
+ * 检查 locale JSON 中是否包含嵌套 key（如 "menu.name" → zhCn.menu.name）
+ */
+function hasNestedKey(localeObj: Record<string, unknown>, dottedKey: string): boolean {
+	const parts = dottedKey.split(".");
+	let current: unknown = localeObj;
+	for (const part of parts) {
+		if (current == null || typeof current !== "object") {
+			return false;
+		}
+		current = (current as Record<string, unknown>)[part];
+	}
+	return current != null;
+}
+
 describe("模块 i18n 一致性", () => {
 	const moduleNames = getModuleNames();
 
@@ -270,5 +309,57 @@ describe("模块发布独立性", () => {
 			leaks,
 			`common.json menu contains module-owned keys that should be in module locales: ${leaks.join(", ")}`,
 		).toEqual([]);
+	});
+});
+
+describe("模块 i18n key 完整性", () => {
+	it("模块代码中使用的 t() key 必须在对应 locale 文件中存在", () => {
+		const errors: string[] = [];
+
+		for (const moduleName of getModuleNames()) {
+			const zhCnPath = path.join(MODULES_DIR, moduleName, "locales", "zh-CN.json");
+			const enUsPath = path.join(MODULES_DIR, moduleName, "locales", "en-US.json");
+			if (!fs.existsSync(zhCnPath)) {
+				continue;
+			}
+
+			const zhCn = JSON.parse(fs.readFileSync(zhCnPath, "utf-8"));
+			const enUs = fs.existsSync(enUsPath) ? JSON.parse(fs.readFileSync(enUsPath, "utf-8")) : {};
+
+			const usedKeys = collectTranslationKeys(moduleName);
+			for (const [key, locations] of usedKeys) {
+				if (!hasNestedKey(zhCn, key)) {
+					errors.push(`${locations[0]}: t("${moduleName}:${key}") not found in locales/zh-CN.json`);
+				}
+				if (!hasNestedKey(enUs, key)) {
+					errors.push(`${locations[0]}: t("${moduleName}:${key}") not found in locales/en-US.json`);
+				}
+			}
+		}
+
+		expect(errors, errors.join("\n")).toEqual([]);
+	});
+});
+
+describe("模块路由 id 设置", () => {
+	it("模块路由经过 addRouteIdByPath 处理后应包含 id 字段", async () => {
+		const { addRouteIdByPath } = await import("#src/router/utils/add-route-id-by-path");
+
+		const testRoutes = [
+			{
+				path: "/test-module",
+				handle: { title: "test" },
+				children: [
+					{ path: "/test-module/page1", handle: { title: "page1" } },
+					{ path: "/test-module/page2", handle: { title: "page2" } },
+				],
+			},
+		];
+
+		const result = addRouteIdByPath(testRoutes as any);
+
+		expect(result[0].id).toBe("/test-module");
+		expect(result[0].children![0].id).toBe("/test-module/page1");
+		expect(result[0].children![1].id).toBe("/test-module/page2");
 	});
 });
