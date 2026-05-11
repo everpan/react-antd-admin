@@ -1,3 +1,4 @@
+import type { AppRouteRecordRaw } from "#src/router/types";
 import { fetchAsyncRoutes } from "#src/api/user";
 import { useCurrentRoute } from "#src/hooks/use-current-route";
 import { getRoutes as getModuleRoutes, loadAll as loadAllModules } from "#src/module-loader";
@@ -109,18 +110,27 @@ export function AuthGuard({ children }: AuthGuardProps) {
 			}
 
 			/**
+			 * @zh 收集模块已覆盖的顶级路径，用于过滤后端路由中的重复项
+			 * @en Collect top-level paths already covered by modules to filter duplicates from backend routes
+			 */
+			const modulePaths = new Set(routes.map(r => r.path).filter(Boolean));
+
+			const filterBackendRoutes = (backendRoutes: Array<AppRouteRecordRaw>) =>
+				backendRoutes.filter(r => !modulePaths.has(r.path));
+
+			/**
 			 * @zh 启用了后端路由且路由从用户接口中获取
 			 * @en If backend routing is enabled and the route is obtained from the user interface
 			 */
 			if (enableBackendAccess && !isSendRoutingRequest && userInfoResult.status === "fulfilled" && "menus" in userInfoResult.value) {
-				routes.push(...await generateRoutesFromBackend(userInfoResult.value?.menus ?? []));
+				routes.push(...await generateRoutesFromBackend(filterBackendRoutes(userInfoResult.value?.menus ?? [])));
 			}
 			/**
 			 * @zh 启用了后端路由且路由从单独接口中获取
 			 * @en If backend routing is enabled and the route is obtained from a separate interface
 			 */
 			if (enableBackendAccess && isSendRoutingRequest && routeResult.status === "fulfilled" && "result" in routeResult.value) {
-				routes.push(...await generateRoutesFromBackend(routeResult.value?.result ?? []));
+				routes.push(...await generateRoutesFromBackend(filterBackendRoutes(routeResult.value?.result ?? [])));
 			}
 
 			/**
