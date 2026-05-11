@@ -356,7 +356,7 @@ describe("模块路由 id 设置", () => {
 			},
 		];
 
-		const result = addRouteIdByPath(testRoutes as any);
+		const result = addRouteIdByPath(testRoutes as any) as any;
 
 		expect(result[0].id).toBe("/test-module");
 		expect(result[0].children![0].id).toBe("/test-module/page1");
