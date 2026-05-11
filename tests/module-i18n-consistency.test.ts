@@ -341,6 +341,52 @@ describe("模块 i18n key 完整性", () => {
 	});
 });
 
+describe("模块对框架翻译 key 的引用", () => {
+	function flattenLocaleKeys(d: Record<string, unknown>, prefix = ""): string[] {
+		const keys: string[] = [];
+		for (const [k, v] of Object.entries(d)) {
+			const full = prefix ? `${prefix}.${k}` : k;
+			if (v && typeof v === "object" && !Array.isArray(v)) {
+				keys.push(...flattenLocaleKeys(v as Record<string, unknown>, full));
+			}
+			else {
+				keys.push(full);
+			}
+		}
+		return keys;
+	}
+
+	it("模块使用的 common.* 和 form.* key 必须在框架 locale 中存在", () => {
+		const zhCommon = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "src/locales/zh-CN/common.json"), "utf-8"));
+		const zhForm = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "src/locales/zh-CN/form.json"), "utf-8"));
+		const frameworkKeys = new Set([
+			...flattenLocaleKeys(zhCommon, "common"),
+			...flattenLocaleKeys(zhForm, "form"),
+		]);
+
+		const errors: string[] = [];
+
+		for (const moduleName of getModuleNames()) {
+			const files = collectModuleFiles(moduleName);
+			for (const [filePath, fileContent] of files) {
+				if (filePath.endsWith("entry.ts")) {
+					continue;
+				}
+				const relativePath = path.relative(PROJECT_ROOT, filePath);
+
+				for (const match of fileContent.matchAll(/t\("(common\.[^"]+|form\.[^"]+)"\)/g)) {
+					const key = match[1];
+					if (!frameworkKeys.has(key)) {
+						errors.push(`${relativePath}: t("${key}") not found in framework locale (src/locales/zh-CN/)`);
+					}
+				}
+			}
+		}
+
+		expect(errors, errors.join("\n")).toEqual([]);
+	});
+});
+
 describe("模块路由 id 设置", () => {
 	it("模块路由经过 addRouteIdByPath 处理后应包含 id 字段", async () => {
 		const { addRouteIdByPath } = await import("#src/router/utils/add-route-id-by-path");

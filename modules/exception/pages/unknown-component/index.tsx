@@ -14,7 +14,7 @@ export default function UnknownComponent() {
 		<Result
 			status="warning"
 			icon={<AppstoreOutlined />}
-			title={t("common.menu.exceptionUnknownComponent")}
+			title={t("exception:menu.exceptionUnknownComponent")}
 			subTitle={t("exception:unknownComponentSubTitle")}
 			extra={(
 				<div>
