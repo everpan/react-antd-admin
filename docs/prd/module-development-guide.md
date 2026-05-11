@@ -49,7 +49,7 @@ react-antd-admin/
 
 ```
 应用启动 → 读取 manifest.json → 加载 enabled 模块
-  → 校验 name/version → 拓扑排序 → beforeInit → onInit
+  → 校验 name → 拓扑排序 → beforeInit → onInit
   → 注册 i18n/store → 注册路由 → AuthGuard 权限校验
   → 用户导航时触发 onActivate/onDeactivate
 ```
@@ -80,6 +80,7 @@ pnpm create:module
 
 模块名称（kebab-case）: my-module
 模块描述（我的模块）: 我的新模块
+初始版本号（1.0.0）: 1.0.0
 是否需要国际化（y/n）: y
 菜单排序权重（数字，越大越靠后）: 50
 需要的角色（逗号分隔，留空无限制）:
@@ -88,7 +89,7 @@ pnpm create:module
 CLI 会自动完成：
 
 1. 创建 `modules/my-module/` 目录结构
-2. 生成 `entry.ts`、`pages/index.tsx`、`locales/*.json`、`package.json`
+2. 生成 `entry.ts`（含 name/description/version）、`pages/index.tsx`、`locales/*.json`
 3. 更新 `src/router/extra-info/order.ts` 添加排序常量
 4. 更新 `manifest.json` 注册新模块
 
@@ -96,13 +97,12 @@ CLI 会自动完成：
 
 ```
 modules/my-module/
-├── entry.ts              # 模块入口（必须）
+├── entry.ts              # 模块入口（必须，含 name/description/version）
 ├── pages/
 │   └── index.tsx         # 默认页面
-├── locales/              # 国际化文件（可选）
-│   ├── zh-CN.json
-│   └── en-US.json
-└── package.json          # 模块元信息
+└── locales/              # 国际化文件（可选）
+    ├── zh-CN.json
+    └── en-US.json
 ```
 
 ### 2.3 手动创建（不使用 CLI）
@@ -115,21 +115,9 @@ modules/my-module/
 mkdir -p modules/my-module/pages modules/my-module/locales
 ```
 
-**Step 2**: 创建 `modules/my-module/package.json`
+**Step 2**: 创建 `modules/my-module/entry.ts`（参考 [6.1 节 entry.ts](#61-entryts)）
 
-```json
-{
-	"name": "@app/module-my-module",
-	"type": "module",
-	"version": "1.0.0",
-	"main": "entry.ts",
-	"module": "entry.ts"
-}
-```
-
-**Step 3**: 创建 `modules/my-module/entry.ts`（参考 [6.1 节 entry.ts](#61-entryts)）
-
-**Step 4**: 在 `manifest.json` 中注册
+**Step 3**: 在 `manifest.json` 中注册
 
 ```json
 {
@@ -139,13 +127,13 @@ mkdir -p modules/my-module/pages modules/my-module/locales
 }
 ```
 
-**Step 5**: 在 `src/router/extra-info/order.ts` 添加排序常量
+**Step 4**: 在 `src/router/extra-info/order.ts` 添加排序常量
 
 ```ts
 export const mymodule = 50;
 ```
 
-**Step 6**: 在公共翻译文件 `src/locales/zh-CN/common.json` 和 `en-US/common.json` 中添加菜单 key
+**Step 5**: 在公共翻译文件 `src/locales/zh-CN/common.json` 和 `en-US/common.json` 中添加菜单 key
 
 ---
 
@@ -388,14 +376,14 @@ pnpm build:module -- --module=system
 
 ### 4.3 版本升级
 
-版本仅在 `modules/<name>/package.json` 中定义（单一来源），`entry.ts` 通过 `import pkg from "./package.json"` 自动读取。
+模块元信息（name、description、version）全部定义在 `entry.ts` 中（唯一来源）。构建脚本从 `entry.ts` 解析 name 和 version。
 
-1. 修改 `modules/<name>/package.json` 中的 `version`
+1. 修改 `modules/<name>/entry.ts` 中的 `version` 字段值
 2. 构建后产物自动输出到新版本目录
 
 ```bash
 # 示例：system 模块从 1.0.0 升级到 1.1.0
-# 1. 修改 modules/system/package.json → "version": "1.1.0"
+# 1. 修改 modules/system/entry.ts → version: "1.1.0"
 # 2. 构建
 pnpm build:module -- --module=system
 ```
@@ -504,16 +492,15 @@ pnpm preview
 
 ### 6.1 entry.ts
 
-每个模块必须提供 `entry.ts`，默认导出 `ModuleDefinition`：
+每个模块必须提供 `entry.ts`，默认导出 `ModuleDefinition`。`entry.ts` 是模块元信息的唯一来源：
 
 ```ts
 import type { ModuleDefinition } from "#src/module-loader/types";
-import pkg from "./package.json";
 
 const mod: ModuleDefinition = {
 	name: "my-module",
 	description: "我的模块",
-	version: pkg.version,
+	version: "1.0.0",
 	routes: [],
 	lifecycle: { ... },
 	i18n: { ... },
@@ -576,15 +563,15 @@ export default mod;
 |------|------|------|
 | 模块目录名 | kebab-case | `my-module` |
 | 模块 name | kebab-case | `"my-module"` |
-| package.json name | `@app/module-` + kebab-case | `"@app/module-my-module"` |
 | 排序常量 | camelCase | `export const mymodule = 50` |
 | i18n namespace | 模块名 | `t("my-module:title")` |
 
-### 7.2 版本管理（单一来源）
+### 7.2 元信息管理（entry.ts 单一来源）
 
-模块版本仅在 `modules/<name>/package.json` 中定义，`entry.ts` 通过 `import pkg from "./package.json"` 读取 `pkg.version`。
+模块的 `name`、`description`、`version` 全部定义在 `entry.ts` 的 `ModuleDefinition` 中。不需要额外的 `package.json` 或 `meta.json`。
 
-升级版本时只需修改 `package.json` 中的 `version` 字段，无需修改其他文件。
+- 构建脚本从 `entry.ts` 解析 `name` 和 `version`，用于确定产物路径
+- 版本升级只需修改 `entry.ts` 中的 `version` 值
 
 ### 7.3 模块间依赖
 
@@ -624,7 +611,7 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 | **根因** | exception 模块从 `core` 路由迁移而非 `routes/modules/`，导致按标准流程注册时被遗漏 |
 | **影响** | 模块完全不可用 |
 | **修复** | 在 `manifest.json` 中补充注册条目 |
-| **如何避免** | 创建模块后必须检查：**`manifest.json` 是否有对应条目、`entry.ts` 是否存在、`order.ts` 是否有排序常量**。CLI（`pnpm create:module`）会自动完成这些步骤，手动创建时容易遗漏。测试防护在 `tests/module-i18n-consistency.test.ts`。注意：manifest 不需要 `version` 字段，版本由 `package.json` 管理 |
+| **如何避免** | 创建模块后必须检查：**`manifest.json` 是否有对应条目、`entry.ts` 是否存在、`order.ts` 是否有排序常量**。CLI（`pnpm create:module`）会自动完成这些步骤，手动创建时容易遗漏。测试防护在 `tests/module-i18n-consistency.test.ts` |
 
 #### P3-5: 路由合并顺序导致所有页面显示"未知组件"
 
@@ -643,8 +630,8 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 | **现象** | dev 启动报错 `Failed to resolve import "#src/layout/container-layout" from "modules/system/entry.ts"` |
 | **根因** | 模块目录有自己的 `package.json`，但没有 `#*` subpath imports 映射，导致 Node.js 解析 `#src` 失败 |
 | **影响** | dev 启动失败 |
-| **修复** | 在 `vite.config.ts` 添加 `resolve.alias: { "#src": ..., "#modules": ... }` |
-| **如何避免** | 模块通过 `#src/` 引用框架资源时，确保 `vite.config.ts` 中有对应 alias。不要在模块的 `package.json` 中重复声明 `imports` |
+| **修复** | 在 `vite.config.ts` 添加 `resolve.alias: { "#src": ..., "#modules": ... }`。已删除模块目录下的 `package.json`（避免 IDE 误识别为独立项目） |
+| **如何避免** | 模块通过 `#src/` 引用框架资源时，确保 `vite.config.ts` 中有对应 alias |
 
 #### P5-3: 构建时模块引入了框架内部实现
 
@@ -660,18 +647,17 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 
 迁移一个新模块时，按以下清单逐项确认：
 
-- [ ] `modules/<name>/entry.ts` 存在，且导出 `ModuleDefinition`
-- [ ] `modules/<name>/package.json` 存在，且 `version` 字段正确
-- [ ] `modules/<name>/entry.ts` 中 `import pkg from "./package.json"` 且使用 `version: pkg.version`
+- [ ] `modules/<name>/entry.ts` 存在，且导出 `ModuleDefinition`（含 name、description、version 字符串字面量）
 - [ ] `manifest.json` 中有对应条目，`name`、`entry` 路径正确（不需要 `version` 字段）
 - [ ] `src/router/extra-info/order.ts` 有排序常量
 - [ ] 所有页面文件已迁移到 `modules/<name>/pages/`
 - [ ] 页面中 `t()` 调用使用 `模块名:key` 冒号语法
 - [ ] `entry.ts` 中 `$t()` 用于菜单标题（全局 namespace），`t()` 用于页面内容（模块 namespace）
+- [ ] 模块目录下无 `package.json`（避免 IDE 误识别为独立项目）
 - [ ] 原页面目录已清理（`src/pages/<name>/` 已删除）
 - [ ] `pnpm typecheck` 通过
 - [ ] `pnpm dev` 启动后页面功能正常
-- [ ] `pnpm test` 通过（含 i18n 一致性和路由优先级测试）
+- [ ] `pnpm test` 通过（含元信息一致性、i18n 一致性和路由优先级测试）
 
 ### 8.3 开发注意事项
 
@@ -679,11 +665,13 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 
 2. **路由合并顺序**：`auth-guard.tsx` 中的 routes push 顺序至关重要 —— 模块路由必须最先 push，后端路由次之，前端路由最后。这样 `removeDuplicateRoutes` 才会保留模块路由（含正确组件）而丢弃后端路由（可能含错误组件回退）。
 
-3. **manifest 注册**：`manifest.json` 中注册的 `name` 必须与 `entry.ts` 中的 `name` 一致，否则加载器会拒绝加载。版本从 `package.json` 自动读取，无需在 manifest 中声明。
+3. **manifest 注册**：`manifest.json` 中注册的 `name` 必须与 `entry.ts` 中的 `name` 一致，否则加载器会拒绝加载。版本从 `entry.ts` 直接定义，无需在 manifest 中声明。
 
 4. **`#src/` vs 相对路径**：引用框架资源用 `#src/`，引用模块内部资源用 `./`。不要在模块内使用绝对路径引用其他模块。
 
 5. **构建 external**：模块构建时 `#src/`、`#modules/` 和所有共享库必须 external 化。如果构建产物中出现框架内部代码，检查 `scripts/build-modules.ts` 的 external 列表。
+
+6. **元信息单一来源**：模块的 `name`、`description`、`version` 只在 `entry.ts` 中定义。不要在模块目录下创建 `package.json` 或 `meta.json`。
 
 ---
 
@@ -725,3 +713,7 @@ dev 模式下控制台会输出模块加载日志：
 [module-loader] ✓ home@1.0.0 loaded in 45ms
 [module-loader] ✗ report@2.1.0 failed: NetworkError
 ```
+
+### Q: 如何升级模块版本？
+
+修改 `entry.ts` 中的 `version` 值即可。构建脚本会自动从 `entry.ts` 解析版本号并输出到对应目录。无需修改其他文件。

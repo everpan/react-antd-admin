@@ -1,7 +1,0 @@
-{
-	"name": "@app/module-home",
-	"type": "module",
-	"version": "1.0.0",
-	"main": "entry.ts",
-	"module": "entry.ts"
-}

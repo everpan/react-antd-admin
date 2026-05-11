@@ -7,8 +7,6 @@ import { $t } from "#src/locales";
 import { access } from "#src/router/extra-info";
 import { lazy } from "react";
 
-import pkg from "./package.json";
-
 const PageControl = lazy(() => import("./pages/page-control"));
 const ButtonControl = lazy(() => import("./pages/button-control"));
 const AdminVisible = lazy(() => import("./pages/admin-visible"));
@@ -68,7 +66,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 	name: "access",
 	description: "权限控制模块",
-	version: pkg.version,
+	version: "1.0.0",
 	routes,
 	i18n: {
 		"zh-CN": () => import("./locales/zh-CN.json"),

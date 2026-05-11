@@ -7,7 +7,6 @@ import { home } from "#src/router/extra-info";
 import { HomeOutlined } from "@ant-design/icons";
 
 import { createElement, lazy } from "react";
-import pkg from "./package.json";
 
 const Home = lazy(() => import("./pages/index"));
 
@@ -36,7 +35,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 	name: "home",
 	description: "首页模块",
-	version: pkg.version,
+	version: "1.0.0",
 	routes,
 	i18n: {
 		"zh-CN": () => import("./locales/zh-CN.json"),

@@ -16,6 +16,20 @@ function getModuleNames(): string[] {
 }
 
 /**
+ * 从 entry.ts 中解析模块元信息（name / description / version）
+ */
+function parseModuleMeta(entryContent: string): { name: string | null, description: string | null, version: string | null } {
+	const nameMatch = entryContent.match(/name:\s*"([^"]+)"/);
+	const descMatch = entryContent.match(/description:\s*"([^"]+)"/);
+	const versionMatch = entryContent.match(/version:\s*"([^"]+)"/);
+	return {
+		name: nameMatch?.[1] ?? null,
+		description: descMatch?.[1] ?? null,
+		version: versionMatch?.[1] ?? null,
+	};
+}
+
+/**
  * 递归收集目录下所有 .tsx/.ts 文件的内容
  */
 function collectModuleFiles(moduleName: string): Map<string, string> {
@@ -80,9 +94,9 @@ describe("模块 i18n 一致性", () => {
 			}
 
 			// 检查 entry.ts 中的 name 与模块目录名一致
-			const nameMatch = content.match(/name:\s*"([^"]+)"/);
-			expect(nameMatch, `${moduleName}/entry.ts: missing name field`).not.toBeNull();
-			expect(nameMatch![1], `${moduleName}/entry.ts: name mismatch`).toBe(moduleName);
+			const { name } = parseModuleMeta(content);
+			expect(name, `${moduleName}/entry.ts: missing name field`).not.toBeNull();
+			expect(name!, `${moduleName}/entry.ts: name mismatch`).toBe(moduleName);
 		}
 	});
 
@@ -117,7 +131,49 @@ describe("模块 i18n 一致性", () => {
 	});
 });
 
-describe("manifest.json 一致性", () => {
+describe("模块元信息一致性（entry.ts 为唯一来源）", () => {
+	it("每个模块的 entry.ts 必须包含 name、description、version 字符串字面量", () => {
+		for (const moduleName of getModuleNames()) {
+			const entryPath = path.join(MODULES_DIR, moduleName, "entry.ts");
+			if (!fs.existsSync(entryPath)) {
+				continue;
+			}
+
+			const content = fs.readFileSync(entryPath, "utf-8");
+			const meta = parseModuleMeta(content);
+
+			expect(meta.name, `${moduleName}/entry.ts: missing name`).not.toBeNull();
+			expect(meta.description, `${moduleName}/entry.ts: missing description`).not.toBeNull();
+			expect(meta.version, `${moduleName}/entry.ts: missing version`).not.toBeNull();
+			expect(meta.name, `${moduleName}/entry.ts: name should match directory name`).toBe(moduleName);
+			expect(
+				/^\d+\.\d+\.\d+$/.test(meta.version!),
+				`${moduleName}/entry.ts: version "${meta.version}" should be semver format`,
+			).toBe(true);
+		}
+	});
+
+	it("模块目录下不应存在 package.json（避免 IDE 识别为独立项目）", () => {
+		for (const moduleName of getModuleNames()) {
+			const pkgPath = path.join(MODULES_DIR, moduleName, "package.json");
+			expect(
+				fs.existsSync(pkgPath),
+				`${moduleName}/package.json should not exist (causes IDE to treat module as separate project)`,
+			).toBe(false);
+		}
+	});
+
+	it("manifest 中不应包含 version 字段（entry.ts 为唯一版本来源）", () => {
+		const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf-8"));
+
+		for (const entry of manifest.modules) {
+			expect(
+				"version" in entry,
+				`${entry.name}: manifest should not contain "version" field (entry.ts is the single source)`,
+			).toBe(false);
+		}
+	});
+
 	it("manifest 中每个模块的 name 与 entry.ts 中的 name 一致", () => {
 		const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf-8"));
 
@@ -128,41 +184,9 @@ describe("manifest.json 一致性", () => {
 			}
 
 			const content = fs.readFileSync(entryPath, "utf-8");
-			const nameMatch = content.match(/name:\s*"([^"]+)"/);
-			expect(nameMatch, `${entry.name}/entry.ts: missing name`).not.toBeNull();
-			expect(nameMatch![1], `manifest name "${entry.name}" != entry.ts name "${nameMatch![1]}"`).toBe(entry.name);
-		}
-	});
-
-	it("manifest 中不应包含 version 字段（package.json 为唯一版本来源）", () => {
-		const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf-8"));
-
-		for (const entry of manifest.modules) {
-			expect(
-				"version" in entry,
-				`${entry.name}: manifest should not contain "version" field (package.json is the single source)`,
-			).toBe(false);
-		}
-	});
-
-	it("每个模块的 entry.ts 必须从 package.json 导入 version", () => {
-		for (const moduleName of getModuleNames()) {
-			const entryPath = path.join(MODULES_DIR, moduleName, "entry.ts");
-			if (!fs.existsSync(entryPath)) {
-				continue;
-			}
-
-			const content = fs.readFileSync(entryPath, "utf-8");
-
-			expect(
-				content.includes("import pkg from \"./package.json\""),
-				`${moduleName}/entry.ts: must import version from "./package.json"`,
-			).toBe(true);
-
-			expect(
-				content.includes("version: pkg.version"),
-				`${moduleName}/entry.ts: must use "version: pkg.version" (not a hardcoded string)`,
-			).toBe(true);
+			const { name } = parseModuleMeta(content);
+			expect(name, `${entry.name}/entry.ts: missing name`).not.toBeNull();
+			expect(name!, `manifest name "${entry.name}" != entry.ts name "${name!}"`).toBe(entry.name);
 		}
 	});
 

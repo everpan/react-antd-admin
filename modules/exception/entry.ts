@@ -13,7 +13,6 @@ import {
 } from "@ant-design/icons";
 
 import { createElement, lazy } from "react";
-import pkg from "./package.json";
 
 const Exception403 = lazy(() => import("./pages/403"));
 const Exception404 = lazy(() => import("./pages/404"));
@@ -69,7 +68,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 	name: "exception",
 	description: "异常页面模块",
-	version: pkg.version,
+	version: "1.0.0",
 	routes,
 	i18n: {
 		"zh-CN": () => import("./locales/zh-CN.json"),

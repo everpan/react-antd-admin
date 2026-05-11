@@ -5,8 +5,6 @@ import ContainerLayout from "#src/layout/container-layout";
 import { system } from "#src/router/extra-info";
 import { lazy } from "react";
 
-import pkg from "./package.json";
-
 const User = lazy(() => import("./pages/user"));
 const Dept = lazy(() => import("./pages/dept"));
 const Role = lazy(() => import("./pages/role"));
@@ -87,7 +85,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 	name: "system",
 	description: "系统管理模块",
-	version: pkg.version,
+	version: "1.0.0",
 	routes,
 	i18n: {
 		"zh-CN": () => import("./locales/zh-CN.json"),

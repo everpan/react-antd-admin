@@ -10,7 +10,6 @@ import { AntDesignOutlined, ContainerOutlined } from "@ant-design/icons";
 
 import { createElement } from "react";
 import { Outlet } from "react-router";
-import pkg from "./package.json";
 
 const routes: AppRouteRecordRaw[] = [
 	{
@@ -76,7 +75,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 	name: "outside",
 	description: "外部链接模块",
-	version: pkg.version,
+	version: "1.0.0",
 	routes,
 };
 

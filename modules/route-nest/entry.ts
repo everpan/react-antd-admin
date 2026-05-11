@@ -12,7 +12,6 @@ import {
 } from "@ant-design/icons";
 
 import { createElement, lazy } from "react";
-import pkg from "./package.json";
 
 const Menu1And1 = lazy(() => import("./pages/menu1/menu1-1"));
 const Menu1And2 = lazy(() => import("./pages/menu1/menu1-2"));
@@ -69,7 +68,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 	name: "route-nest",
 	description: "嵌套路由模块",
-	version: pkg.version,
+	version: "1.0.0",
 	routes,
 };
 

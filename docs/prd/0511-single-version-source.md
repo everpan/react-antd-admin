@@ -7,48 +7,43 @@
 
 ## 问题
 
-模块版本定义分散在三处，升级时必须同步修改：
+模块元信息（name、description、version）分散在多处，升级时必须同步修改：
+1. `modules/<name>/package.json` → `version`、`name`
+2. `modules/<name>/entry.ts` → `version`、`name`、`description`
+3. `manifest.json` → `version`、`name`
 
-1. `modules/<name>/package.json` → `version`
-2. `modules/<name>/entry.ts` → `version`（ModuleDefinition 硬编码）
-3. `manifest.json` → `version`
-
-遗漏任何一处会导致加载器拒绝加载（version mismatch），增加心智负担。
+`package.json` 还会导致 IDE 将模块目录识别为独立项目，干扰开发体验。
 
 ## 方案
 
-以 `package.json` 为唯一版本来源：
+**以 `entry.ts` 为唯一来源**，删除 `modules/*/package.json`：
 
-- `entry.ts` 通过 `import pkg from "./package.json"` 读取 `pkg.version`
-- `manifest.json` 移除 `version` 字段
-- 模块加载器移除 version 校验（不再需要，因为只有一个来源）
-- `ManifestModuleEntry` 类型移除 `version` 字段
+- `entry.ts` 中 `ModuleDefinition` 的 `name`、`description`、`version` 均为字符串字面量
+- `manifest.json` 不含 `version`（已在前一提交完成）
+- 构建脚本从 `entry.ts` 解析 `name` 和 `version`（正则匹配）
+- 不再需要 `package.json` / `meta.json` 中间文件
 
 ## 影响范围
 
 | 文件 | 变更 |
 |------|------|
-| `modules/*/entry.ts` | `version: "1.0.0"` → `version: pkg.version`（8 个文件） |
-| `manifest.json` | 移除所有条目的 `version` 字段 |
-| `src/module-loader/types.ts` | `ManifestModuleEntry` 移除 `version` |
-| `src/module-loader/index.ts` | 移除 version mismatch 校验 |
-| `scripts/create-module.ts` | entry 模板使用 import；manifest 不写 version |
-| `tests/module-i18n-consistency.test.ts` | 更新版本一致性测试 |
-| `docs/prd/module-development-guide.md` | 更新版本升级章节 |
+| `modules/*/entry.ts` | 移除 `import pkg`，恢复字符串字面量（8 个文件） |
+| `modules/*/package.json` | 删除（8 个文件） |
+| `scripts/build-modules.ts` | 从 `entry.ts` 解析 name/version |
+| `scripts/create-module.ts` | 不再创建 `package.json`，模板使用字符串字面量 |
+| `tests/module-i18n-consistency.test.ts` | 更新测试 |
+| `docs/prd/module-development-guide.md` | 更新相关章节 |
 
 ## 任务
 
-- [x] T1: 编写/更新测试用例
-- [x] T2: 修改 `types.ts` — 移除 `ManifestModuleEntry.version`
-- [x] T3: 修改 `module-loader/index.ts` — 移除 version 校验
-- [x] T4: 修改所有 `entry.ts` — 从 `package.json` 导入 version
-- [x] T5: 修改 `manifest.json` — 移除 version 字段
-- [x] T6: 修改 `create-module.ts` — 更新模板
-- [x] T7: 更新开发手册文档
-- [x] T8: 运行测试验证（12 tests passed, typecheck passed）
+- [x] P1: 编写/更新测试用例
+- [x] P2: 恢复所有 `entry.ts` 为字符串字面量（移除 JSON import）
+- [x] P3: 删除所有 `modules/*/package.json`
+- [x] P4: 重构 `build-modules.ts` — 从 entry.ts 解析 name/version
+- [x] P5: 重构 `create-module.ts` — 移除 package.json 创建
+- [x] P6: 更新开发手册文档
+- [x] P7: 运行测试验证
 
 ## 总结
 
-**关键变更**：版本从三处定义收敛为 `package.json` 单一来源。`entry.ts` 通过 Vite 原生 JSON import 读取 `pkg.version`，`manifest.json` 不再需要 `version` 字段，模块加载器移除了 version mismatch 校验。
-
-**验证结果**：全部 12 个测试通过（含新增的 2 个版本一致性测试），TypeScript 类型检查通过。
+**关键变更**：`entry.ts` 成为模块元信息的唯一来源。`name`、`description`、`version` 作为字符串字面量直接定义在 `ModuleDefinition` 中。构建脚本通过正则从 `entry.ts` 提取 name/version。`package.json` 被完全移除，IDE 不再将模块目录误识别为独立项目。
