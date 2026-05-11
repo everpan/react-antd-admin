@@ -2,49 +2,41 @@
 	"modules": [
 		{
 			"name": "home",
-			"version": "1.0.0",
 			"entry": "/modules/home/entry.ts",
 			"enabled": true
 		},
 		{
 			"name": "about",
-			"version": "1.0.0",
 			"entry": "/modules/about/entry.ts",
 			"enabled": true
 		},
 		{
 			"name": "personal-center",
-			"version": "1.0.0",
 			"entry": "/modules/personal-center/entry.ts",
 			"enabled": true
 		},
 		{
 			"name": "route-nest",
-			"version": "1.0.0",
 			"entry": "/modules/route-nest/entry.ts",
 			"enabled": true
 		},
 		{
 			"name": "outside",
-			"version": "1.0.0",
 			"entry": "/modules/outside/entry.ts",
 			"enabled": true
 		},
 		{
 			"name": "access",
-			"version": "1.0.0",
 			"entry": "/modules/access/entry.ts",
 			"enabled": true
 		},
 		{
 			"name": "exception",
-			"version": "1.0.0",
 			"entry": "/modules/exception/entry.ts",
 			"enabled": true
 		},
 		{
 			"name": "system",
-			"version": "1.0.0",
 			"entry": "/modules/system/entry.ts",
 			"enabled": true
 		}

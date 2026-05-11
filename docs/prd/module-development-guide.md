@@ -80,7 +80,6 @@ pnpm create:module
 
 模块名称（kebab-case）: my-module
 模块描述（我的模块）: 我的新模块
-初始版本号（1.0.0）: 1.0.0
 是否需要国际化（y/n）: y
 菜单排序权重（数字，越大越靠后）: 50
 需要的角色（逗号分隔，留空无限制）:
@@ -130,21 +129,20 @@ mkdir -p modules/my-module/pages modules/my-module/locales
 
 **Step 3**: 创建 `modules/my-module/entry.ts`（参考 [6.1 节 entry.ts](#61-entryts)）
 
-**Step 4**: 在 `src/router/extra-info/order.ts` 添加排序常量
-
-```ts
-export const mymodule = 50;
-```
-
-**Step 5**: 在 `manifest.json` 中注册
+**Step 4**: 在 `manifest.json` 中注册
 
 ```json
 {
 	"name": "my-module",
-	"version": "1.0.0",
 	"entry": "/modules/my-module/entry.ts",
 	"enabled": true
 }
+```
+
+**Step 5**: 在 `src/router/extra-info/order.ts` 添加排序常量
+
+```ts
+export const mymodule = 50;
 ```
 
 **Step 6**: 在公共翻译文件 `src/locales/zh-CN/common.json` 和 `en-US/common.json` 中添加菜单 key
@@ -390,21 +388,19 @@ pnpm build:module -- --module=system
 
 ### 4.3 版本升级
 
+版本仅在 `modules/<name>/package.json` 中定义（单一来源），`entry.ts` 通过 `import pkg from "./package.json"` 自动读取。
+
 1. 修改 `modules/<name>/package.json` 中的 `version`
-2. 修改 `modules/<name>/entry.ts` 中的 `version`
-3. 修改 `manifest.json` 中对应条目的 `version`
-4. 构建后产物自动输出到新版本目录
+2. 构建后产物自动输出到新版本目录
 
 ```bash
 # 示例：system 模块从 1.0.0 升级到 1.1.0
 # 1. 修改 modules/system/package.json → "version": "1.1.0"
-# 2. 修改 modules/system/entry.ts → version: "1.1.0"
-# 3. 修改 manifest.json → "version": "1.1.0", "entry": "/modules/system/1.1.0/entry.js"
-# 4. 构建
+# 2. 构建
 pnpm build:module -- --module=system
 ```
 
-旧版本产物保留在 `build/modules/system/1.0.0/`，回退只需修改 manifest。
+旧版本产物保留在 `build/modules/system/1.0.0/`，回退只需修改 manifest 中的 `entry` 路径。
 
 ### 4.4 构建产物说明
 
@@ -426,7 +422,6 @@ pnpm build:module -- --module=system
 ```json
 {
 	"name": "report",
-	"version": "1.0.0",
 	"entry": "/modules/report/1.0.0/entry.js",
 	"enabled": false
 }
@@ -436,12 +431,11 @@ pnpm build:module -- --module=system
 
 ### 5.2 版本回退
 
-修改 `manifest.json` 中的 `version` 和 `entry` 指向旧版本：
+修改 `manifest.json` 中的 `entry` 指向旧版本：
 
 ```json
 {
 	"name": "system",
-	"version": "1.0.0",
 	"entry": "/modules/system/1.0.0/entry.js",
 	"enabled": true
 }
@@ -456,7 +450,6 @@ pnpm build:module -- --module=system
 ```json
 {
 	"name": "report",
-	"version": "2.1.0",
 	"entry": "https://cdn.example.com/modules/report/2.1.0/entry.js",
 	"enabled": true
 }
@@ -515,11 +508,12 @@ pnpm preview
 
 ```ts
 import type { ModuleDefinition } from "#src/module-loader/types";
+import pkg from "./package.json";
 
 const mod: ModuleDefinition = {
 	name: "my-module",
 	description: "我的模块",
-	version: "1.0.0",
+	version: pkg.version,
 	routes: [],
 	lifecycle: { ... },
 	i18n: { ... },
@@ -586,15 +580,11 @@ export default mod;
 | 排序常量 | camelCase | `export const mymodule = 50` |
 | i18n namespace | 模块名 | `t("my-module:title")` |
 
-### 7.2 三处 version 必须一致
+### 7.2 版本管理（单一来源）
 
-修改版本时，以下三处须同步更新：
+模块版本仅在 `modules/<name>/package.json` 中定义，`entry.ts` 通过 `import pkg from "./package.json"` 读取 `pkg.version`。
 
-1. `modules/<name>/package.json` → `version`
-2. `modules/<name>/entry.ts` → `version`
-3. `manifest.json` → `version`
-
-加载器会校验 `entry.ts` 导出的 `name` 和 `version` 与 `manifest.json` 是否一致，不一致会拒绝加载。
+升级版本时只需修改 `package.json` 中的 `version` 字段，无需修改其他文件。
 
 ### 7.3 模块间依赖
 
@@ -634,7 +624,7 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 | **根因** | exception 模块从 `core` 路由迁移而非 `routes/modules/`，导致按标准流程注册时被遗漏 |
 | **影响** | 模块完全不可用 |
 | **修复** | 在 `manifest.json` 中补充注册条目 |
-| **如何避免** | 创建模块后必须检查：**`manifest.json` 是否有对应条目、`entry.ts` 是否存在、`order.ts` 是否有排序常量**。CLI（`pnpm create:module`）会自动完成这些步骤，手动创建时容易遗漏。测试防护在 `tests/module-i18n-consistency.test.ts` |
+| **如何避免** | 创建模块后必须检查：**`manifest.json` 是否有对应条目、`entry.ts` 是否存在、`order.ts` 是否有排序常量**。CLI（`pnpm create:module`）会自动完成这些步骤，手动创建时容易遗漏。测试防护在 `tests/module-i18n-consistency.test.ts`。注意：manifest 不需要 `version` 字段，版本由 `package.json` 管理 |
 
 #### P3-5: 路由合并顺序导致所有页面显示"未知组件"
 
@@ -671,8 +661,9 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 迁移一个新模块时，按以下清单逐项确认：
 
 - [ ] `modules/<name>/entry.ts` 存在，且导出 `ModuleDefinition`
-- [ ] `modules/<name>/package.json` 存在，且 `version` 与 entry.ts 一致
-- [ ] `manifest.json` 中有对应条目，`name`、`version`、`entry` 路径正确
+- [ ] `modules/<name>/package.json` 存在，且 `version` 字段正确
+- [ ] `modules/<name>/entry.ts` 中 `import pkg from "./package.json"` 且使用 `version: pkg.version`
+- [ ] `manifest.json` 中有对应条目，`name`、`entry` 路径正确（不需要 `version` 字段）
 - [ ] `src/router/extra-info/order.ts` 有排序常量
 - [ ] 所有页面文件已迁移到 `modules/<name>/pages/`
 - [ ] 页面中 `t()` 调用使用 `模块名:key` 冒号语法
@@ -688,7 +679,7 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 
 2. **路由合并顺序**：`auth-guard.tsx` 中的 routes push 顺序至关重要 —— 模块路由必须最先 push，后端路由次之，前端路由最后。这样 `removeDuplicateRoutes` 才会保留模块路由（含正确组件）而丢弃后端路由（可能含错误组件回退）。
 
-3. **manifest 三处一致**：`package.json`、`entry.ts`、`manifest.json` 三处的 `name` 和 `version` 必须一致，否则加载器会拒绝加载。
+3. **manifest 注册**：`manifest.json` 中注册的 `name` 必须与 `entry.ts` 中的 `name` 一致，否则加载器会拒绝加载。版本从 `package.json` 自动读取，无需在 manifest 中声明。
 
 4. **`#src/` vs 相对路径**：引用框架资源用 `#src/`，引用模块内部资源用 `./`。不要在模块内使用绝对路径引用其他模块。
 

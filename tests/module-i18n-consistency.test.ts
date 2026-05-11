@@ -134,33 +134,35 @@ describe("manifest.json 一致性", () => {
 		}
 	});
 
-	it("manifest 中每个模块的 version 与 entry.ts 和 package.json 一致", () => {
+	it("manifest 中不应包含 version 字段（package.json 为唯一版本来源）", () => {
 		const manifest = JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf-8"));
 
 		for (const entry of manifest.modules) {
-			const moduleDir = path.join(MODULES_DIR, entry.name);
+			expect(
+				"version" in entry,
+				`${entry.name}: manifest should not contain "version" field (package.json is the single source)`,
+			).toBe(false);
+		}
+	});
 
-			// package.json version
-			const pkgPath = path.join(moduleDir, "package.json");
-			if (fs.existsSync(pkgPath)) {
-				const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-				expect(
-					pkg.version,
-					`${entry.name}: manifest version "${entry.version}" != package.json version "${pkg.version}"`,
-				).toBe(entry.version);
+	it("每个模块的 entry.ts 必须从 package.json 导入 version", () => {
+		for (const moduleName of getModuleNames()) {
+			const entryPath = path.join(MODULES_DIR, moduleName, "entry.ts");
+			if (!fs.existsSync(entryPath)) {
+				continue;
 			}
 
-			// entry.ts version
-			const entryPath = path.join(moduleDir, "entry.ts");
-			if (fs.existsSync(entryPath)) {
-				const content = fs.readFileSync(entryPath, "utf-8");
-				const versionMatch = content.match(/version:\s*"([^"]+)"/);
-				expect(versionMatch, `${entry.name}/entry.ts: missing version`).not.toBeNull();
-				expect(
-					versionMatch![1],
-					`${entry.name}: manifest version "${entry.version}" != entry.ts version "${versionMatch![1]}"`,
-				).toBe(entry.version);
-			}
+			const content = fs.readFileSync(entryPath, "utf-8");
+
+			expect(
+				content.includes("import pkg from \"./package.json\""),
+				`${moduleName}/entry.ts: must import version from "./package.json"`,
+			).toBe(true);
+
+			expect(
+				content.includes("version: pkg.version"),
+				`${moduleName}/entry.ts: must use "version: pkg.version" (not a hardcoded string)`,
+			).toBe(true);
 		}
 	});
 

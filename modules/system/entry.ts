@@ -1,10 +1,11 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
-
 import ContainerLayout from "#src/layout/container-layout";
-import { system } from "#src/router/extra-info";
 
+import { system } from "#src/router/extra-info";
 import { lazy } from "react";
+
+import pkg from "./package.json";
 
 const User = lazy(() => import("./pages/user"));
 const Dept = lazy(() => import("./pages/dept"));
@@ -86,7 +87,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 	name: "system",
 	description: "系统管理模块",
-	version: "1.0.0",
+	version: pkg.version,
 	routes,
 	i18n: {
 		"zh-CN": () => import("./locales/zh-CN.json"),

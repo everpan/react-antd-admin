@@ -66,8 +66,6 @@ export interface ModuleInstance {
 export interface ManifestModuleEntry {
 	/** 模块名称，需与 entry.ts 中 name 一致 */
 	name: string
-	/** 模块版本，需与 entry.ts 中 version 一致 */
-	version: string
 	/** 模块资源路径（本地相对路径或远程 URL） */
 	entry: string
 	/** 是否启用 */

@@ -1,12 +1,13 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
-
 import { accessControlCodes } from "#src/hooks/use-access/constants";
+
 import ContainerLayout from "#src/layout/container-layout";
 import { $t } from "#src/locales";
 import { access } from "#src/router/extra-info";
-
 import { lazy } from "react";
+
+import pkg from "./package.json";
 
 const PageControl = lazy(() => import("./pages/page-control"));
 const ButtonControl = lazy(() => import("./pages/button-control"));
@@ -67,7 +68,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 	name: "access",
 	description: "权限控制模块",
-	version: "1.0.0",
+	version: pkg.version,
 	routes,
 	i18n: {
 		"zh-CN": () => import("./locales/zh-CN.json"),
