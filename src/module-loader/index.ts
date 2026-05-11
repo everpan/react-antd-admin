@@ -100,7 +100,7 @@ async function mergeI18nResources(definition: ModuleDefinition) {
 
 	for (const [locale, loader] of Object.entries(definition.i18n)) {
 		const resources = await loader();
-		i18next.addResourceBundle(locale, definition.name, resources);
+		i18next.addResourceBundle(locale, definition.name, resources.default || resources);
 	}
 }
 
