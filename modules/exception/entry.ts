@@ -1,18 +1,22 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
-import { ServerErrorIcon } from "#src/icons";
 
+import { ServerErrorIcon } from "#src/icons";
 import ContainerLayout from "#src/layout/container-layout";
-import { $t } from "#src/locales";
-import { exception, exception403Path, exception404Path, exception500Path, exceptionPath, exceptionUnknownComponentPath } from "#src/router/extra-info";
+
 import {
 	AppstoreOutlined,
 	IssuesCloseOutlined,
 	MinusSquareOutlined,
 	StopOutlined,
 } from "@ant-design/icons";
-
 import { createElement, lazy } from "react";
+
+const exceptionPath = "/exception";
+const exception403Path = "/exception/403";
+const exception404Path = "/exception/404";
+const exception500Path = "/exception/500";
+const exceptionUnknownComponentPath = "/exception/not-found-component";
 
 const Exception403 = lazy(() => import("./pages/403"));
 const Exception404 = lazy(() => import("./pages/404"));
@@ -24,8 +28,8 @@ const routes: AppRouteRecordRaw[] = [
 		path: exceptionPath,
 		Component: ContainerLayout,
 		handle: {
-			order: exception,
-			title: $t("common.menu.exception"),
+			order: 90,
+			title: "exception:menu.exception",
 			icon: createElement(IssuesCloseOutlined),
 		},
 		children: [
@@ -33,7 +37,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: exception403Path,
 				Component: Exception403,
 				handle: {
-					title: $t("common.menu.exception_403"),
+					title: "exception:menu.exception_403",
 					icon: createElement(StopOutlined),
 				},
 			},
@@ -41,7 +45,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: exception404Path,
 				Component: Exception404,
 				handle: {
-					title: $t("common.menu.exception_404"),
+					title: "exception:menu.exception_404",
 					icon: createElement(MinusSquareOutlined),
 				},
 			},
@@ -49,7 +53,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: exception500Path,
 				Component: Exception500,
 				handle: {
-					title: $t("common.menu.exception_500"),
+					title: "exception:menu.exception_500",
 					icon: createElement(ServerErrorIcon),
 				},
 			},
@@ -57,7 +61,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: exceptionUnknownComponentPath,
 				Component: ExceptionUnknownComponent,
 				handle: {
-					title: $t("common.menu.exceptionUnknownComponent"),
+					title: "exception:menu.exceptionUnknownComponent",
 					icon: createElement(AppstoreOutlined),
 				},
 			},

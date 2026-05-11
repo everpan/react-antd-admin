@@ -9,5 +9,8 @@
 	"documentAddress": "文档地址",
 	"author": "作者",
 	"dependencies": "生产依赖",
-	"devDependencies": "开发依赖"
+	"devDependencies": "开发依赖",
+	"menu": {
+		"about": "关于"
+	}
 }

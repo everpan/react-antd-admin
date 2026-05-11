@@ -1,8 +1,8 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
+
 import ContainerLayout from "#src/layout/container-layout";
 
-import { system } from "#src/router/extra-info";
 import { lazy } from "react";
 
 const User = lazy(() => import("./pages/user"));
@@ -16,8 +16,8 @@ const routes: AppRouteRecordRaw[] = [
 		Component: ContainerLayout,
 		handle: {
 			icon: "SettingOutlined",
-			title: "common.menu.system",
-			order: system,
+			title: "system:menu.system",
+			order: 100,
 			roles: ["admin"],
 		},
 		children: [
@@ -26,7 +26,7 @@ const routes: AppRouteRecordRaw[] = [
 				Component: User,
 				handle: {
 					icon: "UserOutlined",
-					title: "common.menu.user",
+					title: "system:menu.user",
 					roles: ["admin"],
 					permissions: [
 						"permission:button:add",
@@ -40,7 +40,7 @@ const routes: AppRouteRecordRaw[] = [
 				Component: Role,
 				handle: {
 					icon: "TeamOutlined",
-					title: "common.menu.role",
+					title: "system:menu.role",
 					roles: ["admin"],
 					permissions: [
 						"permission:button:add",
@@ -54,7 +54,7 @@ const routes: AppRouteRecordRaw[] = [
 				Component: Menu,
 				handle: {
 					icon: "MenuOutlined",
-					title: "common.menu.menu",
+					title: "system:menu.menu",
 					roles: ["admin"],
 					permissions: [
 						"permission:button:add",
@@ -69,7 +69,7 @@ const routes: AppRouteRecordRaw[] = [
 				handle: {
 					keepAlive: false,
 					icon: "ApartmentOutlined",
-					title: "common.menu.dept",
+					title: "system:menu.dept",
 					roles: ["admin"],
 					permissions: [
 						"permission:button:add",

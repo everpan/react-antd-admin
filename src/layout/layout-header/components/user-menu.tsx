@@ -34,7 +34,7 @@ export function UserMenu({ ...restProps }: ButtonProps) {
 	const altView = useMemo(() => isWindowsOs() ? "Alt" : "⌥", [isWindowsOs]);
 	const items: MenuProps["items"] = [
 		{
-			label: t("common.menu.personalCenter"),
+			label: t("personal-center:menu.personalCenter"),
 			key: "personal-center",
 			icon: <RiAccountCircleLine />,
 			extra: `${altView}P`,

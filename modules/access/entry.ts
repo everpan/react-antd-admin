@@ -1,10 +1,9 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
-import { accessControlCodes } from "#src/hooks/use-access/constants";
 
+import { accessControlCodes } from "#src/hooks/use-access/constants";
 import ContainerLayout from "#src/layout/container-layout";
-import { $t } from "#src/locales";
-import { access } from "#src/router/extra-info";
+
 import { lazy } from "react";
 
 const PageControl = lazy(() => import("./pages/page-control"));
@@ -18,8 +17,8 @@ const routes: AppRouteRecordRaw[] = [
 		Component: ContainerLayout,
 		handle: {
 			icon: "SafetyOutlined",
-			title: $t("common.menu.access"),
-			order: access,
+			title: "access:menu.access",
+			order: 10,
 		},
 		children: [
 			{
@@ -27,7 +26,7 @@ const routes: AppRouteRecordRaw[] = [
 				Component: PageControl,
 				handle: {
 					icon: "FileTextOutlined",
-					title: $t("common.menu.pageControl"),
+					title: "access:menu.pageControl",
 					permissions: [
 						accessControlCodes.get,
 					],
@@ -38,7 +37,7 @@ const routes: AppRouteRecordRaw[] = [
 				Component: ButtonControl,
 				handle: {
 					icon: "LockOutlined",
-					title: $t("common.menu.buttonControl"),
+					title: "access:menu.buttonControl",
 				},
 			},
 			{
@@ -46,7 +45,7 @@ const routes: AppRouteRecordRaw[] = [
 				Component: AdminVisible,
 				handle: {
 					icon: "EyeOutlined",
-					title: $t("common.menu.adminVisible"),
+					title: "access:menu.adminVisible",
 					roles: ["admin"],
 				},
 			},
@@ -55,7 +54,7 @@ const routes: AppRouteRecordRaw[] = [
 				Component: CommonVisible,
 				handle: {
 					icon: "EyeOutlined",
-					title: $t("common.menu.commonVisible"),
+					title: "access:menu.commonVisible",
 					roles: ["common"],
 				},
 			},

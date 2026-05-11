@@ -35,5 +35,12 @@
 		"componentControlRoles": "Component-based Control - Roles",
 		"functionControlPermissionCodes": "Function-based Control - Permission Codes",
 		"functionControlRoles": "Function-based Control - Roles"
+	},
+	"menu": {
+		"access": "Access Demo",
+		"pageControl": "Page Control",
+		"buttonControl": "Button Control",
+		"adminVisible": "Admin Visible",
+		"commonVisible": "Common Visible"
 	}
 }

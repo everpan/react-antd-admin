@@ -1,4 +1,3 @@
-import { about, access, home, outside, personalCenter, routeNest, system } from "#/src/router/extra-info";
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
 import { ADMIN_TOKEN } from "./constants";
 import { resultSuccess } from "./utils";
@@ -13,8 +12,8 @@ const systemManagementRouter = {
 	path: "/system",
 	handle: {
 		icon: "SettingOutlined",
-		title: "common.menu.system",
-		order: system,
+		title: "system:menu.system",
+		order: 100,
 		roles: ["admin"],
 	},
 	children: [
@@ -23,7 +22,7 @@ const systemManagementRouter = {
 			component: "/system/user/index.tsx",
 			handle: {
 				icon: "UserOutlined",
-				title: "common.menu.user",
+				title: "system:menu.user",
 				roles: ["admin"],
 				permissions: [
 					"permission:button:add",
@@ -37,7 +36,7 @@ const systemManagementRouter = {
 			component: "/system/role/index.tsx",
 			handle: {
 				icon: "TeamOutlined",
-				title: "common.menu.role",
+				title: "system:menu.role",
 				roles: ["admin"],
 				permissions: [
 					"permission:button:add",
@@ -51,7 +50,7 @@ const systemManagementRouter = {
 			component: "/system/menu/index.tsx",
 			handle: {
 				icon: "MenuOutlined",
-				title: "common.menu.menu",
+				title: "system:menu.menu",
 				roles: ["admin"],
 				permissions: [
 					"permission:button:add",
@@ -66,7 +65,7 @@ const systemManagementRouter = {
 			handle: {
 				keepAlive: false,
 				icon: "ApartmentOutlined",
-				title: "common.menu.dept",
+				title: "system:menu.dept",
 				roles: ["admin"],
 				permissions: [
 					"permission:button:add",
@@ -83,8 +82,8 @@ const homeRouter = {
 	component: "/home/index.tsx",
 	handle: {
 		icon: "HomeOutlined",
-		title: "common.menu.home",
-		order: home,
+		title: "home:menu.home",
+		order: 1,
 	},
 };
 
@@ -93,8 +92,8 @@ const aboutRouter = {
 	component: "/about/index.tsx",
 	handle: {
 		icon: "CopyrightOutlined",
-		title: "common.menu.about",
-		order: about,
+		title: "about:menu.about",
+		order: 120,
 	},
 };
 
@@ -102,22 +101,22 @@ const outsideRouter = {
 	path: "/outside",
 	handle: {
 		icon: "OutsidePageIcon",
-		title: "common.menu.outside",
-		order: outside,
+		title: "outside:menu.outside",
+		order: 40,
 	},
 	children: [
 		{
 			path: "/outside/embedded",
 			handle: {
 				icon: "EmbeddedIcon",
-				title: "common.menu.embedded",
+				title: "outside:menu.embedded",
 			},
 			children: [
 				{
 					path: "/outside/embedded/ant-design",
 					handle: {
 						icon: "AntDesignOutlined",
-						title: "common.menu.antd",
+						title: "outside:menu.antd",
 						iframeLink: "https://ant.design/",
 					},
 				},
@@ -125,7 +124,7 @@ const outsideRouter = {
 					path: "/outside/embedded/project-docs",
 					handle: {
 						icon: "ContainerOutlined",
-						title: "common.menu.projectDocs",
+						title: "outside:menu.projectDocs",
 						iframeLink: "https://condorheroblog.github.io/react-antd-admin/docs/",
 					},
 				},
@@ -135,14 +134,14 @@ const outsideRouter = {
 			path: "/outside/external-link",
 			handle: {
 				icon: "ExternalIcon",
-				title: "common.menu.externalLink",
+				title: "outside:menu.externalLink",
 			},
 			children: [
 				{
 					path: "/outside/external-link/react-docs",
 					handle: {
 						icon: "RiReactjsLine",
-						title: "common.menu.reactDocs",
+						title: "outside:menu.reactDocs",
 						externalLink: "https://react.dev/",
 					},
 				},
@@ -154,22 +153,22 @@ const outsideRouter = {
 const personalCenterRouter = {
 	path: "/personal-center",
 	handle: {
-		order: personalCenter,
-		title: "common.menu.personalCenter",
+		order: 110,
+		title: "personal-center:menu.personalCenter",
 		icon: "RiAccountCircleLine",
 	},
 	children: [
 		{
 			path: "/personal-center/my-profile",
 			handle: {
-				title: "common.menu.profile",
+				title: "personal-center:menu.profile",
 				icon: "ProfileCardIcon",
 			},
 		},
 		{
 			path: "/personal-center/settings",
 			handle: {
-				title: "common.menu.settings",
+				title: "personal-center:menu.settings",
 				icon: "RiUserSettingsLine",
 			},
 		},
@@ -179,29 +178,29 @@ const personalCenterRouter = {
 const routeNestRouter = {
 	path: "/route-nest",
 	handle: {
-		order: routeNest,
-		title: "common.menu.nestMenus",
+		order: 20,
+		title: "route-nest:menu.nestMenus",
 		icon: "NodeExpandOutlined",
 	},
 	children: [
 		{
 			path: "/route-nest/menu1",
 			handle: {
-				title: "common.menu.menu1",
+				title: "route-nest:menu.menu1",
 				icon: "SisternodeOutlined",
 			},
 			children: [
 				{
 					path: "/route-nest/menu1/menu1-1",
 					handle: {
-						title: "common.menu.menu1-1",
+						title: "route-nest:menu.menu1-1",
 						icon: ("SubnodeOutlined"),
 					},
 				},
 				{
 					path: "/route-nest/menu1/menu1-2",
 					handle: {
-						title: "common.menu.menu1-2",
+						title: "route-nest:menu.menu1-2",
 						icon: ("SubnodeOutlined"),
 					},
 				},
@@ -210,7 +209,7 @@ const routeNestRouter = {
 		{
 			path: "/route-nest/menu2",
 			handle: {
-				title: "common.menu.menu2",
+				title: "route-nest:menu.menu2",
 				icon: "SubnodeOutlined",
 			},
 		},
@@ -229,8 +228,8 @@ export default defineFakeRoute([
 				path: "/access",
 				handle: {
 					icon: "SafetyOutlined",
-					title: "common.menu.access",
-					order: access,
+					title: "access:menu.access",
+					order: 10,
 				},
 				children: [
 					/**
@@ -241,21 +240,21 @@ export default defineFakeRoute([
 						path: "/access/access-mode",
 						handle: {
 							icon: "CloudOutlined",
-							title: "common.menu.accessMode",
+							title: "access:menu.accessMode",
 						},
 					},
 					{
 						path: "/access/page-control",
 						handle: {
 							icon: "FileTextOutlined",
-							title: "common.menu.pageControl",
+							title: "access:menu.pageControl",
 						},
 					},
 					{
 						path: "/access/button-control",
 						handle: {
 							icon: "LockOutlined",
-							title: "common.menu.buttonControl",
+							title: "access:menu.buttonControl",
 							permissions: isAdmin
 								? [
 									"permission:button:get",
@@ -273,14 +272,14 @@ export default defineFakeRoute([
 							path: "/access/admin-visible",
 							handle: {
 								icon: "EyeOutlined",
-								title: "common.menu.adminVisible",
+								title: "access:menu.adminVisible",
 							},
 						}
 						: {
 							path: "/access/common-visible",
 							handle: {
 								icon: "EyeOutlined",
-								title: "common.menu.commonVisible",
+								title: "access:menu.commonVisible",
 							},
 						},
 				],

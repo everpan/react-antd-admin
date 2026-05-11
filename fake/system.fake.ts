@@ -1,54 +1,52 @@
-import { system } from "#/src/router/extra-info";
-
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
 import { resultSuccess } from "./utils";
 
 const systemMenu = [
 	// 系统管理
 	{
-		id: system,
+		id: 100,
 		menuType: 0, // 菜单类型（0 代表菜单、1 代表 iframe、2 代表外链、3 代表按钮）
-		name: "common.menu.system",
+		name: "system:menu.system",
 	},
 	{
-		parentId: system,
-		id: system + 1,
+		parentId: 100,
+		id: 101,
 		menuType: 0,
-		name: "common.menu.user",
+		name: "system:menu.user",
 	},
 	{
-		parentId: system,
-		id: system + 2,
+		parentId: 100,
+		id: 102,
 		menuType: 0,
-		name: "common.menu.role",
+		name: "system:menu.role",
 	},
 	{
-		parentId: system,
-		id: system + 3,
+		parentId: 100,
+		id: 103,
 		menuType: 0,
-		name: "common.menu.menu",
+		name: "system:menu.menu",
 	},
 	{
-		parentId: system,
-		id: system + 4,
+		parentId: 100,
+		id: 104,
 		menuType: 0,
-		name: "common.menu.dept",
+		name: "system:menu.dept",
 	},
 	{
-		parentId: system + 4,
-		id: system + 4 + 1,
+		parentId: 104,
+		id: 105,
 		menuType: 3,
 		name: "common.add",
 	},
 	{
-		parentId: system + 4,
-		id: system + 4 + 2,
+		parentId: 104,
+		id: 106,
 		menuType: 3,
 		name: "common.edit",
 	},
 	{
-		parentId: system + 4,
-		id: system + 4 + 3,
+		parentId: 104,
+		id: 107,
 		menuType: 3,
 		name: "common.delete",
 	},
@@ -149,12 +147,12 @@ export default defineFakeRoute([
 				// 系统管理
 				{
 					parentId: "", // 上级菜单 id
-					id: system, // 菜单 id
+					id: 100, // 菜单 id
 					menuType: 0, // 菜单类型（0 代表菜单、1 代表 iframe、2 代表外链、3 代表按钮）
-					name: "common.menu.system", // 菜单名称
+					name: "system:menu.system", // 菜单名称
 					path: "/system", // 路由路径
 					component: "/system", // 组件路径
-					order: system, // 菜单顺序
+					order: 100, // 菜单顺序
 					icon: "SettingOutlined", // 菜单图标
 					currentActiveMenu: "", // 激活路径
 					iframeLink: "", // iframe 链接
@@ -167,10 +165,10 @@ export default defineFakeRoute([
 					updateTime: 1737023164653,
 				},
 				{
-					parentId: system,
-					id: system + 1,
+					parentId: 100,
+					id: 101,
 					menuType: 0,
-					name: "common.menu.user",
+					name: "system:menu.user",
 					path: "/system/user", // 路由路径
 					component: "/system/user", // 组件路径
 					order: undefined, // 菜单顺序
@@ -186,10 +184,10 @@ export default defineFakeRoute([
 					updateTime: 1737023164653,
 				},
 				{
-					parentId: system,
-					id: system + 2,
+					parentId: 100,
+					id: 102,
 					menuType: 0,
-					name: "common.menu.role",
+					name: "system:menu.role",
 					path: "/system/role", // 路由路径
 					component: "/system/role", // 组件路径
 					order: undefined, // 菜单顺序
@@ -205,10 +203,10 @@ export default defineFakeRoute([
 					updateTime: 1737023164653,
 				},
 				{
-					parentId: system,
-					id: system + 3,
+					parentId: 100,
+					id: 103,
 					menuType: 0,
-					name: "common.menu.menu",
+					name: "system:menu.menu",
 					path: "/system/menu", // 路由路径
 					component: "/system/menu", // 组件路径
 					order: undefined, // 菜单顺序
@@ -224,10 +222,10 @@ export default defineFakeRoute([
 					updateTime: 1737023164653,
 				},
 				{
-					parentId: system,
-					id: system + 4,
+					parentId: 100,
+					id: 104,
 					menuType: 0,
-					name: "common.menu.dept",
+					name: "system:menu.dept",
 					path: "/system/dept", // 路由路径
 					component: "/system/dept", // 组件路径
 					order: undefined, // 菜单顺序
@@ -243,8 +241,8 @@ export default defineFakeRoute([
 					updateTime: 1737023164653,
 				},
 				{
-					parentId: system + 4,
-					id: system + 4 + 1,
+					parentId: 104,
+					id: 105,
 					menuType: 3,
 					name: "common.add",
 					status: 1, // 状态（0 停用、1 启用）
@@ -252,8 +250,8 @@ export default defineFakeRoute([
 					updateTime: 1737023164653,
 				},
 				{
-					parentId: system + 4,
-					id: system + 4 + 2,
+					parentId: 104,
+					id: 106,
 					menuType: 3,
 					name: "common.edit",
 					status: 1, // 状态（0 停用、1 启用）
@@ -261,8 +259,8 @@ export default defineFakeRoute([
 					updateTime: 1737023164653,
 				},
 				{
-					parentId: system + 4,
-					id: system + 4 + 3,
+					parentId: 104,
+					id: 107,
 					menuType: 3,
 					name: "common.delete",
 					status: 1, // 状态（0 停用、1 启用）
