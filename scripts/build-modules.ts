@@ -66,21 +66,28 @@ function isExternal(id: string): boolean {
 	});
 }
 
+function parseEntryMeta(entryContent: string): { name: string, version: string } {
+	const nameMatch = entryContent.match(/name:\s*"([^"]+)"/);
+	const versionMatch = entryContent.match(/version:\s*"([^"]+)"/);
+	if (!nameMatch || !versionMatch) {
+		throw new Error("Failed to parse name/version from entry.ts");
+	}
+	return { name: nameMatch[1], version: versionMatch[1] };
+}
+
 function getOutputDir(moduleName: string, version: string): string {
 	return path.resolve("build", "modules", moduleName, version);
 }
 
 async function buildModule(moduleDir: string) {
-	const pkgPath = path.join(moduleDir, "package.json");
-	const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-	const moduleName = pkg.name.replace("@app/module-", "");
-	const version = pkg.version;
-
 	const entryPath = path.join(moduleDir, "entry.ts");
 	if (!fs.existsSync(entryPath)) {
-		console.warn(`[build-modules] Skip ${moduleName}: entry.ts not found`);
+		console.warn(`[build-modules] Skip ${path.basename(moduleDir)}: entry.ts not found`);
 		return;
 	}
+
+	const entryContent = fs.readFileSync(entryPath, "utf-8");
+	const { name: moduleName, version } = parseEntryMeta(entryContent);
 
 	console.log(`[build-modules] Building ${moduleName}@${version}...`);
 

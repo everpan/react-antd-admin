@@ -40,6 +40,7 @@ async function main() {
 	}
 
 	const description = await question(rl, "模块描述", `${moduleName} 模块`);
+	const version = await question(rl, "初始版本号", "1.0.0");
 	const hasI18n = (await question(rl, "是否需要国际化（y/n）", "y")).toLowerCase() === "y";
 	const orderInput = await question(rl, "菜单排序权重（数字，越大越靠后）", "50");
 	const order = Number.parseInt(orderInput, 10) || 50;
@@ -61,19 +62,6 @@ async function main() {
 		fs.mkdirSync(path.join(moduleDir, dir), { recursive: true });
 	}
 
-	// package.json
-	const pkg = {
-		name: `@app/module-${moduleName}`,
-		type: "module",
-		version: "1.0.0",
-		main: "entry.ts",
-		module: "entry.ts",
-	};
-	fs.writeFileSync(
-		path.join(moduleDir, "package.json"),
-		`${JSON.stringify(pkg, null, "\t")}\n`,
-	);
-
 	// 页面组件
 	const pageContent = `import { BasicContent } from "#src/components/basic-content";
 
@@ -91,7 +79,7 @@ export default function ${modulePascalName}() {
 		fs.writeFileSync(path.join(moduleDir, "locales", "en-US.json"), enUs);
 	}
 
-	// entry.ts
+	// entry.ts（模块元信息的唯一来源）
 	const i18nBlock = hasI18n
 		? `,
 \ti18n: {
@@ -143,7 +131,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 \tname: "${moduleName}",
 \tdescription: "${description}",
-\\tversion: pkg.version,
+\tversion: "${version}",
 \troutes${i18nBlock}${configBlock}
 };
 
@@ -179,7 +167,6 @@ export default mod;
 		console.log("    │   ├── zh-CN.json");
 		console.log("    │   └── en-US.json");
 	}
-	console.log("    └── package.json");
 	console.log("\n已自动更新:");
 	console.log(`  • src/router/extra-info/order.ts (添加 ${exportName} = ${order})`);
 	console.log(`  • manifest.json (添加 ${moduleName})`);
