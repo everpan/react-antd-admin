@@ -63,6 +63,8 @@ react-antd-admin/
 → removeDuplicateRoutes → setAccessStore
 ```
 
+**模块完全自包含**：`entry.ts` 是元信息（name、description、version）的唯一来源，菜单翻译、排序权重、路由路径全部由模块自行管理，无需修改框架代码。
+
 ---
 
 ## 2. 初始化模块
@@ -81,7 +83,6 @@ pnpm create:module
 模块名称（kebab-case）: my-module
 模块描述（我的模块）: 我的新模块
 初始版本号（1.0.0）: 1.0.0
-是否需要国际化（y/n）: y
 菜单排序权重（数字，越大越靠后）: 50
 需要的角色（逗号分隔，留空无限制）:
 ```
@@ -89,19 +90,18 @@ pnpm create:module
 CLI 会自动完成：
 
 1. 创建 `modules/my-module/` 目录结构
-2. 生成 `entry.ts`（含 name/description/version）、`pages/index.tsx`、`locales/*.json`
-3. 更新 `src/router/extra-info/order.ts` 添加排序常量
-4. 更新 `manifest.json` 注册新模块
+2. 生成 `entry.ts`（含 name/description/version/order）、`pages/index.tsx`、`locales/*.json`（含菜单翻译）
+3. 更新 `manifest.json` 注册新模块
 
 ### 2.2 生成的目录结构
 
 ```
 modules/my-module/
-├── entry.ts              # 模块入口（必须，含 name/description/version）
+├── entry.ts              # 模块入口（必须，含全部元信息）
 ├── pages/
 │   └── index.tsx         # 默认页面
-└── locales/              # 国际化文件（可选）
-    ├── zh-CN.json
+└── locales/
+    ├── zh-CN.json        # 翻译（含 menu 菜单翻译）
     └── en-US.json
 ```
 
@@ -117,7 +117,9 @@ mkdir -p modules/my-module/pages modules/my-module/locales
 
 **Step 2**: 创建 `modules/my-module/entry.ts`（参考 [6.1 节 entry.ts](#61-entryts)）
 
-**Step 3**: 在 `manifest.json` 中注册
+**Step 3**: 创建 `modules/my-module/locales/zh-CN.json` 和 `en-US.json`（含 `menu` 翻译 key）
+
+**Step 4**: 在 `manifest.json` 中注册
 
 ```json
 {
@@ -126,14 +128,6 @@ mkdir -p modules/my-module/pages modules/my-module/locales
 	"enabled": true
 }
 ```
-
-**Step 4**: 在 `src/router/extra-info/order.ts` 添加排序常量
-
-```ts
-export const mymodule = 50;
-```
-
-**Step 5**: 在公共翻译文件 `src/locales/zh-CN/common.json` 和 `en-US/common.json` 中添加菜单 key
 
 ---
 
@@ -170,12 +164,6 @@ import { useAccess } from "#src/hooks/use-access";
 
 // 工具
 import { request } from "#src/utils/request";
-
-// 路由常量
-import { mymodule } from "#src/router/extra-info";
-
-// 翻译
-import { $t } from "#src/locales";
 ```
 
 #### 引用第三方库
@@ -209,6 +197,10 @@ import { myHelper } from "./utils/helper";
 import myStore from "./stores/my-store";
 ```
 
+#### 不要引用框架的 order.ts 或 common.json
+
+模块的排序权重直接内联在 `entry.ts` 的 `handle.order` 中，菜单翻译使用模块自身的 namespace。不要从框架导入排序常量或在 `common.json` 中添加模块菜单 key。
+
 ### 3.3 添加页面
 
 在模块 `pages/` 目录下创建新的页面组件：
@@ -222,7 +214,7 @@ export default function Detail() {
 }
 ```
 
-在 `entry.ts` 中注册路由：
+在 `entry.ts` 中注册路由，菜单标题使用 `"模块名:menu.xxx"` namespace 语法：
 
 ```ts
 const Detail = lazy(() => import("./pages/detail"));
@@ -231,15 +223,15 @@ const routes: AppRouteRecordRaw[] = [
 	{
 		path: "/my-module",
 		Component: ContainerLayout,
-		handle: { ... },
+		handle: { order: 50, title: "my-module:menu.home", icon: "AppstoreOutlined" },
 		children: [
-			{ index: true, Component: MyPage, handle: { ... } },
+			{ index: true, Component: MyPage, handle: { title: "my-module:menu.home", icon: "AppstoreOutlined" } },
 			// 新增子路由
 			{
 				path: "/my-module/detail",
 				Component: Detail,
 				handle: {
-					title: "详情页",
+					title: "my-module:menu.detail",
 					icon: "ProfileOutlined",
 				},
 			},
@@ -247,6 +239,8 @@ const routes: AppRouteRecordRaw[] = [
 	},
 ];
 ```
+
+同时在 `locales/zh-CN.json` 和 `en-US.json` 中添加对应的 menu key。
 
 ### 3.4 嵌套路由
 
@@ -275,14 +269,26 @@ const routes: AppRouteRecordRaw[] = [
 
 ### 3.5 国际化
 
-模块 i18n 以模块名为 namespace 独立注册。
+模块 i18n 以模块名为 namespace 独立注册。每个模块必须包含 `menu` 翻译 key。
 
 **翻译文件** (`locales/zh-CN.json`):
 
 ```json
 {
+	"menu": {
+		"home": "首页",
+		"detail": "详情页"
+	},
 	"title": "我的模块",
 	"description": "模块描述"
+}
+```
+
+**菜单标题**在 `entry.ts` 中使用 `"模块名:menu.xxx"` 格式（字符串字面量，渲染时由 `translateMenus()` 解析）：
+
+```ts
+handle: {
+	title: "my-module:menu.detail",
 }
 ```
 
@@ -293,7 +299,6 @@ import { useTranslation } from "react-i18next";
 
 export default function MyPage() {
 	const { t } = useTranslation();
-	// 使用 namespace 前缀 "my-module:"
 	return <div>{t("my-module:title")}</div>;
 }
 ```
@@ -492,19 +497,49 @@ pnpm preview
 
 ### 6.1 entry.ts
 
-每个模块必须提供 `entry.ts`，默认导出 `ModuleDefinition`。`entry.ts` 是模块元信息的唯一来源：
+每个模块必须提供 `entry.ts`，默认导出 `ModuleDefinition`。`entry.ts` 是模块的全部元信息的唯一来源：
 
 ```ts
 import type { ModuleDefinition } from "#src/module-loader/types";
+import type { AppRouteRecordRaw } from "#src/router/types";
+
+import ContainerLayout from "#src/layout/container-layout";
+
+import { createElement, lazy } from "react";
+
+const MyPage = lazy(() => import("./pages/index"));
+
+const routes: AppRouteRecordRaw[] = [
+	{
+		path: "/my-module",
+		Component: ContainerLayout,
+		handle: {
+			order: 50,
+			title: "my-module:menu.home",
+			icon: "AppstoreOutlined",
+		},
+		children: [
+			{
+				index: true,
+				Component: MyPage,
+				handle: {
+					title: "my-module:menu.home",
+					icon: "AppstoreOutlined",
+				},
+			},
+		],
+	},
+];
 
 const mod: ModuleDefinition = {
 	name: "my-module",
 	description: "我的模块",
 	version: "1.0.0",
-	routes: [],
-	lifecycle: { ... },
-	i18n: { ... },
-	config: { ... },
+	routes,
+	i18n: {
+		"zh-CN": () => import("./locales/zh-CN.json"),
+		"en-US": () => import("./locales/en-US.json"),
+	},
 };
 
 export default mod;
@@ -519,7 +554,7 @@ export default mod;
 	path: "/my-module/user",
 	Component: UserPage,
 	handle: {
-		title: "用户管理",
+		title: "my-module:menu.user",
 		icon: "UserOutlined",
 		order: 10,
 		roles: ["admin"],
@@ -563,8 +598,8 @@ export default mod;
 |------|------|------|
 | 模块目录名 | kebab-case | `my-module` |
 | 模块 name | kebab-case | `"my-module"` |
-| 排序常量 | camelCase | `export const mymodule = 50` |
 | i18n namespace | 模块名 | `t("my-module:title")` |
+| 菜单标题 | `"模块名:menu.xxx"` | `"system:menu.user"` |
 
 ### 7.2 元信息管理（entry.ts 单一来源）
 
@@ -573,13 +608,21 @@ export default mod;
 - 构建脚本从 `entry.ts` 解析 `name` 和 `version`，用于确定产物路径
 - 版本升级只需修改 `entry.ts` 中的 `version` 值
 
-### 7.3 模块间依赖
+### 7.3 菜单翻译自管理
+
+菜单翻译定义在模块自身的 `locales/*.json` 中（`menu` key），使用 i18next namespace 语法 `"模块名:menu.xxx"`。不需要修改框架的 `common.json`。
+
+### 7.4 排序权重自管理
+
+排序权重直接内联在 `entry.ts` 的 `handle.order` 中（数值常量），不需要从框架的 `order.ts` 导入。
+
+### 7.5 模块间依赖
 
 - 模块之间通过 `config.dependencies` 声明依赖关系
 - 加载器按拓扑排序执行初始化，确保依赖先于当前模块加载
 - 不允许循环依赖（检测到会输出警告并跳过）
 
-### 7.4 共享库清单
+### 7.6 共享库清单
 
 以下库由主框架提供，模块中直接 import 即可，不需要安装：
 
@@ -611,7 +654,7 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 | **根因** | exception 模块从 `core` 路由迁移而非 `routes/modules/`，导致按标准流程注册时被遗漏 |
 | **影响** | 模块完全不可用 |
 | **修复** | 在 `manifest.json` 中补充注册条目 |
-| **如何避免** | 创建模块后必须检查：**`manifest.json` 是否有对应条目、`entry.ts` 是否存在、`order.ts` 是否有排序常量**。CLI（`pnpm create:module`）会自动完成这些步骤，手动创建时容易遗漏。测试防护在 `tests/module-i18n-consistency.test.ts` |
+| **如何避免** | 创建模块后必须检查：**`manifest.json` 是否有对应条目、`entry.ts` 是否存在**。CLI（`pnpm create:module`）会自动完成这些步骤，手动创建时容易遗漏。测试防护在 `tests/module-i18n-consistency.test.ts` |
 
 #### P3-5: 路由合并顺序导致所有页面显示"未知组件"
 
@@ -643,35 +686,47 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 | **修复** | 模块构建脚本中将 `#src/` 和 `#modules/` 加入 external 列表 |
 | **如何避免** | 模块构建配置中，`#src/` 和 `#modules/` 必须被 external 化，不能被解析为实际文件路径 |
 
-### 8.2 迁移检查清单
+#### R1: 版本/排序/翻译分散导致模块无法独立发布
 
-迁移一个新模块时，按以下清单逐项确认：
+| 项目 | 内容 |
+|------|------|
+| **现象** | 发布模块时必须同时修改并重新发布框架代码 |
+| **根因** | 版本在 `package.json`/`entry.ts`/`manifest.json` 三处定义；排序常量在框架 `order.ts`；菜单翻译在框架 `common.json` |
+| **影响** | 模块发布依赖框架发布 |
+| **修复** | (1) `entry.ts` 成为 name/description/version 唯一来源；(2) 排序权重内联到 entry.ts；(3) 菜单翻译移到模块 locales 使用 namespace 语法；(4) 路由路径内联到模块 entry.ts。删除所有模块 `package.json` |
+| **如何避免** | 模块的所有元信息、翻译、配置全部自包含在 `modules/<name>/` 目录下。不需要修改框架文件 |
 
-- [ ] `modules/<name>/entry.ts` 存在，且导出 `ModuleDefinition`（含 name、description、version 字符串字面量）
-- [ ] `manifest.json` 中有对应条目，`name`、`entry` 路径正确（不需要 `version` 字段）
-- [ ] `src/router/extra-info/order.ts` 有排序常量
-- [ ] 所有页面文件已迁移到 `modules/<name>/pages/`
-- [ ] 页面中 `t()` 调用使用 `模块名:key` 冒号语法
-- [ ] `entry.ts` 中 `$t()` 用于菜单标题（全局 namespace），`t()` 用于页面内容（模块 namespace）
+### 8.2 创建模块检查清单
+
+创建一个新模块时，按以下清单逐项确认（CLI 会自动完成大部分）：
+
+- [ ] `modules/<name>/entry.ts` 存在，导出 `ModuleDefinition`（含 name、description、version 字符串字面量，含 order 数值，含 i18n 声明）
+- [ ] `modules/<name>/locales/zh-CN.json` 和 `en-US.json` 存在，且包含 `menu` 翻译 key
+- [ ] `modules/<name>/pages/` 下有页面组件
+- [ ] `manifest.json` 中有对应条目（name、entry、enabled）
+- [ ] `entry.ts` 中菜单标题使用 `"模块名:menu.xxx"` 格式
 - [ ] 模块目录下无 `package.json`（避免 IDE 误识别为独立项目）
-- [ ] 原页面目录已清理（`src/pages/<name>/` 已删除）
 - [ ] `pnpm typecheck` 通过
 - [ ] `pnpm dev` 启动后页面功能正常
-- [ ] `pnpm test` 通过（含元信息一致性、i18n 一致性和路由优先级测试）
+- [ ] `pnpm test` 通过（含元信息一致性、发布独立性、i18n 一致性和路由优先级测试）
 
 ### 8.3 开发注意事项
 
 1. **namespace 语法**：页面内翻译必须用 `t("module-name:key")`（冒号），不能用 `t("module-name.key")`（点号）。点号语法会在全局 namespace 下查找，迁移到独立 namespace 后会找不到 key。
 
-2. **路由合并顺序**：`auth-guard.tsx` 中的 routes push 顺序至关重要 —— 模块路由必须最先 push，后端路由次之，前端路由最后。这样 `removeDuplicateRoutes` 才会保留模块路由（含正确组件）而丢弃后端路由（可能含错误组件回退）。
+2. **菜单标题格式**：`entry.ts` 中路由 handle 的 `title` 使用 `"模块名:menu.xxx"` 字符串字面量。渲染时由 `translateMenus()` 调用 `t()` 自动解析。
 
-3. **manifest 注册**：`manifest.json` 中注册的 `name` 必须与 `entry.ts` 中的 `name` 一致，否则加载器会拒绝加载。版本从 `entry.ts` 直接定义，无需在 manifest 中声明。
+3. **路由合并顺序**：`auth-guard.tsx` 中的 routes push 顺序至关重要 —— 模块路由必须最先 push，后端路由次之，前端路由最后。这样 `removeDuplicateRoutes` 才会保留模块路由（含正确组件）而丢弃后端路由（可能含错误组件回退）。
 
-4. **`#src/` vs 相对路径**：引用框架资源用 `#src/`，引用模块内部资源用 `./`。不要在模块内使用绝对路径引用其他模块。
+4. **manifest 注册**：`manifest.json` 中注册的 `name` 必须与 `entry.ts` 中的 `name` 一致，否则加载器会拒绝加载。不需要 `version` 字段。
 
-5. **构建 external**：模块构建时 `#src/`、`#modules/` 和所有共享库必须 external 化。如果构建产物中出现框架内部代码，检查 `scripts/build-modules.ts` 的 external 列表。
+5. **`#src/` vs 相对路径**：引用框架资源用 `#src/`，引用模块内部资源用 `./`。不要在模块内使用绝对路径引用其他模块。
 
-6. **元信息单一来源**：模块的 `name`、`description`、`version` 只在 `entry.ts` 中定义。不要在模块目录下创建 `package.json` 或 `meta.json`。
+6. **构建 external**：模块构建时 `#src/`、`#modules/` 和所有共享库必须 external 化。如果构建产物中出现框架内部代码，检查 `scripts/build-modules.ts` 的 external 列表。
+
+7. **元信息单一来源**：模块的 `name`、`description`、`version`、`order` 只在 `entry.ts` 中定义。不要在模块目录下创建 `package.json` 或 `meta.json`，不要从框架导入排序常量。
+
+8. **模块完全自包含**：模块的所有元信息、翻译、排序全部在 `modules/<name>/` 内。创建或修改模块不需要编辑任何框架文件（`src/` 下的文件不需要动）。
 
 ---
 
@@ -681,8 +736,8 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 
 检查：
 1. `manifest.json` 是否注册且 `enabled: true`
-2. `src/router/extra-info/order.ts` 是否添加了排序常量
-3. `src/locales/zh-CN/common.json` 和 `en-US/common.json` 是否添加了菜单翻译 key
+2. `locales/zh-CN.json` 和 `en-US.json` 是否有 `menu` 翻译 key
+3. `entry.ts` 中 title 是否使用了 `"模块名:menu.xxx"` 格式
 4. 重启 dev server（`Ctrl+C` 后重新 `pnpm dev`）
 
 ### Q: 模块页面报 `Failed to resolve import`？
