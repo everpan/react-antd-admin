@@ -61,12 +61,10 @@ describe("模块 i18n 一致性", () => {
 		for (const moduleName of moduleNames) {
 			const files = collectModuleFiles(moduleName);
 			for (const [filePath, content] of files) {
-				// 跳过 entry.ts（其中 $t() 使用全局 namespace 如 common.menu.xxx，是正确的）
 				if (filePath.endsWith("entry.ts")) {
 					continue;
 				}
 
-				// 匹配 t("module-name.xxx") 的旧语法（应改为 t("module-name:xxx")）
 				const oldPattern = new RegExp(`t\\("${moduleName}\\.(.+?)"\\)`, "g");
 				const matches = content.matchAll(oldPattern);
 				for (const match of matches) {
@@ -88,12 +86,10 @@ describe("模块 i18n 一致性", () => {
 
 			const content = fs.readFileSync(entryPath, "utf-8");
 
-			// 检查 i18n 声明是否存在
 			if (!content.includes("i18n:")) {
 				continue;
 			}
 
-			// 检查 entry.ts 中的 name 与模块目录名一致
 			const { name } = parseModuleMeta(content);
 			expect(name, `${moduleName}/entry.ts: missing name field`).not.toBeNull();
 			expect(name!, `${moduleName}/entry.ts: name mismatch`).toBe(moduleName);
@@ -118,7 +114,6 @@ describe("模块 i18n 一致性", () => {
 				`${moduleName}: entry.ts declares i18n but modules/${moduleName}/locales/ directory does not exist`,
 			).toBe(true);
 
-			// 至少有 zh-CN.json 和 en-US.json
 			expect(
 				fs.existsSync(path.join(localesDir, "zh-CN.json")),
 				`${moduleName}: missing locales/zh-CN.json`,
@@ -200,5 +195,80 @@ describe("模块元信息一致性（entry.ts 为唯一来源）", () => {
 				`modules/${moduleName}/ exists but is not registered in manifest.json`,
 			).toBe(true);
 		}
+	});
+});
+
+describe("模块发布独立性", () => {
+	it("模块 entry.ts 不应引用框架的 order.ts（排序值应内联）", () => {
+		for (const moduleName of getModuleNames()) {
+			const entryPath = path.join(MODULES_DIR, moduleName, "entry.ts");
+			if (!fs.existsSync(entryPath)) {
+				continue;
+			}
+
+			const content = fs.readFileSync(entryPath, "utf-8");
+			expect(
+				content.includes("from \"#src/router/extra-info\""),
+				`${moduleName}/entry.ts: should not import from "#src/router/extra-info" (inline order values instead)`,
+			).toBe(false);
+		}
+	});
+
+	it("模块 entry.ts 的菜单标题必须使用模块 namespace（moduleName:menu.xxx）", () => {
+		for (const moduleName of getModuleNames()) {
+			const entryPath = path.join(MODULES_DIR, moduleName, "entry.ts");
+			if (!fs.existsSync(entryPath)) {
+				continue;
+			}
+
+			const content = fs.readFileSync(entryPath, "utf-8");
+
+			expect(
+				content.includes("common.menu"),
+				`${moduleName}/entry.ts: should not reference "common.menu" (use "${moduleName}:menu.xxx" namespace syntax)`,
+			).toBe(false);
+
+			const titlePattern = new RegExp(`title:\\s*["\`]${moduleName}:menu\\.`);
+			expect(
+				titlePattern.test(content),
+				`${moduleName}/entry.ts: must have at least one title using "${moduleName}:menu.xxx" format`,
+			).toBe(true);
+		}
+	});
+
+	it("模块 locale 文件必须包含 menu 翻译 key", () => {
+		for (const moduleName of getModuleNames()) {
+			const zhCnPath = path.join(MODULES_DIR, moduleName, "locales", "zh-CN.json");
+			const enUsPath = path.join(MODULES_DIR, moduleName, "locales", "en-US.json");
+
+			if (!fs.existsSync(zhCnPath) || !fs.existsSync(enUsPath)) {
+				continue;
+			}
+
+			const zhCn = JSON.parse(fs.readFileSync(zhCnPath, "utf-8"));
+			const enUs = JSON.parse(fs.readFileSync(enUsPath, "utf-8"));
+
+			expect(
+				"menu" in zhCn,
+				`${moduleName}/locales/zh-CN.json: missing "menu" key`,
+			).toBe(true);
+			expect(
+				"menu" in enUs,
+				`${moduleName}/locales/en-US.json: missing "menu" key`,
+			).toBe(true);
+		}
+	});
+
+	it("框架 common.json 不应包含模块专属的菜单翻译 key", () => {
+		const zhCommon = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "src/locales/zh-CN/common.json"), "utf-8"));
+		const commonMenuKeys = Object.keys(zhCommon.menu || {});
+
+		const moduleOwnedKeys = ["home", "about", "access", "pageControl", "buttonControl", "adminVisible", "commonVisible", "nestMenus", "menu1", "menu1-1", "menu1-2", "menu2", "outside", "embedded", "externalLink", "antd", "projectDocs", "reactDocs", "exception", "exception_403", "exception_404", "exception_500", "exceptionUnknownComponent", "system", "user", "role", "menu", "dept", "personalCenter", "profile", "settings"];
+
+		const leaks = commonMenuKeys.filter(key => moduleOwnedKeys.includes(key));
+		expect(
+			leaks,
+			`common.json menu contains module-owned keys that should be in module locales: ${leaks.join(", ")}`,
+		).toEqual([]);
 	});
 });

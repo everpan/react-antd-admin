@@ -9,5 +9,8 @@
 	"documentAddress": "Documentation URL",
 	"author": "Author",
 	"dependencies": "Prod Dependencies",
-	"devDependencies": "Dev Dependencies"
+	"devDependencies": "Dev Dependencies",
+	"menu": {
+		"about": "About"
+	}
 }

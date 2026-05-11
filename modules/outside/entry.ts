@@ -1,13 +1,11 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
-import { Iframe } from "#src/components/iframe";
 
+import { Iframe } from "#src/components/iframe";
 import { RiReactjsLine } from "#src/icons";
 import ContainerLayout from "#src/layout/container-layout";
-import { $t } from "#src/locales";
-import { outside } from "#src/router/extra-info";
-import { AntDesignOutlined, ContainerOutlined } from "@ant-design/icons";
 
+import { AntDesignOutlined, ContainerOutlined } from "@ant-design/icons";
 import { createElement } from "react";
 import { Outlet } from "react-router";
 
@@ -17,8 +15,8 @@ const routes: AppRouteRecordRaw[] = [
 		Component: ContainerLayout,
 		handle: {
 			icon: "OutsidePageIcon",
-			title: $t("common.menu.outside"),
-			order: outside,
+			title: "outside:menu.outside",
+			order: 40,
 		},
 		children: [
 			{
@@ -26,7 +24,7 @@ const routes: AppRouteRecordRaw[] = [
 				Component: Outlet,
 				handle: {
 					icon: "EmbeddedIcon",
-					title: $t("common.menu.embedded"),
+					title: "outside:menu.embedded",
 				},
 				children: [
 					{
@@ -34,7 +32,7 @@ const routes: AppRouteRecordRaw[] = [
 						Component: Iframe,
 						handle: {
 							icon: createElement(AntDesignOutlined),
-							title: $t("common.menu.antd"),
+							title: "outside:menu.antd",
 							iframeLink: "https://ant.design/",
 						},
 					},
@@ -43,7 +41,7 @@ const routes: AppRouteRecordRaw[] = [
 						Component: Iframe,
 						handle: {
 							icon: createElement(ContainerOutlined),
-							title: $t("common.menu.projectDocs"),
+							title: "outside:menu.projectDocs",
 							iframeLink: "https://condorheroblog.github.io/react-antd-admin/docs/",
 						},
 					},
@@ -54,7 +52,7 @@ const routes: AppRouteRecordRaw[] = [
 				Component: Outlet,
 				handle: {
 					icon: "ExternalIcon",
-					title: $t("common.menu.externalLink"),
+					title: "outside:menu.externalLink",
 				},
 				children: [
 					{
@@ -62,7 +60,7 @@ const routes: AppRouteRecordRaw[] = [
 						Component: Iframe,
 						handle: {
 							icon: createElement(RiReactjsLine),
-							title: $t("common.menu.reactDocs"),
+							title: "outside:menu.reactDocs",
 							externalLink: "https://react.dev/",
 						},
 					},
@@ -77,6 +75,10 @@ const mod: ModuleDefinition = {
 	description: "外部链接模块",
 	version: "1.0.0",
 	routes,
+	i18n: {
+		"zh-CN": () => import("./locales/zh-CN.json"),
+		"en-US": () => import("./locales/en-US.json"),
+	},
 };
 
 export default mod;

@@ -71,22 +71,18 @@ export default function ${modulePascalName}() {
 `;
 	fs.writeFileSync(path.join(moduleDir, "pages", "index.tsx"), pageContent);
 
-	// i18n 文件
-	if (hasI18n) {
-		const zhCn = `${JSON.stringify({ title: description }, null, "\t")}\n`;
-		const enUs = `${JSON.stringify({ title: description }, null, "\t")}\n`;
-		fs.writeFileSync(path.join(moduleDir, "locales", "zh-CN.json"), zhCn);
-		fs.writeFileSync(path.join(moduleDir, "locales", "en-US.json"), enUs);
-	}
+	// i18n 文件（始终创建，包含菜单翻译）
+	const zhCn = `${JSON.stringify({ menu: { [moduleName]: description } }, null, "\t")}\n`;
+	const enUs = `${JSON.stringify({ menu: { [moduleName]: description } }, null, "\t")}\n`;
+	fs.writeFileSync(path.join(moduleDir, "locales", "zh-CN.json"), zhCn);
+	fs.writeFileSync(path.join(moduleDir, "locales", "en-US.json"), enUs);
 
 	// entry.ts（模块元信息的唯一来源）
-	const i18nBlock = hasI18n
-		? `,
+	const i18nBlock = `,
 \ti18n: {
 \t\t"zh-CN": () => import("./locales/zh-CN.json"),
 \t\t"en-US": () => import("./locales/en-US.json"),
-\t}`
-		: "";
+\t}`;
 
 	const configBlock = requiredRoles
 		? `,
@@ -99,8 +95,6 @@ export default function ${modulePascalName}() {
 import type { AppRouteRecordRaw } from "#src/router/types";
 
 import ContainerLayout from "#src/layout/container-layout";
-import { $t } from "#src/locales";
-import { ${moduleName.replace(/-/g, "")} } from "#src/router/extra-info";
 
 import { createElement, lazy } from "react";
 
@@ -111,8 +105,8 @@ const routes: AppRouteRecordRaw[] = [
 \t\tpath: "/${moduleName}",
 \t\tComponent: ContainerLayout,
 \t\thandle: {
-\t\t\torder: ${moduleName.replace(/-/g, "")},
-\t\t\ttitle: $t("common.menu.${moduleName}"),
+\t\t\torder: ${order},
+\t\t\ttitle: "${moduleName}:menu.${moduleName}",
 \t\t\ticon: "AppstoreOutlined",
 \t\t},
 \t\tchildren: [
@@ -120,7 +114,7 @@ const routes: AppRouteRecordRaw[] = [
 \t\t\t\tindex: true,
 \t\t\t\tComponent: ${modulePascalName}Page,
 \t\t\t\thandle: {
-\t\t\t\t\ttitle: $t("common.menu.${moduleName}"),
+\t\t\t\t\ttitle: "${moduleName}:menu.${moduleName}",
 \t\t\t\t\ticon: "AppstoreOutlined",
 \t\t\t\t},
 \t\t\t},
@@ -138,13 +132,6 @@ const mod: ModuleDefinition = {
 export default mod;
 `;
 	fs.writeFileSync(path.join(moduleDir, "entry.ts"), entryContent);
-
-	// 更新 order.ts
-	const orderFile = path.join(PROJECT_ROOT, "src/router/extra-info/order.ts");
-	let orderContent = fs.readFileSync(orderFile, "utf-8");
-	const exportName = moduleName.replace(/-/g, "");
-	orderContent = `${orderContent.trimEnd()}\nexport const ${exportName} = ${order};\n`;
-	fs.writeFileSync(orderFile, orderContent);
 
 	// 更新 manifest.json
 	const manifestPath = path.join(PROJECT_ROOT, "manifest.json");
@@ -168,11 +155,9 @@ export default mod;
 		console.log("    │   └── en-US.json");
 	}
 	console.log("\n已自动更新:");
-	console.log(`  • src/router/extra-info/order.ts (添加 ${exportName} = ${order})`);
 	console.log(`  • manifest.json (添加 ${moduleName})`);
 	console.log("\n下一步:");
-	console.log("  1. 在 src/locales/zh-CN/common.json 中添加菜单翻译 key");
-	console.log("  2. 运行 pnpm dev 启动开发");
+	console.log("  1. 运行 pnpm dev 启动开发");
 	console.log("");
 }
 

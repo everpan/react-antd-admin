@@ -35,5 +35,12 @@
 		"componentControlRoles": "组件形式控制 - 角色",
 		"functionControlPermissionCodes": "函数形式控制 - 权限码",
 		"functionControlRoles": "函数形式控制 - 角色"
+	},
+	"menu": {
+		"access": "权限演示",
+		"pageControl": "页面控制",
+		"buttonControl": "按钮控制",
+		"adminVisible": "Admin 可见",
+		"commonVisible": "Common 可见"
 	}
 }
