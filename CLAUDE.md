@@ -35,18 +35,49 @@ pnpm check:circular-deps  # Check for circular dependencies
 
 App bootstrap order matters: i18n setup first, then loading animation, then React root render. The app is wrapped in `TanstackQuery` provider at the top level.
 
+### Module System (`modules/` + `src/module-loader/`)
+
+Feature pages are organized as independent modules under `modules/`. Each module is self-contained and can be developed and released independently.
+
+**Module structure:**
+```
+modules/<name>/
+├── entry.ts          # Single source of truth: name, description, version, routes, i18n, lifecycle
+├── pages/            # Page components
+└── locales/          # i18n resources (zh-CN.json, en-US.json)
+```
+
+**Module loading flow:**
+1. `manifest.json` (root) declares enabled modules with entry paths
+2. `src/module-loader/index.ts` loads modules: parallel entry loading → topological sort (by dependencies) → lifecycle hooks → i18n merge
+3. Module routes are injected into the router before backend/frontend routes
+
+**Key conventions:**
+- `entry.ts` is the sole source for module metadata (name, version, description) — no separate `package.json` or `meta.json`
+- Menu title keys use i18next namespace syntax: `"<moduleName>:menu.<key>"` (e.g. `"system:menu.user"`)
+- Route order values are defined inline in `entry.ts` route handles
+- Module i18n is registered into i18next under the module name as namespace
+- Build script (`scripts/build-modules.ts`) parses name/version from `entry.ts` via regex
+
+**Creating a new module:**
+```bash
+pnpm create-module     # Interactive wizard (scripts/create-module.ts)
+```
+
 ### Routing System (`src/router/`)
 
 Routes are organized into three categories:
 
 - **Core routes** (`routes/core/`): Auth pages (login), exception pages (403/404/500), fallback. Always present.
 - **External routes** (`routes/external/`): Public pages like privacy-policy, terms-of-service. No auth check, no user info request.
-- **Module routes** (`routes/modules/`): Feature pages (home, system, about, etc.) loaded via `import.meta.glob`.
+- **Module routes** (`modules/*/entry.ts`): Feature pages loaded via `module-loader` from `manifest.json`.
 
 Permission routes come from two sources, toggled by `enableBackendAccess` / `enableFrontendAccess` preferences:
 
 - **Static routes** (`routes/static/`): Defined at build time in frontend code.
 - **Dynamic routes**: Fetched from backend API at runtime and patched into the router via `router.patchRoutes()`.
+
+When module routes and backend routes share the same top-level path, module routes take priority. Backend routes for already-covered paths are filtered out before component resolution (`filterBackendRoutes` in `auth-guard.tsx`).
 
 Route meta (title, icon, roles, permissions, keepAlive, hideInMenu, iframeLink, etc.) is stored in the `handle` field of each route object. See `src/router/types.ts` → `RouteMeta`.
 
@@ -88,6 +119,8 @@ Uses `vite-plugin-fake-server` with fake endpoint files in `fake/*.fake.ts`. Moc
 ### Internationalization (`src/locales/`)
 
 Uses `react-i18next`. Translation JSON files in `src/locales/zh-CN/` and `src/locales/en-US/`. Helper function `t()` in `src/locales/t.tsx`. Ant Design locale is also switched based on language preference.
+
+Module i18n is self-contained: each module has its own `locales/` directory with translation files registered via i18next namespace (`moduleName:key`). Framework-level `common.json` only contains shared UI strings, not module-specific menu translations.
 
 ### Components (`src/components/`)
 

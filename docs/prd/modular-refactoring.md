@@ -7,6 +7,7 @@
 当前项目是一个单体架构的 React Antd Admin 管理后台，所有路由模块（home、access、system 等）通过 `import.meta.glob` 在编译时静态加载到主应用中。模块之间没有物理隔离，页面、组件、Store、翻译文件等都耦合在统一的 `src/` 目录下。
 
 **核心痛点：**
+
 - 所有模块在编译时确定，无法按需加载或动态增减
 - 模块之间没有明确的边界，容易出现交叉依赖
 - 新增业务模块需要修改主框架代码（路由注册、翻译文件等）
@@ -76,35 +77,35 @@ react-antd-admin/
 import type { ModuleDefinition } from "#src/module-loader/types";
 
 const mod: ModuleDefinition = {
-	// 基础信息
-	name: "system", // 模块唯一标识（kebab-case）
-	description: "系统管理模块", // 模块描述
-	version: "1.2.0", // 模块版本（语义化版本号）
+ // 基础信息
+ name: "system", // 模块唯一标识（kebab-case）
+ description: "系统管理模块", // 模块描述
+ version: "1.2.0", // 模块版本（语义化版本号）
 
-	// 路由配置
-	routes: [], // AppRouteRecordRaw[] — 模块路由定义
+ // 路由配置
+ routes: [], // AppRouteRecordRaw[] — 模块路由定义
 
-	// 生命周期钩子
-	lifecycle: {
-		beforeInit: async (ctx) => {}, // 模块初始化前（可进行依赖检查）
-		onInit: async (ctx) => {}, // 模块初始化（注册 store、API 等）
-		onActivate: async (ctx) => {}, // 模块被激活（路由首次匹配）
-		onDeactivate: async (ctx) => {}, // 模块被停用
-		onDestroy: async (ctx) => {}, // 模块卸载（清理资源）
-	},
+ // 生命周期钩子
+ lifecycle: {
+  beforeInit: async (ctx) => {}, // 模块初始化前（可进行依赖检查）
+  onInit: async (ctx) => {}, // 模块初始化（注册 store、API 等）
+  onActivate: async (ctx) => {}, // 模块被激活（路由首次匹配）
+  onDeactivate: async (ctx) => {}, // 模块被停用
+  onDestroy: async (ctx) => {}, // 模块卸载（清理资源）
+ },
 
-	// 国际化资源
-	i18n: {
-		"zh-CN": () => import("./locales/zh-CN"),
-		"en-US": () => import("./locales/en-US"),
-	},
+ // 国际化资源
+ i18n: {
+  "zh-CN": () => import("./locales/zh-CN"),
+  "en-US": () => import("./locales/en-US"),
+ },
 
-	// 模块配置
-	config: {
-		requiredRoles: ["admin"], // 模块级别的角色要求
-		requiredPermissions: [], // 模块级别的权限要求
-		dependencies: [], // 依赖的其他模块 name
-	},
+ // 模块配置
+ config: {
+  requiredRoles: ["admin"], // 模块级别的角色要求
+  requiredPermissions: [], // 模块级别的权限要求
+  dependencies: [], // 依赖的其他模块 name
+ },
 };
 
 export default mod;
@@ -119,95 +120,95 @@ import type { AppRouteRecordRaw } from "#src/router/types";
 
 /** 模块上下文 — 主框架向模块注入的能力 */
 export interface ModuleContext {
-	/** 当前模块的元信息 */
-	module: {
-		name: string
-		version: string
-	}
-	/** 共享库引用 */
-	libs: {
-		react: typeof import("react")
-		reactDom: typeof import("react-dom")
-		reactRouter: typeof import("react-router")
-		antd: typeof import("antd")
-		zustand: typeof import("zustand")
-		i18next: typeof import("i18next")
-		reactI18next: typeof import("react-i18next")
-		dayjs: typeof import("dayjs")
-		ky: typeof import("ky")
-		// ... 其他共享库
-	}
-	/** 主框架工具 */
-	utils: {
-		request: typeof import("#src/utils/request")
-		getAppNamespace: typeof import("#src/utils/get-app-namespace")
-	}
-	/** 模块注册器 */
-	register: {
-		/** 注册额外的 Zustand store */
-		store: (name: string, store: unknown) => void
-		/** 注册 API 路由前缀 */
-		apiPrefix: (prefix: string) => void
-	}
+ /** 当前模块的元信息 */
+ module: {
+  name: string
+  version: string
+ }
+ /** 共享库引用 */
+ libs: {
+  react: typeof import("react")
+  reactDom: typeof import("react-dom")
+  reactRouter: typeof import("react-router")
+  antd: typeof import("antd")
+  zustand: typeof import("zustand")
+  i18next: typeof import("i18next")
+  reactI18next: typeof import("react-i18next")
+  dayjs: typeof import("dayjs")
+  ky: typeof import("ky")
+  // ... 其他共享库
+ }
+ /** 主框架工具 */
+ utils: {
+  request: typeof import("#src/utils/request")
+  getAppNamespace: typeof import("#src/utils/get-app-namespace")
+ }
+ /** 模块注册器 */
+ register: {
+  /** 注册额外的 Zustand store */
+  store: (name: string, store: unknown) => void
+  /** 注册 API 路由前缀 */
+  apiPrefix: (prefix: string) => void
+ }
 }
 
 /** 模块配置 */
 export interface ModuleConfig {
-	/** 模块级别要求的角色，用户须满足其一才能激活此模块 */
-	requiredRoles?: string[]
-	/** 模块级别要求的权限码，用户须全部满足才能激活此模块 */
-	requiredPermissions?: string[]
-	/** 依赖的其他模块 name 列表，须在 beforeInit 之前完成加载 */
-	dependencies?: string[]
+ /** 模块级别要求的角色，用户须满足其一才能激活此模块 */
+ requiredRoles?: string[]
+ /** 模块级别要求的权限码，用户须全部满足才能激活此模块 */
+ requiredPermissions?: string[]
+ /** 依赖的其他模块 name 列表，须在 beforeInit 之前完成加载 */
+ dependencies?: string[]
 }
 
 /** 生命周期钩子 */
 export interface ModuleLifecycle {
-	beforeInit?: (ctx: ModuleContext) => Promise<void>
-	onInit?: (ctx: ModuleContext) => Promise<void>
-	onActivate?: (ctx: ModuleContext) => Promise<void>
-	onDeactivate?: (ctx: ModuleContext) => Promise<void>
-	onDestroy?: (ctx: ModuleContext) => Promise<void>
+ beforeInit?: (ctx: ModuleContext) => Promise<void>
+ onInit?: (ctx: ModuleContext) => Promise<void>
+ onActivate?: (ctx: ModuleContext) => Promise<void>
+ onDeactivate?: (ctx: ModuleContext) => Promise<void>
+ onDestroy?: (ctx: ModuleContext) => Promise<void>
 }
 
 /** i18n 资源声明 */
 export interface ModuleI18n {
-	[locale: string]: () => Promise<Record<string, unknown>>
+ [locale: string]: () => Promise<Record<string, unknown>>
 }
 
 /** 模块定义 — entry.ts 的导出类型 */
 export interface ModuleDefinition {
-	name: string
-	description: string
-	version: string
-	routes: AppRouteRecordRaw[]
-	lifecycle?: ModuleLifecycle
-	i18n?: ModuleI18n
-	config?: ModuleConfig
+ name: string
+ description: string
+ version: string
+ routes: AppRouteRecordRaw[]
+ lifecycle?: ModuleLifecycle
+ i18n?: ModuleI18n
+ config?: ModuleConfig
 }
 
 /** 运行时模块实例 */
 export interface ModuleInstance {
-	definition: ModuleDefinition
-	status: "pending" | "loading" | "loaded" | "active" | "error"
-	error?: Error
+ definition: ModuleDefinition
+ status: "pending" | "loading" | "loaded" | "active" | "error"
+ error?: Error
 }
 
 /** manifest.json 中的模块条目 */
 export interface ManifestModuleEntry {
-	/** 模块名称，需与 entry.ts 中 name 一致 */
-	name: string
-	/** 模块版本，需与 entry.ts 中 version 一致。用于区分同模块的不同版本产物 */
-	version: string
-	/** 模块资源路径（本地相对路径或远程 URL） */
-	entry: string
-	/** 是否启用 */
-	enabled?: boolean
+ /** 模块名称，需与 entry.ts 中 name 一致 */
+ name: string
+ /** 模块版本，需与 entry.ts 中 version 一致。用于区分同模块的不同版本产物 */
+ version: string
+ /** 模块资源路径（本地相对路径或远程 URL） */
+ entry: string
+ /** 是否启用 */
+ enabled?: boolean
 }
 
 /** manifest.json 格式 */
 export interface Manifest {
-	modules: ManifestModuleEntry[]
+ modules: ManifestModuleEntry[]
 }
 ```
 
@@ -279,6 +280,7 @@ config: {
 **校验时机**：模块加载器的 `beforeInit` 阶段，在获取到用户信息后、路由注册前。
 
 **校验逻辑**：
+
 - `requiredRoles`：`userRoles.some(role => requiredRoles.includes(role))`
 - `requiredPermissions`：`requiredPermissions.every(perm => userPermissions.includes(perm))`
 - 校验失败 → 标记模块 `status: "error"`，不注册其路由和菜单
@@ -290,43 +292,43 @@ config: {
 ```ts
 // 模块路由中的权限声明示例（system 模块）
 const routes: AppRouteRecordRaw[] = [
-	{
-		path: "/system",
-		Component: ContainerLayout,
-		handle: {
-			title: "系统管理",
-			icon: "SettingOutlined",
-			order: 100,
-			// 路由级别：OR 关系，拥有任一角色可看到此菜单
-			roles: ["admin"],
-		},
-		children: [
-			{
-				path: "/system/user",
-				Component: User,
-				handle: {
-					title: "用户管理",
-					roles: ["admin"],
-					// 按钮级别：AND 关系，拥有全部权限码才能看到对应按钮
-					permissions: [
-						"permission:button:add",
-						"permission:button:update",
-						"permission:button:delete",
-					],
-				},
-			},
-			{
-				path: "/system/dept",
-				Component: Dept,
-				handle: {
-					title: "部门管理",
-					roles: ["admin"],
-					permissions: ["permission:button:add"],
-					keepAlive: false, // 不缓存此页面
-				},
-			},
-		],
-	},
+ {
+  path: "/system",
+  Component: ContainerLayout,
+  handle: {
+   title: "系统管理",
+   icon: "SettingOutlined",
+   order: 100,
+   // 路由级别：OR 关系，拥有任一角色可看到此菜单
+   roles: ["admin"],
+  },
+  children: [
+   {
+    path: "/system/user",
+    Component: User,
+    handle: {
+     title: "用户管理",
+     roles: ["admin"],
+     // 按钮级别：AND 关系，拥有全部权限码才能看到对应按钮
+     permissions: [
+      "permission:button:add",
+      "permission:button:update",
+      "permission:button:delete",
+     ],
+    },
+   },
+   {
+    path: "/system/dept",
+    Component: Dept,
+    handle: {
+     title: "部门管理",
+     roles: ["admin"],
+     permissions: ["permission:button:add"],
+     keepAlive: false, // 不缓存此页面
+    },
+   },
+  ],
+ },
 ];
 ```
 
@@ -383,23 +385,23 @@ modules/<module-name>/
 
 ```json
 {
-	"name": "@app/module-system",
-	"version": "1.2.0",
-	"type": "module",
-	"main": "entry.ts",
-	"module": "entry.ts",
-	"peerDependencies": {
-		"react": "^19.0.0",
-		"react-dom": "^19.0.0",
-		"react-router": "^7.0.0",
-		"antd": "^6.0.0",
-		"@ant-design/icons": "^6.0.0",
-		"zustand": "^5.0.0",
-		"i18next": "^25.0.0",
-		"react-i18next": "^16.0.0",
-		"dayjs": "^1.11.0",
-		"ky": "^1.14.0"
-	}
+ "name": "@app/module-system",
+ "version": "1.2.0",
+ "type": "module",
+ "main": "entry.ts",
+ "module": "entry.ts",
+ "peerDependencies": {
+  "react": "^19.0.0",
+  "react-dom": "^19.0.0",
+  "react-router": "^7.0.0",
+  "antd": "^6.0.0",
+  "@ant-design/icons": "^6.0.0",
+  "zustand": "^5.0.0",
+  "i18next": "^25.0.0",
+  "react-i18next": "^16.0.0",
+  "dayjs": "^1.11.0",
+  "ky": "^1.14.0"
+ }
 }
 ```
 
@@ -453,115 +455,115 @@ import { build, defineConfig } from "vite";
 
 // 所有由主框架提供的共享库，模块编译时 external 化
 const SHARED_EXTERNALS: (string | RegExp)[] = [
-	// React 全家桶
-	"react",
-	"react-dom",
-	"react/jsx-runtime",
-	/^react\//,
-	// 路由
-	"react-router",
-	/^react-router\//,
-	// Ant Design 全家桶
-	"antd",
-	/^antd\//,
-	/^@ant-design\//,
-	// 状态管理
-	"zustand",
-	/^zustand\//,
-	// i18n
-	"i18next",
-	/^i18next\//,
-	"react-i18next",
-	/^react-i18next\//,
-	// 工具库
-	"ky",
-	"dayjs",
-	/^dayjs\//,
-	"ahooks",
-	/^ahooks\//,
-	// CSS-in-JS
-	"react-jss",
-	/^react-jss\//,
-	/^@ant-design\/cssinjs/,
-	// 动画
-	"motion",
-	/^motion\//,
-	// 图表
-	"echarts",
-	/^echarts\//,
-	"echarts-for-react",
-	// 其他
-	"nprogress",
-	"keepalive-for-react",
-	"simplebar-react",
-	"tailwind-merge",
-	/^@dnd-kit\//,
+ // React 全家桶
+ "react",
+ "react-dom",
+ "react/jsx-runtime",
+ /^react\//,
+ // 路由
+ "react-router",
+ /^react-router\//,
+ // Ant Design 全家桶
+ "antd",
+ /^antd\//,
+ /^@ant-design\//,
+ // 状态管理
+ "zustand",
+ /^zustand\//,
+ // i18n
+ "i18next",
+ /^i18next\//,
+ "react-i18next",
+ /^react-i18next\//,
+ // 工具库
+ "ky",
+ "dayjs",
+ /^dayjs\//,
+ "ahooks",
+ /^ahooks\//,
+ // CSS-in-JS
+ "react-jss",
+ /^react-jss\//,
+ /^@ant-design\/cssinjs/,
+ // 动画
+ "motion",
+ /^motion\//,
+ // 图表
+ "echarts",
+ /^echarts\//,
+ "echarts-for-react",
+ // 其他
+ "nprogress",
+ "keepalive-for-react",
+ "simplebar-react",
+ "tailwind-merge",
+ /^@dnd-kit\//,
 ];
 
 function isExternal(id: string): boolean {
-	return SHARED_EXTERNALS.some(pattern =>
-		typeof pattern === "string" ? id === pattern || id.startsWith(`${pattern}/`) : pattern.test(id),
-	);
+ return SHARED_EXTERNALS.some(pattern =>
+  typeof pattern === "string" ? id === pattern || id.startsWith(`${pattern}/`) : pattern.test(id),
+ );
 }
 
 // 产物输出结构: build/modules/<name>/<version>/entry.js
 function getOutputDir(moduleName: string, version: string): string {
-	return path.resolve("build", "modules", moduleName, version);
+ return path.resolve("build", "modules", moduleName, version);
 }
 
 async function buildModule(moduleDir: string) {
-	const pkgPath = path.join(moduleDir, "package.json");
-	const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-	const moduleName = pkg.name.replace("@app/module-", "");
-	const version = pkg.version;
+ const pkgPath = path.join(moduleDir, "package.json");
+ const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+ const moduleName = pkg.name.replace("@app/module-", "");
+ const version = pkg.version;
 
-	const entryPath = path.join(moduleDir, "entry.ts");
-	if (!fs.existsSync(entryPath)) {
-		console.warn(`[build-modules] Skip ${moduleName}: entry.ts not found`);
-		return;
-	}
+ const entryPath = path.join(moduleDir, "entry.ts");
+ if (!fs.existsSync(entryPath)) {
+  console.warn(`[build-modules] Skip ${moduleName}: entry.ts not found`);
+  return;
+ }
 
-	console.log(`[build-modules] Building ${moduleName}@${version}...`);
+ console.log(`[build-modules] Building ${moduleName}@${version}...`);
 
-	await build({
-		root: moduleDir,
-		build: {
-			lib: {
-				entry: entryPath,
-				formats: ["es"],
-				fileName: () => "entry.js",
-			},
-			outDir: getOutputDir(moduleName, version),
-			emptyOutDir: true,
-			rollupOptions: {
-				external: id => isExternal(id),
-			},
-		},
-		resolve: {
-			alias: {
-				"#src": path.resolve("src"),
-			},
-		},
-		plugins: [react()],
-		// 不生成 sourcemap（可选）
-		build: undefined, // 由上面的 build.lib 接管
-	} as UserConfig);
+ await build({
+  root: moduleDir,
+  build: {
+   lib: {
+    entry: entryPath,
+    formats: ["es"],
+    fileName: () => "entry.js",
+   },
+   outDir: getOutputDir(moduleName, version),
+   emptyOutDir: true,
+   rollupOptions: {
+    external: id => isExternal(id),
+   },
+  },
+  resolve: {
+   alias: {
+    "#src": path.resolve("src"),
+   },
+  },
+  plugins: [react()],
+  // 不生成 sourcemap（可选）
+  build: undefined, // 由上面的 build.lib 接管
+ } as UserConfig);
 
-	console.log(`[build-modules] ✓ ${moduleName}@${version} → build/modules/${moduleName}/${version}/`);
+ console.log(`[build-modules] ✓ ${moduleName}@${version} → build/modules/${moduleName}/${version}/`);
 }
 
 // 主流程：遍历 modules/* 目录
 async function main() {
-	const modulesDir = path.resolve("modules");
-	const entries = fs.readdirSync(modulesDir, { withFileTypes: true })
-		.filter(d => d.isDirectory())
-		.map(d => path.join(modulesDir, d.name));
+ const modulesDir = path.resolve("modules");
+ const entries = fs.readdirSync(modulesDir, { withFileTypes: true })
+  .filter(d => d.isDirectory())
+  .map(d => path.join(modulesDir, d.name));
 
-	for (const moduleDir of entries) {
-		await buildModule(moduleDir);
-	}
+ for (const moduleDir of entries) {
+  await buildModule(moduleDir);
+ }
 
-	console.log("[build-modules] All modules built.");
+ console.log("[build-modules] All modules built.");
 }
 
 main().catch(console.error);
@@ -651,12 +653,12 @@ build/
 
 ```json
 {
-	"scripts": {
-		"build": "vite build && tsx scripts/build-modules.ts",
-		"build:framework": "vite build",
-		"build:modules": "tsx scripts/build-modules.ts",
-		"build:module": "tsx scripts/build-modules.ts --module=<name>"
-	}
+ "scripts": {
+  "build": "vite build && tsx scripts/build-modules.ts",
+  "build:framework": "vite build",
+  "build:modules": "tsx scripts/build-modules.ts",
+  "build:module": "tsx scripts/build-modules.ts --module=<name>"
+ }
 }
 ```
 
@@ -671,62 +673,62 @@ build/
 
 ```json
 {
-	"modules": [
-		{
-			"name": "home",
-			"version": "1.0.0",
-			"entry": "/modules/home/1.0.0/entry.js",
-			"enabled": true
-		},
-		{
-			"name": "system",
-			"version": "1.2.0",
-			"entry": "/modules/system/1.2.0/entry.js",
-			"enabled": true
-		},
-		{
-			"name": "access",
-			"version": "1.0.0",
-			"entry": "/modules/access/1.0.0/entry.js",
-			"enabled": true
-		},
-		{
-			"name": "route-nest",
-			"version": "1.0.0",
-			"entry": "/modules/route-nest/1.0.0/entry.js",
-			"enabled": true
-		},
-		{
-			"name": "outside",
-			"version": "1.0.0",
-			"entry": "/modules/outside/1.0.0/entry.js",
-			"enabled": true
-		},
-		{
-			"name": "exception",
-			"version": "1.0.0",
-			"entry": "/modules/exception/1.0.0/entry.js",
-			"enabled": true
-		},
-		{
-			"name": "personal-center",
-			"version": "1.0.0",
-			"entry": "/modules/personal-center/1.0.0/entry.js",
-			"enabled": true
-		},
-		{
-			"name": "about",
-			"version": "1.0.0",
-			"entry": "/modules/about/1.0.0/entry.js",
-			"enabled": true
-		},
-		{
-			"name": "report",
-			"version": "2.1.0",
-			"entry": "https://cdn.example.com/modules/report/2.1.0/entry.js",
-			"enabled": false
-		}
-	]
+ "modules": [
+  {
+   "name": "home",
+   "version": "1.0.0",
+   "entry": "/modules/home/1.0.0/entry.js",
+   "enabled": true
+  },
+  {
+   "name": "system",
+   "version": "1.2.0",
+   "entry": "/modules/system/1.2.0/entry.js",
+   "enabled": true
+  },
+  {
+   "name": "access",
+   "version": "1.0.0",
+   "entry": "/modules/access/1.0.0/entry.js",
+   "enabled": true
+  },
+  {
+   "name": "route-nest",
+   "version": "1.0.0",
+   "entry": "/modules/route-nest/1.0.0/entry.js",
+   "enabled": true
+  },
+  {
+   "name": "outside",
+   "version": "1.0.0",
+   "entry": "/modules/outside/1.0.0/entry.js",
+   "enabled": true
+  },
+  {
+   "name": "exception",
+   "version": "1.0.0",
+   "entry": "/modules/exception/1.0.0/entry.js",
+   "enabled": true
+  },
+  {
+   "name": "personal-center",
+   "version": "1.0.0",
+   "entry": "/modules/personal-center/1.0.0/entry.js",
+   "enabled": true
+  },
+  {
+   "name": "about",
+   "version": "1.0.0",
+   "entry": "/modules/about/1.0.0/entry.js",
+   "enabled": true
+  },
+  {
+   "name": "report",
+   "version": "2.1.0",
+   "entry": "https://cdn.example.com/modules/report/2.1.0/entry.js",
+   "enabled": false
+  }
+ ]
 }
 ```
 
@@ -775,11 +777,11 @@ build/
 ```ts
 // 模块加载器中的版本校验
 if (mod.version !== manifestEntry.version) {
-	console.error(
-		`[module-loader] Version mismatch for "${mod.name}": `
-		+ `manifest=${manifestEntry.version}, module=${mod.version}`
-	);
-	return null;
+ console.error(
+  `[module-loader] Version mismatch for "${mod.name}": `
+  + `manifest=${manifestEntry.version}, module=${mod.version}`
+ );
+ return null;
 }
 ```
 
@@ -809,23 +811,23 @@ if (mod.version !== manifestEntry.version) {
 // src/module-loader/index.ts
 
 export interface ModuleLoader {
-	/** 加载所有 manifest 中启用的模块 */
-	loadAll: (manifest: Manifest) => Promise<ModuleInstance[]>
+ /** 加载所有 manifest 中启用的模块 */
+ loadAll: (manifest: Manifest) => Promise<ModuleInstance[]>
 
-	/** 加载单个模块（指定 name + version） */
-	load: (name: string, version: string) => Promise<ModuleInstance>
+ /** 加载单个模块（指定 name + version） */
+ load: (name: string, version: string) => Promise<ModuleInstance>
 
-	/** 卸载指定模块 */
-	unload: (name: string) => Promise<void>
+ /** 卸载指定模块 */
+ unload: (name: string) => Promise<void>
 
-	/** 获取已加载的模块 */
-	getModules: () => ModuleInstance[]
+ /** 获取已加载的模块 */
+ getModules: () => ModuleInstance[]
 
-	/** 获取指定模块 */
-	getModule: (name: string) => ModuleInstance | undefined
+ /** 获取指定模块 */
+ getModule: (name: string) => ModuleInstance | undefined
 
-	/** 获取所有模块的路由（合并后） */
-	getRoutes: () => AppRouteRecordRaw[]
+ /** 获取所有模块的路由（合并后） */
+ getRoutes: () => AppRouteRecordRaw[]
 }
 ```
 
@@ -848,26 +850,26 @@ const module = await import(/* @vite-ignore */ remoteUrl);
 ```ts
 // 加载模块时校验版本
 async function loadModule(entry: ManifestModuleEntry): Promise<ModuleDefinition | null> {
-	const modImport = await import(/* @vite-ignore */ entry.entry);
-	const mod: ModuleDefinition = modImport.default;
+ const modImport = await import(/* @vite-ignore */ entry.entry);
+ const mod: ModuleDefinition = modImport.default;
 
-	// 版本校验
-	if (mod.version !== entry.version) {
-		console.error(
-			`[module-loader] Version mismatch: manifest=${entry.version}, actual=${mod.version}`
-		);
-		return null;
-	}
+ // 版本校验
+ if (mod.version !== entry.version) {
+  console.error(
+   `[module-loader] Version mismatch: manifest=${entry.version}, actual=${mod.version}`
+  );
+  return null;
+ }
 
-	// 名称校验
-	if (mod.name !== entry.name) {
-		console.error(
-			`[module-loader] Name mismatch: manifest=${entry.name}, actual=${mod.name}`
-		);
-		return null;
-	}
+ // 名称校验
+ if (mod.name !== entry.name) {
+  console.error(
+   `[module-loader] Name mismatch: manifest=${entry.name}, actual=${mod.name}`
+  );
+  return null;
+ }
 
-	return mod;
+ return mod;
 }
 ```
 
@@ -878,16 +880,19 @@ async function loadModule(entry: ManifestModuleEntry): Promise<ModuleDefinition 
 ### 8.1 路由系统集成
 
 **现有流程（保留不变）：**
+
 ```
 coreRoutes + externalRoutes → baseRoutes → AuthGuard → fetchUserInfo → setAccessStore → router.patchRoutes()
 ```
 
 **新增模块路由注入点：**
+
 ```
 模块加载器完成加载 → 收集所有模块 routes → 注入到 accessStore.setAccessStore()
 ```
 
 具体改造：
+
 - `src/router/routes/index.ts`：已移除 `import.meta.glob("./modules/**/*.ts")`，模块路由由加载器提供
 - `AuthGuard`：在 `fetchUserInfoAndRoutes()` 中按以下顺序合并路由（模块路由优先于后端/前端路由，避免 `removeDuplicateRoutes` 保留后端路由的错误组件）：
   1. 模块路由（`loadAllModules` → `getModuleRoutes()`）
@@ -909,8 +914,8 @@ coreRoutes + externalRoutes → baseRoutes → AuthGuard → fetchUserInfo → s
 ```ts
 // 模块加载器执行 i18n 合并
 for (const [locale, loader] of Object.entries(module.i18n)) {
-	const resources = await loader();
-	i18next.addResourceBundle(locale, module.name, resources);
+ const resources = await loader();
+ i18next.addResourceBundle(locale, module.name, resources);
 }
 ```
 
@@ -938,18 +943,18 @@ AuthGuard 逻辑保持不变，模块路由中的 `handle.roles`、`handle.permi
 ```ts
 // vite.config.ts (dev 模式)
 export default defineConfig({
-	resolve: {
-		alias: {
-			// 开发时直接解析模块源码，不走构建产物
-			...moduleAliases,
-		},
-	},
-	server: {
-		watch: {
-			// 监听模块目录变化，实现 HMR
-			ignored: ["!**/modules/**"],
-		},
-	},
+ resolve: {
+  alias: {
+   // 开发时直接解析模块源码，不走构建产物
+   ...moduleAliases,
+  },
+ },
+ server: {
+  watch: {
+   // 监听模块目录变化，实现 HMR
+   ignored: ["!**/modules/**"],
+  },
+ },
 });
 ```
 
