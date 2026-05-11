@@ -57,11 +57,15 @@ react-antd-admin/
 **路由合并顺序**（auth-guard 中，模块路由优先于后端/前端路由）:
 
 ```
-1. 模块路由（loadAllModules → getModuleRoutes）
-2. 后端路由（generateRoutesFromBackend）
-3. 前端路由（generateRoutesByFrontend）
+1. 模块路由（loadAllModules → addRouteIdByPath(getModuleRoutes)）
+2. 过滤后端路由（filterBackendRoutes 移除已被模块覆盖的路径）
+3. 后端路由（generateRoutesFromBackend，仅剩模块未覆盖的路径）
+4. 前端路由（generateRoutesByFrontend）
 → removeDuplicateRoutes → setAccessStore
 ```
+
+> `addRouteIdByPath` 为模块路由设置 `id = path`，使 `useMatches()` 返回路径 ID 匹配菜单 key，避免子菜单点击后折叠。
+> `filterBackendRoutes` 在后端路由传入 `generateRoutesFromBackend` 前移除与模块重复的路径，避免 `[Frontend component not found]` 和 `[auth-guard]: Duplicate route path` 告警。
 
 **模块完全自包含**：`entry.ts` 是元信息（name、description、version）的唯一来源，菜单翻译、排序权重、路由路径全部由模块自行管理，无需修改框架代码。
 
@@ -302,6 +306,8 @@ export default function MyPage() {
 	return <div>{t("my-module:title")}</div>;
 }
 ```
+
+**locale 文件中的所有 key 都会被注册**：i18next 的 `addResourceBundle` 会加载整个 JSON 对象。key 命名没有特殊限制（支持数字开头、下划线等），但如果 key 涉及多种类型（菜单翻译 + 业务字段翻译），建议按类型分组（如 `menu.*`、`role.*`、`dept.*`）。
 
 **公共翻译**（`common.json`）不需要 namespace 前缀：
 
@@ -686,6 +692,36 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 | **修复** | 模块构建脚本中将 `#src/` 和 `#modules/` 加入 external 列表 |
 | **如何避免** | 模块构建配置中，`#src/` 和 `#modules/` 必须被 external 化，不能被解析为实际文件路径 |
 
+#### R2: 模块 i18n 资源注册未使用 resources.default
+
+| 项目 | 内容 |
+|------|------|
+| **现象** | 浏览器控制台告警 `[i18n] Not found '403SubTitle' key in 'zh-CN' locale messages`，以数字开头的翻译 key 全部缺失 |
+| **根因** | Vite 动态 `import()` JSON 文件返回 `{ default: {...}, validIdentKey: ... }`。以数字开头的 key（如 `403SubTitle`）不是合法 JS 标识符，不会被提升为命名导出，只存在于 `default` 中。`addResourceBundle` 直接传入 `resources` 导致这些 key 嵌套在 `default` 下无法被 i18next 查找 |
+| **影响** | 所有以数字开头的翻译 key 无法解析（exception 模块的 403/404/500 子标题等） |
+| **修复** | `addResourceBundle(locale, definition.name, resources.default \|\| resources)` |
+| **如何避免** | 动态 `import()` JSON 时，始终使用 `.default` 获取实际内容。测试防护在 `tests/module-i18n-consistency.test.ts`（i18n key 完整性检查） |
+
+#### R3: 模块路由缺少 id 导致菜单点击后折叠
+
+| 项目 | 内容 |
+|------|------|
+| **现象** | 展开侧边栏子菜单后点击子菜单项，子菜单自动折叠 |
+| **根因** | 后端路由和静态路由经 `addRouteIdByPath` 处理设置了 `id = path`，但模块路由直接 push 到 routes 数组未处理。React Router 为无 `id` 的路由自动生成内部 ID（不匹配菜单 key），导致 `useMatches()` 返回的 `id` 与菜单 `key` 对不上，`getSelectedKeys` 找不到父级 key，`openKeys` 被重置为空 |
+| **影响** | 侧边栏菜单无法保持展开状态，用户体验差 |
+| **修复** | `auth-guard.tsx` 中对模块路由调用 `addRouteIdByPath(getModuleRoutes())` |
+| **如何避免** | 所有路由来源（模块、后端、前端）在注册前都必须经过 `addRouteIdByPath` 处理。测试防护在 `tests/module-i18n-consistency.test.ts`（路由 id 设置检查） |
+
+#### R4: 模块迁移时 locale 翻译 key 丢失
+
+| 项目 | 内容 |
+|------|------|
+| **现象** | 浏览器控制台告警 `[i18n] Not found 'menu.name' key in 'zh-CN' locale messages`，system 模块的菜单管理页面翻译缺失 |
+| **根因** | 模块从 `src/locales/` 迁移到 `modules/system/locales/` 时，`menu` 节点被覆盖为仅含菜单名称翻译（`system`、`user` 等），丢失了菜单管理页面的业务翻译 key（`name`、`routePath`、`menuType` 等 20+ 个） |
+| **影响** | 菜单管理页面大量字段显示原始 key |
+| **修复** | 合并恢复原始业务翻译 key 到 `modules/system/locales/*.json` |
+| **如何避免** | 迁移 locale 文件时，必须逐个 key 对比源和目标，确保没有遗漏。新增测试在 `tests/module-i18n-consistency.test.ts`（扫描所有 `t()` 调用验证 key 存在性 + 框架 key 引用检查） |
+
 #### R1: 版本/排序/翻译分散导致模块无法独立发布
 
 | 项目 | 内容 |
@@ -708,7 +744,8 @@ react, react-dom, react-router, antd, @ant-design/icons, zustand, i18next, react
 - [ ] 模块目录下无 `package.json`（避免 IDE 误识别为独立项目）
 - [ ] `pnpm typecheck` 通过
 - [ ] `pnpm dev` 启动后页面功能正常
-- [ ] `pnpm test` 通过（含元信息一致性、发布独立性、i18n 一致性和路由优先级测试）
+- [ ] 模块 locale 文件包含所有 `t()` 调用引用的翻译 key（含业务 key，不只是 `menu`）
+- [ ] `pnpm test` 通过（含元信息一致性、发布独立性、i18n key 完整性、框架 key 引用和路由优先级测试）
 
 ### 8.3 开发注意事项
 

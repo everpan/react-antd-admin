@@ -381,31 +381,11 @@ modules/<module-name>/
 
 > 模块不需要独立的 `vite.config.ts`，统一由根目录构建脚本处理（见第 5 章）。
 
-### 4.2 模块 package.json 示例
+### 4.2 元信息管理（已废弃 package.json）
 
-```json
-{
- "name": "@app/module-system",
- "version": "1.2.0",
- "type": "module",
- "main": "entry.ts",
- "module": "entry.ts",
- "peerDependencies": {
-  "react": "^19.0.0",
-  "react-dom": "^19.0.0",
-  "react-router": "^7.0.0",
-  "antd": "^6.0.0",
-  "@ant-design/icons": "^6.0.0",
-  "zustand": "^5.0.0",
-  "i18next": "^25.0.0",
-  "react-i18next": "^16.0.0",
-  "dayjs": "^1.11.0",
-  "ky": "^1.14.0"
- }
-}
-```
+> **已废弃**：模块目录下不再创建 `package.json`（避免 IDE 将模块识别为独立项目）。
 
-`version` 字段必须与 `entry.ts` 中的 `version` 以及 `manifest.json` 中的 `version` 保持一致。构建脚本从 `package.json` 读取版本号，用于生成产物路径。
+模块的 `name`、`description`、`version` 全部定义在 `entry.ts` 的 `ModuleDefinition` 中，构建脚本从 `entry.ts` 解析 name 和 version，无需额外文件。
 
 ### 4.3 模块对框架资源的引用
 
@@ -418,7 +398,6 @@ import ContainerLayout from "#src/layout/container-layout";
 import { useUserStore } from "#src/store/user";
 import { useAccess } from "#src/hooks/use-access";
 import { request } from "#src/utils/request";
-import { $t } from "#src/locales";
 import type { ModuleDefinition } from "#src/module-loader/types";
 
 // 第三方库直接 import（运行时由主框架提供）
@@ -895,9 +874,10 @@ coreRoutes + externalRoutes → baseRoutes → AuthGuard → fetchUserInfo → s
 
 - `src/router/routes/index.ts`：已移除 `import.meta.glob("./modules/**/*.ts")`，模块路由由加载器提供
 - `AuthGuard`：在 `fetchUserInfoAndRoutes()` 中按以下顺序合并路由（模块路由优先于后端/前端路由，避免 `removeDuplicateRoutes` 保留后端路由的错误组件）：
-  1. 模块路由（`loadAllModules` → `getModuleRoutes()`）
-  2. 后端路由（`generateRoutesFromBackend`）
-  3. 前端路由（`generateRoutesByFrontend`）
+  1. 模块路由（`loadAllModules` → `addRouteIdByPath(getModuleRoutes())`，设置 `id = path` 确保菜单展开状态正确）
+  2. 过滤后端路由（`filterBackendRoutes` 移除已被模块覆盖的路径，避免组件解析失败和重复路由告警）
+  3. 后端路由（`generateRoutesFromBackend`，仅剩模块未覆盖的路径）
+  4. 前端路由（`generateRoutesByFrontend`）
 - `accessStore.setAccessStore()`：复用现有逻辑不变
 - `generate-routes-from-backend.ts`：`import.meta.glob` 已扩展为同时搜索 `/src/pages/` 和 `/modules/*/pages/`，确保后端路由也能正确解析已迁移到 modules 的页面组件
 
@@ -912,15 +892,18 @@ coreRoutes + externalRoutes → baseRoutes → AuthGuard → fetchUserInfo → s
 - 模块 i18n 资源以模块名为命名空间注册到 i18next
 
 ```ts
-// 模块加载器执行 i18n 合并
+// 模块加载器执行 i18n 合并（注意使用 resources.default）
 for (const [locale, loader] of Object.entries(module.i18n)) {
  const resources = await loader();
- i18next.addResourceBundle(locale, module.name, resources);
+ i18next.addResourceBundle(locale, module.name, resources.default || resources);
 }
 ```
 
+> **注意**：Vite 动态 `import()` JSON 返回 `{ default: {...} }`，必须使用 `resources.default` 获取实际内容，否则以数字开头的 key（如 `403SubTitle`）无法被 i18next 查找。
+
 - 模块内翻译使用命名空间限定：`t("system:menu.user")`
-- 主框架公共翻译保持全局命名空间：`t("common.menu.home")`
+- 主框架公共翻译保持全局命名空间：`t("common.view")`、`t("form.required")` 等
+- 菜单翻译由模块自管理（`modules/<name>/locales/*.json` 的 `menu` key），不再使用框架的 `common.json`
 
 ### 8.4 认证鉴权集成
 
