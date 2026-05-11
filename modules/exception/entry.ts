@@ -1,18 +1,19 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
-
 import { ServerErrorIcon } from "#src/icons";
+
 import ContainerLayout from "#src/layout/container-layout";
 import { $t } from "#src/locales";
 import { exception, exception403Path, exception404Path, exception500Path, exceptionPath, exceptionUnknownComponentPath } from "#src/router/extra-info";
-
 import {
 	AppstoreOutlined,
 	IssuesCloseOutlined,
 	MinusSquareOutlined,
 	StopOutlined,
 } from "@ant-design/icons";
+
 import { createElement, lazy } from "react";
+import pkg from "./package.json";
 
 const Exception403 = lazy(() => import("./pages/403"));
 const Exception404 = lazy(() => import("./pages/404"));
@@ -68,7 +69,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 	name: "exception",
 	description: "异常页面模块",
-	version: "1.0.0",
+	version: pkg.version,
 	routes,
 	i18n: {
 		"zh-CN": () => import("./locales/zh-CN.json"),

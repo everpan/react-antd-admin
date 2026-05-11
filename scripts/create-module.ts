@@ -40,7 +40,6 @@ async function main() {
 	}
 
 	const description = await question(rl, "模块描述", `${moduleName} 模块`);
-	const version = await question(rl, "初始版本号", "1.0.0");
 	const hasI18n = (await question(rl, "是否需要国际化（y/n）", "y")).toLowerCase() === "y";
 	const orderInput = await question(rl, "菜单排序权重（数字，越大越靠后）", "50");
 	const order = Number.parseInt(orderInput, 10) || 50;
@@ -66,7 +65,7 @@ async function main() {
 	const pkg = {
 		name: `@app/module-${moduleName}`,
 		type: "module",
-		version,
+		version: "1.0.0",
 		main: "entry.ts",
 		module: "entry.ts",
 	};
@@ -144,7 +143,7 @@ const routes: AppRouteRecordRaw[] = [
 const mod: ModuleDefinition = {
 \tname: "${moduleName}",
 \tdescription: "${description}",
-\tversion: "${version}",
+\\tversion: pkg.version,
 \troutes${i18nBlock}${configBlock}
 };
 
@@ -164,7 +163,6 @@ export default mod;
 	const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
 	manifest.modules.push({
 		name: moduleName,
-		version,
 		entry: `/modules/${moduleName}/entry.ts`,
 		enabled: true,
 	});
@@ -184,7 +182,7 @@ export default mod;
 	console.log("    └── package.json");
 	console.log("\n已自动更新:");
 	console.log(`  • src/router/extra-info/order.ts (添加 ${exportName} = ${order})`);
-	console.log(`  • manifest.json (添加 ${moduleName}@${version})`);
+	console.log(`  • manifest.json (添加 ${moduleName})`);
 	console.log("\n下一步:");
 	console.log("  1. 在 src/locales/zh-CN/common.json 中添加菜单翻译 key");
 	console.log("  2. 运行 pnpm dev 启动开发");

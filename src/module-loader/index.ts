@@ -47,13 +47,6 @@ async function loadModuleEntry(entry: ManifestModuleEntry): Promise<ModuleDefini
 			return null;
 		}
 
-		if (mod.version !== entry.version) {
-			console.error(
-				`[module-loader] Version mismatch for "${mod.name}": manifest=${entry.version}, actual=${mod.version}`,
-			);
-			return null;
-		}
-
 		return mod;
 	}
 	catch (error) {
@@ -141,7 +134,7 @@ export async function loadAll(manifest: Manifest): Promise<ModuleInstance[]> {
 		}
 		else {
 			modules.set(entry.name, {
-				definition: { name: entry.name, description: "", version: entry.version, routes: [] },
+				definition: { name: entry.name, description: "", version: "0.0.0", routes: [] },
 				status: "error",
 				error: new Error("Failed to load module entry"),
 			});
