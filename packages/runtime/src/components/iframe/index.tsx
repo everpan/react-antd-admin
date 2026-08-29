@@ -3,6 +3,8 @@ import { isValidElement } from "react";
 import { useTranslation } from "react-i18next";
 import { useMatches } from "react-router";
 
+import { resolveSafeIframeLink } from "#src/utils/iframe-guard";
+
 export function Iframe() {
 	const matches = useMatches();
 	const { t } = useTranslation();
@@ -24,16 +26,23 @@ export function Iframe() {
 	}
 
 	/**
-	 * use this tool https://iframegenerator.top/ to generate the iframe code
+	 * P6.4 / §4.8：iframe 加固——仅渲染通过守卫的链接（https + 域名
+	 * 白名单），并以 sandbox 限制嵌入页能力（不给 allow-same-origin）。
 	 */
-	return iframeLink
+	const safeLink = resolveSafeIframeLink(iframeLink ?? "");
+	if (iframeLink && !safeLink) {
+		console.error(`[iframe] 链接未通过安全校验（须 https 且域名在白名单内），已拒绝渲染：${iframeLink}`);
+	}
+
+	return safeLink
 		? (
 			<iframe
-				src={iframeLink}
+				src={safeLink}
 				title={title}
 				width="100%"
 				height="100%"
 				loading="lazy"
+				sandbox="allow-scripts allow-popups"
 				className="p-4 rounded-sm"
 			/>
 		)
