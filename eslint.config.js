@@ -1,5 +1,64 @@
 import antfu from "@antfu/eslint-config";
 
+/**
+ * P2.4 卡口：runtime 是框架产物，必须单向被模块依赖，不得反向 import 业务模块。
+ *
+ * 为什么不用 `no-restricted-imports`：该规则底层用 minimatch 匹配，而 minimatch 默认把
+ * 以 `#` 开头的 pattern 当成「注释」直接忽略，导致 `#modules` / `#modules/**` 永远匹配不到
+ * （已实测：`react` 能匹配，`#modules/**` 匹配不到）。因此这里用一条本地自定义规则，
+ * 直接对 import / export / 动态 import() 的 source 做前缀判断，覆盖所有形态。
+ *
+ * 仅对 `packages/runtime/src/**` 生效（模块工程仍可正常使用 #modules）。
+ */
+const noModulesInRuntime = {
+	meta: {
+		type: "problem",
+		docs: {
+			description: "禁止 runtime 源码反向依赖业务模块（#modules）",
+		},
+		schema: [],
+		messages: {
+			restricted: "runtime 不得反向依赖业务模块（#modules）。请改用框架内置组件或通过 defineModule 契约解耦。",
+		},
+	},
+	create(context) {
+		function check(node, source) {
+			if (typeof source === "string" && source.startsWith("#modules")) {
+				context.report({ node, messageId: "restricted" });
+			}
+		}
+
+		return {
+			ImportDeclaration(node) {
+				check(node, node.source.value);
+			},
+			ExportNamedDeclaration(node) {
+				if (node.source)
+					check(node, node.source.value);
+			},
+			ExportAllDeclaration(node) {
+				check(node, node.source.value);
+			},
+			ImportExpression(node) {
+				if (node.source.type === "Literal")
+					check(node, node.source.value);
+			},
+		};
+	},
+};
+
+const runtimeNoModulesGuard = {
+	files: ["packages/runtime/src/**/*"],
+	plugins: {
+		"runtime-guard": {
+			rules: { "no-modules-in-runtime": noModulesInRuntime },
+		},
+	},
+	rules: {
+		"runtime-guard/no-modules-in-runtime": "error",
+	},
+};
+
 export default antfu({
 	react: true,
 	markdown: false,
@@ -12,4 +71,4 @@ export default antfu({
 		"style/jsx-indent-props": ["error", "tab"],
 		"react-hooks/exhaustive-deps": "off",
 	},
-});
+}, runtimeNoModulesGuard);

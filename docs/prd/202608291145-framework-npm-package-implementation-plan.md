@@ -287,7 +287,7 @@ pnpm build
 | 2.1 | **KeepAlive 上移到 shell 固定层**（必须第一个做） | 从 `ContainerLayout → LayoutContent`（`src/layout/layout-content/index.tsx:116-126`）移到 LayoutRoot 之后、路由 outlet 之外；exclude 改由 module-loader 汇总各模块 `handle` 计算 | ✅ 已完成（`26cc3d7`） |
 | 2.2 | 引入 `handle.layout` 契约 | `"container" \| "parent" \| "none"`，迁移期默认 `container`（P2.7 后改为 `none`）；`src/router/types.ts` 的 `RouteMeta` 加字段 | ✅ 已完成（`87bd842`） |
 | 2.3 | 框架内置 `NotFound` / `UnknownComponent` | 替代 `fallback.ts:5`、`generate-routes-from-backend.ts:8` 对 `#modules/exception` 的依赖；exception 模块降级为可选覆盖 | ✅ 已完成 |
-| 2.4 | 加 CI 卡口 | `eslint.config.js` 的 `no-restricted-imports` 禁 runtime 内出现 `#modules`；CI 跑 `grep -rn "#modules" packages/runtime/src && exit 1` | ⬜ 待开始 |
+| 2.4 | 加 CI 卡口 | `eslint.config.js` 的 `no-restricted-imports` 禁 runtime 内出现 `#modules`；CI 跑 `grep -rn "#modules" packages/runtime/src && exit 1` | ✅ 已完成 |
 | 2.5 | 移除主包对模块页面的 glob 收录 | `generate-routes-from-backend.ts:14-17` 去掉 `/modules/*/pages/**`；同步改 `tests/module-route-priority.test.ts:43-52` 的断言为**不含** `/modules/` | ⬜ 待开始 |
 | 2.6 | `__APP_INFO__` → `getAppInfo()` | 覆盖 `modules/about/pages/constants.ts:1` 与 `src/utils/get-app-namespace/index.ts:13` | ⬜ 待开始 |
 | 2.7 | 先迁 1–2 个 dogfooding 模块验证语义 | 建议 `route-nest`（有嵌套）+ `system`（有 `keepAlive: false`） | ⬜ 待开始 |
@@ -306,6 +306,12 @@ pnpm build
 - **文案随框架下发**：新增 `locales/{zh-CN,en-US}/exception.json`，走框架默认 `translation` namespace（`t("exception.notFoundSubTitle")`）。顺带修复既有隐性缺失 key —— `components/page-error` 一直引用 `t("exception.pageErrorTitle")`，但该文案此前只存在于 exception **模块**的 namespace（`exception:pageErrorTitle`）里，实际取不到；现由框架 locale 提供，并从模块 locale 中移除该已失效的 key。
 - **exception 模块降级为可选覆盖**：模块保留 `/exception/403|404|500|not-found-component` 演示路由，全部走相对引用（`./pages/*`），不再被框架硬引用；同时删除 P1 遗留的两个手写 `index.d.ts`（仅为满足框架跨目录引用而存在，现已无用）。
 - **验证**：新增 `tests/framework-fallback.test.ts`（5 例，含「runtime 源码不得出现 `#modules/exception`」的全量扫描断言，可作为 P2.4 卡口的测试侧对照）；full vitest 57/57；`tsc --noEmit` 0 错误；runtime 库构建 + 完整应用 `vite build` 均通过，产物同时含框架 `not-found` / `unknown-component` chunk 与模块自身的演示 chunk。
+
+### P2.4 执行小结
+
+- **两层卡口（本地 + CI）**：① ESLint 规则 `runtime-guard/no-modules-in-runtime`，仅作用于 `packages/runtime/src/**`，对 `import` / `export ... from` / 动态 `import()` 的 source 做 `#modules` 前缀判断；② CI 新增 `.github/workflows/ci.yml`，在 `feature/pkg-*` 分支 push 与 PR 上跑 `grep -rn "#modules" packages/runtime/src && exit 1`，作为发布前的硬兜底。③ 测试侧已有 `tests/framework-fallback.test.ts` 的全量扫描断言对照。
+- **为什么没直接用 `no-restricted-imports`**：该规则底层用 minimatch 匹配，而 minimatch 默认把以 `#` 开头的 pattern 当「注释」直接忽略，导致 `#modules` / `#modules/**` 永远匹配不到（实测 `react` 能匹配、`#modules/**` 匹配不到）。因此改用本地自定义规则做前缀判断，覆盖静态 / 动态 / re-export 全部形态。
+- **验证**：临时探针文件 `import("#modules/exception/pages/404")` 与该路径的静态 `import` 均被规则拦截（已删探针）；对真实 `packages/runtime/src` 跑 eslint，`no-modules-in-runtime` 报错数为 0（无误伤）；`grep -rn "#modules" packages/runtime/src` 当前为空（pass 路径 exit 0，fail 路径 exit 1 已模拟通过）。
 
 **BDD 场景**：设计文档 US-4、US-8。
 

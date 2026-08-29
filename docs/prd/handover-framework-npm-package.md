@@ -165,13 +165,13 @@ my-modules/
 | 2.1 | KeepAlive 上移到宿主固定层 | ✅ | `26cc3d7` |
 | 2.2 | 引入 `handle.layout` 契约 | ✅ | `87bd842` |
 | 2.3 | 框架内置 `NotFound` / `UnknownComponent` | ✅ | `db2d05f` |
-| 2.4 | CI 卡口：禁 runtime 内出现 `#modules` | ⬜ **下一步** | |
+| 2.4 | CI 卡口：禁 runtime 内出现 `#modules` | ✅ | |
 | 2.5 | 移除主包对模块页面的 glob 收录 | ⬜ | |
 | 2.6 | `__APP_INFO__` → `getAppInfo()` | ⬜ | |
 | 2.7 | 先迁 1–2 个模块 dogfooding 验证语义 | ⬜ | |
 | 2.8 | P2 TDD 验收与文档回填 | ⬜ | |
 
-**2.4 具体要做什么**：`eslint.config.js` 加 `no-restricted-imports` 禁止 `packages/runtime/**` 里出现 `#modules/*`；CI 加 `grep -rn "#modules" packages/runtime/src && exit 1`。测试侧的对照断言已经在 `tests/framework-fallback.test.ts` 里写好了（全量扫描 runtime 源码），2.4 是把它升级成 lint + CI 双卡口。
+**2.4 具体做了什么**：ESLint 增加本地规则 `runtime-guard/no-modules-in-runtime`（仅作用于 `packages/runtime/src/**`，对 `import` / `export ... from` / 动态 `import()` 的 source 做 `#modules` 前缀判断），CI 新增 `.github/workflows/ci.yml` 跑 `grep -rn "#modules" packages/runtime/src && exit 1` 作为硬兜底。注意：**不能用 `no-restricted-imports`**——它底层用 minimatch，而 minimatch 默认把以 `#` 开头的 pattern 当注释忽略，导致 `#modules` 永远匹配不到（实测 `react` 能匹配、`#modules/**` 匹配不到）。测试侧对照断言已在 `tests/framework-fallback.test.ts`（全量扫描 runtime 源码），2.4 把它升级成了 lint + CI 双卡口。
 
 **2.5 注意**：删掉 `generate-routes-from-backend.ts` 里 glob 的 `/modules/*/pages/**` 之后，要同步把 `tests/module-route-priority.test.ts` 的断言改成**不含** `/modules/`。
 

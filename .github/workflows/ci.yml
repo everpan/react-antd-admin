@@ -1,0 +1,31 @@
+name: CI Guard
+
+on:
+  push:
+    branches: ['feature/pkg-*']
+  pull_request:
+    branches: ['feature/pkg-*', main]
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-no-modules:
+    name: 'Guard: runtime 不得反向依赖业务模块 #modules'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      # P2.4 卡口：runtime 是框架产物，必须单向被模块依赖。
+      # 若 packages/runtime/src 中出现任意对 #modules 的引用（静态 import / 动态 import() /
+      # re-export），即视为违反「框架不得反向依赖业务模块」的契约，CI 直接失败。
+      # 配套还有 eslint 的 runtime-guard/no-modules-in-runtime 规则（本地提交即拦截），
+      # 此处作为 CI 层的硬卡口兜底。
+      - name: 运行反向依赖卡口
+        run: |
+          if grep -rn "#modules" packages/runtime/src; then
+            echo "::error::packages/runtime/src 中发现对业务模块 #modules 的反向依赖，已违反 P2.4 卡口"
+            exit 1
+          fi
+          echo "OK: packages/runtime/src 未反向依赖 #modules"
