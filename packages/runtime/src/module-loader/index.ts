@@ -11,7 +11,7 @@ import i18next from "i18next";
 
 import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
 import { useUserStore } from "#src/store/user";
-import { request } from "#src/utils/request";
+import { createScopedRequest } from "#src/utils/request/scoped";
 import { getAllRoutePaths, getKeepAliveExcludes } from "./keep-alive";
 import { registerSlot, removeModuleSlots } from "./slots";
 
@@ -26,7 +26,12 @@ function createModuleContext(definition: ModuleDefinition): ModuleContext {
 			version: definition.version,
 		},
 		utils: {
-			request,
+			// P6.3 / D11：模块拿到的是按其登记 apiPrefix 收敛的 scoped client，
+			// 而非全局 request——越界请求在客户端即被拒绝
+			request: createScopedRequest(
+				definition.name,
+				() => registeredApiPrefixes.get(definition.name),
+			),
 		},
 		register: {
 			store: (name: string, store: unknown) => {
