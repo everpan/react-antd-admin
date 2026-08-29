@@ -49,8 +49,8 @@ modules/<name>/
 
 **Module loading flow:**
 1. `manifest.json` (root) declares enabled modules with entry paths
-2. `src/module-loader/index.ts` loads modules: parallel entry loading → topological sort (by dependencies) → lifecycle hooks → i18n merge
-3. Module routes are injected into the router before backend/frontend routes
+2. `packages/runtime/src/index.tsx` loads modules once at app bootstrap (`loadAll`): parallel entry loading → topological sort (by dependencies) → lifecycle hooks → i18n merge; failure renders a human-readable fatal error page
+3. The auth guard only consumes `getRoutes()`; module routes are injected before backend/frontend routes. Module-level `config.requiredRoles` filters routes **before** injection (B16)
 
 **Key conventions:**
 - `entry.ts` is the sole source for module metadata (name, version, description) — no separate `package.json` or `meta.json`
@@ -114,7 +114,7 @@ Uses `ky` (not axios or fetch directly). Configured with:
 
 ### API Mocking (`fake/`)
 
-Uses `vite-plugin-fake-server` with fake endpoint files in `fake/*.fake.ts`. Mock server is enabled in both dev and production builds.
+Uses `vite-plugin-fake-server` with fake endpoint files in `fake/*.fake.ts`. Mock server is enabled in dev; production builds only include it when `VITE_ENABLE_FAKE_PROD=1` is set explicitly (P6.5/B15 — a test asserts the build output contains no fake code).
 
 ### Internationalization (`src/locales/`)
 

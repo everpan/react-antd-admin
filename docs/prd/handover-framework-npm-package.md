@@ -2,7 +2,7 @@
 
 > 面向新接手这项工作的开发者。
 > 覆盖：要做成什么、为什么这么做、已经做到哪、每步怎么验收、哪些坑必踩。
-> 最后更新：2026-08-29（P2 全部完成于 `feature/pkg-p2-inversion`；下一步 P3，见 §8）
+> 最后更新：2026-08-30（**P0–P6 全部完成**并依次本地合并回 `modularization`；O7 按需求方指示搁置。遗留项见 §3.5「遗留」与 §8）
 
 ## 0. 五分钟上手
 
@@ -153,12 +153,12 @@ my-modules/
 | Spike B | 外部模块 Tailwind 产出与注入验证 | ✅ Go |
 | P1 | 垂直切片：`rad build` / `rad dev` / shell importmap / playground | ✅ |
 | **P2** | **依赖反转与语义迁移** | ✅ **全部完成（2.1–2.8）** |
-| P3 | Runtime 出口收敛与冻结 | ⬜ |
-| P4 | Shell 与共享表治理 | ⬜ |
-| P5 | 模块迁移与测试改造 | ⬜ |
-| P6 | 安全加固 | ⬜ |
+| P3 | Runtime 出口收敛与冻结 | ✅（`feature/pkg-p3-runtime-api`） |
+| P4 | Shell 与共享表治理 | ✅（`feature/pkg-p4-shell`） |
+| P5 | 模块迁移与测试改造 | ✅（`feature/pkg-p5-migration`） |
+| P6 | 安全加固 | ✅（`feature/pkg-p6-security`；O7 搁置） |
 
-### P2 明细（当前所在位置）
+### P2 明细
 
 | # | 任务 | 状态 | 提交 |
 |---|---|---|---|
@@ -206,14 +206,28 @@ my-modules/
 | P2.7 模块布局解耦 dogfooding | `resolveRouteLayouts` 按 `handle.layout` 注入布局；route-nest/system 零 layout import 且产物无 `#src/layout`；默认值按 D9 翻转为 `none`；full vitest 68；`tsc --noEmit` 0；build 通过 | ✅ 通过 | `766e4c3` / `5ffa2db` |
 | P2.8 P2 验收 | §3 P2 完成判据 5 条全绿；本文与计划文档同步更新 | ✅ 通过 | 文档提交 |
 
-#### 未完成（待接手）
+#### P3–P6（全部完成，2026-08-30）
 
-| 任务 | 验收条件（做完的标准） | 当前状态 | 下一步 / 阻塞 |
-|---|---|---|---|
-| P3 出口冻结 | `#src/*`→`@react-antd-admin/runtime`；图标契约统一 `ReactNode`；出 `runtime.d.ts` 并取消 `private: true` | 🔄 d.ts 阻塞已解除（`feature/pkg-p3-runtime-api`） | 3 处声明报错已修，`dist/` 声明树（146 个 d.ts）已出，`exports.types` 已指向 `dist/index.d.ts`（实测改用结构化标注而非引用 jss，见计划文档 P3.5 小结）；剩余：出口白名单、`#src` 替换、图标契约、`private: true` 取消 |
-| P4 共享表治理 | importmap 自动生成（不再手写）；dev 三件套（`jsx-dev-runtime` 映射 / react-refresh preamble / sourcemap）；`rad info` 版本矩阵；版本严格相等校验（D12） | ⬜ | D12 必须严格相等而非 semver 范围 |
-| P5 模块迁移 | `modules/` 下 8 个模块全迁新语义；旧 `manifest.json` 下线（O5，建议 P5） | ⬜ | — |
-| P6 安全加固 | CSP；iframe scheme 白名单；关生产 fake server（B15 `enableProd: true` 等同认证绕过）；`requiredRoles` 真正生效（B16）；加载失败不静默 catch（B7）；供应链防护 | ⬜ | **O7 阻塞**：refreshToken→httpOnly Cookie 需后端配合，超出前端范围；不阻塞 P0–P5 |
+各任务逐项的小结、问题分类与耗时记录在计划文档对应阶段章节，此处只列验收锚点：
+
+| Phase | 验收锚点（测试卡口即验收） | 状态 |
+|---|---|---|
+| P3 出口冻结 | `tests/runtime-exports.test.ts`（出口白名单）+ playground 独立 tsc 自证（`tests/playground-package-tsc.test.ts`）；`private: true` 已取消，peerDeps 25 包与共享表互锁 | ✅ |
+| P4 共享表治理 | `tests/shared-deps.test.ts` + `tests/shell-importmap.test.ts` + `tests/version-gate.test.ts`（D12 严格相等）；importmap/shell 表全部由 `SHARED_DEPS` 单一来源生成，四张手写清单归一 | ✅ |
+| P5 模块迁移 | `tests/module-bootstrap.test.ts`（清单消费仅入口，O5/B7）+ `tests/manifest-merge.test.ts`（R12）+ `tests/module-required-roles.test.ts`（B16）+ `tests/shell-integrity.test.ts`（L2）；手册重写 `docs/prd/module-development-guide.md` | ✅ |
+| P6 安全加固 | `tests/shell-trust.test.ts`（moduleOrigins）+ `tests/shell-csp.test.ts`（nonce CSP，无 strict-dynamic）+ `tests/scoped-request.test.ts`（D11）+ `tests/iframe-guard.test.ts` + `tests/no-fake-in-dist.test.ts`（B15）+ `tests/supply-chain.test.ts`（P6.6/6.8） | ✅ |
+
+收尾全量：161 用例 / 32 文件绿，`tsc --noEmit` 0 错误，`pnpm run build` 通过。
+
+#### 遗留（待接手）
+
+| 项 | 说明 |
+|---|---|
+| O7 refreshToken → httpOnly Cookie | 需后端配合，需求方未确认，前端侧不实施；风险已记 R13/O7，README 有明示 |
+| `require-trusted-types-for` CSP 未启用 | antd6 cssinjs 大量 innerHTML 注入，直接加会全站崩，需配套 trusted-types policy |
+| CI 版本回归（宿主升级 → 已发布模块） | 随首轮真实发布补进发布流程 |
+| `frame-src` 与 `TRUSTED_ORIGINS` 占位值 | 当前为设计示例域，部署时按业务域替换并重建 shell |
+| 真 HMR（vite middleware dev server） | `rad dev` 现为构建 + watch + 手动刷新；P4/P5 偏差记录延续 |
 
 ---
 
@@ -255,7 +269,7 @@ my-modules/
 
 ---
 
-## 5. 后续阶段要做什么
+## 5. P3–P6 各阶段做了什么（全部已完成）
 
 ### P3：Runtime 出口收敛与冻结
 
@@ -279,15 +293,17 @@ importmap 自动生成（不再手写）、dev 体验三件套（`jsx-dev-runtim
 
 **D12 为什么必须严格相等而非 semver 范围**：类型来自 `node_modules`，实现来自 shell 的 `dist`。两者可以差 N 个 minor，结果类型全绿而运行期炸。
 
-### P5：模块迁移与测试改造
+### P5：模块迁移与测试改造（已完成）
 
-把 `modules/` 下 8 个模块全部迁到新语义；旧 `manifest.json` 下线时机待定（O5，建议 P5）。
+8 个模块全部迁到新语义（布局部分在 P3.2 前跑完成）；O5 的落地方式是**守卫链路下线**：`manifest.json` 加载上移到 `index.tsx` 启动期，守卫只消费 `getRoutes()`，加载失败显示人话错误页（B7）。手册已重写为外部团队视角：`docs/prd/module-development-guide.md`。
 
-### P6：安全加固
+### P6：安全加固（已完成）
 
-CSP、iframe scheme 白名单、关掉生产 fake server（B15，`vite.config.ts` 的 `enableProd: true` 等同认证绕过）、`requiredRoles` 真正生效（B16）、加载失败不再静默 catch（B7）、供应链防护（provenance / 2FA / frozen-lockfile / typosquat）。
+信任根（`moduleOrigins` 白名单）、CSP（构建期随机 nonce 保护内联 importmap，不加 strict-dynamic）、scoped request client（模块按 `register.apiPrefix` 前缀收敛，越界拒绝）、iframe 加固（https + 域名白名单 + sandbox）、fake server 治理（B15，`enableProd` 改 `VITE_ENABLE_FAKE_PROD` 显式控制 + 产物扫描卡口）、供应链（发布锁官方源 / provenance / README checklist / R13 明示）。
 
-**O7 未决且阻塞**：refreshToken 迁到 httpOnly Cookie 需要后端配合，超出前端范围。在此之前，风险是「同组织内的模块可读取 localStorage 里的 refreshToken」，由组织内信任模型承担。不阻塞 P0–P5。
+执行中发现并修复的新问题：`__APP_INFO__` 曾把整个 package.json（含 devDependencies 清单）打进产物，属供应链侦察信息泄露——已剔除注入并加卡口。
+
+**O7 搁置（需求方指示）**：refreshToken 迁到 httpOnly Cookie 需要后端配合。在此之前，风险是「同组织内的模块可读取 localStorage 里的 refreshToken」，由组织内信任模型承担，已记 R13/O7。
 
 ---
 
@@ -337,6 +353,12 @@ d.ts 生成失败时仍会写出一部分声明文件到 `packages/runtime/dist/
 | 框架↔模块依赖方向 | `tests/framework-fallback.test.ts` |
 | 路由优先级 / glob 收录 | `tests/module-route-priority.test.ts` |
 | CLI 产物契约 | `tests/cli-build.test.ts`、`tests/vertical-slice.test.ts` |
+| 共享依赖表 / importmap / 版本门禁 | `tests/shared-deps.test.ts`、`tests/shell-importmap.test.ts`、`tests/version-gate.test.ts` |
+| 清单加载与错误契约 | `tests/module-bootstrap.test.ts`、`tests/manifest-merge.test.ts` |
+| 模块角色 / 布局插槽 | `tests/module-required-roles.test.ts`、`tests/runtime-slots.test.ts` |
+| shell 完整性 / 信任根 / CSP | `tests/shell-integrity.test.ts`、`tests/shell-trust.test.ts`、`tests/shell-csp.test.ts` |
+| scoped request / iframe 守卫 | `tests/scoped-request.test.ts`、`tests/iframe-guard.test.ts` |
+| fake 门禁 / 供应链 | `tests/no-fake-in-dist.test.ts`、`tests/supply-chain.test.ts` |
 | 模块 i18n 规范 | `tests/module-i18n-consistency.test.ts` |
 | 目录结构 | `tests/monorepo-layout.test.ts`、`tests/playground-structure.test.ts` |
 
@@ -354,12 +376,12 @@ d.ts 生成失败时仍会写出一部分声明文件到 `packages/runtime/dist/
 
 ## 8. 接手清单（按此顺序，给下一棒）
 
-> 当前状态：`feature/pkg-p2-inversion` 上 P2 全部任务（2.1–2.8）已完成并逐任务提交，五条完成判据全绿（68 测试 / tsc 0 错 / 完整构建通过）。
+> 当前状态：**P0–P6 全部完成**，六个阶段分支依次本地合并回 `modularization`（分支均保留，未推送远端）。收尾全量 161 用例 / 32 文件绿，tsc 0 错误，完整构建通过。
 
-1. **从 P2 分支切出 P3 分支**：`git switch -c feature/pkg-p3-runtime-api`（分支名见计划文档 §0）。
-2. **P3 第一步——修 d.ts 3 处报错**（见 §3.5 / §5 的「已探明的具体阻碍」）：`layout-menu/style.ts`、`layout-tabbar/style.ts` 的 TS2883 给 `createUseStyles` 加显式 `Classes` 标注，`locales/index.ts:19` 的 TS4023 把 `LanguageModule` 显式导出。这三项解掉后 `pnpm --filter @react-antd-admin/runtime build` 才能出 `runtime.d.ts`，出口冻结才有载体。
-3. **注意**：默认值已翻转为 `none`（§2.3），新模块不声明 `handle.layout` 就没有 chrome；后端下发的父级路由也须携带 layout。给模块排障时先查这个。
-4. **P3 后续**：出口白名单（3.1）、`#src/*` 说明符替换（3.2，23 个说明符 / 83 条 import / 28 文件，动手前重量）、图标契约（3.3）、`build-modules` 正则替换（3.4）、`registerSlot`（3.6）、playground 类型自证（3.7）。
-5. **P4–P6** 详见 §5 与各阶段计划。O7（refreshToken→httpOnly Cookie）需后端配合，不阻塞 P0–P5。
+1. **对照遗留表**（§3.5「遗留」）按需处理：O7 等后端确认；`TRUSTED_ORIGINS` / `frame-src` 部署时替换占位域名（`packages/shell/src/trust.ts` / `src/csp.ts`，改后重建 shell）。
+2. **首次真实发布时**：按 README「Security & Publishing」checklist 走（2FA、`--provenance`、`--frozen-lockfile`），并把 CI 版本回归（宿主升级 → 已发布模块）补进发布流程。
+3. **排障提醒**：模块加载失败看启动期人话错误页（B7）；模块路由/菜单整体缺失先查 `requiredRoles`（B16，注入前过滤）与清单 `enabled`；单模块 `status: "error"` 不影响其余模块。
+4. **外部团队入口文档**是 `docs/prd/module-development-guide.md`（P5.6 重写）；框架侧改共享依赖须走 `packages/cli/src/shared-deps.ts` 单一来源，drift-prevention 测试会先红。
+5. 各阶段逐任务的小结、问题分类（反常规/反常识/与业界不符）与耗时都在计划文档对应 Phase 章节，勿在本文重复。
 
 **最小验证回路（任何改动后都跑）**：`npx tsc --noEmit` → `pnpm test` → 相关构建（runtime lib / shell / 完整 app）。测试里的路径从 `tests/helpers/paths.ts` 取，别硬编码。
