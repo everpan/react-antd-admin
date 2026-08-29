@@ -4,7 +4,7 @@
  * 产物（dist/）：
  *   index.html                  —— 含手写 importmap
  *   assets/<name>.js            —— 各共享依赖的单入口自包含 ESM
- *   assets/host.js              —— 宿主应用（external 全部共享依赖）
+ *   assets/index-<hash>.js      —— 宿主应用（host.tsx，external 全部共享依赖）
  *   assets/runtime.js           —— 拷贝自 @react-antd-admin/runtime 的 dist
  *
  * 关键：每个共享依赖单独打包、相互 external（经 importmap 解析），
@@ -77,7 +77,7 @@ function injectImportmap(map: Record<string, string>) {
 
 async function buildSharedEntries() {
 	for (const entry of SHARED_ENTRIES) {
-		// 自分のパッケージのみバンドルし、それ以外の共有依存は external
+		// 只打包自己这一个包，其余共享依赖一律 external（由 importmap 解析）
 		const external = (id: string) => isSharedDep(id) && id !== entry.pkg;
 
 		console.log(`[shell] 构建共享依赖 ${entry.name} ← ${entry.pkg}`);

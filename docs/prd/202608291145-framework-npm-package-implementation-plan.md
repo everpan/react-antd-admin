@@ -321,7 +321,7 @@ pnpm build
 | 3.2 | 23 个 `#src/*` 说明符 → `@react-antd-admin/runtime` | 约 86 条 import / 29 个文件，可用 codemod |
 | 3.3 | 图标契约统一为 `ReactNode` | 11 处字符串 → `createElement(X)`；`generate-menu-items-from-routes.ts:42-54` 去掉 `isString` 分支 |
 | 3.4 | `defineModule` + `tsx` 真实 import 解析 name/version | 一次性替换 `build-modules.ts:69-76` 的脆弱正则（B10） |
-| 3.5 | 出 d.ts；补 `files` / `exports` / `peerDependencies` | 取消 `private: true` 准备发版 |
+| 3.5 | 出 d.ts；补 `files` / `exports` / `peerDependencies` | 取消 `private: true` 准备发版。**P2.3 后复测：B3 反向依赖已不再是阻塞项**，`tsc -p tsconfig.dts.json` 仅剩 3 处 declaration-emit 报错待修：① `layout/layout-menu/style.ts:3` 与 ② `layout/layout-tabbar/style.ts:3` 的 TS2883（`createUseStyles` 推断类型引用了 jss 的 `Classes`，需显式类型标注）；③ `locales/index.ts:19` 的 TS4023（`i18nResources` 用到 `helper.ts` 未导出的 `LanguageModule`，需导出该类型或标注返回类型） |
 | 3.6 | `registerSlot()` 实现（L2 布局插槽） | 配合 P2 的 L1 |
 | 3.7 | TDD：playground 仅靠包名 `tsc --noEmit` 通过 | |
 

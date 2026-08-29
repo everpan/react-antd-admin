@@ -4,6 +4,8 @@
 
 当前默认支持中英文两种语言，源文件位于 `src/locales` 中，如果需要新增语言支持，确保文件名是 [ISO 639-1](https://www.andiamo.co.uk/resources/iso-language-codes/) 规范里面的，而不是自己随便写。
 
+这里只放**框架自身**的文案。页面级文案由各模块自带（`modules/<name>/locales/*.json`，通过 `entry.ts` 的 `i18n` 字段声明，走 `模块名:key` 的 namespace 语法）。
+
 某个语言下需要包含的文件结构如下所示：
 
 ```bash
@@ -12,17 +14,13 @@
 │   ├── en-US
 │   │   ├── authority.json             # 权限相关，例如登录页面等
 │   │   ├── common.json                # 通用字段，例如菜单、按钮文字、信息提示等
+│   │   ├── exception.json             # 框架内置兜底页，例如 404、未知组件、页面报错
 │   │   ├── form.json                  # 表单相关，例如表单字段、校验信息等
 │   │   ├── preferences.json           # 偏好设置相关，例如主题、字体大小等
-│   │   ├── widgets.json               # 偏好设置里的控件，例如系统更新等
-│   │   ├── -----------                # 以下为页面级别的翻译文件
-│   │   ├── system.json                # 系统管理页面
-│   │   ├── home.json                  # 首页
-│   │   ├── about.json                 # 关于页面
-│   │   └── personal-center.json       # 个人中心
+│   │   └── widgets.json               # 偏好设置里的控件，例如系统更新等
 ```
 
-如果新建一个路由，只需要新建一个对应的文件即可。
+新增框架文案时新建一个对应的文件即可，文件名会成为 key 的第一段（如 `exception.json` → `t("exception.notFoundSubTitle")`）。
 
 ## 国际化 Key 的规范
 
