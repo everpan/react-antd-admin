@@ -1,27 +1,8 @@
 //#region \0rolldown/runtime.js
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
-var __copyProps = (to, from, except, desc) => {
-	if (from && typeof from === "object" || typeof from === "function") for (var keys = __getOwnPropNames(from), i = 0, n = keys.length, key; i < n; i++) {
-		key = keys[i];
-		if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-			get: ((k) => from[k]).bind(null, key),
-			enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-		});
-	}
-	return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule || !__hasOwnProp.call(mod, "default") ? __defProp(target, "default", {
-	value: mod,
-	enumerable: true
-}) : target, mod));
 //#endregion
-var dayjs_default = (/* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((exports, module) => {
+//#region ../../node_modules/.pnpm/dayjs@1.11.23/node_modules/dayjs/dayjs.min.js
+var require_dayjs_min = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	(function(t, e) {
 		"object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : (t = "undefined" != typeof globalThis ? globalThis : t || self).dayjs = e();
 	})(exports, (function() {
@@ -316,5 +297,6 @@ var dayjs_default = (/* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((ex
 			return O(1e3 * t);
 		}, O.en = D[g], O.Ls = D, O.p = {}, O;
 	}));
-})))(), 1)).default;
-export { dayjs_default as default };
+}));
+//#endregion
+export default require_dayjs_min();

@@ -2,12 +2,12 @@ import ky from "ky";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Link, Navigate, Outlet, createBrowserRouter, matchRoutes, useLocation, useMatches, useNavigate, useOutlet, useSearchParams } from "react-router";
-import { Suspense, cloneElement, createContext, createElement, forwardRef, isValidElement, lazy, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, Suspense, cloneElement, createContext, createElement, forwardRef, isValidElement, lazy, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Trans, initReactI18next, useTranslation } from "react-i18next";
 import { AntDesignOutlined, ApartmentOutlined, AppstoreOutlined, ArrowDownOutlined, ArrowLeftOutlined, ArrowUpOutlined, BellOutlined, CloseOutlined, CloudOutlined, ContainerOutlined, CopyOutlined, CopyrightOutlined, DownOutlined, EnterOutlined, EyeOutlined, FileTextOutlined, FullscreenExitOutlined, FullscreenOutlined, HomeOutlined, LeftOutlined, LoadingOutlined, LockOutlined, LogoutOutlined, MenuFoldOutlined, MenuOutlined, MenuUnfoldOutlined, NodeExpandOutlined, QuestionCircleOutlined, RedoOutlined, ReloadOutlined, RocketOutlined, SafetyOutlined, SearchOutlined, SettingOutlined, SisternodeOutlined, SubnodeOutlined, SwapOutlined, TeamOutlined, TranslationOutlined, UploadOutlined, UserOutlined, VerticalAlignBottomOutlined, VerticalAlignMiddleOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
 import { Avatar, Badge, Breadcrumb, Button, Checkbox, Col, ColorPicker, ConfigProvider, Divider, Drawer, Dropdown, Empty, FloatButton, Form, Grid, Input, InputNumber, List, Menu, Modal, Popover, Result, Row, Select, Slider, Space, Spin, Switch, Tabs, Tooltip, Tree, Typography, Upload, Watermark, message, theme } from "antd";
-import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+import { Fragment as Fragment$1, jsx, jsxs } from "react/jsx-runtime";
 import i18next from "i18next";
 import { useCountDown, useDebounceFn, useFullscreen, useKeyPress, useLocalStorageState, useResponsive, useSize, useToggle } from "ahooks";
 import { clsx } from "clsx";
@@ -1029,7 +1029,7 @@ function LayoutFooter({ className }) {
 			}), "\xA0"] }) : null,
 			"Copyright ©\xA0",
 			copyrightDate,
-			copyrightDate ? /* @__PURE__ */ jsx(Fragment, { children: "\xA0" }) : "",
+			copyrightDate ? /* @__PURE__ */ jsx(Fragment$1, { children: "\xA0" }) : "",
 			companyName ? /* @__PURE__ */ jsx("span", { children: /* @__PURE__ */ jsxs("a", {
 				href: companyWebsite,
 				rel: "noreferrer noopener",
@@ -1125,7 +1125,7 @@ var init_is = __esmMin((() => {}));
 //#region src/layout/widgets/global-search/components/search-footer.tsx
 function SearchFooter({ searchItems }) {
 	const { t } = useTranslation();
-	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(Divider, { className: "mt-2 my-0" }), /* @__PURE__ */ jsxs("div", {
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [/* @__PURE__ */ jsx(Divider, { className: "mt-2 my-0" }), /* @__PURE__ */ jsxs("div", {
 		className: "px-4 py-2 flex items-center justify-between text-xs",
 		children: [/* @__PURE__ */ jsxs("div", {
 			className: "flex items-center",
@@ -1171,7 +1171,7 @@ function SearchPanel({ menuItem, active, enter, setActiveKey, showCloseButton, r
 	function handleMouseEnter(key) {
 		setActiveKey(key);
 	}
-	return /* @__PURE__ */ jsx(Fragment, { children: /* @__PURE__ */ jsx("li", {
+	return /* @__PURE__ */ jsx(Fragment$1, { children: /* @__PURE__ */ jsx("li", {
 		"data-search-item": menuItem.key,
 		onMouseEnter: () => {
 			handleMouseEnter(menuItem.key);
@@ -1326,7 +1326,7 @@ function GlobalSearch() {
 	useEffect(() => {
 		if (!keyword.length && Array.isArray(searchHistory)) setResultOptions(searchMenuList.filter((item) => searchHistory?.includes(item.key)));
 	}, [keyword, searchHistory]);
-	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsxs("div", {
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [/* @__PURE__ */ jsxs("div", {
 		onClick: () => setOpen((open) => !open),
 		className: "group flex justify-center items-center gap-2 md:bg-colorBgLayout px-3 py-1.5 rounded-full cursor-pointer text-colorTextSecondary hover:text-colorText md:mr-2.5",
 		children: [
@@ -1347,7 +1347,7 @@ function GlobalSearch() {
 			if (open) inputRef.current?.focus();
 		},
 		keyboard: true,
-		title: /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx("div", {
+		title: /* @__PURE__ */ jsxs(Fragment$1, { children: [/* @__PURE__ */ jsx("div", {
 			className: "mr-17",
 			children: /* @__PURE__ */ jsx(Input, {
 				ref: inputRef,
@@ -2577,7 +2577,7 @@ function Animation() {
 	function handleClick(value) {
 		setPreferences("transitionName", value);
 	}
-	return /* @__PURE__ */ jsxs(Fragment, { children: [
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [
 		/* @__PURE__ */ jsx(SwitchItem, {
 			name: "transitionProgress",
 			checked: transitionProgress,
@@ -2657,7 +2657,7 @@ var init_text_input = __esmMin((() => {}));
 function PreferencesFooter() {
 	const { t } = useTranslation();
 	const { enableFooter, fixedFooter, companyName, companyWebsite, copyrightDate, ICPNumber, ICPLink, setPreferences } = usePreferencesStore();
-	return /* @__PURE__ */ jsxs(Fragment, { children: [
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [
 		/* @__PURE__ */ jsx(SwitchItem, {
 			name: "enableFooter",
 			checked: enableFooter,
@@ -2749,7 +2749,7 @@ var init_utils$2 = __esmMin((() => {
 function General() {
 	const { t } = useTranslation();
 	const { language, enableDynamicTitle, watermark, watermarkContent, enableCheckUpdates, enableBackTopButton, setPreferences } = usePreferencesStore();
-	return /* @__PURE__ */ jsxs(Fragment, { children: [
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [
 		/* @__PURE__ */ jsx(SelectItem, {
 			name: "language",
 			value: language,
@@ -2831,7 +2831,7 @@ function PreferencesLayout() {
 	function handleClick(value) {
 		setPreferences("navigationStyle", value);
 	}
-	return /* @__PURE__ */ jsx(Fragment, { children: /* @__PURE__ */ jsx("ul", {
+	return /* @__PURE__ */ jsx(Fragment$1, { children: /* @__PURE__ */ jsx("ul", {
 		className: "w-full flex flex-wrap justify-between gap-1 en-US:gap-y-3 px-0 list-none",
 		children: navigationPreset.map((item) => /* @__PURE__ */ jsx("li", {
 			onClick: () => handleClick(item.type),
@@ -2916,7 +2916,7 @@ function Sidebar() {
 	const handleChange = (name, value) => {
 		setPreferences(name, value);
 	};
-	return /* @__PURE__ */ jsxs(Fragment, { children: [
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [
 		sidebarPreset.map((item) => {
 			return /* @__PURE__ */ jsx(SwitchItem, {
 				name: item.name,
@@ -2990,7 +2990,7 @@ function Tabbar() {
 			value: "brisk"
 		}
 	];
-	return /* @__PURE__ */ jsxs(Fragment, { children: [
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [
 		/* @__PURE__ */ jsx(SwitchItem, {
 			name: "tabbarEnable",
 			checked: tabbarEnable,
@@ -3094,7 +3094,7 @@ function BuiltinTheme() {
 			color: "#13c2c2"
 		},
 		{
-			label: /* @__PURE__ */ jsxs(Fragment, { children: [
+			label: /* @__PURE__ */ jsxs(Fragment$1, { children: [
 				/* @__PURE__ */ jsx("span", { children: t("preferences.theme.builtin.blue") }),
 				/* @__PURE__ */ jsx("br", { className: "zh-CN:hidden" }),
 				/* @__PURE__ */ jsxs("span", { children: [
@@ -3146,7 +3146,7 @@ function BuiltinTheme() {
 			themeColorPrimary: builtinThemePresets.find((item) => item.value === value)?.color
 		});
 	}
-	return /* @__PURE__ */ jsx(Fragment, { children: /* @__PURE__ */ jsx("ul", {
+	return /* @__PURE__ */ jsx(Fragment$1, { children: /* @__PURE__ */ jsx("ul", {
 		className: "flex justify-between flex-wrap w-full gap-3 p-0 m-0 list-none",
 		children: builtinThemePresets.map((item) => {
 			const innerBlock = /* @__PURE__ */ jsx("li", {
@@ -3216,7 +3216,7 @@ function SiteTheme() {
 	const handleChange = (newValue) => {
 		setPreferences("themeRadius", newValue);
 	};
-	return /* @__PURE__ */ jsxs(Fragment, { children: [
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [
 		/* @__PURE__ */ jsx("ul", {
 			className: "flex justify-between w-full gap-3 p-0 m-0 list-none",
 			children: themePresets.map((item) => /* @__PURE__ */ jsx("li", {
@@ -3324,7 +3324,7 @@ function Preferences({ ...restProps }) {
 			content: t("preferences.copyPreferencesSuccess")
 		});
 	};
-	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(BasicButton, {
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [/* @__PURE__ */ jsx(BasicButton, {
 		type: "text",
 		...restProps,
 		onClick: (e) => {
@@ -3414,6 +3414,30 @@ var init_preferences$2 = __esmMin((() => {
 	init_preferences$3();
 	init_blocks();
 	preferencesContentId = "__react-antd-admin__preferences_drawer__";
+}));
+//#endregion
+//#region src/module-loader/slots.ts
+/** 供模块上下文调用：注册/覆盖本模块在某插槽上的节点 */
+function registerSlot(moduleName, slotName, node) {
+	useSlotRegistry.setState((state) => {
+		const byModule = state.slots[slotName] ?? {};
+		return { slots: {
+			...state.slots,
+			[slotName]: {
+				...byModule,
+				[moduleName]: node
+			}
+		} };
+	});
+}
+/** 布局组件订阅：插槽节点变化（注册/卸载）时触发重渲染 */
+function useSlotNodes(slotName) {
+	const byModule = useSlotRegistry((state) => state.slots[slotName]);
+	return Object.values(byModule ?? {});
+}
+var useSlotRegistry;
+var init_slots = __esmMin((() => {
+	useSlotRegistry = create(() => ({ slots: {} }));
 }));
 //#endregion
 //#region src/components/fullscreen-button/index.tsx
@@ -3674,6 +3698,7 @@ function LayoutHeader({ className, children }) {
 	const { isMobile } = useDeviceType();
 	const isMaximize = useTabsStore((state) => state.isMaximize);
 	const { isTopNav, isMixedNav } = useLayout();
+	const slotActions = useSlotNodes("header-actions");
 	const isFixedDarkTheme = isDark || sidebarTheme === "dark" && (isMixedNav || isTopNav);
 	return /* @__PURE__ */ jsx(ConfigProvider, {
 		theme: { algorithm: isFixedDarkTheme ? theme.darkAlgorithm : theme.defaultAlgorithm },
@@ -3697,6 +3722,7 @@ function LayoutHeader({ className, children }) {
 				/* @__PURE__ */ jsxs("div", {
 					className: "flex items-center",
 					children: [
+						slotActions.map((node, index) => /* @__PURE__ */ jsx(Fragment, { children: node }, index)),
 						/* @__PURE__ */ jsx(GlobalSearch, {}),
 						/* @__PURE__ */ jsx(Preferences, { ...buttonProps }),
 						/* @__PURE__ */ jsx(ThemeButton, { ...buttonProps }),
@@ -3721,6 +3747,7 @@ var init_layout_header = __esmMin((() => {
 	init_global_search();
 	init_notification_container();
 	init_preferences$2();
+	init_slots();
 	init_tabs();
 	init_cn();
 	init_constants$2();
@@ -4954,7 +4981,7 @@ function ContainerLayout() {
 			style: { paddingLeft: computedSidebarWidth },
 			className: cn("transition-all flex flex-col h-screen"),
 			children: [
-				/* @__PURE__ */ jsx(LayoutHeader, { children: isTopNav || isMixedNav ? /* @__PURE__ */ jsxs(Fragment, { children: [isTopNav ? /* @__PURE__ */ jsx(Logo, {
+				/* @__PURE__ */ jsx(LayoutHeader, { children: isTopNav || isMixedNav ? /* @__PURE__ */ jsxs(Fragment$1, { children: [isTopNav ? /* @__PURE__ */ jsx(Logo, {
 					sidebarCollapsed: false,
 					className: "mr-8"
 				}) : null, /* @__PURE__ */ jsx(LayoutMenu, {
@@ -5133,6 +5160,9 @@ function createModuleContext(definition) {
 			apiPrefix: (prefix) => {
 				registeredApiPrefixes.set(definition.name, prefix);
 			}
+		},
+		registerSlot: (slotName, node) => {
+			registerSlot(definition.name, slotName, node);
 		}
 	};
 }
@@ -5269,6 +5299,7 @@ var init_module_loader = __esmMin((() => {
 	init_resolve_layout();
 	init_request();
 	init_keep_alive();
+	init_slots();
 	modules = /* @__PURE__ */ new Map();
 	registeredStores = /* @__PURE__ */ new Map();
 	registeredApiPrefixes = /* @__PURE__ */ new Map();
@@ -6352,7 +6383,7 @@ function TermsOfService$1() {
 		className: "p-4 dark:bg-black",
 		children: /* @__PURE__ */ jsx(Typography.Title, {
 			level: 1,
-			children: /* @__PURE__ */ jsx(Fragment, { children: t("authority.termsOfService") })
+			children: /* @__PURE__ */ jsx(Fragment$1, { children: t("authority.termsOfService") })
 		})
 	});
 }
@@ -6661,7 +6692,7 @@ function CodeLogin() {
 			window.$message?.success(t("common.success"));
 		}, 1e3);
 	};
-	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(Space, {
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [/* @__PURE__ */ jsx(Space, {
 		orientation: "vertical",
 		children: /* @__PURE__ */ jsx(Title$2, {
 			level: 3,
@@ -6752,7 +6783,7 @@ function ForgotPassword() {
 			setLoading(false);
 		}, 1e3);
 	};
-	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsxs(Space, {
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [/* @__PURE__ */ jsxs(Space, {
 		orientation: "vertical",
 		children: [/* @__PURE__ */ jsx(Title$1, {
 			level: 3,
@@ -6835,7 +6866,7 @@ function PasswordLogin() {
 			}, 1e3);
 		});
 	};
-	return /* @__PURE__ */ jsxs(Fragment, { children: [
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [
 		contextLoadingHolder,
 		/* @__PURE__ */ jsxs(Space, {
 			orientation: "vertical",
@@ -6926,7 +6957,7 @@ function RegisterPassword() {
 	const handleFinish = async () => {
 		window.$message?.success("注册成功");
 	};
-	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsxs(Space, {
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [/* @__PURE__ */ jsxs(Space, {
 		orientation: "vertical",
 		children: [/* @__PURE__ */ jsx(Title, {
 			level: 3,
@@ -8393,7 +8424,7 @@ function BasicContent(props) {
 //#endregion
 //#region src/components/basic-form/form-items/form-avatar-item.tsx
 function FormAvatarItem({ value, onChange }) {
-	return /* @__PURE__ */ jsx(Fragment, { children: /* @__PURE__ */ jsxs("div", {
+	return /* @__PURE__ */ jsx(Fragment$1, { children: /* @__PURE__ */ jsxs("div", {
 		className: "flex items-center gap-5",
 		children: [/* @__PURE__ */ jsx(Avatar, {
 			size: 100,
@@ -8485,7 +8516,7 @@ function FormTreeItem({ treeData, value, onChange }) {
 		if (checkedOptions.includes("checkAll")) onChange?.(flattenTreeData.map((item) => item.id));
 		else onChange?.([]);
 	}, [checkedOptions, flattenTreeData]);
-	return /* @__PURE__ */ jsxs(Fragment, { children: [
+	return /* @__PURE__ */ jsxs(Fragment$1, { children: [
 		/* @__PURE__ */ jsx(Search, {
 			className: "mb-3",
 			placeholder: t("common.keywordSearch"),

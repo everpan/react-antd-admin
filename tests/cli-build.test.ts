@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { SHARED_DEPS } from "../packages/cli/src/shared-deps";
+import { isSharedDep } from "../packages/cli/src/shared-deps";
 import { PROJECT_ROOT } from "./helpers/paths";
 
 /**
@@ -69,7 +69,7 @@ describe("rad build 产出模块 chunk", () => {
 	it("产物只保留共享裸说明符，其余全部 external", () => {
 		for (const file of jsFiles()) {
 			const bare = specifiersOf(path.join(MODULE_DIR, file));
-			const notShared = bare.filter(s => !SHARED_DEPS.includes(s));
+			const notShared = bare.filter(s => !isSharedDep(s));
 			expect(notShared, `${file} 含非共享裸说明符：${notShared.join(", ")}`).toEqual([]);
 		}
 	});

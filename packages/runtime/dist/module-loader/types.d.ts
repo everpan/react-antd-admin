@@ -17,6 +17,8 @@ export interface ModuleContext {
         /** 注册 API 路由前缀 */
         apiPrefix: (prefix: string) => void;
     };
+    /** 注册布局插槽节点（US-8 L2），卸载模块时自动清理 */
+    registerSlot: (slotName: string, node: React.ReactNode) => void;
 }
 /** 模块配置 */
 export interface ModuleConfig {

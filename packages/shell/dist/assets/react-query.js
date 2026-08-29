@@ -2894,4 +2894,7 @@ function useInfiniteQuery(options, queryClient) {
 	return useBaseQuery(options, InfiniteQueryObserver, queryClient);
 }
 //#endregion
+//#region ../../node_modules/.pnpm/@tanstack+react-query@5.102.8_react@19.2.8/node_modules/@tanstack/react-query/build/modern/index.js
+/* istanbul ignore file */
+//#endregion
 export { CancelledError, HydrationBoundary, InfiniteQueryObserver, IsRestoringProvider, Mutation, MutationCache, MutationObserver, QueriesObserver, Query, QueryCache, QueryClient, QueryClientContext, QueryClientProvider, QueryErrorResetBoundary, QueryObserver, dataTagErrorSymbol, dataTagSymbol, defaultScheduler, defaultShouldDehydrateMutation, defaultShouldDehydrateQuery, dehydrate, dehydrateQuery, environmentManager, streamedQuery as experimental_streamedQuery, focusManager, hashKey, hydrate, infiniteQueryOptions, isCancelledError, isServer, keepPreviousData, matchMutation, matchQuery, mutationOptions, noop, notifyManager, onlineManager, partialMatchKey, queryOptions, replaceEqualDeep, shouldThrowError, skipToken, timeoutManager, unsetMarker, useInfiniteQuery, useIsFetching, useIsMutating, useIsRestoring, useMutation, useMutationState, usePrefetchInfiniteQuery, usePrefetchQuery, useQueries, useQuery, useQueryClient, useQueryErrorResetBoundary, useSuspenseInfiniteQuery, useSuspenseQueries, useSuspenseQuery };

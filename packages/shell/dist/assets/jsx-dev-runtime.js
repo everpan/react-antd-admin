@@ -1,3 +1,7 @@
+//#region \0rolldown/runtime.js
+var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
+//#endregion
+//#region ../../node_modules/.pnpm/react@19.2.8/node_modules/react/cjs/react-jsx-dev-runtime.production.js
 /**
 * @license React
 * react-jsx-dev-runtime.production.js
@@ -7,4 +11,14 @@
 * This source code is licensed under the MIT license found in the
 * LICENSE file in the root directory of this source tree.
 */
+var require_react_jsx_dev_runtime_production = /* @__PURE__ */ __commonJSMin(((exports) => {
+	exports.Fragment = Symbol.for("react.fragment");
+	exports.jsxDEV = void 0;
+}));
 //#endregion
+//#region ../../node_modules/.pnpm/react@19.2.8/node_modules/react/jsx-dev-runtime.js
+var require_jsx_dev_runtime = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+	module.exports = require_react_jsx_dev_runtime_production();
+}));
+//#endregion
+export default require_jsx_dev_runtime();

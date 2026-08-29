@@ -1,12 +1,12 @@
+import { StyleProvider } from "@ant-design/cssinjs";
+import { getRoutes, loadAll } from "@react-antd-admin/runtime";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { App, ConfigProvider, Layout, Menu, theme } from "antd";
+import i18next from "i18next";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Outlet, RouterProvider, createBrowserRouter, useNavigate } from "react-router/dom";
-import { App, ConfigProvider, Layout, Menu, theme } from "antd";
-import { StyleProvider } from "@ant-design/cssinjs";
-import i18next from "i18next";
 import { initReactI18next, useTranslation } from "react-i18next";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { getRoutes, loadAll } from "@react-antd-admin/runtime";
+import { Outlet, RouterProvider, createBrowserRouter, useNavigate } from "react-router/dom";
 import { jsx, jsxs } from "react/jsx-runtime";
 //#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
@@ -40,16 +40,6 @@ import { jsx, jsxs } from "react/jsx-runtime";
 })();
 //#endregion
 //#region src/host.tsx
-/**
-* 预构建宿主（shell）入口。
-*
-* 设计要点（设计文档 §4.4 / §4.7）：
-* - 宿主只负责「加载外部模块 + 渲染容器」，不内置任何业务模块；
-* - 所有共享依赖（react / antd / runtime …）由 importmap 注入，宿主本身
-*   external 这些裸说明符，保证与模块命中同一份实例（单例，D5/D12）；
-* - 模块通过 `loadAll(manifest)` 加载，`getRoutes()` 收集路由后注入 react-router；
-* - 本文件编译进 `host.js`，其余共享依赖编译进各自的单入口 ESM（见 scripts/build.mts）。
-*/
 var queryClient = new QueryClient();
 async function ensureI18n() {
 	if (i18next.isInitialized) return;

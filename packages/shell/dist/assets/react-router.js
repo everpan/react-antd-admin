@@ -1,3 +1,4 @@
+"use client";
 import * as React from "react";
 import React3 from "react";
 //#region \0rolldown/runtime.js
@@ -10064,5 +10065,17 @@ function getHydrationData({ state, routes, getRouteInfo, location, basename, isS
 	}
 	return hydrationData;
 }
+//#endregion
+//#region ../../node_modules/.pnpm/react-router@7.18.2_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/react-router/dist/development/index.mjs
+/**
+* react-router v7.18.2
+*
+* Copyright (c) Remix Software Inc.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE.md file in the root directory of this source tree.
+*
+* @license MIT
+*/
 //#endregion
 export { Await, BrowserRouter, Form, HashRouter, IDLE_BLOCKER, IDLE_FETCHER, IDLE_NAVIGATION, Link, Links, MemoryRouter, Meta, NavLink, Navigate, Action as NavigationType, Outlet, PrefetchPageLinks, Route, Router, RouterContextProvider, RouterProvider, Routes, Scripts, ScrollRestoration, ServerRouter, StaticRouter, StaticRouterProvider, AwaitContextProvider as UNSAFE_AwaitContextProvider, DataRouterContext as UNSAFE_DataRouterContext, DataRouterStateContext as UNSAFE_DataRouterStateContext, ErrorResponseImpl as UNSAFE_ErrorResponseImpl, FetchersContext as UNSAFE_FetchersContext, FrameworkContext as UNSAFE_FrameworkContext, LocationContext as UNSAFE_LocationContext, NavigationContext as UNSAFE_NavigationContext, RSCDefaultRootErrorBoundary as UNSAFE_RSCDefaultRootErrorBoundary, RemixErrorBoundary as UNSAFE_RemixErrorBoundary, RouteContext as UNSAFE_RouteContext, ServerMode as UNSAFE_ServerMode, SingleFetchRedirectSymbol as UNSAFE_SingleFetchRedirectSymbol, ViewTransitionContext as UNSAFE_ViewTransitionContext, WithComponentProps as UNSAFE_WithComponentProps, WithErrorBoundaryProps as UNSAFE_WithErrorBoundaryProps, WithHydrateFallbackProps as UNSAFE_WithHydrateFallbackProps, createBrowserHistory as UNSAFE_createBrowserHistory, createClientRoutes as UNSAFE_createClientRoutes, createClientRoutesWithHMRRevalidationOptOut as UNSAFE_createClientRoutesWithHMRRevalidationOptOut, createHashHistory as UNSAFE_createHashHistory, createMemoryHistory as UNSAFE_createMemoryHistory, createRouter as UNSAFE_createRouter, decodeViaTurboStream as UNSAFE_decodeViaTurboStream, getHydrationData as UNSAFE_getHydrationData, getPatchRoutesOnNavigationFunction as UNSAFE_getPatchRoutesOnNavigationFunction, getTurboStreamSingleFetchDataStrategy as UNSAFE_getTurboStreamSingleFetchDataStrategy, hydrationRouteProperties as UNSAFE_hydrationRouteProperties, invariant as UNSAFE_invariant, mapRouteProperties as UNSAFE_mapRouteProperties, shouldHydrateRouteLoader as UNSAFE_shouldHydrateRouteLoader, useFogOFWarDiscovery as UNSAFE_useFogOFWarDiscovery, useScrollRestoration as UNSAFE_useScrollRestoration, withComponentProps as UNSAFE_withComponentProps, withErrorBoundaryProps as UNSAFE_withErrorBoundaryProps, withHydrateFallbackProps as UNSAFE_withHydrateFallbackProps, createBrowserRouter, createContext, createCookie, createCookieSessionStorage, createHashRouter, createMemoryRouter, createMemorySessionStorage, createPath, createRequestHandler, createRoutesFromChildren, createRoutesFromElements, createRoutesStub, createSearchParams, createSession, createSessionStorage, createStaticHandler2 as createStaticHandler, createStaticRouter, data, generatePath, href, isCookie, isRouteErrorResponse, isSession, matchPath, matchRoutes, parsePath, redirect, redirectDocument, renderMatches, replace, resolvePath, HistoryRouter as unstable_HistoryRouter, RSCStaticRouter as unstable_RSCStaticRouter, routeRSCServerRequest as unstable_routeRSCServerRequest, setDevServerHooks as unstable_setDevServerHooks, usePrompt as unstable_usePrompt, useRoute as unstable_useRoute, useRouterState as unstable_useRouterState, useActionData, useAsyncError, useAsyncValue, useBeforeUnload, useBlocker, useFetcher, useFetchers, useFormAction, useHref, useInRouterContext, useLinkClickHandler, useLoaderData, useLocation, useMatch, useMatches, useNavigate, useNavigation, useNavigationType, useOutlet, useOutletContext, useParams, useResolvedPath, useRevalidator, useRouteError, useRouteLoaderData, useRoutes, useSearchParams, useSubmit, useViewTransitionState };

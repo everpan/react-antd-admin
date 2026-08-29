@@ -19,7 +19,7 @@ import path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { buildModules } from "../packages/cli/src/build";
-import { HARD_SHARED_DEPS, isSharedDep } from "../packages/cli/src/shared-deps";
+import { isSharedDep, SHARED_DEPS } from "../packages/cli/src/shared-deps";
 import {
 	PLAYGROUND_DIR,
 	PLAYGROUND_DIST_DIR,
@@ -143,12 +143,14 @@ describe("p1 垂直切片：importmap 与单例", () => {
 	});
 
 	it("importmap 覆盖全部硬共享依赖", () => {
-		for (const dep of HARD_SHARED_DEPS)
+		const hardSpecifiers = SHARED_DEPS.filter(dep => dep.hard).map(dep => dep.specifier);
+		for (const dep of hardSpecifiers)
 			expect(resolveViaImportmap(dep, importmap), `importmap 未映射 ${dep}`).not.toBeNull();
 	});
 
 	it("硬共享依赖各自映射到的 URL 互不相同", () => {
-		const urls = HARD_SHARED_DEPS.map(dep => resolveViaImportmap(dep, importmap)!);
+		const hardSpecifiers = SHARED_DEPS.filter(dep => dep.hard).map(dep => dep.specifier);
+		const urls = hardSpecifiers.map(dep => resolveViaImportmap(dep, importmap)!);
 		expect(new Set(urls).size).toBe(urls.length);
 	});
 
