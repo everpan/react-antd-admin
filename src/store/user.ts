@@ -1,7 +1,7 @@
 import type { UserInfoType } from "#src/api/user/types";
-import { fetchUserInfo } from "#src/api/user";
-
 import { create } from "zustand";
+
+import { fetchUserInfo } from "#src/api/user";
 
 const initialState = {
 	id: "",

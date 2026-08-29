@@ -1,7 +1,7 @@
 import type { InputNumberProps } from "antd";
 
-import { isNumber } from "#src/utils/is";
 import { InputNumber } from "antd";
+import { isNumber } from "#src/utils/is";
 
 export interface NumberInputSpinnerProps {
 	children: React.ReactNode

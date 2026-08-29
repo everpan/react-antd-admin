@@ -1,5 +1,5 @@
-import type { MenuItemType } from "#src/layout/layout-menu/types";
 import type { ReactElement } from "react";
+import type { MenuItemType } from "#src/layout/layout-menu/types";
 
 import { CloseOutlined } from "@ant-design/icons";
 import { Button } from "antd";

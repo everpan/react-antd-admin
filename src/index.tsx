@@ -1,9 +1,9 @@
-import { TanstackQuery } from "#src/components/tanstack-query";
-import { setupI18n } from "#src/locales";
-import { setupLoading } from "#src/plugins/loading";
-
 // import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { TanstackQuery } from "#src/components/tanstack-query";
+import { setupI18n } from "#src/locales";
+
+import { setupLoading } from "#src/plugins/loading";
 
 import App from "./app";
 import "./styles/index.css";

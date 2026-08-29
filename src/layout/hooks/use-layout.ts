@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useDeviceType } from "#src/hooks/use-device-type";
 import {
 	MIXED_NAVIGATION,
@@ -5,9 +6,8 @@ import {
 	TOP_NAVIGATION,
 	TWO_COLUMN_NAVIGATION,
 } from "#src/layout/widgets/preferences/blocks/layout/constants";
-import { usePreferencesStore } from "#src/store/preferences";
 
-import { useMemo } from "react";
+import { usePreferencesStore } from "#src/store/preferences";
 
 /**
  * 获取当前页面的布局类型信息

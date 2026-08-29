@@ -7,9 +7,9 @@ import type {
 	ModuleInstance,
 } from "./types";
 
-import { request } from "#src/utils/request";
-
 import i18next from "i18next";
+
+import { request } from "#src/utils/request";
 
 const modules = new Map<string, ModuleInstance>();
 const registeredStores = new Map<string, unknown>();

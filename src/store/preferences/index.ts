@@ -1,11 +1,11 @@
 import type { LanguageType } from "#src/locales";
 import type { PreferencesState, ThemeType } from "./types";
 
-import { SIDE_NAVIGATION } from "#src/layout/widgets/preferences/blocks/layout/constants";
-import { getAppNamespace } from "#src/utils/get-app-namespace";
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
+import { SIDE_NAVIGATION } from "#src/layout/widgets/preferences/blocks/layout/constants";
+import { getAppNamespace } from "#src/utils/get-app-namespace";
 
 /**
  * 默认偏好设置

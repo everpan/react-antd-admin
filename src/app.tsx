@@ -1,16 +1,16 @@
-import { AntdApp } from "#src/components/antd-app";
-import { JSSThemeProvider } from "#src/components/jss-theme-provider";
-import { usePreferences } from "#src/hooks/use-preferences";
-import { useScrollToHash } from "#src/hooks/use-scroll-to-hash";
-import { AppVersionMonitor } from "#src/layout/widgets/version-monitor";
-import { ANT_DESIGN_LOCALE } from "#src/locales";
-
 import { StyleProvider } from "@ant-design/cssinjs";
 import { theme as antdTheme, ConfigProvider } from "antd";
 import dayjs from "dayjs";
 import { Suspense, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router/dom";
+
+import { AntdApp } from "#src/components/antd-app";
+import { JSSThemeProvider } from "#src/components/jss-theme-provider";
+import { usePreferences } from "#src/hooks/use-preferences";
+import { useScrollToHash } from "#src/hooks/use-scroll-to-hash";
+import { AppVersionMonitor } from "#src/layout/widgets/version-monitor";
+import { ANT_DESIGN_LOCALE } from "#src/locales";
 
 import { router } from "./router";
 import { customAntdDarkTheme, customAntdLightTheme } from "./styles/theme/antd/antd-theme";

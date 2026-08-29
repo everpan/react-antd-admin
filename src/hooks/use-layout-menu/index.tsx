@@ -1,12 +1,12 @@
-import type { PageLayoutType } from "#src/store/preferences/types";
 import type { MenuProps } from "antd";
 import type { TFunction } from "i18next";
-
-import { LayoutCenterIcon, LayoutLeftIcon, LayoutRightIcon } from "#src/icons";
-import { usePreferencesStore } from "#src/store/preferences";
+import type { PageLayoutType } from "#src/store/preferences/types";
 
 import { Button, Dropdown } from "antd";
 import { useTranslation } from "react-i18next";
+
+import { LayoutCenterIcon, LayoutLeftIcon, LayoutRightIcon } from "#src/icons";
+import { usePreferencesStore } from "#src/store/preferences";
 
 function menuItems(t: TFunction<"translation", undefined>) {
 	return [

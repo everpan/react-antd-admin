@@ -1,7 +1,3 @@
-import { BasicContent } from "#src/components/basic-content";
-import { FormAvatarItem } from "#src/components/basic-form";
-import { useUserStore } from "#src/store/user";
-
 import {
 	ProForm,
 	ProFormDigit,
@@ -9,6 +5,10 @@ import {
 	ProFormTextArea,
 } from "@ant-design/pro-components";
 import { Form, Input } from "antd";
+import { BasicContent } from "#src/components/basic-content";
+
+import { FormAvatarItem } from "#src/components/basic-form";
+import { useUserStore } from "#src/store/user";
 
 export default function Profile() {
 	const currentUser = useUserStore();

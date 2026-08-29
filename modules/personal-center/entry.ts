@@ -1,10 +1,10 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
 
-import { ProfileCardIcon, RiAccountCircleLine, RiUserSettingsLine } from "#src/icons";
-import ContainerLayout from "#src/layout/container-layout";
-
 import { createElement, lazy } from "react";
+import { ProfileCardIcon, RiAccountCircleLine, RiUserSettingsLine } from "#src/icons";
+
+import ContainerLayout from "#src/layout/container-layout";
 
 const MyProfile = lazy(() => import("./pages/my-profile"));
 const Settings = lazy(() => import("./pages/settings"));

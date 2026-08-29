@@ -1,8 +1,8 @@
+import { useMemo } from "react";
 import { DEFAULT_PREFERENCES, usePreferencesStore } from "#src/store/preferences";
 import { isDarkTheme } from "#src/utils/is-dark-theme";
-import { isLightTheme } from "#src/utils/is-light-theme";
 
-import { useMemo } from "react";
+import { isLightTheme } from "#src/utils/is-light-theme";
 
 /**
  * 包装下用户偏好设置的参数，不需要存储在 localStorage 中，但是为了方便使用的变量可以在这里出现。

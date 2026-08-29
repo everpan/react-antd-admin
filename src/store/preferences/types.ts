@@ -1,12 +1,12 @@
+import type { MenuProps } from "antd";
+
 import type {
 	MIXED_NAVIGATION,
 	SIDE_NAVIGATION,
 	TOP_NAVIGATION,
 	TWO_COLUMN_NAVIGATION,
 } from "#src/layout/widgets/preferences/blocks/layout/constants";
-
 import type { LanguageType } from "#src/locales";
-import type { MenuProps } from "antd";
 
 /**
  * @zh 登录页面布局

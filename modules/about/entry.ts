@@ -1,10 +1,10 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
 
-import ContainerLayout from "#src/layout/container-layout";
-
 import { CopyrightOutlined } from "@ant-design/icons";
+
 import { createElement, lazy } from "react";
+import ContainerLayout from "#src/layout/container-layout";
 
 const About = lazy(() => import("./pages/index"));
 

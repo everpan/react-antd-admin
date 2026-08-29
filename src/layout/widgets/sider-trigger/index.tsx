@@ -1,9 +1,9 @@
-import { BasicButton } from "#src/components/basic-button";
-
-import { usePreferences } from "#src/hooks/use-preferences";
-import { cn } from "#src/utils/cn";
-
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+
+import { BasicButton } from "#src/components/basic-button";
+import { usePreferences } from "#src/hooks/use-preferences";
+
+import { cn } from "#src/utils/cn";
 
 import { siderTriggerHeight } from "../../constants";
 

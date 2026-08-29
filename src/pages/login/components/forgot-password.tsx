@@ -1,6 +1,5 @@
-import { BasicButton } from "#src/components/basic-button";
-
 import { LeftOutlined } from "@ant-design/icons";
+
 import { useCountDown } from "ahooks";
 import {
 	Button,
@@ -11,6 +10,7 @@ import {
 } from "antd";
 import { use, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { BasicButton } from "#src/components/basic-button";
 import { FormModeContext } from "../form-mode-context";
 
 const { Title } = Typography;
@@ -37,7 +37,7 @@ export function ForgotPassword() {
 
 	const handleFinish = async () => {
 		setLoading(true);
-		setTargetDate(new Date().getTime() + 1000 * 30);
+		setTargetDate(Date.now() + 1000 * 30);
 		setTimeout(() => {
 			setLoading(false);
 		}, 1000);

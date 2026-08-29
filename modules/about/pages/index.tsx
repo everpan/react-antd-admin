@@ -1,7 +1,7 @@
-import { BasicContent } from "#src/components/basic-content";
-
 import { Badge, Card, Col, Descriptions, Row, Tag, theme, Typography } from "antd";
+
 import { useTranslation } from "react-i18next";
+import { BasicContent } from "#src/components/basic-content";
 
 import { dependenciesItems, devDependenciesItems } from "./constants";
 

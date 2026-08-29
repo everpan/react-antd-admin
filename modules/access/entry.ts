@@ -1,10 +1,10 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
 
-import { accessControlCodes } from "#src/hooks/use-access/constants";
-import ContainerLayout from "#src/layout/container-layout";
-
 import { lazy } from "react";
+import { accessControlCodes } from "#src/hooks/use-access/constants";
+
+import ContainerLayout from "#src/layout/container-layout";
 
 const PageControl = lazy(() => import("./pages/page-control"));
 const ButtonControl = lazy(() => import("./pages/button-control"));

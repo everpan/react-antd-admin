@@ -1,20 +1,20 @@
-import type { TabItemProps } from "#src/store/tabs";
 import type { TabsProps } from "antd";
 import type { ReactElement } from "react";
+import type { TabItemProps } from "#src/store/tabs";
 
-import { useCurrentRoute } from "#src/hooks/use-current-route";
-import { removeTrailingSlash } from "#src/router/utils/remove-trailing-slash";
-import { useAccessStore } from "#src/store/access";
-import { usePreferencesStore } from "#src/store/preferences";
-import { useTabsStore } from "#src/store/tabs";
-
-import { isString } from "#src/utils/is";
 import { RedoOutlined } from "@ant-design/icons";
 import { Button, Tabs } from "antd";
 import { clsx } from "clsx";
 import { isValidElement, useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+
 import { useLocation, useNavigate } from "react-router";
+import { useCurrentRoute } from "#src/hooks/use-current-route";
+import { removeTrailingSlash } from "#src/router/utils/remove-trailing-slash";
+import { useAccessStore } from "#src/store/access";
+import { usePreferencesStore } from "#src/store/preferences";
+import { useTabsStore } from "#src/store/tabs";
+import { isString } from "#src/utils/is";
 
 import { tabbarHeight } from "../constants";
 import { DraggableTabBar } from "./components/draggable-tab-bar";

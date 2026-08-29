@@ -1,6 +1,6 @@
-import { BasicContent } from "#src/components/basic-content";
-
 import { Input } from "antd";
+
+import { BasicContent } from "#src/components/basic-content";
 
 export default function User() {
 	return (

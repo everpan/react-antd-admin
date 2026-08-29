@@ -1,12 +1,12 @@
-import type { ThemeType } from "#src/store/preferences/types";
 import type { InputNumberProps } from "antd";
+import type { ThemeType } from "#src/store/preferences/types";
+
+import { InputNumber, Slider } from "antd";
+import { useTranslation } from "react-i18next";
 
 import { RiContrastFill, RiMoonIcon, RiSunIcon } from "#src/icons";
 import { usePreferencesStore } from "#src/store/preferences";
-
 import { cn } from "#src/utils/cn";
-import { InputNumber, Slider } from "antd";
-import { useTranslation } from "react-i18next";
 
 import { SwitchItem } from "../../switch-item";
 

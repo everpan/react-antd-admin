@@ -1,13 +1,13 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
 
-import { Iframe } from "#src/components/iframe";
-import { RiReactjsLine } from "#src/icons";
-import ContainerLayout from "#src/layout/container-layout";
-
 import { AntDesignOutlined, ContainerOutlined } from "@ant-design/icons";
 import { createElement } from "react";
 import { Outlet } from "react-router";
+
+import { Iframe } from "#src/components/iframe";
+import { RiReactjsLine } from "#src/icons";
+import ContainerLayout from "#src/layout/container-layout";
 
 const routes: AppRouteRecordRaw[] = [
 	{

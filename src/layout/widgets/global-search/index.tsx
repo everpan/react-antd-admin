@@ -1,19 +1,19 @@
-import type { MenuItemType } from "#src/layout/layout-menu/types";
 import type { InputRef } from "antd";
-
 import type { ReactElement } from "react";
-import { Scrollbar } from "#src/components/scrollbar";
-import { useDeviceType } from "#src/hooks/use-device-type";
-import { useAccessStore } from "#src/store/access";
 
-import { isString } from "#src/utils/is";
+import type { MenuItemType } from "#src/layout/layout-menu/types";
 import { SearchOutlined } from "@ant-design/icons";
 import { useDebounceFn, useKeyPress, useLocalStorageState } from "ahooks";
 import { Divider, Empty, Input, Modal } from "antd";
+
 import { match } from "pinyin-pro";
 import { isValidElement, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { Scrollbar } from "#src/components/scrollbar";
+import { useDeviceType } from "#src/hooks/use-device-type";
+import { useAccessStore } from "#src/store/access";
+import { isString } from "#src/utils/is";
 
 import { SearchFooter } from "./components/search-footer";
 import { SearchPanel } from "./components/search-panel";

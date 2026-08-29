@@ -1,8 +1,8 @@
 import type { AppRouteRecordRaw } from "#src/router/types";
-import { $t } from "#src/locales";
-
 import { lazy } from "react";
+
 import { Outlet } from "react-router";
+import { $t } from "#src/locales";
 
 const PrivacyPolicy = lazy(() => import("#src/pages/privacy-policy"));
 

@@ -1,17 +1,17 @@
 import type { ButtonProps } from "antd";
 
-import { BasicButton } from "#src/components/basic-button";
-import { useDeviceType } from "#src/hooks/use-device-type";
-import { usePreferences } from "#src/hooks/use-preferences";
-import { loginPath } from "#src/router/extra-info";
-import { useAuthStore } from "#src/store/auth";
-import { usePreferencesStore } from "#src/store/preferences";
-
 import { CopyOutlined, RedoOutlined, RocketOutlined, SettingOutlined } from "@ant-design/icons";
 import { theme as antdTheme, Badge, ConfigProvider, Divider, Drawer, FloatButton } from "antd";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { BasicButton } from "#src/components/basic-button";
+
+import { useDeviceType } from "#src/hooks/use-device-type";
+import { usePreferences } from "#src/hooks/use-preferences";
+import { loginPath } from "#src/router/extra-info";
+import { useAuthStore } from "#src/store/auth";
+import { usePreferencesStore } from "#src/store/preferences";
 
 import {
 	Animation,

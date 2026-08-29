@@ -1,9 +1,5 @@
 import type { LoginInfo } from "#src/api/user";
 
-import { BasicButton } from "#src/components/basic-button";
-import { PASSWORD_RULES, USERNAME_RULES } from "#src/constants/rules";
-import { useAuthStore } from "#src/store/auth";
-
 import {
 	Button,
 	Form,
@@ -13,7 +9,11 @@ import {
 } from "antd";
 import { use, useState } from "react";
 import { useTranslation } from "react-i18next";
+
 import { useNavigate, useSearchParams } from "react-router";
+import { BasicButton } from "#src/components/basic-button";
+import { PASSWORD_RULES, USERNAME_RULES } from "#src/constants/rules";
+import { useAuthStore } from "#src/store/auth";
 
 import { FormModeContext } from "../form-mode-context";
 

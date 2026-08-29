@@ -1,6 +1,4 @@
-/* eslint-disable react-refresh/only-export-components */
 import type { MenuProps } from "antd";
-import { useTabsStore } from "#src/store/tabs";
 import {
 	CloseOutlined,
 	RedoOutlined,
@@ -11,8 +9,9 @@ import {
 } from "@ant-design/icons";
 import { useKeepAliveContext } from "keepalive-for-react";
 import { useCallback, useMemo } from "react";
-
 import { useTranslation } from "react-i18next";
+
+import { useTabsStore } from "#src/store/tabs";
 
 const homePath = import.meta.env.VITE_BASE_HOME_PATH;
 /**

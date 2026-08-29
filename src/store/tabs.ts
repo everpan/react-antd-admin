@@ -1,10 +1,10 @@
 import type { TabPaneProps } from "antd";
 
-import { usePreferencesStore } from "#src/store/preferences";
-import { getAppNamespace } from "#src/utils/get-app-namespace";
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+
+import { usePreferencesStore } from "#src/store/preferences";
+import { getAppNamespace } from "#src/utils/get-app-namespace";
 
 /**
  * @zh 标签页项目属性接口

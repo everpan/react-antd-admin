@@ -1,14 +1,14 @@
 import type { FallbackProps } from "react-error-boundary";
 
-// https://undraw.co/search
-import BugFixing from "#src/assets/svg/undraw-bug-fixing.svg?react";
-import { usePreferencesStore } from "#src/store/preferences";
-
 import { ArrowLeftOutlined, ReloadOutlined } from "@ant-design/icons";
 import { Button, Result, Space, Typography } from "antd";
+
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+// https://undraw.co/search
+import BugFixing from "#src/assets/svg/undraw-bug-fixing.svg?react";
+import { usePreferencesStore } from "#src/store/preferences";
 
 const { VITE_BASE_HOME_PATH } = import.meta.env;
 

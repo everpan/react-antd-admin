@@ -1,9 +1,6 @@
 import type { ModuleDefinition } from "#src/module-loader/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
 
-import { ServerErrorIcon } from "#src/icons";
-import ContainerLayout from "#src/layout/container-layout";
-
 import {
 	AppstoreOutlined,
 	IssuesCloseOutlined,
@@ -11,6 +8,9 @@ import {
 	StopOutlined,
 } from "@ant-design/icons";
 import { createElement, lazy } from "react";
+
+import { ServerErrorIcon } from "#src/icons";
+import ContainerLayout from "#src/layout/container-layout";
 
 const exceptionPath = "/exception";
 const exception403Path = "/exception/403";

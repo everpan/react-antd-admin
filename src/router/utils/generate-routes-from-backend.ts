@@ -1,8 +1,8 @@
 import type { AppRouteRecordRaw } from "#src/router/types";
-import { Iframe } from "#src/components/iframe";
-import ContainerLayout from "#src/layout/container-layout";
 import { lazy } from "react";
 import { Outlet } from "react-router";
+import { Iframe } from "#src/components/iframe";
+import ContainerLayout from "#src/layout/container-layout";
 import { addRouteIdByPath } from "./add-route-id-by-path";
 
 const ExceptionUnknownComponent = lazy(() => import("#modules/exception/pages/unknown-component"));

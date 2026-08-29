@@ -1,4 +1,6 @@
 import type { AppRouteRecordRaw } from "#src/router/types";
+import { useEffect } from "react";
+import { matchRoutes, Navigate, useLocation, useNavigate, useSearchParams } from "react-router";
 import { fetchAsyncRoutes } from "#src/api/user";
 import { useCurrentRoute } from "#src/hooks/use-current-route";
 import { getRoutes as getModuleRoutes, loadAll as loadAllModules } from "#src/module-loader";
@@ -12,11 +14,9 @@ import { generateRoutesFromBackend } from "#src/router/utils/generate-routes-fro
 import { generateRoutesByFrontend } from "#src/router/utils/generate-routes-from-frontend";
 import { useAccessStore } from "#src/store/access";
 import { useAuthStore } from "#src/store/auth";
+
 import { usePreferencesStore } from "#src/store/preferences";
 import { useUserStore } from "#src/store/user";
-
-import { useEffect } from "react";
-import { matchRoutes, Navigate, useLocation, useNavigate, useSearchParams } from "react-router";
 
 import { removeDuplicateRoutes } from "./utils";
 

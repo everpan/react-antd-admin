@@ -1,12 +1,12 @@
-import { useDeviceType } from "#src/hooks/use-device-type";
-import { useLayoutFooterStyle, useLayoutHeaderStyle } from "#src/hooks/use-layout-style";
-import { usePreferencesStore } from "#src/store/preferences";
-import { useTabsStore } from "#src/store/tabs";
-import { cn } from "#src/utils/cn";
-
 import { RocketOutlined } from "@ant-design/icons";
 import { FloatButton, Grid, Watermark } from "antd";
 import { useEffect, useMemo } from "react";
+import { useDeviceType } from "#src/hooks/use-device-type";
+import { useLayoutFooterStyle, useLayoutHeaderStyle } from "#src/hooks/use-layout-style";
+
+import { usePreferencesStore } from "#src/store/preferences";
+import { useTabsStore } from "#src/store/tabs";
+import { cn } from "#src/utils/cn";
 
 import { ELEMENT_ID_MAIN_CONTENT, footerHeight, headerHeight, tabbarHeight } from "../constants";
 import { useLayout } from "../hooks";

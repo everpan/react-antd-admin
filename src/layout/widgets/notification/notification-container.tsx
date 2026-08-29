@@ -1,9 +1,9 @@
 import type { ButtonProps } from "antd";
 import type { NotificationItem } from "./types";
 
-import { fetchNotifications } from "#src/api/notifications";
-
 import { useEffect, useState } from "react";
+
+import { fetchNotifications } from "#src/api/notifications";
 import { NotificationPopup } from "./index";
 
 export function NotificationContainer({ ...restProps }: ButtonProps) {

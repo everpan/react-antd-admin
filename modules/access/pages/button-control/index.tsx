@@ -1,14 +1,14 @@
 import type { LoginInfo } from "#src/api/user";
 
-import { AccessControl } from "#src/components/access-control";
-import { BasicContent } from "#src/components/basic-content";
-import { accessControlCodes, AccessControlRoles, useAccess } from "#src/hooks/use-access";
-import { useAuthStore } from "#src/store/auth";
-import { useUserStore } from "#src/store/user";
-
 import { Alert, Button, Card, Typography } from "antd";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { AccessControl } from "#src/components/access-control";
+import { BasicContent } from "#src/components/basic-content";
+
+import { accessControlCodes, AccessControlRoles, useAccess } from "#src/hooks/use-access";
+import { useAuthStore } from "#src/store/auth";
+import { useUserStore } from "#src/store/user";
 
 const accounts: Record<string, LoginInfo> = {
 	[AccessControlRoles.admin]: {

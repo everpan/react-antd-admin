@@ -1,10 +1,10 @@
-import type { MenuItemType } from "#src/api/system/menu";
 import type { ProColumns } from "@ant-design/pro-components";
 import type { TFunction } from "i18next";
-
-import { getYesNoOptions } from "#src/constants/options";
+import type { MenuItemType } from "#src/api/system/menu";
 
 import { Tag } from "antd";
+
+import { getYesNoOptions } from "#src/constants/options";
 
 export function getMenuTypeOptions(t: TFunction<"translation", undefined>) {
 	return [

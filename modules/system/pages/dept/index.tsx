@@ -1,6 +1,6 @@
-import { BasicContent } from "#src/components/basic-content";
-
 import { useState } from "react";
+
+import { BasicContent } from "#src/components/basic-content";
 
 export default function Dept() {
 	const [count, setCount] = useState(0);

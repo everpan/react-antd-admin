@@ -2,16 +2,16 @@ import type { ParamsType, ProTableProps } from "@ant-design/pro-components";
 
 import type { TablePaginationConfig } from "antd";
 
-import { footerHeight as layoutFooterHeight } from "#src/layout/constants";
-import { usePreferencesStore } from "#src/store/preferences";
-import { cn } from "#src/utils/cn";
-import { isObject, isUndefined } from "#src/utils/is";
-
 import { LoadingOutlined } from "@ant-design/icons";
 import { ProTable } from "@ant-design/pro-components";
 import { useSize } from "ahooks";
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import { useTranslation } from "react-i18next";
+import { footerHeight as layoutFooterHeight } from "#src/layout/constants";
+import { usePreferencesStore } from "#src/store/preferences";
+import { cn } from "#src/utils/cn";
+import { isObject, isUndefined } from "#src/utils/is";
 
 import { BASIC_TABLE_ROOT_CLASS_NAME } from "./constants";
 import { useStyles } from "./styles";

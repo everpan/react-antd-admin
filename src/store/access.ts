@@ -1,14 +1,14 @@
 import type { MenuItemType } from "#src/layout/layout-menu/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
 
+import { create } from "zustand";
 import { rootRoute, router } from "#src/router";
 import { ROOT_ROUTE_ID } from "#src/router/constants";
 import { baseRoutes } from "#src/router/routes";
 import { ascending } from "#src/router/utils/ascending";
 import { flattenRoutes } from "#src/router/utils/flatten-routes";
-import { generateMenuItemsFromRoutes } from "#src/router/utils/generate-menu-items-from-routes";
 
-import { create } from "zustand";
+import { generateMenuItemsFromRoutes } from "#src/router/utils/generate-menu-items-from-routes";
 
 interface AccessState {
 	// 路由菜单

@@ -1,11 +1,11 @@
 import type { MenuItemType } from "#src/layout/layout-menu/types";
 import type { AppRouteRecordRaw } from "#src/router/types";
 
-import { menuIcons } from "#src/icons/menu-icons";
-import { isString } from "#src/utils/is";
-
 import { createElement } from "react";
 import { Link } from "react-router";
+
+import { menuIcons } from "#src/icons/menu-icons";
+import { isString } from "#src/utils/is";
 
 /**
  * 根据路由列表生成菜单项数组

@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 
-import { usePreferences } from "#src/hooks/use-preferences";
-
 import { ConfigProvider, theme } from "antd";
+
 import { use } from "react";
 import { ThemeProvider } from "react-jss";
+import { usePreferences } from "#src/hooks/use-preferences";
 
 /**
  * 自定义的JSS主题提供者组件

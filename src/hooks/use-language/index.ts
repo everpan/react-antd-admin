@@ -1,8 +1,8 @@
 import type { LanguageType } from "#src/locales";
-import { usePreferencesStore } from "#src/store/preferences";
-
 import { useCallback, useMemo } from "react";
+
 import { useTranslation } from "react-i18next";
+import { usePreferencesStore } from "#src/store/preferences";
 
 export function useLanguage() {
 	const { i18n } = useTranslation();

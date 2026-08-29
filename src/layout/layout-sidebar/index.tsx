@@ -1,7 +1,7 @@
-import { Scrollbar } from "#src/components/scrollbar";
-import { usePreferences } from "#src/hooks/use-preferences";
-
 import { theme as antdTheme, ConfigProvider } from "antd";
+import { Scrollbar } from "#src/components/scrollbar";
+
+import { usePreferences } from "#src/hooks/use-preferences";
 
 import { headerHeight, siderTriggerHeight } from "../constants";
 import { Logo } from "../widgets/logo";

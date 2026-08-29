@@ -8,11 +8,11 @@
  */
 
 import type { RouteObject } from "react-router";
+import { createBrowserRouter, createHashRouter } from "react-router";
 import LayoutRoot from "#src/layout/layout-root";
 import { usePreferencesStore } from "#src/store/preferences";
-import { NProgress } from "#src/utils/progress";
 
-import { createBrowserRouter, createHashRouter } from "react-router";
+import { NProgress } from "#src/utils/progress";
 import { ROOT_ROUTE_ID } from "./constants";
 import { baseRoutes } from "./routes";
 
