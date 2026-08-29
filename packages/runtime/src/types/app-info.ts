@@ -13,7 +13,6 @@ export interface AppInfo {
 		license: string
 		author: string
 		dependencies: Record<string, string>
-		devDependencies: Record<string, string>
 	}
 	lastBuildTime: string
 }

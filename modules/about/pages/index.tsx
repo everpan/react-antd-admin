@@ -120,13 +120,15 @@ export default function About() {
 						</Card>
 					</Badge.Ribbon>
 				</Col>
-				<Col span={24}>
-					<Badge.Ribbon text={devDependenciesItems.length} color="blue">
-						<Card title={t("about:devDependencies")}>
-							<Descriptions bordered items={devDependenciesItems} />
-						</Card>
-					</Badge.Ribbon>
-				</Col>
+				{devDependenciesItems.length > 0 && (
+					<Col span={24}>
+						<Badge.Ribbon text={devDependenciesItems.length} color="blue">
+							<Card title={t("about:devDependencies")}>
+								<Descriptions bordered items={devDependenciesItems} />
+							</Card>
+						</Badge.Ribbon>
+					</Col>
+				)}
 			</Row>
 		</BasicContent>
 	);

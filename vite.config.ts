@@ -14,10 +14,12 @@ import { checker } from "vite-plugin-checker";
 import { vitePluginFakeServer } from "vite-plugin-fake-server";
 import svgrPlugin from "vite-plugin-svgr";
 
-import { author, dependencies, devDependencies, license, name, version } from "./package.json";
+import { author, dependencies, license, name, version } from "./package.json";
 
 const __APP_INFO__ = {
-	pkg: { dependencies, devDependencies, name, version, license, author },
+	// P6.5 执行中发现：devDependencies 全清单被打进产物等于向攻击者公开
+	// 工具链构成（供应链侦察地图），故不注入；about 页该卡片自动隐藏
+	pkg: { dependencies, name, version, license, author },
 	lastBuildTime: dayjs(new Date()).format("YYYY-MM-DD HH:mm:ss"),
 };
 
@@ -38,7 +40,9 @@ export default defineConfig({
 	plugins: [
 		vitePluginFakeServer({
 			basename: "/api",
-			enableProd: true,
+			// P6.5 / B15：mock 代码不得进入生产构建——仅当显式设置
+			// VITE_ENABLE_FAKE_PROD=1 时才打进产物（演示/脱敏交付场景）
+			enableProd: process.env.VITE_ENABLE_FAKE_PROD === "1",
 			timeout: 1000,
 		}),
 		// https://github.com/pd4d10/vite-plugin-svgr#options
