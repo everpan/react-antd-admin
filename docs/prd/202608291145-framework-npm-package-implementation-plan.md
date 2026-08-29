@@ -376,7 +376,7 @@ P2 完成判据逐条核对（2026-08-29）：
 | 3.4 | `defineModule` + `tsx` 真实 import 解析 name/version | 一次性替换 `build-modules.ts:69-76` 的脆弱正则（B10） |
 | 3.5 | 出 d.ts；补 `files` / `exports` / `peerDependencies` | 取消 `private: true` 准备发版。✅ 已完成（d.ts 于 P3.5 前半解除阻塞，元数据定稿见执行小结） |
 | 3.6 | `registerSlot()` 实现（L2 布局插槽） | ✅ 已完成（见执行小结） |
-| 3.7 | TDD：playground 仅靠包名 `tsc --noEmit` 通过 | |
+| 3.7 | TDD：playground 仅靠包名 `tsc --noEmit` 通过 | ✅ 已完成（见执行小结） |
 
 **BDD 场景**：设计文档 US-8（插槽部分）。
 
@@ -449,6 +449,23 @@ P2 完成判据逐条核对（2026-08-29）：
 
 1. 【反常规·测试夹具后缀】含 JSX 的测试夹具以 `.ts` 为后缀时，vitest（oxc transform）不按 JSX 解析，报 `Expected ">" but found "Identifier"`，报错信息完全看不出与后缀有关。夹具必须用 `.tsx`。与既有 `entry-no-name.ts`（纯对象、无 JSX）不一致，后续夹具需按内容选后缀。
 2. 【反常识·共享单例的全局态泄漏】module-loader 的 modules Map 与插槽注册表是进程级单例，测试文件内前序 describe 的注册会泄漏进集成断言（`expected 3 to be 0`）。本测试以「纯 store 用例用独立插槽名、集成用例独占契约名 slotName」隔离，未引入仅供测试的 reset API；若后续测试矩阵变复杂，再评估导出测试专用清理钩子。
+
+### P3.7 执行小结：playground 仅靠包名通过 tsc（2026-08-29，`feature/pkg-p3-runtime-api`）
+
+- **实现**：`apps/playground` 建独立 `tsconfig.json`——**无任何 `@react-antd-admin/*` 的 paths 映射**，包名经 `node_modules`（workspace symlink）→ `exports["."].types` 解析到 `packages/runtime/dist/index.d.ts`。这是「外部工程无框架源码」形态的最终验收：P3.5 的 jss 结构化标注、图标包装（零 `~icons` 泄漏）、peerDeps 声明链在此一次兑现。
+- **TDD**：`tests/playground-package-tsc.test.ts` 2 例——①tsconfig 存在且不含 runtime 的 paths 映射（防倒退回源码同源编译）；②`npx tsc -p tsconfig.json --noEmit` 退出码 0（真跑子进程 tsc）。首跑红（无 tsconfig），落地后绿。
+- **顺带补齐**：playground devDeps 显式声明 `@ant-design/icons`（demo 模块实际使用；此前靠 monorepo hoist 隐式命中，外部工程语义上必须显式）。
+- **全绿**：tsc（根 + playground 独立）0 错误，vitest 100/100（新增 2），根完整构建通过。
+
+**P3 阶段总结（2026-08-29）**
+
+**关键过程**：P3 七个任务按序完成——3.1 出口白名单冻结（P1 用量为输入，`runtime-exports.test.ts` 即契约）→ 3.5 前半（3 处 d.ts 阻塞解除，dist 首次完整产出）→ 3.2 模块包名化（29 文件 codemod + 布局迁移提前完成，monorepo 解析三件套）→ 3.3 图标契约 ReactNode（边界编译收拢到 `generateRoutesFromBackend`）→ 3.4 元数据真实 import 解析（esbuild + stub 替换脆弱正则，防漂移断言锁定 stub 同步）→ 3.5 后半（取消 private、peerDeps 25 包定稿 + 防漂移）→ 3.6 registerSlot 插槽（US-8 L2，unloadModule 清理）→ 3.7 playground 包名 tsc（d.ts 自包含验收）。全程 TDD，每任务先红后绿；出口、stub、peerDeps 三张防漂移测试网彼此咬合。
+
+**对本计划文档的修正**：3.5 原处方「引用 jss Classes 类型标注」不可行（jss 非消费方可解析依赖），改为结构化等价标注；布局组件出口因 P5.1 布局迁移提前（P3.2）而无需冻结。
+
+**耗时**：P3 全阶段约 6 小时（3.1 约 1.5h 含 dist 内联根修；3.2 约 1h；3.3 约 40min；3.4 约 1.5h 含动态 import 两难排查；3.5 约 40min；3.6 约 1h；3.7 约 20min）。
+
+**遗留与交接**：① dist 的 24 包裸导入表已固化为 runtime peerDependencies（P4 SHARED_DEPS 单一来源的直接输入）；② `shell/dist/assets/runtime.js` 过期，P4.3 重建时一并处理；③ 插槽/卸载的宿主级出口（`unloadModule` 等）按 P5/P6 运维需求再定，当前保持出口最小面。
 
 ---
 
