@@ -225,6 +225,9 @@ importers:
 
   apps/playground:
     devDependencies:
+      '@react-antd-admin/cli':
+        specifier: workspace:*
+        version: link:../../packages/cli
       '@react-antd-admin/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
@@ -249,6 +252,15 @@ importers:
       vitepress:
         specifier: ^1.6.4
         version: 1.6.4(@algolia/client-search@5.57.0)(@types/node@25.9.5)(@types/react@19.2.18)(change-case@5.4.4)(lightningcss@1.33.0)(nprogress@0.2.0)(postcss@8.5.26)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(search-insights@2.17.3)(typescript@6.0.3)
+
+  packages/cli:
+    dependencies:
+      tsx:
+        specifier: ^4.23.12
+        version: 4.23.12
+      vite:
+        specifier: ^8.0.13
+        version: 8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
 
   packages/runtime:
     dependencies:
@@ -11036,6 +11048,21 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.9.5
       esbuild: 0.27.7
+      fsevents: 2.3.3
+      jiti: 2.7.0
+      tsx: 4.23.12
+      yaml: 2.9.0
+
+  vite@8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0):
+    dependencies:
+      lightningcss: 1.33.0
+      picomatch: 4.0.7
+      postcss: 8.5.26
+      rolldown: 1.2.6
+      tinyglobby: 0.2.17
+    optionalDependencies:
+      '@types/node': 25.9.5
+      esbuild: 0.28.2
       fsevents: 2.3.3
       jiti: 2.7.0
       tsx: 4.23.12

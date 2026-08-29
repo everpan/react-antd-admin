@@ -14,6 +14,8 @@ node_modules
 # production
 /build
 /dist
+# workspace 子包的构建产物（packages/*/dist、apps/*/dist）
+dist/
 
 # misc
 .DS_Store

@@ -1,0 +1,24 @@
+{
+	"name": "@react-antd-admin/cli",
+	"type": "module",
+	"version": "0.0.0",
+	"private": true,
+	"description": "React Antd Admin 模块工程命令行工具",
+	"license": "MIT",
+	"exports": {
+		".": "./src/index.ts",
+		"./shared-deps": "./src/shared-deps.ts",
+		"./config": "./src/config.ts"
+	},
+	"bin": {
+		"rad": "./bin/rad.mjs"
+	},
+	"files": [
+		"bin",
+		"src"
+	],
+	"dependencies": {
+		"tsx": "^4.23.12",
+		"vite": "^8.0.13"
+	}
+}

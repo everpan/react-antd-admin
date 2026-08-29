@@ -8,6 +8,7 @@
 		"build": "rad build"
 	},
 	"devDependencies": {
+		"@react-antd-admin/cli": "workspace:*",
 		"@react-antd-admin/runtime": "workspace:*",
 		"antd": "^6.4.2",
 		"react": "^19.2.6",
