@@ -518,19 +518,44 @@ P2 完成判据逐条核对（2026-08-29）：
 
 **分支**：`feature/pkg-p5-migration`
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 5.1 | 8 个模块迁移到新契约 | home / about / personal-center / route-nest / outside / access / exception / system |
-| 5.2 | 测试改造 | `module-route-priority.test.ts`、`module-i18n-consistency.test.ts`、`demo.test.tsx`，约 20 用例 |
-| 5.3 | `modules/` 纳入 `tsconfig.json` include（B8） | |
-| 5.4 | 清单合并策略 | 多团队各出一份 `modules.json` 时同名冲突拒绝 + 显式报错（R12） |
-| 5.5 | 旧 `manifest.json` 链路下线（O5） | |
-| 5.6 | 模块开发指南改写 | `docs/prd/module-development-guide.md` |
-| 5.7 | L2 完整性落地 | `modulepreload + integrity`；`chunks[].lazy` 标记与构建期提示 |
-| 5.8 | 错误处理契约 | 每类失败输出「人话原因 + 修复建议 + 文档链接」；去掉 `auth-guard.tsx:107-111` 的静默 catch（B7） |
-| 5.9 | `requiredRoles` 在路由注入前生效（B16） | |
+| # | 任务 | 说明 | 状态 |
+|---|------|------|------|
+| 5.1 | 8 个模块迁移到新契约 | home / about / personal-center / route-nest / outside / access / exception / system | ✅（布局部分 P3.2 前跑，本阶段核验收口） |
+| 5.2 | 测试改造 | `module-route-priority.test.ts`、`module-i18n-consistency.test.ts`、`demo.test.tsx`，约 20 用例 | ✅（route-priority 随 P5.5 新架构改写；全量 131 用例 26 文件绿） |
+| 5.3 | `modules/` 纳入 `tsconfig.json` include（B8） | | ✅ |
+| 5.4 | 清单合并策略 | 多团队各出一份 `modules.json` 时同名冲突拒绝 + 显式报错（R12） | ✅ |
+| 5.5 | 旧 `manifest.json` 链路下线（O5） | | ✅（加载上移应用启动，守卫仅消费 getRoutes） |
+| 5.6 | 模块开发指南改写 | `docs/prd/module-development-guide.md` | ✅ |
+| 5.7 | L2 完整性落地 | `modulepreload + integrity`；`chunks[].lazy` 标记与构建期提示 | ✅ |
+| 5.8 | 错误处理契约 | 每类失败输出「人话原因 + 修复建议 + 文档链接」；去掉 `auth-guard.tsx:107-111` 的静默 catch（B7） | ✅ |
+| 5.9 | `requiredRoles` 在路由注入前生效（B16） | | ✅ |
 
 **BDD 场景**：设计文档 US-4、US-5、US-6、US-9、US-10、US-11。
+
+### P5 执行小结（2026-08-30）
+
+- **5.1/5.2 核验**：`modules/` 全目录零 `#src/` 引用（P2.4 eslint + CI 双卡口在位）；全量 131 用例 / 26 文件绿；`npx tsc --noEmit` 0 错误；`pnpm run build` 通过。
+- **5.3**：`modules` 纳入根 tsconfig include（B8，模块源码进主类型检查）。
+- **5.4**：`packages/cli/src/manifest.ts` `mergeModuleManifests`，同名模块（含同清单内部重复）抛错并定位两个来源（R12）。
+- **5.5+5.8**：清单加载从 `auth-guard` 上移到 `index.tsx` `setupApp()`（O5：router 域与清单解耦，守卫仅消费 `getRoutes()`）；原守卫内静默 catch（仅 DEV console.warn）改为启动期全屏错误页——人话原因 + 修复建议（清单可达 / 资源 URL / 依赖模块部署）+ 文档链接（B7）。`module-bootstrap.test.ts` 锁定「清单消费仅允许出现在入口」。
+- **5.6**：手册全量重写（811 → 220 行），外部团队视角：环境准备与版本门禁、defineModule（含 requiredRoles/requiredPermissions/peerRuntime/registerSlot）、构建产物与完整性、多团队清单合并、红线与门禁表、FAQ。
+- **5.7**：`packages/shell/src/preload.ts` `collectPreloads` 纯函数 + host 注入 `modulepreload + integrity + crossorigin`；lazy chunk 跳过（D7）、URL 去重。
+- **5.9**：`getRoutes()` 按 `ModuleConfig.requiredRoles` 在注入前过滤（`useUserStore` 角色，some 语义），无角色用户拿不到路由与菜单本身。
+
+**执行中发现的问题**
+
+- **反常规**：为测试纯函数而 import shell 入口 `host.tsx`，把它首次拉进根 tsc 编译图，暴露 `react-router/dom` 类型解析的预存缺陷——测试的依赖方向会意外扩大类型检查面。修复：纯函数解耦到零依赖的 `preload.ts`（结构性修复优于在入口上加 ignore）。
+- **反常识**：`@ant-design/pro-components` 假 ESM 会在**不直接引用它**的文件中触发（经 antd 生态链传递性加载），报错位置与根因相距甚远；沿用 `vi.mock` 惯例解决。
+- **工具行为**：vitest 全量运行偶发一次「陈旧断言」失败（单跑与随后两轮全量均绿），疑似转换缓存未失效，未复现，持续观察。
+- **计划语义修正**：5.5 原文「旧 manifest.json 链路下线」——实际保留 `#manifest.json` 加载机制，下线的是**守卫链路**（消费点上移到唯一入口）；shell 宿主态仍走 `modules.json → Manifest` 形状映射（P4.6）。
+
+**P5 阶段总结（2026-08-30）**
+
+**关键过程**：5.3/5.4（B8/R12 门禁）→ 5.9（B16 注入前过滤）→ 5.5+5.8（O5 链路上移 + B7 人话报错）→ 5.7（L2 完整性）→ 5.1/5.2 核验 + 5.6 手册重写。全程 TDD 先红后绿（module-bootstrap / manifest-merge / module-required-roles / shell-integrity 四张新测试网）。
+
+**耗时**：约 3.5 小时（5.3/5.4 约 30min；5.9 约 40min；5.5+5.8 约 40min；5.7 约 50min 含 tsc 牵连排查；5.1/5.2 核验 + 5.6 手册 + 小节约 40min）。
+
+**遗留与交接**：① `manifest.json`（仓库内开发态）与 `modules.json`（构建产物态）双清单并存，形状映射在 shell host，若后续统一需框架方决策；② 真 HMR（vite middleware dev server）延续 P4 偏差记录；③ requiredPermissions 字段类型已定义但路由注入层尚未消费（P6.3 scoped client 时一并评估）。
 
 ---
 
@@ -558,8 +583,8 @@ P2 完成判据逐条核对（2026-08-29）：
 | 项 | 状态 | 说明 |
 |----|------|------|
 | O7 refreshToken 迁 httpOnly Cookie | **阻塞 P6.7** | 需后端配合，需求方未确认 |
-| Spike A 结论 | **阻塞 P1** | antd 单入口 ESM 化若 No-Go，需先修订设计文档 §4.3 与 §7 R3 |
-| Spike B 结论 | 阻塞 P4.6 | |
+| Spike A 结论 | ✅ 已完成（P0） | antd 单入口 ESM 化，P1 已消费 |
+| Spike B 结论 | ✅ 已完成（P4.6/P4.8） | tailwind + antd cssinjs 兼容确认 |
 
 ---
 
