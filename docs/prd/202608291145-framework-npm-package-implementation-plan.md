@@ -563,18 +563,43 @@ P2 完成判据逐条核对（2026-08-29）：
 
 **分支**：`feature/pkg-p6-security`
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 6.1 | 信任根 | 清单与产物分目录分发布凭据，仅 CI 可写清单；宿主内置 `moduleOrigins` 白名单 |
-| 6.2 | CSP 落地 | 按设计文档 §4.8；内联 importmap 带 nonce；**不加** `strict-dynamic` |
-| 6.3 | scoped request client | 模块不再拿全局 request，改为按 `register.apiPrefix` 前缀收敛，越界拒绝 |
-| 6.4 | iframe 加固 | `new URL(u).protocol === "https:"` + 域名白名单 + `sandbox="allow-scripts allow-popups"` |
-| 6.5 | fake server 治理（B15） | `enableProd: true` 改受显式环境变量控制；CI 断言 dist 无 fake 代码 |
-| 6.6 | 供应链（公开 npm） | `publishConfig.registry` 锁定、2FA、`--provenance`、`--frozen-lockfile`、`npm audit signatures`；防 `@react-antd-admin/*` typosquat |
-| 6.7 | O7 refreshToken | **待需求方与后端确认**，未确认前保持现状，风险记 R13 / O7 |
-| 6.8 | 残留风险登记 | 不签名（O3 已定）→ R13，需在 README 与运维文档中明示 |
+| # | 任务 | 说明 | 状态 |
+|---|------|------|------|
+| 6.1 | 信任根 | 清单与产物分目录分发布凭据，仅 CI 可写清单；宿主内置 `moduleOrigins` 白名单 | ✅（白名单代码化；分凭据为部署约束落档） |
+| 6.2 | CSP 落地 | 按设计文档 §4.8；内联 importmap 带 nonce；**不加** `strict-dynamic` | ✅（构建期随机 nonce；`require-trusted-types-for` 见偏差） |
+| 6.3 | scoped request client | 模块不再拿全局 request，改为按 `register.apiPrefix` 前缀收敛，越界拒绝 | ✅ |
+| 6.4 | iframe 加固 | `new URL(u).protocol === "https:"` + 域名白名单 + `sandbox="allow-scripts allow-popups"` | ✅ |
+| 6.5 | fake server 治理（B15） | `enableProd: true` 改受显式环境变量控制；CI 断言 dist 无 fake 代码 | ✅ |
+| 6.6 | 供应链（公开 npm） | `publishConfig.registry` 锁定、2FA、`--provenance`、`--frozen-lockfile`、`npm audit signatures`；防 `@react-antd-admin/*` typosquat | ✅（账号级 2FA 为流程约束落档） |
+| 6.7 | O7 refreshToken | **待需求方与后端确认**，未确认前保持现状，风险记 R13 / O7 | ⏸️ 阻塞（按需求方指示不实施） |
+| 6.8 | 残留风险登记 | 不签名（O3 已定）→ R13，需在 README 与运维文档中明示 | ✅ |
 
 **BDD 场景**：设计文档 US-6（来源未登记）、US-7。
+
+### P6 执行小结（2026-08-30）
+
+- **6.1**：`packages/shell/src/trust.ts`——`assertTrustedModules` 校验清单内 entry/css/chunks 全部资源 URL（同源相对路径可信，绝对 URL origin 须命中 `TRUSTED_ORIGINS`），在 CSS 注入/L2 预载/loadAll 之前执行；报错含模块名与修复指引。「清单与产物分目录、仅 CI 可写清单」为部署约束，README/小结落档。
+- **6.2**：`packages/shell/src/csp.ts` `generateCsp` + `generateNonce`——构建期随机 nonce（每次 build 轮换，静态部署无 per-request 能力）注入 importmap 标签与 meta CSP；`script-src 'self' + CDN 白名单 + nonce`；`style-src 'unsafe-inline'` 为 antd cssinjs 必需；**不加 strict-dynamic**。dist 冒烟确认注入。`require-trusted-types-for` 未加（antd6 cssinjs 大量 innerHTML 注入会全站崩，需配套 trusted-types policy，列为后续项）。
+- **6.3**：`packages/runtime/src/utils/request/scoped.ts`——`createScopedRequest` 以惰性求值的登记前缀为边界，callable 与六个 HTTP verb 全受检，越界/未登记人话报错；不暴露 create/extend（逃逸口）；`createModuleContext` 注入 scoped 实例。单元 5 例 + loadAll 集成夹具。
+- **6.4**：`packages/runtime/src/utils/iframe-guard.ts`——`resolveSafeIframeLink` 仅放行 https + 白名单域名（允许子域），Iframe 组件单一消费点收敛，`sandbox="allow-scripts allow-popups"` 不给 allow-same-origin，拒绝渲染并人话报错。
+- **6.5**：`enableProd` 改 `VITE_ENABLE_FAKE_PROD === "1"` 显式控制；测试双卡口（配置层 + build/ 产物扫描）。**执行中发现**：`__APP_INFO__` 注入整个 package.json，devDependencies 清单（工具链版本地图）随产物泄露——注入剔除、about 页卡片空态隐藏，并加第三卡口（产物不得含 devDependencies 清单特征）。
+- **6.6/6.8**：runtime/cli 移除 private，`publishConfig` 锁官方 registry + access public（安装走镜像、发布走官方）；shell 保持 private（dist 交付）；`.npmrc` 开 provenance；README 新增 Security & Publishing 章节（R13 明示 + 发布 checklist：2FA/--provenance/--frozen-lockfile/audit signatures/typosquat）。
+
+**执行中发现的问题**
+
+- **反常规（B15 实锤）**：旧配置 `enableProd: true` 使 `@faker-js/faker` 与全部 mock 接口真实进入生产构建（`build/assets/faker-*.js`），即 mock 数据在生产可被调用。
+- **反常规（新发现）**：`__APP_INFO__` define 注入整个 package.json——生产 bundle 内嵌 devDependencies 全清单，等于向攻击者公开工具链构成（供应链侦察地图）；已剔除并加卡口。
+- **反常识**：vitest 的 `new URL(..., import.meta.url)` 在 module-runner 下非磁盘路径，测试构造 entry URL 必须走 `__dirname` 系 helper（`PROJECT_ROOT`）。
+- **工具脆弱性**：既有测试按「源码是否含 `__APP_INFO__` 字样」扫描，注释文本即可误触发卡口；本次以修改注释措辞规避，判定方式建议后续改为 AST/精确匹配（记录，不在本阶段改）。
+- **流程教训**：P6.2 提交时只验证了单文件测试与 tsc，nonce 属性回归了两个既有 importmap 测试正则；P6.3 全量才暴露。此后坚持每任务提交前全量。
+
+**P6 阶段总结（2026-08-30）**
+
+**关键过程**：6.1 信任根（moduleOrigins 白名单前置拦截）→ 6.2 CSP（nonce + 无 strict-dynamic）→ 6.3 scoped request（D11 客户端收敛）→ 6.4 iframe 守卫 → 6.5 fake 治理（B15）+ devDependencies 泄露修复 → 6.6/6.8 供应链与风险登记。全程 TDD 先红后绿（shell-trust / shell-csp / scoped-request / iframe-guard / no-fake-in-dist / supply-chain 六张新测试网），全量 161 用例 / 32 文件绿。
+
+**耗时**：约 3 小时（6.1 约 30min；6.2 约 40min 含 dist 冒烟；6.3 约 45min 含夹具语义返工；6.4 约 25min；6.5 约 45min 含新发现泄露修复与重建验证；6.6/6.8 与文档约 20min）。
+
+**遗留与交接**：① O7（refreshToken → httpOnly Cookie）阻塞于后端配合，风险已记 R13/O7，前端侧不实施；② `require-trusted-types-for` CSP 未启用，需 antd trusted-types policy 配套；③ CI 版本回归（宿主升级 → 已发布模块）随发布流程首轮发布时补；④ `frame-src` 域名与 `TRUSTED_ORIGINS` 为占位示例值，部署时按业务域替换。
 
 ---
 
