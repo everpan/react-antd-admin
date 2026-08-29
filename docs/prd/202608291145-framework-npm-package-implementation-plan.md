@@ -475,16 +475,42 @@ P2 完成判据逐条核对（2026-08-29）：
 
 | # | 任务 | 说明 |
 |---|------|------|
-| 4.1 | `SHARED_DEPS` 单一常量源 | 由 `@react-antd-admin/cli` 导出；importmap、`external` 表、版本校验表全部由它生成（解决 B11/B12） |
-| 4.2 | 软 / 硬共享分层落地 | 硬共享含 `@tanstack/react-query`（B12）；软共享支持 importmap `scopes` 多版本共存 |
-| 4.3 | shell 预构建 + importmap 片段自动生成 | 输出 `packages/shell/dist/` |
-| 4.4 | dev 体验三件套 | `react/jsx-dev-runtime` 映射、react-refresh preamble 注入、`sourcemap:"hidden"` |
-| 4.5 | 版本矩阵门禁 | CLI 严格相等校验（D12）；宿主升级共享依赖时 CI 对已发布模块跑回归 |
-| 4.6 | Tailwind 方案落地 | 采用 Spike B 结论 |
-| 4.7 | 移除 `build-modules.ts` 的死产物逻辑（B1） | |
-| 4.8 | `StyleProvider layer` 与 `@layer` 顺序验证 | |
+| 4.1 | `SHARED_DEPS` 单一常量源 | ✅ 结构化表（specifier+asset+hard），importmap/预构建入口/external/版本校验全部生成（B11/B12） |
+| 4.2 | 软 / 硬共享分层落地 | ✅ `hard` 字段落表；`scopes` 多版本共存留作旧模块兜底，随 P5 运维一并按需启用（C7） |
+| 4.3 | shell 预构建 + importmap 片段自动生成 | ✅ 产物全量重建（39 入口 + runtime + versions.json），`tests/shell-importmap.test.ts` 锁定 |
+| 4.4 | dev 体验三件套 | ✅ jsx-dev-runtime 已随共享表映射；sourcemap hidden 落地（.map 不入库）；**preamble 偏差见小结** |
+| 4.5 | 版本矩阵门禁 | ✅ shell 落 versions.json（实际安装版本），`checkSharedVersions` 构建前强制校验（D12/C4）；CI 回归随发布流程在 P6 补 |
+| 4.6 | Tailwind 方案落地 | ✅ 宿主按 modules.json `css` 字段 `<link>` 注入（loadAll 前） |
+| 4.7 | 移除 `build-modules.ts` 的死产物逻辑（B1） | ✅ 删 `#src/#modules` external 死分支 + 本地 SHARED_EXTERNALS 收敛到 cli 单源 |
+| 4.8 | `StyleProvider layer` 与 `@layer` 顺序验证 | ✅ 结论见小结（维持 hashPriority high） |
 
 **BDD 场景**：设计文档 US-2（dev 体验不退化）、US-3。
+
+### P4 执行小结（2026-08-29，`feature/pkg-p4-shell`）
+
+**4.1 单一常量源**：`SHARED_DEPS` 重构为结构化条目（`specifier`/`asset`/`hard`），**条目粒度 = importmap 键 = 实际裸说明符**（importmap 无前缀通配，`motion/react`、`zustand/shallow` 等深路径必须单独成条）。`generateShellEntries()` 生成 shell 预构建入口、`generateImportmap()` 生成映射，防漂移测试三张网：runtime peerDeps ⊆ 共享表、产物裸说明符 ⊆ importmap、共享表全量产物存在。补齐 runtime 实际依赖的 11 个缺口包（ahooks/ky/react-jss 等）与 clsx。`src/entries/*.ts` 实体文件删除——入口直接 `import.meta.resolve` 包说明符为真实路径（vite lib.entry 不解析裸说明符），`rollupOptions.output.entryFileNames` 会覆盖 `lib.fileName` 导致产物名取包入口 basename（如 `dayjs.min.js`），必须删 output 配置。
+
+**4.3 shell 重建**：产物从手写 15 项扩到共享表全量 39 入口 + runtime（sha256 与包 dist 一致性入测）。shell 构建改走 `pnpm --filter @react-antd-admin/runtime build` 完整构建——只跑 `vite build` 会 emptyOutDir 清掉 dist 里的 d.ts 声明树（P3.5 隐患）。
+
+**4.4 dev 三件套**：jsx-dev-runtime 已随共享表映射 ✓；`sourcemap: "hidden"` 落地且 `.map` 不入库（gitignore）✓；**react-refresh preamble 未落地（偏差）**：当前 `rad dev` 是「build + watch + 手动刷新」静态架构，无 `/@react-refresh` 端点、模块产物也不含 refresh 代码，强行注入 preamble 只会报 import 失败。真 HMR 需要 dev 服务器升级为 vite middleware 模式（transform 模块产物），记入 P5 待办评估。
+
+**4.5 版本矩阵门禁**：shell 构建时经 `import.meta.resolve` 逐包向上找最近 package.json 读**实际安装版本**写 `dist/versions.json`（40 项）；`checkSharedVersions` 在 `buildModules` 前强制执行。**语义修正**：C4「版本严格相等」指**安装后版本**（读模块工程 node_modules，跟随 pnpm symlink），而非 devDependencies 的范围字面量——`^19.2.6` 与安装的 `19.2.8` 字面上永远不等，按字面校验全员误伤。校验逻辑抽纯函数 `validateSharedVersions`，fs 无关可直测。
+
+**4.6 Tailwind**：Spike B 结论（外部模块自带构建、宿主 `<link>` 注入）落地：host 按 modules.json `css` 字段在 `loadAll` 前去重注入。**顺带修一个潜伏 bug**：cli 写的 modules.json 是数组（`BuiltModule[]`），而 `loadAll` 需要 `{ modules: [...] }`，原样传入会在运行期崩（`manifest.modules.filter is not a function`），host 侧补形状映射。
+
+**4.7**：删除 `scripts/build-modules.ts` 的 `#src/`/`#modules` external 死分支（P3.2 后模块零 `#src` import），并把本地 `SHARED_EXTERNALS` 20+ 项正则表整个删除、收敛到 cli `isSharedDep` 单源（B1 的根本治理，防止第四张手写清单）。
+
+**4.8**：维持 `StyleProvider hashPriority="high"` 不引入 `layer`。结论：antd 6 经 cssinjs 产出带 hash 的低优先级样式 + tailwind `@layer(theme)` 分层，当前组合无层序冲突（Spike B 已浏览器验证）；`layer` 模式是给「需要 tailwind utilities 覆盖 antd 样式」的场景留的开关，当前设计不需要。
+
+**全绿**：tsc 0 错误，vitest 117/117（新增 shell-importmap 3 + version-gate 7 + shared-deps 7 = 17），根完整构建 + 8 模块独立构建 + shell 全量重建通过。
+
+**P4 阶段总结（2026-08-29）**
+
+**关键过程**：4.1 结构化共享表与防漂移三张测试网 → 4.3 shell 全量重建（B11 债务清偿）→ 4.4 sourcemap hidden + preamble 偏差登记 → 4.5 版本门禁（语义修正后落地）→ 4.6 css 注入 + modules.json 形状修正 → 4.7 死逻辑删除与第四张清单收敛 → 4.8 StyleProvider 结论落档。TDD：每项先红后绿（shell-importmap 首跑暴露产物命名缺陷，version-gate 首跑暴露严格相等语义错误）。
+
+**耗时**：约 2.5 小时（4.1 约 50min；4.3 约 40min 含产物命名排查；4.4/4.5 约 50min 含门禁语义返工；4.6/4.7/4.8 与文档约 30min）。
+
+**遗留与交接**：① preamble/真 HMR 待 vite middleware dev server（P5 评估）；② importmap `scopes` 多版本兜底未实现（无多版本模块实例，P5 按需）；③ CI 版本回归（宿主升级→已发布模块回归）随 P6 发布流程补；④ P3.5 的 peerDeps 25 包与 P4.1 共享表 40 说明符已通过测试互锁，任一侧漂移先红。
 
 ---
 
