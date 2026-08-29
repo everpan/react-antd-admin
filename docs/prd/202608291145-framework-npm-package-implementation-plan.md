@@ -281,16 +281,23 @@ pnpm build
 **分支**：`feature/pkg-p2-inversion`
 **目标**：切断框架→模块的反向依赖，为布局去中心化与 KeepAlive 上移做语义准备。
 
-| # | 任务 | 说明 |
-|---|------|------|
-| 2.1 | **KeepAlive 上移到 shell 固定层**（必须第一个做） | 从 `ContainerLayout → LayoutContent`（`src/layout/layout-content/index.tsx:116-126`）移到 LayoutRoot 之后、路由 outlet 之外；exclude 改由 module-loader 汇总各模块 `handle` 计算 |
-| 2.2 | 引入 `handle.layout` 契约 | `"container" \| "parent" \| "none"`，默认 `none`；`src/router/types.ts` 的 `RouteMeta` 加字段 |
-| 2.3 | 框架内置 `NotFound` / `UnknownComponent` | 替代 `fallback.ts:5`、`generate-routes-from-backend.ts:8` 对 `#modules/exception` 的依赖；exception 模块降级为可选覆盖 |
-| 2.4 | 加 CI 卡口 | `eslint.config.js` 的 `no-restricted-imports` 禁 runtime 内出现 `#modules`；CI 跑 `grep -rn "#modules" packages/runtime/src && exit 1` |
-| 2.5 | 移除主包对模块页面的 glob 收录 | `generate-routes-from-backend.ts:14-17` 去掉 `/modules/*/pages/**`；同步改 `tests/module-route-priority.test.ts:43-52` 的断言为**不含** `/modules/` |
-| 2.6 | `__APP_INFO__` → `getAppInfo()` | 覆盖 `modules/about/pages/constants.ts:1` 与 `src/utils/get-app-namespace/index.ts:13` |
-| 2.7 | 先迁 1–2 个 dogfooding 模块验证语义 | 建议 `route-nest`（有嵌套）+ `system`（有 `keepAlive: false`） |
-| 2.8 | TDD | 缓存行为不回退、整站 chrome 不消失、路由优先级断言更新 |
+| # | 任务 | 说明 | 状态 |
+|---|------|------|------|
+| 2.1 | **KeepAlive 上移到 shell 固定层**（必须第一个做） | 从 `ContainerLayout → LayoutContent`（`src/layout/layout-content/index.tsx:116-126`）移到 LayoutRoot 之后、路由 outlet 之外；exclude 改由 module-loader 汇总各模块 `handle` 计算 | ✅ 已完成（`26cc3d7`） |
+| 2.2 | 引入 `handle.layout` 契约 | `"container" \| "parent" \| "none"`，默认 `none`；`src/router/types.ts` 的 `RouteMeta` 加字段 | ⬜ 待开始 |
+| 2.3 | 框架内置 `NotFound` / `UnknownComponent` | 替代 `fallback.ts:5`、`generate-routes-from-backend.ts:8` 对 `#modules/exception` 的依赖；exception 模块降级为可选覆盖 | ⬜ 待开始 |
+| 2.4 | 加 CI 卡口 | `eslint.config.js` 的 `no-restricted-imports` 禁 runtime 内出现 `#modules`；CI 跑 `grep -rn "#modules" packages/runtime/src && exit 1` | ⬜ 待开始 |
+| 2.5 | 移除主包对模块页面的 glob 收录 | `generate-routes-from-backend.ts:14-17` 去掉 `/modules/*/pages/**`；同步改 `tests/module-route-priority.test.ts:43-52` 的断言为**不含** `/modules/` | ⬜ 待开始 |
+| 2.6 | `__APP_INFO__` → `getAppInfo()` | 覆盖 `modules/about/pages/constants.ts:1` 与 `src/utils/get-app-namespace/index.ts:13` | ⬜ 待开始 |
+| 2.7 | 先迁 1–2 个 dogfooding 模块验证语义 | 建议 `route-nest`（有嵌套）+ `system`（有 `keepAlive: false`） | ⬜ 待开始 |
+| 2.8 | TDD 验收与文档更新 | 缓存行为不回退、整站 chrome 不消失、路由优先级断言更新；完成后回填本表与总结 | ⬜ 待开始 |
+
+### P2.1 执行小结
+
+- **位置取舍**：KeepAlive 抽到 `layout/keep-alive-layer`（shell 固定层组件），但**只包裹页面 outlet**，不包在 `LayoutRoot` 的 `<Outlet/>` 外层。理由：包外层会把 header/sidebar 也缓存，导致切回路由时 chrome 状态错位（违背「整站 chrome 不消失」约束）。功能目标（B13：缓存不依赖 ContainerLayout 是否存在）已达成——exclude 现在由 module-loader 汇总 `handle.keepAlive` 得出。
+- **exclude 数据源反转**：`keep-alive.ts` 提供纯函数 `collectKeepAliveExcludes` / `collectAllRoutePaths`（复用 `flattenRoutes`，key 与 `activeCacheKey` 精确对齐），module-loader 暴露 `getKeepAliveExcludeKeys` / `getAllRoutePathKeys`；`LayoutContent` 不再依赖 access store 的 `flatRouteList`。
+- **验证**：新增 `tests/keep-alive.test.ts`（3 例）；full vitest 48/48；`rad build` 与完整应用 `vite build` 均通过。
+
 
 **BDD 场景**：设计文档 US-4、US-8。
 
