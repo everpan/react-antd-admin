@@ -8,9 +8,6 @@ import {
 } from "@ant-design/icons";
 import { createElement, lazy } from "react";
 
-import ContainerLayout from "#src/layout/container-layout";
-import ParentLayout from "#src/layout/parent-layout";
-
 const Menu1And1 = lazy(() => import("./pages/menu1/menu1-1"));
 const Menu1And2 = lazy(() => import("./pages/menu1/menu1-2"));
 const Menu2 = lazy(() => import("./pages/menu2"));
@@ -18,19 +15,19 @@ const Menu2 = lazy(() => import("./pages/menu2"));
 const routes: AppRouteRecordRaw[] = [
 	{
 		path: "/route-nest",
-		Component: ContainerLayout,
 		handle: {
 			order: 20,
 			title: "route-nest:menu.nestMenus",
 			icon: createElement(NodeExpandOutlined),
+			layout: "container",
 		},
 		children: [
 			{
 				path: "/route-nest/menu1",
-				Component: ParentLayout,
 				handle: {
 					title: "route-nest:menu.menu1",
 					icon: createElement(SisternodeOutlined),
+					layout: "parent",
 				},
 				children: [
 					{

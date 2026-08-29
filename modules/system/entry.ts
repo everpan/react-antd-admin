@@ -3,8 +3,6 @@ import type { AppRouteRecordRaw } from "#src/router/types";
 
 import { lazy } from "react";
 
-import ContainerLayout from "#src/layout/container-layout";
-
 const User = lazy(() => import("./pages/user"));
 const Dept = lazy(() => import("./pages/dept"));
 const Role = lazy(() => import("./pages/role"));
@@ -13,12 +11,12 @@ const Menu = lazy(() => import("./pages/menu"));
 const routes: AppRouteRecordRaw[] = [
 	{
 		path: "/system",
-		Component: ContainerLayout,
 		handle: {
 			icon: "SettingOutlined",
 			title: "system:menu.system",
 			order: 100,
 			roles: ["admin"],
+			layout: "container",
 		},
 		children: [
 			{

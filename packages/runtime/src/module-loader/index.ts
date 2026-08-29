@@ -9,6 +9,7 @@ import type {
 
 import i18next from "i18next";
 
+import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
 import { request } from "#src/utils/request";
 import { getAllRoutePaths, getKeepAliveExcludes } from "./keep-alive";
 
@@ -190,7 +191,8 @@ export function getRoutes(): AppRouteRecordRaw[] {
 	const routes: AppRouteRecordRaw[] = [];
 	for (const instance of modules.values()) {
 		if (instance.status !== "error" && instance.definition.routes.length > 0) {
-			routes.push(...instance.definition.routes);
+			// P2.7：布局不再由模块自行 import，按 handle.layout 在出口统一包裹
+			routes.push(...resolveRouteLayouts(instance.definition.routes));
 		}
 	}
 	return routes;
