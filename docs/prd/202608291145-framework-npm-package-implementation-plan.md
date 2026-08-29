@@ -375,7 +375,7 @@ P2 完成判据逐条核对（2026-08-29）：
 | 3.3 | 图标契约统一为 `ReactNode` | 11 处字符串 → `createElement(X)`；`generate-menu-items-from-routes.ts:42-54` 去掉 `isString` 分支 |
 | 3.4 | `defineModule` + `tsx` 真实 import 解析 name/version | 一次性替换 `build-modules.ts:69-76` 的脆弱正则（B10） |
 | 3.5 | 出 d.ts；补 `files` / `exports` / `peerDependencies` | 取消 `private: true` 准备发版。✅ 已完成（d.ts 于 P3.5 前半解除阻塞，元数据定稿见执行小结） |
-| 3.6 | `registerSlot()` 实现（L2 布局插槽） | 配合 P2 的 L1 |
+| 3.6 | `registerSlot()` 实现（L2 布局插槽） | ✅ 已完成（见执行小结） |
 | 3.7 | TDD：playground 仅靠包名 `tsc --noEmit` 通过 | |
 
 **BDD 场景**：设计文档 US-8（插槽部分）。
@@ -435,6 +435,20 @@ P2 完成判据逐条核对（2026-08-29）：
 **P3.5 过程中发现的问题（分类记录）**：
 
 1. 【反常规·静态分析的注释陷阱】dist/runtime.js 中存在 2 处 `from "#src/..."` 字符串，实为 `ContainerLayout` 的 jsdoc 用法示例文本（P3.1 曾确认过一处，重建后复现两处）。粗粒度的 `from "..."` 全文匹配会把注释当代码。防漂移测试改用行首锚定的 import/export 语句匹配。教训：对构建产物做静态扫描时，正则必须锚定语句边界，否则文档注释就是假阳性源。
+
+### P3.6 执行小结：registerSlot 布局插槽（2026-08-29，`feature/pkg-p3-runtime-api`）
+
+- **实现**：新增 `module-loader/slots.ts`——zustand 注册表按 `slotName → moduleName` 两级组织，`registerSlot` 同名覆盖、`removeModuleSlots` 按模块清理、`getSlotNodes` 纯读、`useSlotNodes` 供布局订阅（selector 只取 byModule 引用，注册/卸载才触发重渲染，规避 v5 useStore 的新数组引用循环）。`ModuleContext` 新增 `registerSlot(slotName, node)`（设计文档 US-8 场景 3 的字面 API，绑定调用模块名）。
+- **卸载语义**：新增 `unloadModule(name)`——执行 `onDestroy` 生命周期 → 清理该模块插槽 → 移除实例（US-8「卸载模块后该节点消失」+ US-9 运维下线的地基）。此前 `onDestroy` 在 loader 中定义但从未被调用。
+- **消费点**：`layout-header` 右侧操作区（GlobalSearch 之前）渲染 `useSlotNodes("header-actions")`。
+- **出口纪律**：插槽 API 全部为 runtime 内部消费（模块走 ctx、布局走 #src 相对导入），**未加入 index.ts 出口**——P3.1 冻结面与 P3.5 peerDeps 防漂移表均不受扰动；宿主级运维出口（unloadModule 暴露给 shell）留待 P5/P6 按需定。
+- **TDD**：`tests/runtime-slots.test.ts` 4 例——注册表 3 例（注册可读 / 同名覆盖 / 清理隔离）+ US-8 真实集成 1 例（fixture 模块经 `loadAll` 动态 import 走完整 onInit 注册 → `unloadModule` 后节点消失且 `getModule` 为 undefined）。
+- **全绿**：tsc 0 错误，vitest 98/98（新增 4），lint 0 error，根完整构建 + 8 模块独立构建通过。
+
+**P3.6 过程中发现的问题（分类记录）**：
+
+1. 【反常规·测试夹具后缀】含 JSX 的测试夹具以 `.ts` 为后缀时，vitest（oxc transform）不按 JSX 解析，报 `Expected ">" but found "Identifier"`，报错信息完全看不出与后缀有关。夹具必须用 `.tsx`。与既有 `entry-no-name.ts`（纯对象、无 JSX）不一致，后续夹具需按内容选后缀。
+2. 【反常识·共享单例的全局态泄漏】module-loader 的 modules Map 与插槽注册表是进程级单例，测试文件内前序 describe 的注册会泄漏进集成断言（`expected 3 to be 0`）。本测试以「纯 store 用例用独立插槽名、集成用例独占契约名 slotName」隔离，未引入仅供测试的 reset API；若后续测试矩阵变复杂，再评估导出测试专用清理钩子。
 
 ---
 
