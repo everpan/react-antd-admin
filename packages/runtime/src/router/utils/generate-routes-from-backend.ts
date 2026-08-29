@@ -5,7 +5,7 @@ import { Iframe } from "#src/components/iframe";
 import { addRouteIdByPath } from "./add-route-id-by-path";
 import { resolveLayoutComponent } from "./resolve-layout";
 
-const ExceptionUnknownComponent = lazy(() => import("#modules/exception/pages/unknown-component"));
+const UnknownComponent = lazy(() => import("#src/components/unknown-component"));
 
 /**
  * @zh 异步获取页面组件（包含框架 pages 和模块 pages）
@@ -75,7 +75,7 @@ export async function generateRoutesFromBackend(backendRoutes: Array<AppRouteRec
 		}
 		else {
 			console.warn(`[Frontend component not found]: ${componentPath}`);
-			route.Component = ExceptionUnknownComponent;
+			route.Component = UnknownComponent;
 		}
 	};
 

@@ -1,0 +1,7 @@
+{
+	"notFoundTitle": "404",
+	"notFoundSubTitle": "抱歉，您访问的页面不存在。",
+	"unknownComponentTitle": "未知组件",
+	"unknownComponentSubTitle": "抱歉，当前路由没有对应的组件，请联系开发人员。",
+	"pageErrorTitle": "槽糕！出错了！"
+}

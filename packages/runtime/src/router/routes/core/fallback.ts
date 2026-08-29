@@ -2,7 +2,7 @@ import type { RouteObject } from "react-router";
 
 import { lazy } from "react";
 
-const NotFound = lazy(() => import("#modules/exception/pages/404"));
+const NotFound = lazy(() => import("#src/components/not-found"));
 
 const routes: RouteObject[] = [
 	{

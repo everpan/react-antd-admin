@@ -284,8 +284,8 @@ pnpm build
 | # | 任务 | 说明 | 状态 |
 |---|------|------|------|
 | 2.1 | **KeepAlive 上移到 shell 固定层**（必须第一个做） | 从 `ContainerLayout → LayoutContent`（`src/layout/layout-content/index.tsx:116-126`）移到 LayoutRoot 之后、路由 outlet 之外；exclude 改由 module-loader 汇总各模块 `handle` 计算 | ✅ 已完成（`26cc3d7`） |
-| 2.2 | 引入 `handle.layout` 契约 | `"container" \| "parent" \| "none"`，默认 `none`；`src/router/types.ts` 的 `RouteMeta` 加字段 | ⬜ 待开始 |
-| 2.3 | 框架内置 `NotFound` / `UnknownComponent` | 替代 `fallback.ts:5`、`generate-routes-from-backend.ts:8` 对 `#modules/exception` 的依赖；exception 模块降级为可选覆盖 | ⬜ 待开始 |
+| 2.2 | 引入 `handle.layout` 契约 | `"container" \| "parent" \| "none"`，迁移期默认 `container`（P2.7 后改为 `none`）；`src/router/types.ts` 的 `RouteMeta` 加字段 | ✅ 已完成（`87bd842`） |
+| 2.3 | 框架内置 `NotFound` / `UnknownComponent` | 替代 `fallback.ts:5`、`generate-routes-from-backend.ts:8` 对 `#modules/exception` 的依赖；exception 模块降级为可选覆盖 | ✅ 已完成 |
 | 2.4 | 加 CI 卡口 | `eslint.config.js` 的 `no-restricted-imports` 禁 runtime 内出现 `#modules`；CI 跑 `grep -rn "#modules" packages/runtime/src && exit 1` | ⬜ 待开始 |
 | 2.5 | 移除主包对模块页面的 glob 收录 | `generate-routes-from-backend.ts:14-17` 去掉 `/modules/*/pages/**`；同步改 `tests/module-route-priority.test.ts:43-52` 的断言为**不含** `/modules/` | ⬜ 待开始 |
 | 2.6 | `__APP_INFO__` → `getAppInfo()` | 覆盖 `modules/about/pages/constants.ts:1` 与 `src/utils/get-app-namespace/index.ts:13` | ⬜ 待开始 |
@@ -298,6 +298,13 @@ pnpm build
 - **exclude 数据源反转**：`keep-alive.ts` 提供纯函数 `collectKeepAliveExcludes` / `collectAllRoutePaths`（复用 `flattenRoutes`，key 与 `activeCacheKey` 精确对齐），module-loader 暴露 `getKeepAliveExcludeKeys` / `getAllRoutePathKeys`；`LayoutContent` 不再依赖 access store 的 `flatRouteList`。
 - **验证**：新增 `tests/keep-alive.test.ts`（3 例）；full vitest 48/48；`rad build` 与完整应用 `vite build` 均通过。
 
+### P2.3 执行小结
+
+- **新增框架内置兜底页**：`components/not-found`（404）与 `components/unknown-component`（后端下发路由找不到前端组件）。两者同时提供命名导出与 `export default`，后者用于满足 `lazy()` 的默认导出要求。
+- **反向依赖已切断**：`router/routes/core/fallback.ts` 与 `router/utils/generate-routes-from-backend.ts` 改为 `import("#src/components/...")`；`packages/runtime/src` 全量扫描已无 `#modules/exception`。
+- **文案随框架下发**：新增 `locales/{zh-CN,en-US}/exception.json`，走框架默认 `translation` namespace（`t("exception.notFoundSubTitle")`）。顺带修复既有隐性缺失 key —— `components/page-error` 一直引用 `t("exception.pageErrorTitle")`，但该文案此前只存在于 exception **模块**的 namespace（`exception:pageErrorTitle`）里，实际取不到；现由框架 locale 提供，并从模块 locale 中移除该已失效的 key。
+- **exception 模块降级为可选覆盖**：模块保留 `/exception/403|404|500|not-found-component` 演示路由，全部走相对引用（`./pages/*`），不再被框架硬引用；同时删除 P1 遗留的两个手写 `index.d.ts`（仅为满足框架跨目录引用而存在，现已无用）。
+- **验证**：新增 `tests/framework-fallback.test.ts`（5 例，含「runtime 源码不得出现 `#modules/exception`」的全量扫描断言，可作为 P2.4 卡口的测试侧对照）；full vitest 57/57；`tsc --noEmit` 0 错误；runtime 库构建 + 完整应用 `vite build` 均通过，产物同时含框架 `not-found` / `unknown-component` chunk 与模块自身的演示 chunk。
 
 **BDD 场景**：设计文档 US-4、US-8。
 
