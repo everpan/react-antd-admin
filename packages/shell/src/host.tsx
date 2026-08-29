@@ -15,6 +15,7 @@
 
 import type { AppRouteRecordRaw } from "@react-antd-admin/runtime";
 import type { ReactNode } from "react";
+import type { HostModule } from "./preload";
 import { StyleProvider } from "@ant-design/cssinjs";
 import { getRoutes, loadAll } from "@react-antd-admin/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -23,12 +24,14 @@ import i18next from "i18next";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { initReactI18next, useTranslation } from "react-i18next";
+
 import {
 	createBrowserRouter,
 	Outlet,
 	RouterProvider,
 	useNavigate,
 } from "react-router/dom";
+import { collectPreloads } from "./preload";
 
 const queryClient = new QueryClient();
 
@@ -100,7 +103,7 @@ function Boot() {
 				const res = await fetch("./modules.json");
 				if (!res.ok)
 					throw new Error(`modules.json 加载失败：HTTP ${res.status}`);
-				const list: { name?: string, entry?: string, css?: string[] }[] = await res.json();
+				const list: HostModule[] = await res.json();
 
 				// P4.6 / Spike B：外部模块的 tailwind/css 产物由模块侧构建、
 				// 宿主侧 <link> 注入（在 loadAll 之前，避免样式闪断）
@@ -113,6 +116,19 @@ function Boot() {
 							document.head.appendChild(link);
 						}
 					}
+				}
+
+				// P5.7 / L2 完整性：非 lazy chunk 预载时携带构建期产出的
+				// sha384 integrity，浏览器加载前校验（在 loadAll 之前生效）
+				for (const { href, integrity } of collectPreloads(list)) {
+					if (document.querySelector(`link[rel="modulepreload"][href="${href}"]`))
+						continue;
+					const link = document.createElement("link");
+					link.rel = "modulepreload";
+					link.href = href;
+					link.integrity = integrity;
+					link.crossOrigin = "anonymous";
+					document.head.appendChild(link);
 				}
 
 				// modules.json（cli BuiltModule[]）→ loader 的 Manifest 形状
