@@ -13,12 +13,12 @@
  */
 
 import { execSync } from "node:child_process";
-import { copyFileSync, mkdirSync, rmSync } from "node:fs";
-import { resolve } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { parse, resolve } from "node:path";
 import process from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { generateImportmap, generateShellEntries, isSharedDep } from "@react-antd-admin/cli/shared-deps";
+import { generateImportmap, generateShellEntries, isSharedDep, SHARED_DEPS } from "@react-antd-admin/cli/shared-deps";
 import react from "@vitejs/plugin-react";
 import { build } from "vite";
 
@@ -55,6 +55,9 @@ async function buildSharedEntries() {
 			build: {
 				outDir: "dist/assets",
 				emptyOutDir: false,
+				// dev 三件套（P4.4）：sourcemap hidden —— 产物不加注释链接，
+				// 但 .map 可供内部错误栈解析（不发版）
+				sourcemap: "hidden",
 				lib: {
 					entry: pkgEntry,
 					formats: ["es"],
@@ -79,6 +82,7 @@ async function buildHost() {
 		build: {
 			outDir: "dist",
 			emptyOutDir: false,
+			sourcemap: "hidden",
 			rollupOptions: {
 				input: resolve(shellDir, "index.html"),
 				external: (id: string) => isSharedDep(id),
@@ -86,6 +90,42 @@ async function buildHost() {
 			minify: false,
 		},
 	});
+}
+
+/** 共享表各包的实际安装版本 → dist/versions.json（P4.5 版本门禁的宿主侧真源） */
+function packageNameOf(specifier: string): string {
+	return specifier.startsWith("@") ? specifier.split("/").slice(0, 2).join("/") : specifier.split("/")[0];
+}
+
+function installedVersion(specifier: string): string | undefined {
+	try {
+		const resolved = import.meta.resolve(specifier, pathToFileURL(resolve(shellDir, "package.json")).href);
+		let dir = resolve(fileURLToPath(resolved), "..");
+		const name = packageNameOf(specifier);
+		while (dir !== parse(dir).root) {
+			const pkgJson = resolve(dir, "package.json");
+			if (existsSync(pkgJson)) {
+				const parsed = JSON.parse(readFileSync(pkgJson, "utf-8"));
+				if (parsed.name === name)
+					return parsed.version;
+			}
+			dir = resolve(dir, "..");
+		}
+	}
+	catch {
+		return undefined;
+	}
+}
+
+function writeVersionsJson() {
+	const versions: Record<string, string> = {};
+	for (const dep of SHARED_DEPS) {
+		const version = installedVersion(dep.specifier);
+		if (version)
+			versions[dep.specifier] = version;
+	}
+	writeFileSync(resolve(distDir, "versions.json"), `${JSON.stringify(versions, null, 2)}\n`);
+	console.log(`[shell] 版本矩阵已生成（${Object.keys(versions).length} 项） → dist/versions.json`);
 }
 
 async function main() {
@@ -107,6 +147,7 @@ async function main() {
 	copyFileSync(runtimeSrc, resolve(assetsDir, "runtime.js"));
 
 	await buildHost();
+	writeVersionsJson();
 
 	console.log("[shell] 完成 →", distDir);
 }

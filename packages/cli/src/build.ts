@@ -9,6 +9,7 @@ import { build as esbuild } from "esbuild";
 import { build } from "vite";
 import { loadModulesConfig, resolveModuleEntry } from "./config";
 import { isSharedDep } from "./shared-deps";
+import { checkSharedVersions, resolveShellDist } from "./versions";
 
 /**
  * `@react-antd-admin/runtime` 的只读占位源码（设计文档 B10 / §4.3）。
@@ -252,6 +253,9 @@ export async function buildModules(projectRoot: string): Promise<BuiltModule[]> 
 	const config = await loadModulesConfig(projectRoot);
 	const outDir = path.join(projectRoot, "dist");
 	const baseUrl = config.baseUrl ?? "";
+
+	// P4.5 / C4 / D12：构建前先过版本矩阵门禁，版本漂移直接拒绝
+	checkSharedVersions(projectRoot, resolveShellDist(projectRoot));
 
 	warnUnsharedDeps(projectRoot);
 

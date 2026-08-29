@@ -1,0 +1,88 @@
+/**
+ * 版本矩阵门禁（设计文档 C4 / D12，P4.5）。
+ *
+ * 宿主 shell 构建时把共享表各包的**实际安装版本**落进 dist/versions.json；
+ * CLI 加载模块工程前校验：硬共享依赖只能进 devDependencies，且
+ * **安装后的实际版本**与宿主严格相等（读 node_modules，非 semver 兼容判断，
+ * 也非 devDependencies 里的范围字面量）——类型来自 node_modules、实现来自
+ * 宿主 importmap，两者差一个 minor 就可能双实例崩。
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+
+import { SHARED_DEPS } from "./shared-deps";
+
+/** 读取宿主 shell 产物中的共享依赖实际版本表 */
+export function readHostVersions(shellDist: string): Record<string, string> {
+	return JSON.parse(fs.readFileSync(path.join(shellDist, "versions.json"), "utf-8"));
+}
+
+/** 定位 shell 预构建产物：npm 依赖优先，monorepo dogfooding 回退 workspace */
+export function resolveShellDist(projectRoot: string): string {
+	const fromNodeModules = path.join(projectRoot, "node_modules/@react-antd-admin/shell/dist");
+	if (fs.existsSync(fromNodeModules))
+		return fromNodeModules;
+	const fromWorkspace = path.join(projectRoot, "../../packages/shell/dist");
+	if (fs.existsSync(fromWorkspace))
+		return fromWorkspace;
+	throw new Error(
+		"找不到 @react-antd-admin/shell 的预构建产物（dist）。\n"
+		+ "请先构建宿主：pnpm --filter @react-antd-admin/shell build",
+	);
+}
+
+/**
+ * 读取模块工程中某共享依赖的安装后版本（node_modules 解析，跟随 pnpm symlink）；
+ * 未安装返回 undefined（仅声明未安装时跳过版本比对，由包管理器保证一致性）。
+ */
+export function readInstalledVersion(projectRoot: string, specifier: string): string | undefined {
+	try {
+		const pkgJson = path.join(projectRoot, "node_modules", specifier, "package.json");
+		const parsed = JSON.parse(fs.readFileSync(pkgJson, "utf-8"));
+		return typeof parsed.version === "string" ? parsed.version : undefined;
+	}
+	catch {
+		return undefined;
+	}
+}
+
+/** 纯校验：返回违规描述列表（空数组 = 通过） */
+export function validateSharedVersions(
+	pkg: { dependencies?: Record<string, string>, devDependencies?: Record<string, string> },
+	hostVersions: Record<string, string>,
+	readInstalled: (specifier: string) => string | undefined,
+): string[] {
+	const hardSpecifiers = SHARED_DEPS.filter(dep => dep.hard).map(dep => dep.specifier);
+	const errors: string[] = [];
+
+	for (const spec of hardSpecifiers) {
+		if (pkg.dependencies?.[spec]) {
+			errors.push(
+				`· ${spec} 是硬共享依赖，禁止放入 dependencies（由宿主 importmap 统一提供，自带将产生双实例）；请移入 devDependencies`,
+			);
+		}
+		const want = hostVersions[spec];
+		const got = readInstalled(spec);
+		if (want && got && got !== want) {
+			errors.push(
+				`· ${spec}: 安装版本 ${got} 与宿主严格相等校验失败（期望 ${want}）；请对齐版本后重新安装`,
+			);
+		}
+	}
+	return errors;
+}
+
+/** 校验模块工程的共享依赖版本矩阵，违规直接抛错并打印期望值 */
+export function checkSharedVersions(projectRoot: string, shellDist: string): void {
+	const versions = readHostVersions(shellDist);
+	const pkg = JSON.parse(fs.readFileSync(path.join(projectRoot, "package.json"), "utf-8"));
+	const errors = validateSharedVersions(pkg, versions, spec => readInstalledVersion(projectRoot, spec));
+
+	if (errors.length > 0) {
+		throw new Error(
+			`[rad] 版本矩阵门禁（C4/D12）校验失败：\n${errors.join("\n")}\n`
+			+ "设计文档：docs/prd/202608291025-framework-npm-package-design.md §4.3",
+		);
+	}
+}
