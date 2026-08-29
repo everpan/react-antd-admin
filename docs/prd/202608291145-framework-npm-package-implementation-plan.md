@@ -374,7 +374,7 @@ P2 完成判据逐条核对（2026-08-29）：
 | 3.2 | 23 个 `#src/*` 说明符 → `@react-antd-admin/runtime` | 约 86 条 import / 29 个文件，可用 codemod |
 | 3.3 | 图标契约统一为 `ReactNode` | 11 处字符串 → `createElement(X)`；`generate-menu-items-from-routes.ts:42-54` 去掉 `isString` 分支 |
 | 3.4 | `defineModule` + `tsx` 真实 import 解析 name/version | 一次性替换 `build-modules.ts:69-76` 的脆弱正则（B10） |
-| 3.5 | 出 d.ts；补 `files` / `exports` / `peerDependencies` | 取消 `private: true` 准备发版。**P2.3 后复测：B3 反向依赖已不再是阻塞项**，`tsc -p tsconfig.dts.json` 仅剩 3 处 declaration-emit 报错待修：① `layout/layout-menu/style.ts:3` 与 ② `layout/layout-tabbar/style.ts:3` 的 TS2883（`createUseStyles` 推断类型引用了 jss 的 `Classes`，需显式类型标注）；③ `locales/index.ts:19` 的 TS4023（`i18nResources` 用到 `helper.ts` 未导出的 `LanguageModule`，需导出该类型或标注返回类型） |
+| 3.5 | 出 d.ts；补 `files` / `exports` / `peerDependencies` | 取消 `private: true` 准备发版。✅ 已完成（d.ts 于 P3.5 前半解除阻塞，元数据定稿见执行小结） |
 | 3.6 | `registerSlot()` 实现（L2 布局插槽） | 配合 P2 的 L1 |
 | 3.7 | TDD：playground 仅靠包名 `tsc --noEmit` 通过 | |
 
@@ -423,6 +423,18 @@ P2 完成判据逐条核对（2026-08-29）：
 - **动态 import 的两难与化解**：lazy 页面 / i18n JSON 的动态导入若放任进 bundle，esbuild 输出 ESM 时把页面模块的裸导入 hoist 到顶层（pro-components 假 ESM 在 Node import() 时爆炸）；若标 external，vitest 又在 transform 阶段强行解析相对说明符。最终以「动态导入目标替换为虚拟空模块」双堵——元数据读取本就不需要动态模块。
 - **顺带修一个隐含假设**：esbuild 输出名默认取入口 basename，非 `entry.ts` 文件名的产物对不上后续 `import(outDir/entry.js)` 路径（测试夹具暴露）。加 `entryNames: "entry"` 固定。
 - **全绿**：tsc 0 错误，vitest 91/91（新增 5），`pnpm run build` 的模块构建走真实 import 解析成功。
+
+### P3.5 执行小结：包元数据定稿（2026-08-29，`feature/pkg-p3-runtime-api`）
+
+- **3.5 全部完成**：`private: true` 已移除（具备发版资格）；`files: ["dist"]` 核对无误；**出口树裁剪以「exports 仅开放 `"."`」落地**——dist 声明树里的 layout/router 等内部模块虽物理存在，但不作为子路径出口暴露，内部性由不导出保证，无需额外 internal 标注文件。
+- **peerDependencies 从 4 个扩至 25 个**：以 `dist/runtime.js` 的实际 bare 导入为准（P3.1 债务登记的 24 包清单 + react/jsx-runtime 归一为 react），版本范围照抄根 package.json。语义：宿主（importmap）统一供给，与 D2 单例决策一致；该表即 P4「SHARED_DEPS 单一来源 + D12 严格相等校验」的直接输入。
+- **TDD**：`tests/runtime-declarations.test.ts` 增至 6 例，新增 3 例——无 `private`、`files` 含 dist 且 exports 仅主入口、**peerDeps 防漂移**（静态解析产物 import/export 语句的 bare 说明符并归一包名，未覆盖即红）。出口再扩大时此测试先红，P4 共享表不会漏包。
+- **顺带重建 dist**：P3.3/P3.4 改动过 runtime 源码（图标边界、basic-table 标注）但未重发 dist，本次一并同步（164 个声明文件 + runtime.js 449.73 kB）。
+- **全绿**：tsc 0 错误，vitest 94/94（新增 3），根完整构建通过。
+
+**P3.5 过程中发现的问题（分类记录）**：
+
+1. 【反常规·静态分析的注释陷阱】dist/runtime.js 中存在 2 处 `from "#src/..."` 字符串，实为 `ContainerLayout` 的 jsdoc 用法示例文本（P3.1 曾确认过一处，重建后复现两处）。粗粒度的 `from "..."` 全文匹配会把注释当代码。防漂移测试改用行首锚定的 import/export 语句匹配。教训：对构建产物做静态扫描时，正则必须锚定语句边界，否则文档注释就是假阳性源。
 
 ---
 
