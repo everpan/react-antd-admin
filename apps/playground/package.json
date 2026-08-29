@@ -8,6 +8,7 @@
 		"build": "rad build"
 	},
 	"devDependencies": {
+		"@ant-design/icons": "^6.2.3",
 		"@react-antd-admin/cli": "workspace:*",
 		"@react-antd-admin/runtime": "workspace:*",
 		"@react-antd-admin/shell": "workspace:*",

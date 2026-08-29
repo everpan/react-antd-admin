@@ -228,6 +228,9 @@ importers:
 
   apps/playground:
     devDependencies:
+      '@ant-design/icons':
+        specifier: ^6.2.3
+        version: 6.3.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@react-antd-admin/cli':
         specifier: workspace:*
         version: link:../../packages/cli
