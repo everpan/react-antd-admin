@@ -2,8 +2,10 @@
 
 > 创建时间: 2026-08-29 10:25
 > 修订: 2026-08-29，v2（架构师 / 产品 / 开发 / 安全 四方评审后调整，评审记录见 §10）
-> 状态: 待评审（尚未建分支、未写实现代码）
-> 关联文档: `docs/prd/modular-refactoring.md`、`docs/prd/0511-module-decoupling.md`、`docs/prd/module-development-guide.md`
+> 状态: 已评审通过，正在实施（P0/P1 完成，P2 进行中；进度见实施步骤文档）
+> 关联文档: `docs/prd/202608291145-framework-npm-package-implementation-plan.md`（实施步骤）、`docs/prd/handover-framework-npm-package.md`（**新人接手先读这份**）、`docs/prd/modular-refactoring.md`、`docs/prd/0511-module-decoupling.md`、`docs/prd/module-development-guide.md`
+>
+> ⚠️ 实施中已发现两处本文与实现不一致，细节见交接手册：① D9 的 `handle.layout` 默认值，实现为迁移期 `container`（本文写 `none`，为 P2.7 之后的目标态）；② P1 验收提到的 `__REACT_INSTANCE_COUNT__` 并不存在于 React 19，真实校验方式见 `singleton-verification.md`。
 
 ---
 

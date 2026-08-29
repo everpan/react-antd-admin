@@ -1,6 +1,7 @@
 # 框架 npm 包化 — 实施步骤
 
 > 关联设计: `docs/prd/202608291025-framework-npm-package-design.md`（v2）
+> 新人接手请先读: `docs/prd/handover-framework-npm-package.md`（交接手册：目标、决策取舍、进度、验收、雷区）
 > 创建时间: 2026-08-29 11:45
 > 前置决策: O2 = 公开 npm；O3 = 同源静态清单、不实施签名（同组织不同团队）；O7 refreshToken 未决，不阻塞
 
