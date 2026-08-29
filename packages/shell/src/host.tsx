@@ -32,6 +32,7 @@ import {
 	useNavigate,
 } from "react-router/dom";
 import { collectPreloads } from "./preload";
+import { assertTrustedModules } from "./trust";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,9 @@ function Boot() {
 				if (!res.ok)
 					throw new Error(`modules.json 加载失败：HTTP ${res.status}`);
 				const list: HostModule[] = await res.json();
+
+				// P6.1 / D10 信任根：来源白名单校验在 CSS/预载/加载之前
+				assertTrustedModules(list);
 
 				// P4.6 / Spike B：外部模块的 tailwind/css 产物由模块侧构建、
 				// 宿主侧 <link> 注入（在 loadAll 之前，避免样式闪断）
