@@ -13,28 +13,29 @@ function getModuleNames(): string[] {
 }
 
 describe("模块路由优先级", () => {
-	it("模块路由加载必须在后端路由生成之前执行（auth-guard 代码顺序）", () => {
+	it("模块路由消费必须在后端路由生成之前执行（auth-guard 代码顺序）", () => {
 		const content = fs.readFileSync(AUTH_GUARD_PATH, "utf-8");
 
-		const moduleLoaderMatch = content.match(/await\s+loadAllModules\(manifest\.default\)/);
+		// P5.5/O5：加载已上移到应用启动（index.tsx），守卫只消费 getModuleRoutes()
+		const moduleRoutesMatch = content.match(/getModuleRoutes\(\)/);
 		const backendRouteMatch = content.match(/await\s+generateRoutesFromBackend\(/);
 		const frontendRouteMatch = content.match(/generateRoutesByFrontend\([\s\S]*?\)/);
 
-		expect(moduleLoaderMatch, "auth-guard 中应包含 await loadAllModules(manifest.default) 调用").not.toBeNull();
+		expect(moduleRoutesMatch, "auth-guard 中应包含 getModuleRoutes() 消费调用").not.toBeNull();
 
-		const moduleLoaderIndex = moduleLoaderMatch!.index!;
+		const moduleRoutesIndex = moduleRoutesMatch!.index!;
 
 		if (backendRouteMatch) {
 			expect(
-				moduleLoaderIndex,
-				"模块路由加载 (loadAllModules) 必须在后端路由生成 (generateRoutesFromBackend) 之前",
+				moduleRoutesIndex,
+				"模块路由消费 (getModuleRoutes) 必须在后端路由生成 (generateRoutesFromBackend) 之前",
 			).toBeLessThan(backendRouteMatch.index!);
 		}
 
 		if (frontendRouteMatch) {
 			expect(
-				moduleLoaderIndex,
-				"模块路由加载 (loadAllModules) 必须在前端路由生成 (generateRoutesByFrontend) 之前",
+				moduleRoutesIndex,
+				"模块路由消费 (getModuleRoutes) 必须在前端路由生成 (generateRoutesByFrontend) 之前",
 			).toBeLessThan(frontendRouteMatch.index!);
 		}
 	});

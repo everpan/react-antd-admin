@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { matchRoutes, Navigate, useLocation, useNavigate, useSearchParams } from "react-router";
 import { fetchAsyncRoutes } from "#src/api/user";
 import { useCurrentRoute } from "#src/hooks/use-current-route";
-import { getRoutes as getModuleRoutes, loadAll as loadAllModules } from "#src/module-loader";
+import { getRoutes as getModuleRoutes } from "#src/module-loader";
 import { hideLoading } from "#src/plugins/hide-loading";
 import { setupLoading } from "#src/plugins/loading";
 import { exception403Path, exception404Path, exception500Path, loginPath } from "#src/router/extra-info";
@@ -93,21 +93,15 @@ export function AuthGuard({ children }: AuthGuardProps) {
 				latestRoles.push(...userInfoResult.value?.roles ?? []);
 			}
 			/**
-			 * @zh 加载 manifest.json 中声明的模块，合并模块路由（优先于后端/前端路由）
-			 * @en Load modules declared in manifest.json (takes priority over backend/frontend routes)
+			 * @zh 合并模块路由（优先于后端/前端路由）。模块已在应用启动时由 index.tsx
+			 * 统一加载（P5.5/O5），守卫只消费已注册的路由，不触碰模块清单。
+			 * @en Merge module routes (takes priority over backend/frontend routes).
+			 * Modules are loaded once at app bootstrap (index.tsx, P5.5/O5); the guard
+			 * only consumes already-registered routes and never touches the manifest.
 			 */
-			try {
-				const manifest = await import("#manifest.json");
-				await loadAllModules(manifest.default);
-				const moduleRoutes = addRouteIdByPath(getModuleRoutes());
-				if (moduleRoutes.length > 0) {
-					routes.push(...moduleRoutes);
-				}
-			}
-			catch (error) {
-				if (import.meta.env.DEV) {
-					console.warn("[module-loader] Failed to load modules:", error);
-				}
+			const moduleRoutes = addRouteIdByPath(getModuleRoutes());
+			if (moduleRoutes.length > 0) {
+				routes.push(...moduleRoutes);
 			}
 
 			/**
