@@ -10,6 +10,7 @@ import type {
 import i18next from "i18next";
 
 import { request } from "#src/utils/request";
+import { getAllRoutePaths, getKeepAliveExcludes } from "./keep-alive";
 
 const modules = new Map<string, ModuleInstance>();
 const registeredStores = new Map<string, unknown>();
@@ -201,4 +202,26 @@ export function getRegisteredStore<T = unknown>(name: string): T | undefined {
 
 export function getRegisteredApiPrefix(moduleName: string): string | undefined {
 	return registeredApiPrefixes.get(moduleName);
+}
+
+/**
+ * 当前已加载（非 error）模块的全部定义，供 keep-alive 聚合使用。
+ */
+function loadedDefinitions(): ModuleDefinition[] {
+	return Array.from(modules.values())
+		.filter(instance => instance.status !== "error")
+		.map(instance => instance.definition);
+}
+
+/**
+ * KeepAlive exclude key：各模块路由中 `handle.keepAlive === false` 的路径集合。
+ * 由 module-loader 汇总，不再依赖 access store 的 flatRouteList（B13）。
+ */
+export function getKeepAliveExcludeKeys(): string[] {
+	return getKeepAliveExcludes(loadedDefinitions());
+}
+
+/** 全部路由 key：关闭多 tab 时整体排除，仅保留切换动画 */
+export function getAllRoutePathKeys(): string[] {
+	return getAllRoutePaths(loadedDefinitions());
 }

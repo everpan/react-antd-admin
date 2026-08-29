@@ -2,6 +2,7 @@ import { clsx } from "clsx";
 import { jsx } from "react/jsx-runtime";
 import i18next from "i18next";
 import { request } from "#src/utils/request";
+import "#src/router/utils/flatten-routes";
 //#region src/components/basic-content/index.tsx
 function BasicContent(props) {
 	const { children, className, style } = props;
@@ -18,19 +19,6 @@ function BasicContent(props) {
 		style: { ...style },
 		children
 	});
-}
-//#endregion
-//#region src/module-loader/define-module.ts
-/**
-* 声明一个模块。
-*
-* 目前只做类型收窄，但它是模块契约的**唯一入口**：
-* - 编译期：收窄 entry.ts 的导出类型，字段名写错会直接报错
-* - 构建期：CLI 可用 tsx 真实 import 解析出 name / version，
-*   替代 `scripts/build-modules.ts` 里脆弱的正则（B10）
-*/
-function defineModule(definition) {
-	return definition;
 }
 //#endregion
 //#region src/module-loader/index.ts
@@ -164,6 +152,19 @@ function getRegisteredStore(name) {
 }
 function getRegisteredApiPrefix(moduleName) {
 	return registeredApiPrefixes.get(moduleName);
+}
+//#endregion
+//#region src/module-loader/define-module.ts
+/**
+* 声明一个模块。
+*
+* 目前只做类型收窄，但它是模块契约的**唯一入口**：
+* - 编译期：收窄 entry.ts 的导出类型，字段名写错会直接报错
+* - 构建期：CLI 可用 tsx 真实 import 解析出 name / version，
+*   替代 `scripts/build-modules.ts` 里脆弱的正则（B10）
+*/
+function defineModule(definition) {
+	return definition;
 }
 //#endregion
 export { BasicContent, defineModule, getModule, getModules, getRegisteredApiPrefix, getRegisteredStore, getRoutes, loadAll };
