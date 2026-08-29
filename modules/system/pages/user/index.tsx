@@ -1,6 +1,6 @@
-import { Input } from "antd";
+import { BasicContent } from "@react-antd-admin/runtime";
 
-import { BasicContent } from "#src/components/basic-content";
+import { Input } from "antd";
 
 export default function User() {
 	return (

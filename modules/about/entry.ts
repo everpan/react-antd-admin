@@ -1,18 +1,16 @@
-import type { ModuleDefinition } from "#src/module-loader/types";
-import type { AppRouteRecordRaw } from "#src/router/types";
+import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
 
 import { CopyrightOutlined } from "@ant-design/icons";
 
 import { createElement, lazy } from "react";
-import ContainerLayout from "#src/layout/container-layout";
 
 const About = lazy(() => import("./pages/index"));
 
 const routes: AppRouteRecordRaw[] = [
 	{
 		path: "/about",
-		Component: ContainerLayout,
 		handle: {
+			layout: "container",
 			order: 120,
 			title: "about:menu.about",
 			icon: createElement(CopyrightOutlined),

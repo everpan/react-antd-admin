@@ -1,4 +1,4 @@
-import { BasicContent } from "#src/components/basic-content";
+import { BasicContent } from "@react-antd-admin/runtime";
 
 export default function Menu1And1() {
 	return <BasicContent>menu1-1</BasicContent>;

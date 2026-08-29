@@ -106,6 +106,10 @@ async function buildModule(moduleDir: string) {
 					if (id.startsWith("#src/") || id.startsWith("#modules/")) {
 						return true;
 					}
+					if (id === "@react-antd-admin/runtime") {
+						// 框架运行时由宿主 importmap 提供（P3.2）
+						return true;
+					}
 					return isExternal(id);
 				},
 			},

@@ -1,10 +1,7 @@
-import type { ModuleDefinition } from "#src/module-loader/types";
-import type { AppRouteRecordRaw } from "#src/router/types";
+import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
+import { ProfileCardIcon, RiAccountCircleLine, RiUserSettingsLine } from "@react-antd-admin/runtime";
 
 import { createElement, lazy } from "react";
-import { ProfileCardIcon, RiAccountCircleLine, RiUserSettingsLine } from "#src/icons";
-
-import ContainerLayout from "#src/layout/container-layout";
 
 const MyProfile = lazy(() => import("./pages/my-profile"));
 const Settings = lazy(() => import("./pages/settings"));
@@ -12,8 +9,8 @@ const Settings = lazy(() => import("./pages/settings"));
 const routes: AppRouteRecordRaw[] = [
 	{
 		path: "/personal-center",
-		Component: ContainerLayout,
 		handle: {
+			layout: "container",
 			order: 110,
 			title: "personal-center:menu.personalCenter",
 			icon: createElement(RiAccountCircleLine),

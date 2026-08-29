@@ -8,6 +8,9 @@
 			"#src/*": [
 				"./packages/runtime/src/*"
 			],
+			"@react-antd-admin/runtime": [
+				"./packages/runtime/src/index.ts"
+			],
 			"#*": [
 				"./*"
 			]

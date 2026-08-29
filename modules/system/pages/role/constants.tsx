@@ -1,6 +1,6 @@
 import type { ProColumns } from "@ant-design/pro-components";
+import type { RoleItemType } from "@react-antd-admin/runtime";
 import type { TFunction } from "i18next";
-import type { RoleItemType } from "#src/api/system/role";
 
 import { Tag } from "antd";
 

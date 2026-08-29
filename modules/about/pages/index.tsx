@@ -1,8 +1,7 @@
-import { Badge, Card, Col, Descriptions, Row, Tag, theme, Typography } from "antd";
+import { BasicContent, getAppInfo } from "@react-antd-admin/runtime";
 
+import { Badge, Card, Col, Descriptions, Row, Tag, theme, Typography } from "antd";
 import { useTranslation } from "react-i18next";
-import { BasicContent } from "#src/components/basic-content";
-import { getAppInfo } from "#src/utils/get-app-info";
 
 import { dependenciesItems, devDependenciesItems } from "./constants";
 

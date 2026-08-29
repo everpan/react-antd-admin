@@ -1,10 +1,9 @@
 import type { ProColumns } from "@ant-design/pro-components";
+import type { MenuItemType } from "@react-antd-admin/runtime";
 import type { TFunction } from "i18next";
-import type { MenuItemType } from "#src/api/system/menu";
+import { getYesNoOptions } from "@react-antd-admin/runtime";
 
 import { Tag } from "antd";
-
-import { getYesNoOptions } from "#src/constants/options";
 
 export function getMenuTypeOptions(t: TFunction<"translation", undefined>) {
 	return [

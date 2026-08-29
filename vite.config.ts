@@ -30,6 +30,8 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"#src": path.resolve("packages/runtime/src"),
+			// monorepo 内将包名直指 runtime 源码，模块工程与宿主同源编译（P3.2）
+			"@react-antd-admin/runtime": path.resolve("packages/runtime/src/index.ts"),
 			"#modules": path.resolve("modules"),
 		},
 	},

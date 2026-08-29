@@ -10,10 +10,19 @@ import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
 import { MODULES_DIR, RUNTIME_DIR } from "./helpers/paths";
 
 /**
- * P2.7 已完成新语义迁移的模块：声明 handle.layout，不再 import 布局组件（US-8）。
- * P5 全量迁移时把其余模块追加进此列表即可。
+ * 已完成新语义迁移的模块：声明 handle.layout，不再 import 布局组件（US-8）。
+ * P3.2 随包名化 codemod 一并迁移完 8 个模块（前跑 P5.1 的布局部分）。
  */
-const LAYOUT_MIGRATED_MODULES = ["route-nest", "system"];
+const LAYOUT_MIGRATED_MODULES = [
+	"route-nest",
+	"system",
+	"home",
+	"access",
+	"exception",
+	"outside",
+	"about",
+	"personal-center",
+];
 
 function route(path: string, layout?: string, children?: AppRouteRecordRaw[]): AppRouteRecordRaw {
 	return { path, handle: { layout }, children } as AppRouteRecordRaw;

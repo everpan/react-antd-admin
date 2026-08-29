@@ -1,4 +1,4 @@
-import { getAppInfo } from "#src/utils/get-app-info";
+import { getAppInfo } from "@react-antd-admin/runtime";
 
 const { dependencies, devDependencies } = getAppInfo().pkg;
 

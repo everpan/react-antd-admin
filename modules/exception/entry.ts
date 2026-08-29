@@ -1,16 +1,13 @@
-import type { ModuleDefinition } from "#src/module-loader/types";
-import type { AppRouteRecordRaw } from "#src/router/types";
-
+import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
 import {
 	AppstoreOutlined,
 	IssuesCloseOutlined,
 	MinusSquareOutlined,
 	StopOutlined,
 } from "@ant-design/icons";
-import { createElement, lazy } from "react";
 
-import { ServerErrorIcon } from "#src/icons";
-import ContainerLayout from "#src/layout/container-layout";
+import { ServerErrorIcon } from "@react-antd-admin/runtime";
+import { createElement, lazy } from "react";
 
 const exceptionPath = "/exception";
 const exception403Path = "/exception/403";
@@ -26,8 +23,8 @@ const ExceptionUnknownComponent = lazy(() => import("./pages/unknown-component")
 const routes: AppRouteRecordRaw[] = [
 	{
 		path: exceptionPath,
-		Component: ContainerLayout,
 		handle: {
+			layout: "container",
 			order: 90,
 			title: "exception:menu.exception",
 			icon: createElement(IssuesCloseOutlined),

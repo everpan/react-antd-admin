@@ -1,10 +1,7 @@
-import type { ModuleDefinition } from "#src/module-loader/types";
-import type { AppRouteRecordRaw } from "#src/router/types";
+import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
+import { accessControlCodes } from "@react-antd-admin/runtime";
 
 import { lazy } from "react";
-import { accessControlCodes } from "#src/hooks/use-access/constants";
-
-import ContainerLayout from "#src/layout/container-layout";
 
 const PageControl = lazy(() => import("./pages/page-control"));
 const ButtonControl = lazy(() => import("./pages/button-control"));
@@ -14,8 +11,8 @@ const CommonVisible = lazy(() => import("./pages/common-visible"));
 const routes: AppRouteRecordRaw[] = [
 	{
 		path: "/access",
-		Component: ContainerLayout,
 		handle: {
+			layout: "container",
 			icon: "SafetyOutlined",
 			title: "access:menu.access",
 			order: 10,

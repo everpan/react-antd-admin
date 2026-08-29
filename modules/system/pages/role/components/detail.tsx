@@ -1,18 +1,16 @@
-import type { RoleItemType } from "#src/api/system/role";
-import type { TreeDataNodeWithId } from "#src/components/basic-form";
+import type { RoleItemType, TreeDataNodeWithId } from "@react-antd-admin/runtime";
 import {
 	DrawerForm,
 	ProFormRadio,
 	ProFormText,
 	ProFormTextArea,
 } from "@ant-design/pro-components";
+import { fetchAddRoleItem, fetchUpdateRoleItem, FormTreeItem } from "@react-antd-admin/runtime";
 import { useMutation } from "@tanstack/react-query";
 
 import { Form } from "antd";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { fetchAddRoleItem, fetchUpdateRoleItem } from "#src/api/system/role";
-import { FormTreeItem } from "#src/components/basic-form";
 
 interface DetailProps {
 	treeData: TreeDataNodeWithId[]

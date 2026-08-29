@@ -1,18 +1,16 @@
-import type { ModuleDefinition } from "#src/module-loader/types";
-import type { AppRouteRecordRaw } from "#src/router/types";
+import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
 
 import { HomeOutlined } from "@ant-design/icons";
 
 import { createElement, lazy } from "react";
-import ContainerLayout from "#src/layout/container-layout";
 
 const Home = lazy(() => import("./pages/index"));
 
 const routes: AppRouteRecordRaw[] = [
 	{
 		path: "/home",
-		Component: ContainerLayout,
 		handle: {
+			layout: "container",
 			order: 1,
 			title: "home:menu.home",
 			icon: createElement(HomeOutlined),

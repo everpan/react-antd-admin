@@ -1,12 +1,10 @@
 import type { TreeDataNode } from "antd";
 
 import { MinusCircleOutlined, PlusCircleOutlined, SearchOutlined } from "@ant-design/icons";
+import { BasicButton, BasicContent, getAllExpandedKeys } from "@react-antd-admin/runtime";
 import { Card, Input, Radio, Tag, Tree } from "antd";
-import { useState } from "react";
 
-import { BasicButton } from "#src/components/basic-button";
-import { BasicContent } from "#src/components/basic-content";
-import { getAllExpandedKeys } from "#src/utils/get-all-expanded-keys";
+import { useState } from "react";
 
 const treeData: TreeDataNode[] = [
 	{

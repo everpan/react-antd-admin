@@ -401,6 +401,14 @@ P2 完成判据逐条核对（2026-08-29）：
 3. 【债务登记 → P4 输入】出口扩大后 `dist/runtime.js` 的裸依赖面扩至 24 个（zustand、ahooks、ky、@ant-design/pro-components、@dnd-kit/*、keepalive-for-react、motion/react、nprogress、pinyin-pro、react-error-boundary、simplebar-react、spin-delay、tailwind-merge、antd-img-crop、react-jss 等）。monorepo alias 模式不受影响，但 shell importmap（P1 手工 15 项）远未覆盖；`shell/dist/assets/runtime.js` 亦已过期。P4「SHARED_DEPS 单一来源 + importmap 自动生成」须以此为输入清单，并重建 shell。
 4. 【工具链】vitest 处理「假 ESM」依赖的三个开关（`server.deps.inline` / `deps.optimizer.ssr.include` / `server.deps.web`）在 alias 与包名两种 id 形态下均未能命中，最终以 `vi.mock` 解决——记录避免后续重复试错。
 
+### P3.2 执行小结：模块包名化（2026-08-29，`feature/pkg-p3-runtime-api`）
+
+- **布局迁移提前完成（前跑 P5.1 布局部分）**：剩余 6 个模块（home/access/exception/outside/about/personal-center）的顶层路由由 `Component: ContainerLayout` 改为 `handle.layout: "container"`，runtime 无需把布局组件冻结进出口（与 D9 目标态一致）。P5.1 剩余范围仅迁移核验。`tests/module-layout.test.ts` 的 `LAYOUT_MIGRATED_MODULES` 扩至 8 个。
+- **codemod**：`modules/` 下 29 个文件的 23 种 `#src/*` 说明符全部合并为 `@react-antd-admin/runtime` 具名导入（value / type 两条语句）；`apps/playground` 的 demo 模块 P1 起已是包名化，无需处理。合并后全仓（modules + playground）零 `#src` import。
+- **monorepo 解析三件套**：根 `tsconfig.json` paths 与根 `vite.config.ts` alias 将包名直指 `packages/runtime/src/index.ts`（源码同源编译，保持 dev 体验）；`scripts/build-modules.ts` 将包名加入 external（独立构建产物由宿主 importmap 提供，与 cli `build.ts` 的既有插件语义一致）。刻意**不**把 runtime 加为根 package.json 依赖。
+- **契约闭环**：`tests/module-package-imports.test.ts` 4 例——modules + playground 零 `#src`、每个 entry 均从包名导入、tsconfig/vite 包名映射存在、build-modules external 存在。「模块 import 的符号是否都在冻结出口里」由 tsc 保证（paths 直指 `index.ts`，出口外符号 typecheck 报错），与 P3.1 的 `runtime-exports.test.ts` 组成双向契约。
+- **全绿**：tsc 0 错误，vitest 82/82（新增 4），根构建 + 模块独立构建通过。无新增问题记录（eslint 4 条警告均为既有代码的 `react/exhaustive-deps`）。
+
 ---
 
 ## P4: Shell 与共享表治理

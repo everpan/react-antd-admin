@@ -1,19 +1,15 @@
-import type { ModuleDefinition } from "#src/module-loader/types";
-import type { AppRouteRecordRaw } from "#src/router/types";
-
+import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
 import { AntDesignOutlined, ContainerOutlined } from "@ant-design/icons";
+
+import { Iframe, RiReactjsLine } from "@react-antd-admin/runtime";
 import { createElement } from "react";
 import { Outlet } from "react-router";
-
-import { Iframe } from "#src/components/iframe";
-import { RiReactjsLine } from "#src/icons";
-import ContainerLayout from "#src/layout/container-layout";
 
 const routes: AppRouteRecordRaw[] = [
 	{
 		path: "/outside",
-		Component: ContainerLayout,
 		handle: {
+			layout: "container",
 			icon: "OutsidePageIcon",
 			title: "outside:menu.outside",
 			order: 40,

@@ -1,14 +1,10 @@
-import type { LoginInfo } from "#src/api/user";
+import type { LoginInfo } from "@react-antd-admin/runtime";
+import { AccessControlRoles, BasicContent, useAuthStore, usePreferences, useUserStore } from "@react-antd-admin/runtime";
 
 import { Alert, Button, Card, Typography } from "antd";
 import { clsx } from "clsx";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
-import { BasicContent } from "#src/components/basic-content";
-import { AccessControlRoles } from "#src/hooks/use-access";
-import { usePreferences } from "#src/hooks/use-preferences";
-import { useAuthStore } from "#src/store/auth";
-import { useUserStore } from "#src/store/user";
 
 const accounts: Record<string, LoginInfo> = {
 	[AccessControlRoles.admin]: {
