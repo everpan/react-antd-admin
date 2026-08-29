@@ -1,0 +1,9 @@
+{
+	"menu": {
+		"demo": "Demo Module"
+	},
+	"page": {
+		"title": "Vertical Slice Demo",
+		"loaded": "Module loaded"
+	}
+}

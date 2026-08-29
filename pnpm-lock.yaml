@@ -223,6 +223,27 @@ importers:
         specifier: ^4.1.6
         version: 4.1.11(@types/node@25.9.5)(happy-dom@20.11.12)(vite@8.2.2(@types/node@25.9.5)(esbuild@0.27.7)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
 
+  apps/playground:
+    devDependencies:
+      '@react-antd-admin/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
+      antd:
+        specifier: ^6.4.2
+        version: 6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      react:
+        specifier: ^19.2.6
+        version: 19.2.8
+      react-dom:
+        specifier: ^19.2.6
+        version: 19.2.8(react@19.2.8)
+      react-i18next:
+        specifier: ^17.0.8
+        version: 17.0.12(i18next@26.4.0(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
+      react-router:
+        specifier: ^7.15.1
+        version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+
   docs:
     devDependencies:
       vitepress:

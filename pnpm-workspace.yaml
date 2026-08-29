@@ -9,6 +9,7 @@ trustPolicyExclude:
 packages:
   - docs
   - packages/*
+  - apps/*
 
 allowBuilds:
   esbuild: true

@@ -30,6 +30,7 @@
 	},
 	"include": [
 		"packages/runtime/src",
+		"apps/playground",
 		"fake",
 		"tests",
 		"vite.config.ts",

@@ -11,13 +11,17 @@
 		"#manifest.json": "../../manifest.json"
 	},
 	"exports": {
-		".": "./dist/runtime.js",
-		"./router": "./dist/router.js",
-		"./module": "./dist/module.js"
+		".": {
+			"types": "./dist/runtime.d.ts",
+			"default": "./dist/runtime.js"
+		}
 	},
 	"files": [
 		"dist"
 	],
+	"scripts": {
+		"build": "vite build && tsc -p tsconfig.dts.json && node scripts/rewrite-dts-specifiers.mjs"
+	},
 	"peerDependencies": {
 		"antd": "^6.4.2",
 		"react": "^19.2.6",

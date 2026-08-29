@@ -53,6 +53,8 @@ export interface ModuleDefinition {
 	lifecycle?: ModuleLifecycle
 	i18n?: ModuleI18n
 	config?: ModuleConfig
+	/** 兼容的宿主 runtime 版本（semver 范围），宿主加载前校验，不兼容则拒绝加载并显式报错 */
+	peerRuntime?: string
 }
 
 /** 运行时模块实例 */
