@@ -10,6 +10,7 @@ import type {
 import i18next from "i18next";
 
 import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
+import { useUserStore } from "#src/store/user";
 import { request } from "#src/utils/request";
 import { getAllRoutePaths, getKeepAliveExcludes } from "./keep-alive";
 import { registerSlot, removeModuleSlots } from "./slots";
@@ -192,9 +193,17 @@ export function getModule(name: string): ModuleInstance | undefined {
 }
 
 export function getRoutes(): AppRouteRecordRaw[] {
+	// P5.9 / B16：模块级 requiredRoles 在路由注入前过滤——
+	// 无角色的用户拿不到路由本身（菜单同源），而非渲染后 403
+	const { roles } = useUserStore.getState();
 	const routes: AppRouteRecordRaw[] = [];
 	for (const instance of modules.values()) {
-		if (instance.status !== "error" && instance.definition.routes.length > 0) {
+		if (instance.status === "error")
+			continue;
+		const requiredRoles = instance.definition.config?.requiredRoles;
+		if (requiredRoles?.length && !requiredRoles.some(role => roles.includes(role)))
+			continue;
+		if (instance.definition.routes.length > 0) {
 			// P2.7：布局不再由模块自行 import，按 handle.layout 在出口统一包裹
 			routes.push(...resolveRouteLayouts(instance.definition.routes));
 		}
