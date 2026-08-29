@@ -3,6 +3,10 @@
 > 面向外部团队：在独立仓库中开发业务模块，产物以静态资源形式发布，
 > 宿主不重建即可上线（D1）。本文取代旧版「同仓库 modules/」手册。
 >
+> 更新：2026-08-30 随 P6 安全加固同步——`ctx.utils.request` 收敛为
+> 按 `apiPrefix` 的 scoped client、模块资源 URL 受 moduleOrigins 白名单
+> 约束、iframe 路由启用 https + 域名白名单 + sandbox。
+>
 > 前置阅读：`202608291145-framework-npm-package-implementation-plan.md`（设计文档），
 > 本文引用其中决策编号（D*）与需求编号（B*/O*/R*）。
 
@@ -48,6 +52,8 @@
 - **清单加载在应用启动**（P5.5/O5）：`index.tsx` 启动时 `loadAll` 一次，
   路由守卫只消费 `getRoutes()`；加载失败显示人话错误页（P5.8/B7），
   不静默丢路由。
+- **安全基线**（P6/§4.8）：模块请求按 `apiPrefix` 收敛（D11）、资源
+  来源白名单（D10）+ L2 完整性 + CSP、iframe 守卫。详见 §8 红线表。
 
 ## 2. 环境准备
 
@@ -155,6 +161,7 @@ export default definition;
 | 框架能力（store/request/布局/hooks…） | `import { ... } from "@react-antd-admin/runtime"` |
 | 共享三方（antd/zustand/dayjs…） | 直接 `import "antd"` 等——构建时 external，importmap 提供单例 |
 | 模块内部 | 相对路径（`./pages/list`） |
+| 发起 HTTP 请求 | `ctx.utils.request`——按 `register.apiPrefix` 前缀收敛的 scoped client，**越界请求被拒绝**（D11） |
 | **其他模块的内部文件** | **禁止**（含 `#src/`、`#modules/`——eslint + CI 双卡口，P2.4） |
 | 其他模块的能力 | 经 runtime 注册表：`ctx.register.store()` + `getRegisteredStore()` |
 
@@ -207,6 +214,12 @@ build/modules.json         # BuiltModule[]（含每 chunk sha384 完整性）
 发布 = 把 `build/modules/<name>/<version>/` 上传到静态资源 CDN/目录，
 并交付你的 `modules.json` 给宿主运维。
 
+**来源约束（P6.1/D10）**：清单里的资源 URL 只允许两种形态——同源
+相对路径（如 `/modules/order/1.0.0/entry.js`），或 origin 已在宿主
+`moduleOrigins` 白名单登记的绝对 URL。使用自建 CDN 时，先把域名交给
+框架方登记（同时覆盖信任根校验与 CSP `script-src`），否则宿主在
+加载前直接拒绝整份清单。
+
 **完整性档位（§4.7）**：宿主按 L2 保护——所有非 lazy chunk 以
 `modulepreload + integrity + crossorigin` 注入，浏览器加载前校验；
 lazy chunk 按需加载不受保护（D7）。entry 篡改会被直接拒绝执行。
@@ -254,10 +267,12 @@ lazy chunk 按需加载不受保护（D7）。entry 篡改会被直接拒绝执�
 | 成员 | 说明 |
 | --- | --- |
 | `ctx.module` | `{ name, version }` |
-| `ctx.utils.request` | 框架 ky 实例（token 注入/401 刷新/进度条已配置） |
+| `ctx.utils.request` | **scoped client（P6.3/D11）**：底层 ky 实例的按前缀收敛视图（token 注入/401 刷新/进度条已配置）。仅当请求 URL 以本模块登记的 `apiPrefix` 开头才放行；未登记先请求、或越界访问其他前缀，都会直接抛人话错误。`create`/`extend` 不暴露（可绕过全局 hooks） |
 | `ctx.register.store(name, store)` | 注册私有 store，跨模块经 `getRegisteredStore` 消费 |
-| `ctx.register.apiPrefix(prefix)` | 声明模块 API 前缀 |
+| `ctx.register.apiPrefix(prefix)` | 声明模块 API 前缀；`ctx.utils.request` 的放行边界即此值，可重新登记（惰性求值，下一请求生效） |
 | `ctx.registerSlot(slotName, node)` | 注册布局插槽（现支持 `header-actions`），随模块卸载自动清理 |
+
+> 后端逐接口鉴权仍是安全兜底（D11 双层）；客户端收敛是纵深防御的第一层。
 
 ### 7.3 常用出口
 
@@ -272,6 +287,9 @@ drift-prevention 测试锁定，P3）。
 | --- | --- |
 | import 框架内部实现（`#src/`、`#modules/`） | eslint + CI 双卡口（P2.4），构建 external 白名单兜底 |
 | dependencies 声明硬依赖 / 共享依赖版本与宿主不一致 | `rad build` 版本矩阵门禁（C4/D12） |
+| 请求越出本模块登记的 `apiPrefix` | scoped client 直接抛错（P6.3/D11） |
+| 资源 URL origin 未登记（自建 CDN 未报备） | 宿主 `moduleOrigins` 白名单在加载前拒绝整份清单（P6.1/D10） |
+| iframe 路由非 https / 域名不在白名单 | `resolveSafeIframeLink` 拒绝渲染，控制台人话报错（P6.4） |
 | 清单同名模块 | `mergeModuleManifests` 直接拒绝（R12） |
 | 共享依赖新版本 | 须框架方更新 `SHARED_DEPS` 表 + shell 重发布（importmap 无前缀通配） |
 | runtime 出口变更 | 框架方流程；外部团队按冻结出口编程（P3） |
@@ -286,6 +304,17 @@ drift-prevention 测试锁定，P3）。
 **Q: 页面渲染 UnknownComponent？**
 路由未被合并：查清单 `entry` URL 可达性、entry 内 `name` 与清单是否一致
 （不一致 loader 会拒绝并标 error）。
+
+**Q: 请求报「尚未登记 API 前缀」或「请求越界」？**
+scoped request（P6.3/D11）按 `ctx.register.apiPrefix()` 登记的前缀收敛：
+先在生命周期里登记前缀，且请求路径必须以它开头（如登记 `/order-api`
+后可请求 `/order-api/list`，请求 `/user/...` 即越界）。接口路径调整不了时，
+与框架方确认登记正确前缀；后端同样会逐接口鉴权。
+
+**Q: iframe 页面被拒绝渲染？**
+`handle.iframeLink` 仅接受 `https:` 且域名在宿主白名单内的链接
+（允许其子域），渲染时自动带 `sandbox`（P6.4）。http 链接或未报备
+域名会被拒绝并打 `[iframe]` 错误日志——换 https 并联系框架方登记域名。
 
 **Q: 构建报「版本矩阵门禁校验失败」？**
 按报错逐项对齐：删掉 dependencies 里的硬依赖；用与宿主 versions.json
