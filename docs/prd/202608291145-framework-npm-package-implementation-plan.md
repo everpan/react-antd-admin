@@ -409,6 +409,13 @@ P2 完成判据逐条核对（2026-08-29）：
 - **契约闭环**：`tests/module-package-imports.test.ts` 4 例——modules + playground 零 `#src`、每个 entry 均从包名导入、tsconfig/vite 包名映射存在、build-modules external 存在。「模块 import 的符号是否都在冻结出口里」由 tsc 保证（paths 直指 `index.ts`，出口外符号 typecheck 报错），与 P3.1 的 `runtime-exports.test.ts` 组成双向契约。
 - **全绿**：tsc 0 错误，vitest 82/82（新增 4），根构建 + 模块独立构建通过。无新增问题记录（eslint 4 条警告均为既有代码的 `react/exhaustive-deps`）。
 
+### P3.3 执行小结：图标契约统一 ReactNode（2026-08-29，`feature/pkg-p3-runtime-api`）
+
+- **分层确定**：`handle.icon` 全链路统一 ReactNode。模块（前端）路由在 entry 里直接 `createElement(X)`（13 处：access 5 / system 5 / outside 3，后者用 P3.1 已冻结进出口的本地图标）；后端 JSON 只能下发图标名，字符串 → 组件的编译收拢到框架边界 `generateRoutesFromBackend`（`menu-icons` 映射从此仅存在于这一处），未知图标名告警并置空。**fake 数据保持字符串**——它模拟的是真实后端响应，改掉反而失真。
+- **简化**：`generate-menu-items-from-routes.ts` 删除 `isString` / `menuIcons` 查找与告警分支，`menuItem.icon = icon` 直接透传（原计划行号 42-54 的 isString 分支不复存在）。
+- **TDD**：`tests/router-icon-contract.test.ts` 4 例（透传同引用、后端编译 `isValidElement`、未知图标告警+置空、模块 entry 零字符串图标）。
+- **全绿**：tsc 0 错误，vitest 86/86（新增 4），根构建 + 模块独立构建通过。无新增问题记录。
+
 ---
 
 ## P4: Shell 与共享表治理
