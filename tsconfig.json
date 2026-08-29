@@ -35,6 +35,7 @@
 		"packages/runtime/src",
 		"packages/cli/src",
 		"apps/playground",
+		"modules",
 		"fake",
 		"tests",
 		"vite.config.ts",

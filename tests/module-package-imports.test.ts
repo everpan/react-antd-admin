@@ -66,4 +66,9 @@ describe("模块包名化（P3.2 / D3）", () => {
 		const buildScript = fs.readFileSync(path.join(PROJECT_ROOT, "scripts/build-modules.ts"), "utf-8");
 		expect(buildScript).toContain(RUNTIME_PACKAGE);
 	});
+
+	it("modules/ 纳入根 tsconfig include（B8：模块源码参与全量类型检查）", () => {
+		const tsconfig = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "tsconfig.json"), "utf-8"));
+		expect(tsconfig.include).toContain("modules");
+	});
 });
