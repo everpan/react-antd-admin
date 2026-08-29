@@ -416,6 +416,14 @@ P2 完成判据逐条核对（2026-08-29）：
 - **TDD**：`tests/router-icon-contract.test.ts` 4 例（透传同引用、后端编译 `isValidElement`、未知图标告警+置空、模块 entry 零字符串图标）。
 - **全绿**：tsc 0 错误，vitest 86/86（新增 4），根构建 + 模块独立构建通过。无新增问题记录。
 
+### P3.4 执行小结：元数据真实 import 解析（2026-08-29，`feature/pkg-p3-runtime-api`）
+
+- **实现**：主仓库 `scripts/build-modules.ts` 弃用 `parseEntryMeta` 正则（B10），改经 `@react-antd-admin/cli` 的 `readModuleDefinition`（esbuild bundle + runtime stub + 真实 `import()`）。cli `exports` 新增 `./build` 子路径；根 devDependencies 显式补 `esbuild`（此前为 cli 传递依赖，scripts 上下文解析不到）。
+- **P3.1 出口扩大的连锁修复**：cli 的 `RUNTIME_STUB_SOURCE` 仍是 P1 最小集合，模块页面 import 的 api/utils/constants 符号在 stub 中缺失导致 bundle 报 missing export。已补齐全量出口，并在 `runtime-exports.test.ts` 增加**防漂移断言**（比对运行时真实出口与 stub 静态导出名），出口与 stub 的同步从此由测试锁定。
+- **动态 import 的两难与化解**：lazy 页面 / i18n JSON 的动态导入若放任进 bundle，esbuild 输出 ESM 时把页面模块的裸导入 hoist 到顶层（pro-components 假 ESM 在 Node import() 时爆炸）；若标 external，vitest 又在 transform 阶段强行解析相对说明符。最终以「动态导入目标替换为虚拟空模块」双堵——元数据读取本就不需要动态模块。
+- **顺带修一个隐含假设**：esbuild 输出名默认取入口 basename，非 `entry.ts` 文件名的产物对不上后续 `import(outDir/entry.js)` 路径（测试夹具暴露）。加 `entryNames: "entry"` 固定。
+- **全绿**：tsc 0 错误，vitest 91/91（新增 5），`pnpm run build` 的模块构建走真实 import 解析成功。
+
 ---
 
 ## P4: Shell 与共享表治理
