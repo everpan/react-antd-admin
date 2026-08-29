@@ -17,8 +17,12 @@ import type {
 	RouteMeta,
 	TreeDataNodeWithId,
 } from "#src/index";
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import * as Runtime from "#src/index";
+
+import { PROJECT_ROOT } from "./helpers/paths";
 
 // pro-components 发布物 type:"module" 与 lib/ 的 CJS 语法矛盾、es/ 内部
 // 又是目录导入，node 无法直接加载（vite dev/build 走 bundler 解析不受影响）。
@@ -117,6 +121,18 @@ describe("runtime 主入口出口白名单 (P3.1)", () => {
 		expect(Runtime.getAllExpandedKeys).toBeTypeOf("function");
 		expect(Runtime.getYesNoOptions).toBeTypeOf("function");
 		expect(Runtime.getBooleanOptions).toBeTypeOf("function");
+	});
+
+	it("cli 的 runtime stub 覆盖全部运行时出口（防漂移，P3.4）", () => {
+		const stubSource = fs.readFileSync(
+			path.join(PROJECT_ROOT, "packages/cli/src/build.ts"),
+			"utf-8",
+		);
+		const stubBlock = stubSource.match(/RUNTIME_STUB_SOURCE = `([^`]+)`/)?.[1] ?? "";
+		const stubExports = new Set([...stubBlock.matchAll(/export const (\w+)/g)].map(m => m[1]));
+		const runtimeExports = Object.keys(Runtime).filter(k => (Runtime as Record<string, unknown>)[k] !== undefined);
+		const missing = runtimeExports.filter(key => !stubExports.has(key));
+		expect(missing, `出口符号未同步进 cli RUNTIME_STUB_SOURCE：${missing.join(", ")}`).toEqual([]);
 	});
 });
 

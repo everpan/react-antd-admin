@@ -23,7 +23,75 @@ import { isSharedDep } from "./shared-deps";
  */
 const RUNTIME_STUB_SOURCE = `
 const _fn = (...a) => a[a.length - 1];
+const _obj = () => ({});
+// 组件
 export const BasicContent = _fn;
+export const BasicButton = _fn;
+export const BasicTable = _fn;
+export const Iframe = _fn;
+export const AccessControl = _fn;
+export const FormAvatarItem = _fn;
+export const FormTreeItem = _fn;
+// api
+export const fetchPie = _fn;
+export const fetchLine = _fn;
+export const fetchLogin = _fn;
+export const fetchLogout = _fn;
+export const fetchAsyncRoutes = _fn;
+export const fetchUserInfo = _fn;
+export const fetchRefreshToken = _fn;
+export const fetchRoleList = _fn;
+export const fetchAddRoleItem = _fn;
+export const fetchUpdateRoleItem = _fn;
+export const fetchDeleteRoleItem = _fn;
+export const fetchRoleMenu = _fn;
+export const fetchMenuByRoleId = _fn;
+export const fetchMenuList = _fn;
+export const fetchAddMenuItem = _fn;
+export const fetchUpdateMenuItem = _fn;
+export const fetchDeleteMenuItem = _fn;
+// hooks 与权限常量
+export const useAccess = _fn;
+export const usePreferences = _fn;
+export const accessControlCodes = _obj;
+export const AccessControlRoles = _obj;
+export const permissionPrefix = "permission:button";
+// store
+export const useAuthStore = _fn;
+export const useUserStore = _fn;
+// 图标
+export const menuIcons = _obj;
+export const EmbeddedIcon = _fn;
+export const ExternalIcon = _fn;
+export const LayoutCenterIcon = _fn;
+export const LayoutLeftIcon = _fn;
+export const LayoutRightIcon = _fn;
+export const MixedNavigationIcon = _fn;
+export const OutsidePageIcon = _fn;
+export const ProfileCardIcon = _fn;
+export const ServerErrorIcon = _fn;
+export const SideNavigationIcon = _fn;
+export const TopNavigationIcon = _fn;
+export const TwoColumnNavigationIcon = _fn;
+export const RiAccountCircleLine = _fn;
+export const RiContrastFill = _fn;
+export const RiFullscreenExitLine = _fn;
+export const RiFullscreenLine = _fn;
+export const RiMailCheckLine = _fn;
+export const RiMoonIcon = _fn;
+export const RiReactjsLine = _fn;
+export const RiSunIcon = _fn;
+export const RiUserSettingsLine = _fn;
+// 工具与常量
+export const handleTree = _fn;
+export const traverseTreeValues = _fn;
+export const filterTree = _fn;
+export const mapTree = _fn;
+export const getAllExpandedKeys = _fn;
+export const getAppInfo = _fn;
+export const getYesNoOptions = _fn;
+export const getBooleanOptions = _fn;
+// 模块契约
 export const defineModule = (d) => d;
 export const defineRoutes = (...a) => a[a.length - 1];
 export const defineGuard = (...a) => a[a.length - 1];
@@ -51,6 +119,31 @@ const runtimeStubPlugin: EsbuildPlugin = {
 			contents: RUNTIME_STUB_SOURCE,
 			loader: "js",
 			resolveDir: process.cwd(),
+		}));
+	},
+};
+
+/**
+ * 把 entry 内所有动态 import 的目标（lazy 页面、i18n JSON）替换为虚拟空模块：
+ * 元数据读取只需要 defineModule 的入参对象，动态模块永远不该执行。
+ * 若放任这些模块进 bundle，esbuild 输出 ESM 时会把页面模块的裸导入 hoist 到
+ * bundle 顶层（如 pro-components），Node import() 时即被求值并可能加载失败；
+ * 若标为 external，vitest 等变换环境又会在 transform 阶段强行解析相对说明符。
+ * 空模块两条路都堵死（P3.4）。
+ */
+const dynamicImportStubPlugin: EsbuildPlugin = {
+	name: "rad-dynamic-import-stub",
+	setup(b) {
+		// esbuild 的 onResolve 不支持按 kind 过滤，在回调里判断后放行其余 resolver
+		b.onResolve({ filter: /^\./ }, (args) => {
+			if (args.kind === "dynamic-import") {
+				return { path: args.path, namespace: "rad-dynamic-stub" };
+			}
+			return null;
+		});
+		b.onLoad({ filter: /.*/, namespace: "rad-dynamic-stub" }, () => ({
+			contents: "export default {};",
+			loader: "js",
 		}));
 	},
 };
@@ -90,19 +183,24 @@ function sha384(file: string): string {
  *   - 其余共享依赖 → 空 stub
  * 从而读取模块定义（name/version/peerRuntime/config）而无需真正加载整个框架
  * 运行时（其源码含 Vite 专有的 `?react`/`?url` svg 导入），替代脆弱的正则（B10）。
+ *
+ * P3.4 起同时供主仓库 `scripts/build-modules.ts` 复用（经 exports `./build`）。
  */
-async function readModuleDefinition(entryFile: string, projectRoot: string) {
+export async function readModuleDefinition(entryFile: string, projectRoot: string) {
 	// 必须落在工程目录内（而非 os.tmpdir），否则 bundle 外部化的共享依赖
 	// （react / antd …）在 import() 时无法从 /tmp 解析到 node_modules。
 	const outDir = fs.mkdtempSync(path.join(projectRoot, ".rad-tmp-"));
 	try {
 		await esbuild({
 			entryPoints: [entryFile],
+			// 固定输出名 entry.js：esbuild 默认取 entry 文件 basename，
+			// 会让非 entry.ts 文件名（如测试夹具）的产物对不上后续 import 路径
+			entryNames: "entry",
 			bundle: true,
 			format: "esm",
 			platform: "node",
 			packages: "external",
-			plugins: [runtimeStubPlugin],
+			plugins: [runtimeStubPlugin, dynamicImportStubPlugin],
 			outdir: outDir,
 			jsx: "automatic",
 			loader: { ".ts": "ts", ".tsx": "tsx", ".json": "json" },

@@ -4,6 +4,7 @@ import path from "node:path";
 import process from "node:process";
 import react from "@vitejs/plugin-react";
 import { build } from "vite";
+import { readModuleDefinition } from "../packages/cli/src/build";
 
 const SHARED_EXTERNALS: (string | RegExp)[] = [
 	// React
@@ -66,15 +67,6 @@ function isExternal(id: string): boolean {
 	});
 }
 
-function parseEntryMeta(entryContent: string): { name: string, version: string } {
-	const nameMatch = entryContent.match(/name:\s*"([^"]+)"/);
-	const versionMatch = entryContent.match(/version:\s*"([^"]+)"/);
-	if (!nameMatch || !versionMatch) {
-		throw new Error("Failed to parse name/version from entry.ts");
-	}
-	return { name: nameMatch[1], version: versionMatch[1] };
-}
-
 function getOutputDir(moduleName: string, version: string): string {
 	return path.resolve("build", "modules", moduleName, version);
 }
@@ -86,8 +78,9 @@ async function buildModule(moduleDir: string) {
 		return;
 	}
 
-	const entryContent = fs.readFileSync(entryPath, "utf-8");
-	const { name: moduleName, version } = parseEntryMeta(entryContent);
+	// P3.4 / B10：元数据由 esbuild bundle + 真实 import() 解析（复用 cli 实现），
+	// 替换此前从源码抠 name/version 字符串的脆弱正则
+	const { name: moduleName, version } = await readModuleDefinition(entryPath, path.resolve());
 
 	console.log(`[build-modules] Building ${moduleName}@${version}...`);
 
