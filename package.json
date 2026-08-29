@@ -16,6 +16,7 @@
 		"url": "https://github.com/condorheroblog/react-antd-admin/issues"
 	},
 	"imports": {
+		"#src/*": "./packages/runtime/src/*",
 		"#*": "./*"
 	},
 	"scripts": {
@@ -34,7 +35,7 @@
 		"prepare": "simple-git-hooks",
 		"pnpm:install": "pnpm install",
 		"npm-check": "taze major -lrw",
-		"check:circular-deps": "ds src --output circular-deps.json",
+		"check:circular-deps": "ds packages/runtime/src --output circular-deps.json",
 		"test": "vitest"
 	},
 	"dependencies": {

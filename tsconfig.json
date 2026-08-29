@@ -5,6 +5,9 @@
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"paths": {
+			"#src/*": [
+				"./packages/runtime/src/*"
+			],
 			"#*": [
 				"./*"
 			]
@@ -26,7 +29,7 @@
 		"skipLibCheck": true
 	},
 	"include": [
-		"src",
+		"packages/runtime/src",
 		"fake",
 		"tests",
 		"vite.config.ts",

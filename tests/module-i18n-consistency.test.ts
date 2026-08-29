@@ -1,10 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-
-const PROJECT_ROOT = path.resolve(__dirname, "..");
-const MODULES_DIR = path.join(PROJECT_ROOT, "modules");
-const MANIFEST_PATH = path.join(PROJECT_ROOT, "manifest.json");
+import { MANIFEST_PATH, MODULES_DIR, PROJECT_ROOT, RUNTIME_DIR } from "./helpers/paths";
 
 /**
  * 获取所有模块目录名
@@ -299,7 +296,7 @@ describe("模块发布独立性", () => {
 	});
 
 	it("框架 common.json 不应包含模块专属的菜单翻译 key", () => {
-		const zhCommon = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "src/locales/zh-CN/common.json"), "utf-8"));
+		const zhCommon = JSON.parse(fs.readFileSync(path.join(RUNTIME_DIR, "locales/zh-CN/common.json"), "utf-8"));
 		const commonMenuKeys = Object.keys(zhCommon.menu || {});
 
 		const moduleOwnedKeys = ["home", "about", "access", "pageControl", "buttonControl", "adminVisible", "commonVisible", "nestMenus", "menu1", "menu1-1", "menu1-2", "menu2", "outside", "embedded", "externalLink", "antd", "projectDocs", "reactDocs", "exception", "exception_403", "exception_404", "exception_500", "exceptionUnknownComponent", "system", "user", "role", "menu", "dept", "personalCenter", "profile", "settings"];
@@ -357,8 +354,8 @@ describe("模块对框架翻译 key 的引用", () => {
 	}
 
 	it("模块使用的 common.* 和 form.* key 必须在框架 locale 中存在", () => {
-		const zhCommon = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "src/locales/zh-CN/common.json"), "utf-8"));
-		const zhForm = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "src/locales/zh-CN/form.json"), "utf-8"));
+		const zhCommon = JSON.parse(fs.readFileSync(path.join(RUNTIME_DIR, "locales/zh-CN/common.json"), "utf-8"));
+		const zhForm = JSON.parse(fs.readFileSync(path.join(RUNTIME_DIR, "locales/zh-CN/form.json"), "utf-8"));
 		const frameworkKeys = new Set([
 			...flattenLocaleKeys(zhCommon, "common"),
 			...flattenLocaleKeys(zhForm, "form"),
@@ -377,7 +374,7 @@ describe("模块对框架翻译 key 的引用", () => {
 				for (const match of fileContent.matchAll(/t\("(common\.[^"]+|form\.[^"]+)"\)/g)) {
 					const key = match[1];
 					if (!frameworkKeys.has(key)) {
-						errors.push(`${relativePath}: t("${key}") not found in framework locale (src/locales/zh-CN/)`);
+						errors.push(`${relativePath}: t("${key}") not found in framework locale (packages/runtime/src/locales/zh-CN/)`);
 					}
 				}
 			}

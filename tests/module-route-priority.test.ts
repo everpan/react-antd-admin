@@ -1,11 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { MODULES_DIR, RUNTIME_DIR } from "./helpers/paths";
 
-const PROJECT_ROOT = path.resolve(__dirname, "..");
-const MODULES_DIR = path.join(PROJECT_ROOT, "modules");
-const AUTH_GUARD_PATH = path.join(PROJECT_ROOT, "src/router/guard/auth-guard.tsx");
-const BACKEND_ROUTE_GEN_PATH = path.join(PROJECT_ROOT, "src/router/utils/generate-routes-from-backend.ts");
+const AUTH_GUARD_PATH = path.join(RUNTIME_DIR, "router/guard/auth-guard.tsx");
+const BACKEND_ROUTE_GEN_PATH = path.join(RUNTIME_DIR, "router/utils/generate-routes-from-backend.ts");
 
 function getModuleNames(): string[] {
 	return fs.readdirSync(MODULES_DIR, { withFileTypes: true })

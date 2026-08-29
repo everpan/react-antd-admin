@@ -1,0 +1,27 @@
+{
+	"name": "@react-antd-admin/runtime",
+	"type": "module",
+	"version": "0.0.0",
+	"private": true,
+	"description": "React Antd Admin 框架运行时，供模块工程消费",
+	"license": "MIT",
+	"imports": {
+		"#src/*": "./src/*",
+		"#modules/*": "../../modules/*",
+		"#manifest.json": "../../manifest.json"
+	},
+	"exports": {
+		".": "./dist/runtime.js",
+		"./router": "./dist/router.js",
+		"./module": "./dist/module.js"
+	},
+	"files": [
+		"dist"
+	],
+	"peerDependencies": {
+		"antd": "^6.4.2",
+		"react": "^19.2.6",
+		"react-dom": "^19.2.6",
+		"react-router": "^7.15.1"
+	}
+}

@@ -29,7 +29,7 @@ export default defineConfig({
 	base: isDev ? "/" : "/react-antd-admin/",
 	resolve: {
 		alias: {
-			"#src": path.resolve("src"),
+			"#src": path.resolve("packages/runtime/src"),
 			"#modules": path.resolve("modules"),
 		},
 	},
@@ -73,7 +73,7 @@ export default defineConfig({
 		 */
 		Icons({
 			customCollections: {
-				svg: FileSystemIconLoader("./src/icons/svg"),
+				svg: FileSystemIconLoader("./packages/runtime/src/icons/svg"),
 			},
 			/**
 			 * @see https://iconify.design/docs/articles/cleaning-up-icons/#parsing-one-monotone-icon
@@ -118,7 +118,7 @@ export default defineConfig({
 	test: {
 		globals: true,
 		environment: "happy-dom",
-		setupFiles: ["./src/setupTests.ts"],
+		setupFiles: ["./packages/runtime/src/setupTests.ts"],
 	},
 	server: {
 		port: 3333,

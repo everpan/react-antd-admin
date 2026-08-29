@@ -639,6 +639,8 @@ Feature: 模块级权限真实生效
 | A8 | keepAlive 的 exclude 依赖"页面套了 ContainerLayout"这一隐式前提 | 全项目只有一处显式 `keepAlive: false`，其余靠"没套 ContainerLayout 就不缓存"的副作用 |
 | A9 | importmap 是 document 作用域的 | 这是 D5 成立的关键：跨源加载的模块内部裸说明符同样被映射，与模块自身来源无关 |
 | A10 | L1（只校验入口 chunk）的防护价值≈0 | 子 chunk 才是真正的注入点；这也是 D7 直接跳到 L2 的原因 |
+| A11 | **新建子包 `package.json` 会截断父包的 `imports` 解析** | Node 的 subpath imports 只查找**最近的** package.json，**不向上回溯**。P0 把 `src/` 迁到 `packages/runtime/src/` 并新建 `packages/runtime/package.json` 后，Tailwind 经 jiti 加载 `plugins/tailwind.ts` 时 `#src/styles/...` 解析失败——此处走 Node `require`，Vite alias 与 tsconfig paths 均不生效。修复：子包 package.json 必须自行声明 `imports`。**推广结论**：任何被 Node 侧（jiti / tsx / 脚本）加载的文件，其 `#` 说明符都要由最近的 package.json 兜住 |
+| A12 | 页面入口路径写在 `index.html` 里，同样不会被 alias 改写 | `index.html:23` 的 `/src/index.tsx` 需同步改为 `/packages/runtime/src/index.tsx`，Vite 能启动但页面 404 |
 
 ---
 

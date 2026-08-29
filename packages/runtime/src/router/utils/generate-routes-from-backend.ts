@@ -12,7 +12,7 @@ const ExceptionUnknownComponent = lazy(() => import("#modules/exception/pages/un
  * @en Async load page components (from both framework and modules)
  */
 const pageModules = import.meta.glob([
-	"/src/pages/**/*.tsx",
+	"/packages/runtime/src/pages/**/*.tsx",
 	"/modules/*/pages/**/*.tsx",
 ]);
 
@@ -25,7 +25,7 @@ export function getComponentPathByRoute(route: AppRouteRecordRaw & { component?:
 	const routePath = route.path ?? "/";
 
 	if (route.component) {
-		const srcPath = `/src/pages${route.component}`;
+		const srcPath = `/packages/runtime/src/pages${route.component}`;
 		if (pageModulePaths.includes(srcPath)) {
 			return srcPath;
 		}
@@ -38,7 +38,7 @@ export function getComponentPathByRoute(route: AppRouteRecordRaw & { component?:
 		return srcPath;
 	}
 	else {
-		const srcPath = `/src/pages${routePath}/index.tsx`;
+		const srcPath = `/packages/runtime/src/pages${routePath}/index.tsx`;
 		if (pageModulePaths.includes(srcPath)) {
 			return srcPath;
 		}

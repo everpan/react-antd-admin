@@ -10,7 +10,9 @@
 
 ### 分支策略
 
-每个 Phase / Spike 独立分支，独立评审，可单独回滚。分支从 `main` 切出。
+每个 Phase / Spike 独立分支，独立评审，可单独回滚。
+
+**基线分支为 `modularization`，不是 `main`**。`main` 落后 32 个提交且不含模块系统；模块化改造全部在 `modularization` 上。所有 `feature/pkg-*` 与 `spike/*` 分支均从 `modularization` 切出。
 
 | 阶段 | 分支 |
 |------|------|
@@ -86,7 +88,32 @@ git switch -c feature/pkg-p0-monorepo
 | `src/router/utils/generate-routes-from-backend.ts:14-17` | `import.meta.glob(["/src/pages/**/*.tsx", "/modules/*/pages/**/*.tsx"])` | `/packages/runtime/src/pages/**/*.tsx`（**字面量，不会被 alias 改写**） |
 | `vite.config.ts:76` | `FileSystemIconLoader("./src/icons/svg")` | `./packages/runtime/src/icons/svg`（相对 vite root） |
 | `src/router/routes/index.ts:10-12` | `import.meta.glob` 收集 `external/**` `static/**` | 核对是否含根相对字面量 |
-| `src/styles/tailwind.css` | `@source` 指令 | 核对相对路径 |
+| `packages/runtime/src/styles/index.css` → `plugins/tailwind.ts` | `@plugin` 相对路径，随目录整体迁移无需改 | 但该文件经 **jiti** 加载，其 `#src/*` 走 Node 解析，见下方 A11 |
+| **`index.html:23`** | `src="/src/index.tsx"` | `src="/packages/runtime/src/index.tsx"`（Vite 能启动，但页面 404） |
+| **`packages/runtime/package.json`** | 新建子包后需自行声明 `imports` | 否则截断父包 imports，见下方 A11 |
+
+#### ⚠️ 实测新增的两个坑（A11 / A12）
+
+**A11 · 新建子包 package.json 会截断父包的 `imports` 解析**（本次构建失败的直接原因，共触发 2 次）
+
+Node 的 subpath imports 只查找**最近的** package.json，**不向上回溯**。把 `src/` 迁到 `packages/runtime/src/` 并新建 `packages/runtime/package.json` 后：
+
+1. Tailwind 经 jiti 加载 `plugins/tailwind.ts` → `#src/styles/theme/antd/css-variables` 解析失败（此处是 Node `require`，Vite alias 与 tsconfig paths 均不生效）
+2. `auth-guard.tsx` 的 `#manifest.json` → Vite `resolveSubpathImports` 报 `Missing "#manifest.json" specifier in "@react-antd-admin/runtime" package`
+
+**修复**：子包 package.json 必须自行声明完整的 `imports`：
+
+```json
+"imports": {
+  "#src/*": "./src/*",
+  "#modules/*": "../../modules/*",
+  "#manifest.json": "../../manifest.json"
+}
+```
+
+**推广结论**：凡是被 Node 侧（jiti / tsx / 脚本）加载的文件，其 `#` 说明符都要由最近的 package.json 兜住——Vite alias 救不了。
+
+**A12 · 页面入口路径写在 `index.html` 里，同样不会被 alias 改写**
 | `scripts/` | 硬编码 `src` 路径 | 逐个核对 |
 
 ### Task 0.3 — workspace 与包元数据
@@ -183,6 +210,45 @@ pnpm build
 5. 明确记录：**不要**扫构建产物（class 已拼接，扫不准）
 
 **产出**：`spikes/module-tailwind/README.md`，给出推荐方案与踩坑记录。
+
+### P0 执行状态：✅ 已完成（2026-08-29）
+
+| 任务 | 状态 | 验证结果 |
+|------|------|----------|
+| 0.1 建分支 `feature/pkg-p0-monorepo` | ✅ | 从 `modularization` 切出 |
+| 0.2 迁移 `src/` → `packages/runtime/src/` | ✅ | 230 文件 rename，源码内容零改动 |
+| 0.3 workspace 与 runtime 包元数据 | ✅ | `pnpm install` 通过，workspace 识别 3 个项目 |
+| 0.4 测试路径常量化 | ✅ | 新增 `tests/helpers/paths.ts`，3 个测试文件改用常量 |
+| 0.5 验收 | ✅ | 见下表 |
+| 0.6 双 Spike | ⏳ | 未开始 |
+
+**验收数据**
+
+| 检查项 | 迁移前 | 迁移后 | 结论 |
+|--------|--------|--------|------|
+| `pnpm typecheck` | 通过 | 通过 | ✅ |
+| `pnpm lint` | 176 问题（116 错误 / 60 警告） | 176 问题（116 错误 / 60 警告） | ✅ 零新增 |
+| `pnpm test` | 20 用例通过 | 24 用例通过（+4 条 `monorepo-layout`） | ✅ |
+| `pnpm build` | 61 文件 / 4,521,985 字节 | 61 文件 / 4,522,138 字节 | ✅ +153 字节（0.003%，glob 路径字符串变长） |
+| dev 冒烟 | — | `/` 返回正确入口路径，入口模块 HTTP 200，无错误日志 | ✅ |
+
+**关键过程**
+
+1. 先跑基线：测试 20 通过、lint 176 问题（**基线 lint 本就是红的**，`@docsearch/react` 的 peer 警告与 116 个既有错误均与本次无关）
+2. TDD：先改测试常量指向新路径，确认 5 个用例按预期失败，再执行迁移
+3. `git mv src packages/runtime/src`，随后逐个修正不会被 alias 改写的字面量
+4. 构建两次失败，均落入同一个根因（A11），修正后一次通过
+5. 用 `git worktree` 在基线提交上跑 lint 做对照，确认迁移零新增问题
+
+**耗时**：约 1 小时 50 分（含两次构建失败的排查；若不含排查，纯搬迁约 30 分钟）。
+
+**与计划的偏差**
+
+| 计划 | 实际 | 说明 |
+|------|------|------|
+| 分支从 `main` 切出 | 从 `modularization` 切出 | `main` 落后 32 个提交且不含模块系统，已同步修正本文档 |
+| 只需改 glob 与 FileSystemIconLoader 两处字面量 | 实际 4 处 | 另加 `index.html:23` 入口路径、`vite.config.ts:121` setupFiles |
+| 未预料子包 package.json 会截断 imports | 触发 2 次构建失败 | 已记为 A11，并补进上方坑位表 |
 
 ---
 
