@@ -46,6 +46,15 @@ export interface RouteMeta {
 	keepAlive?: boolean
 
 	/**
+	 * 布局包裹方式（P2.2，设计文档 D9）。显式声明，不做隐式推导。
+	 * - `"container"`：套完整 chrome（header / sidebar / tabbar / content）
+	 * - `"parent"`：套父级布局（自身含 Outlet，用于嵌套菜单场景）
+	 * - `"none"`：不套任何布局，页面/子路由直接渲染
+	 * @default "container"（迁移期向后兼容，目标在 P2.7 补全显式声明后改为 `"none"`）
+	 */
+	layout?: "container" | "parent" | "none"
+
+	/**
 	 * 是否在菜单中隐藏，用于控制某些路由不在侧边栏菜单中显示
 	 */
 	hideInMenu?: boolean

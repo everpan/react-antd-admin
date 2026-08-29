@@ -2,8 +2,8 @@ import type { AppRouteRecordRaw } from "#src/router/types";
 import { lazy } from "react";
 import { Outlet } from "react-router";
 import { Iframe } from "#src/components/iframe";
-import ContainerLayout from "#src/layout/container-layout";
 import { addRouteIdByPath } from "./add-route-id-by-path";
+import { resolveLayoutComponent } from "./resolve-layout";
 
 const ExceptionUnknownComponent = lazy(() => import("#modules/exception/pages/unknown-component"));
 
@@ -108,7 +108,7 @@ export async function generateRoutesFromBackend(backendRoutes: Array<AppRouteRec
 		}
 		// 处理有子路由的情况
 		else if (transformedRoute.children?.length) {
-			transformedRoute.Component = parentComponentPath ? Outlet : ContainerLayout;
+			transformedRoute.Component = parentComponentPath ? Outlet : resolveLayoutComponent(transformedRoute.handle);
 		}
 		// 处理普通路由
 		else {
