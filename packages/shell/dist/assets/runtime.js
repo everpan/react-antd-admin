@@ -5267,8 +5267,14 @@ function getModule(name) {
 	return modules.get(name);
 }
 function getRoutes() {
+	const { roles } = useUserStore.getState();
 	const routes = [];
-	for (const instance of modules.values()) if (instance.status !== "error" && instance.definition.routes.length > 0) routes.push(...resolveRouteLayouts(instance.definition.routes));
+	for (const instance of modules.values()) {
+		if (instance.status === "error") continue;
+		const requiredRoles = instance.definition.config?.requiredRoles;
+		if (requiredRoles?.length && !requiredRoles.some((role) => roles.includes(role))) continue;
+		if (instance.definition.routes.length > 0) routes.push(...resolveRouteLayouts(instance.definition.routes));
+	}
 	return routes;
 }
 function getRegisteredStore(name) {
@@ -5297,6 +5303,7 @@ function getAllRoutePathKeys() {
 var modules, registeredStores, registeredApiPrefixes;
 var init_module_loader = __esmMin((() => {
 	init_resolve_layout();
+	init_user();
 	init_request();
 	init_keep_alive();
 	init_slots();
@@ -7526,14 +7533,14 @@ function AuthGuard({ children }) {
 			*/
 			if (userInfoResult.status === "fulfilled" && "roles" in userInfoResult.value) latestRoles.push(...userInfoResult.value?.roles ?? []);
 			/**
-			* @zh 加载 manifest.json 中声明的模块，合并模块路由（优先于后端/前端路由）
-			* @en Load modules declared in manifest.json (takes priority over backend/frontend routes)
+			* @zh 合并模块路由（优先于后端/前端路由）。模块已在应用启动时由 index.tsx
+			* 统一加载（P5.5/O5），守卫只消费已注册的路由，不触碰模块清单。
+			* @en Merge module routes (takes priority over backend/frontend routes).
+			* Modules are loaded once at app bootstrap (index.tsx, P5.5/O5); the guard
+			* only consumes already-registered routes and never touches the manifest.
 			*/
-			try {
-				await loadAll((await import("#manifest.json")).default);
-				const moduleRoutes = addRouteIdByPath(getRoutes());
-				if (moduleRoutes.length > 0) routes.push(...moduleRoutes);
-			} catch (error) {}
+			const moduleRoutes = addRouteIdByPath(getRoutes());
+			if (moduleRoutes.length > 0) routes.push(...moduleRoutes);
 			/**
 			* @zh 收集模块已覆盖的顶级路径，用于过滤后端路由中的重复项
 			* @en Collect top-level paths already covered by modules to filter duplicates from backend routes

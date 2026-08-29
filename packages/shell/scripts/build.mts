@@ -22,6 +22,8 @@ import { generateImportmap, generateShellEntries, isSharedDep, SHARED_DEPS } fro
 import react from "@vitejs/plugin-react";
 import { build } from "vite";
 
+import { defaultTrustedOrigins, generateCsp, generateNonce } from "../src/csp";
+
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const shellDir = resolve(__dirname, "..");
 const distDir = resolve(shellDir, "dist");
@@ -31,8 +33,12 @@ function injectImportmap(map: Record<string, string>) {
 	return {
 		name: "inject-importmap",
 		transformIndexHtml(html: string) {
-			const script = `<script type="importmap">${JSON.stringify({ imports: map }, null, 2)}</script>`;
-			return html.replace("<!--IMPORTMAP-->", script);
+			// P6.2 / §4.8：构建期随机 nonce——内联 importmap 必须带 nonce，
+			// 否则被 CSP script-src 'self' 拦掉；每次 build 轮换，不加 strict-dynamic
+			const nonce = generateNonce();
+			const cspMeta = `<meta http-equiv="Content-Security-Policy" content="${generateCsp(defaultTrustedOrigins, nonce).replace(/\n/g, " ")}" />`;
+			const script = `<script type="importmap" nonce="${nonce}">${JSON.stringify({ imports: map }, null, 2)}</script>`;
+			return html.replace("<!--CSP-->", cspMeta).replace("<!--IMPORTMAP-->", script);
 		},
 	};
 }
