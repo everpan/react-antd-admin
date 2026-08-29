@@ -1,7 +1,7 @@
 import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
 import { AntDesignOutlined, ContainerOutlined } from "@ant-design/icons";
 
-import { Iframe, RiReactjsLine } from "@react-antd-admin/runtime";
+import { EmbeddedIcon, ExternalIcon, Iframe, OutsidePageIcon, RiReactjsLine } from "@react-antd-admin/runtime";
 import { createElement } from "react";
 import { Outlet } from "react-router";
 
@@ -10,7 +10,7 @@ const routes: AppRouteRecordRaw[] = [
 		path: "/outside",
 		handle: {
 			layout: "container",
-			icon: "OutsidePageIcon",
+			icon: createElement(OutsidePageIcon),
 			title: "outside:menu.outside",
 			order: 40,
 		},
@@ -19,7 +19,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: "/outside/embedded",
 				Component: Outlet,
 				handle: {
-					icon: "EmbeddedIcon",
+					icon: createElement(EmbeddedIcon),
 					title: "outside:menu.embedded",
 				},
 				children: [
@@ -47,7 +47,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: "/outside/external-link",
 				Component: Outlet,
 				handle: {
-					icon: "ExternalIcon",
+					icon: createElement(ExternalIcon),
 					title: "outside:menu.externalLink",
 				},
 				children: [

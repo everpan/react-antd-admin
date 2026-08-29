@@ -1,7 +1,9 @@
 import type { AppRouteRecordRaw } from "#src/router/types";
-import { lazy } from "react";
+import { createElement, lazy } from "react";
 import { Outlet } from "react-router";
 import { Iframe } from "#src/components/iframe";
+import { menuIcons } from "#src/icons/menu-icons";
+import { isString } from "#src/utils/is";
 import { addRouteIdByPath } from "./add-route-id-by-path";
 import { resolveLayoutComponent } from "./resolve-layout";
 
@@ -82,6 +84,19 @@ export async function generateRoutesFromBackend(backendRoutes: Array<AppRouteRec
 				backstage: true,
 			},
 		};
+
+		// P3.3：后端 JSON 只能下发图标名，在此边界统一编译为组件；
+		// menu-icons 字符串映射仅存在于这一处，模块路由不走此处
+		const iconName = transformedRoute.handle?.icon;
+		if (isString(iconName)) {
+			if (menuIcons[iconName]) {
+				transformedRoute.handle.icon = createElement(menuIcons[iconName]);
+			}
+			else {
+				console.warn(`[backstage-route]: icon "${iconName}" not found in icons/menu-icons.ts`);
+				transformedRoute.handle.icon = undefined;
+			}
+		}
 
 		// 处理 index 路由（继承父级路径）
 		if (transformedRoute.index === true && parentComponentPath) {

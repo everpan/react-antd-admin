@@ -1,7 +1,8 @@
 import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
-import { accessControlCodes } from "@react-antd-admin/runtime";
+import { EyeOutlined, FileTextOutlined, LockOutlined, SafetyOutlined } from "@ant-design/icons";
 
-import { lazy } from "react";
+import { accessControlCodes } from "@react-antd-admin/runtime";
+import { createElement, lazy } from "react";
 
 const PageControl = lazy(() => import("./pages/page-control"));
 const ButtonControl = lazy(() => import("./pages/button-control"));
@@ -13,7 +14,7 @@ const routes: AppRouteRecordRaw[] = [
 		path: "/access",
 		handle: {
 			layout: "container",
-			icon: "SafetyOutlined",
+			icon: createElement(SafetyOutlined),
 			title: "access:menu.access",
 			order: 10,
 		},
@@ -22,7 +23,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: "/access/page-control",
 				Component: PageControl,
 				handle: {
-					icon: "FileTextOutlined",
+					icon: createElement(FileTextOutlined),
 					title: "access:menu.pageControl",
 					permissions: [
 						accessControlCodes.get,
@@ -33,7 +34,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: "/access/button-control",
 				Component: ButtonControl,
 				handle: {
-					icon: "LockOutlined",
+					icon: createElement(LockOutlined),
 					title: "access:menu.buttonControl",
 				},
 			},
@@ -41,7 +42,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: "/access/admin-visible",
 				Component: AdminVisible,
 				handle: {
-					icon: "EyeOutlined",
+					icon: createElement(EyeOutlined),
 					title: "access:menu.adminVisible",
 					roles: ["admin"],
 				},
@@ -50,7 +51,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: "/access/common-visible",
 				Component: CommonVisible,
 				handle: {
-					icon: "EyeOutlined",
+					icon: createElement(EyeOutlined),
 					title: "access:menu.commonVisible",
 					roles: ["common"],
 				},

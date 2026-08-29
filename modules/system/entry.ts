@@ -1,6 +1,7 @@
 import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
 
-import { lazy } from "react";
+import { ApartmentOutlined, MenuOutlined, SettingOutlined, TeamOutlined, UserOutlined } from "@ant-design/icons";
+import { createElement, lazy } from "react";
 
 const User = lazy(() => import("./pages/user"));
 const Dept = lazy(() => import("./pages/dept"));
@@ -11,7 +12,7 @@ const routes: AppRouteRecordRaw[] = [
 	{
 		path: "/system",
 		handle: {
-			icon: "SettingOutlined",
+			icon: createElement(SettingOutlined),
 			title: "system:menu.system",
 			order: 100,
 			roles: ["admin"],
@@ -22,7 +23,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: "/system/user",
 				Component: User,
 				handle: {
-					icon: "UserOutlined",
+					icon: createElement(UserOutlined),
 					title: "system:menu.user",
 					roles: ["admin"],
 					permissions: [
@@ -36,7 +37,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: "/system/role",
 				Component: Role,
 				handle: {
-					icon: "TeamOutlined",
+					icon: createElement(TeamOutlined),
 					title: "system:menu.role",
 					roles: ["admin"],
 					permissions: [
@@ -50,7 +51,7 @@ const routes: AppRouteRecordRaw[] = [
 				path: "/system/menu",
 				Component: Menu,
 				handle: {
-					icon: "MenuOutlined",
+					icon: createElement(MenuOutlined),
 					title: "system:menu.menu",
 					roles: ["admin"],
 					permissions: [
@@ -65,7 +66,7 @@ const routes: AppRouteRecordRaw[] = [
 				Component: Dept,
 				handle: {
 					keepAlive: false,
-					icon: "ApartmentOutlined",
+					icon: createElement(ApartmentOutlined),
 					title: "system:menu.dept",
 					roles: ["admin"],
 					permissions: [

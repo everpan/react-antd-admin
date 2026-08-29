@@ -4,9 +4,6 @@ import type { AppRouteRecordRaw } from "#src/router/types";
 import { createElement } from "react";
 import { Link } from "react-router";
 
-import { menuIcons } from "#src/icons/menu-icons";
-import { isString } from "#src/utils/is";
-
 /**
  * 根据路由列表生成菜单项数组
  *
@@ -17,7 +14,7 @@ export function generateMenuItemsFromRoutes(routeList: AppRouteRecordRaw[]) {
 	return routeList.reduce<MenuItemType[]>((acc, item) => {
 		const label = item.handle?.title;
 		const externalLink = item?.handle?.externalLink;
-		const iconName = item?.handle?.icon;
+		const icon = item?.handle?.icon;
 
 		const menuItem: MenuItemType = {
 			key: item.path!,
@@ -39,18 +36,10 @@ export function generateMenuItemsFromRoutes(routeList: AppRouteRecordRaw[]) {
 					label
 				),
 		};
-		if (iconName) {
-			menuItem.icon = iconName;
-			if (isString(iconName)) {
-				if (menuIcons[iconName]) {
-					menuItem.icon = createElement(menuIcons[iconName]);
-				}
-				else {
-					console.warn(
-						`menu-icon: icon "${iconName}" not found in src/icons/menu-icons.ts file`,
-					);
-				}
-			}
+		// P3.3：icon 契约为 ReactNode，直接透传；
+		// 后端字符串图标已在 generateRoutesFromBackend 边界编译
+		if (icon) {
+			menuItem.icon = icon;
 		}
 		if (Array.isArray(item.children) && item.children.length > 0) {
 			// 过滤掉非首页，且不显示在菜单中的路由
