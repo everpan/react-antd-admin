@@ -1,4 +1,6 @@
-const { dependencies, devDependencies } = __APP_INFO__.pkg;
+import { getAppInfo } from "#src/utils/get-app-info";
+
+const { dependencies, devDependencies } = getAppInfo().pkg;
 
 export const dependenciesItems = Object.keys(dependencies).map((dep) => {
 	const value = dependencies[dep as keyof typeof dependencies];

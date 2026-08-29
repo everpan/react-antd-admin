@@ -289,7 +289,7 @@ pnpm build
 | 2.3 | 框架内置 `NotFound` / `UnknownComponent` | 替代 `fallback.ts:5`、`generate-routes-from-backend.ts:8` 对 `#modules/exception` 的依赖；exception 模块降级为可选覆盖 | ✅ 已完成 |
 | 2.4 | 加 CI 卡口 | `eslint.config.js` 的 `no-restricted-imports` 禁 runtime 内出现 `#modules`；CI 跑 `grep -rn "#modules" packages/runtime/src && exit 1` | ✅ 已完成 |
 | 2.5 | 移除主包对模块页面的 glob 收录 | `generate-routes-from-backend.ts:14-17` 去掉 `/modules/*/pages/**`；同步改 `tests/module-route-priority.test.ts:43-52` 的断言为**不含** `/modules/` | ✅ 已完成 |
-| 2.6 | `__APP_INFO__` → `getAppInfo()` | 覆盖 `modules/about/pages/constants.ts:1` 与 `src/utils/get-app-namespace/index.ts:13` | ⬜ 待开始 |
+| 2.6 | `__APP_INFO__` → `getAppInfo()` | 覆盖 `modules/about/pages/constants.ts:1` 与 `src/utils/get-app-namespace/index.ts:13` | ✅ 已完成 |
 | 2.7 | 先迁 1–2 个 dogfooding 模块验证语义 | 建议 `route-nest`（有嵌套）+ `system`（有 `keepAlive: false`） | ⬜ 待开始 |
 | 2.8 | TDD 验收与文档更新 | 缓存行为不回退、整站 chrome 不消失、路由优先级断言更新；完成后回填本表与总结 | ⬜ 待开始 |
 
@@ -321,6 +321,16 @@ pnpm build
 - **为什么安全**：模块路由由 `loadAllModules(manifest)` 经各模块自身 `entry.ts` 的 glob 注册，进入 `auth-guard` 前 `filterBackendRoutes` 已把「与模块重复的后端路径」剔除（见 `auth-guard.tsx:119/127/134`），因此 `generateRoutesFromBackend` 实际只处理框架路径。框架不再 glob 模块页面，等价于「框架单向依赖模块」的反向耦合被切断。
 - **测试同步**：`tests/module-route-priority.test.ts` 该用例从「应搜索 modules/」翻转为「不得 glob 收录模块页面 /modules/」，并更正了测试名与断言语义。
 - **验证**：full vitest 57/57；`tsc --noEmit` 0 错误；`runtime` 库构建 6 模块（不再打包任何模块页面）；根 `pnpm run build` 全量通过，9 个模块各自独立构建到 `build/modules/*`（证明模块页面改由模块侧自行打包）。
+
+**BDD 场景**：设计文档 US-8（插槽部分）、US-4。
+
+### P2.6 执行小结
+
+- **新增 `getAppInfo()` API**：`packages/runtime/src/utils/get-app-info/index.ts` 导出 `getAppInfo()`（返回 `AppInfo`，类型见 `packages/runtime/src/types/app-info.ts`），并随 runtime 主入口 `src/index.ts` 一并导出（`export { getAppInfo }` + `export type { AppInfo }`）。框架内部**唯一**读取全局 `__APP_INFO__` 的位置收敛到此处。
+- **消费点迁移**：① 框架侧 `get-app-namespace/index.ts` 由 `__APP_INFO__.pkg.version` 改为 `getAppInfo().pkg.version`；② 模块侧 `modules/about/pages/constants.ts` 与 `index.tsx`（共 4 处：`pkg.version` / `lastBuildTime` / `pkg.license` / `pkg.author`）全部改为 `getAppInfo()`。模块通过 `#src/utils/get-app-info` 引入，无需再依赖 Vite `define` 注入的全局（B9 解除）。
+- **为什么保留 vite `define`**：`__APP_INFO__` 仍由宿主/框架构建期注入，仅框架内部 `getAppInfo` 读取；模块不再引用该全局，因此外部模块工程不必复制同样的 define 配置。
+- **测试**：新增 `tests/app-info-api.test.ts`（2 例）——断言 runtime 入口导出 `getAppInfo`、模块源码零 `__APP_INFO__` 直接引用、框架内除 `getAppInfo` 外无直接读取点。
+- **验证**：full vitest 59/59（原 57 + 2）；`tsc --noEmit` 0 错误；根 `pnpm run build` 全量通过，9 个模块（含 about）各自独立构建成功。
 
 **BDD 场景**：设计文档 US-8（插槽部分）、US-4。
 

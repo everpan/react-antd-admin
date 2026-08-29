@@ -8,9 +8,11 @@
  * const storeKey = getAppNamespace('userStore');
  * // Output: "myapp-1.0.0-prod-userStore"
  */
+import { getAppInfo } from "#src/utils/get-app-info";
+
 export function getAppNamespace(name: string): string {
 	const env = import.meta.env.PROD ? "prod" : "dev";
-	const appVersion = __APP_INFO__.pkg.version;
+	const appVersion = getAppInfo().pkg.version;
 	const appNamespace = import.meta.env.VITE_APP_NAMESPACE;
 
 	if (!appNamespace) {

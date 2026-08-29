@@ -1,20 +1,10 @@
 import type { GlobalToken } from "antd";
 
-import type { dependencies, devDependencies } from "#package.json";
 import type { ThemeType } from "#src/store";
+import type { AppInfo } from "#src/types/app-info";
 
 declare global {
-	const __APP_INFO__: {
-		pkg: {
-			name: string
-			version: string
-			license: string
-			author: string
-			dependencies: typeof dependencies
-			devDependencies: typeof devDependencies
-		}
-		lastBuildTime: string
-	};
+	const __APP_INFO__: AppInfo;
 
 	/* Inspired by https://github.com/soybeanjs/soybean-admin/blob/v1.3.8/src/typings/global.d.ts */
 	interface Window {

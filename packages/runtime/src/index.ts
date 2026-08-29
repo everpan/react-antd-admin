@@ -10,6 +10,7 @@
 
 // 组件
 export { BasicContent } from "./components/basic-content";
+
 // 模块加载（宿主消费外部模块时使用；模块工程一般不直接调用）
 export {
 	getModule,
@@ -19,10 +20,8 @@ export {
 	getRoutes,
 	loadAll,
 } from "./module-loader";
-
 // 模块契约
 export { defineModule } from "./module-loader/define-module";
-
 export type {
 	ModuleConfig,
 	ModuleContext,
@@ -39,3 +38,8 @@ export type {
 
 // 路由类型（模块声明 routes 时要用）
 export type { AppRouteRecordRaw, RouteMeta } from "./router/types";
+
+export type { AppInfo } from "./types/app-info";
+
+// 应用元信息（构建期注入；模块经此函数获取，不依赖全局 __APP_INFO__ 注入）
+export { getAppInfo } from "./utils/get-app-info";

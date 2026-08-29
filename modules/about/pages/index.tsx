@@ -2,11 +2,12 @@ import { Badge, Card, Col, Descriptions, Row, Tag, theme, Typography } from "ant
 
 import { useTranslation } from "react-i18next";
 import { BasicContent } from "#src/components/basic-content";
+import { getAppInfo } from "#src/utils/get-app-info";
 
 import { dependenciesItems, devDependenciesItems } from "./constants";
 
-const { version } = __APP_INFO__.pkg;
-const { lastBuildTime } = __APP_INFO__;
+const { version } = getAppInfo().pkg;
+const { lastBuildTime } = getAppInfo();
 
 const { Text, Link } = Typography;
 
@@ -30,7 +31,7 @@ export default function About() {
 		{
 			key: 3,
 			label: t("about:license"),
-			children: <Tag color="green">{__APP_INFO__.pkg.license}</Tag>,
+			children: <Tag color="green">{getAppInfo().pkg.license}</Tag>,
 		},
 		{
 			key: 4,
@@ -83,7 +84,7 @@ export default function About() {
 					target="_blank"
 					href="https://github.com/condorheroblog/"
 				>
-					{__APP_INFO__.pkg.author}
+					{getAppInfo().pkg.author}
 				</Link>
 			),
 		},
