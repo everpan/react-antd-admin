@@ -1,9 +1,54 @@
 import { clsx } from "clsx";
-import { jsx } from "react/jsx-runtime";
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+import { Avatar, Badge, Breadcrumb, Button, Checkbox, Col, ColorPicker, ConfigProvider, Divider, Drawer, Dropdown, Empty, FloatButton, Form, Grid, Input, InputNumber, List, Menu, Modal, Popover, Result, Row, Select, Slider, Space, Spin, Switch, Tabs, Tooltip, Tree, Typography, Upload, Watermark, message, theme } from "antd";
+import { AntDesignOutlined, ApartmentOutlined, AppstoreOutlined, ArrowDownOutlined, ArrowLeftOutlined, ArrowUpOutlined, BellOutlined, CloseOutlined, CloudOutlined, ContainerOutlined, CopyOutlined, CopyrightOutlined, DownOutlined, EnterOutlined, EyeOutlined, FileTextOutlined, FullscreenExitOutlined, FullscreenOutlined, HomeOutlined, LeftOutlined, LoadingOutlined, LockOutlined, LogoutOutlined, MenuFoldOutlined, MenuOutlined, MenuUnfoldOutlined, NodeExpandOutlined, QuestionCircleOutlined, RedoOutlined, ReloadOutlined, RocketOutlined, SafetyOutlined, SearchOutlined, SettingOutlined, SisternodeOutlined, SubnodeOutlined, SwapOutlined, TeamOutlined, TranslationOutlined, UploadOutlined, UserOutlined, VerticalAlignBottomOutlined, VerticalAlignMiddleOutlined, VerticalAlignTopOutlined } from "@ant-design/icons";
+import { ProFormCaptcha, ProTable } from "@ant-design/pro-components";
+import { useCountDown, useDebounceFn, useFullscreen, useKeyPress, useLocalStorageState, useResponsive, useSize, useToggle } from "ahooks";
+import { Suspense, cloneElement, createContext, createElement, forwardRef, isValidElement, lazy, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Trans, initReactI18next, useTranslation } from "react-i18next";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { twMerge } from "tailwind-merge";
+import { createUseStyles } from "react-jss";
+import { Link, Navigate, Outlet, createBrowserRouter, matchRoutes, useLocation, useMatches, useNavigate, useOutlet, useSearchParams } from "react-router";
+import ky from "ky";
+import { ErrorBoundary } from "react-error-boundary";
 import i18next from "i18next";
-import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
-import { request } from "#src/utils/request";
-import "#src/router/utils/flatten-routes";
+import { useSpinDelay } from "spin-delay";
+import SimpleBar from "simplebar-react";
+import { KeepAlive, useKeepAliveContext, useKeepAliveRef } from "keepalive-for-react";
+import { match } from "pinyin-pro";
+import { flushSync } from "react-dom";
+import { DndContext, PointerSensor, closestCenter, useSensor } from "@dnd-kit/core";
+import { SortableContext, horizontalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { useShallow } from "zustand/shallow";
+import "antd/locale/en_US";
+import "antd/locale/zh_CN";
+import { AnimatePresence, motion } from "motion/react";
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
+import ImgCrop from "antd-img-crop";
+//#region \0rolldown/runtime.js
+var __defProp = Object.defineProperty;
+var __esmMin = (fn, res, err) => () => {
+	if (err) throw err[0];
+	try {
+		return fn && (res = fn(fn = 0)), res;
+	} catch (e) {
+		throw err = [e], e;
+	}
+};
+var __exportAll = (all, no_symbols) => {
+	let target = {};
+	for (var name in all) __defProp(target, name, {
+		get: all[name],
+		enumerable: true
+	});
+	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
+	return target;
+};
+//#endregion
 //#region src/components/basic-content/index.tsx
 function BasicContent(props) {
 	const { children, className, style } = props;
@@ -22,10 +67,5174 @@ function BasicContent(props) {
 	});
 }
 //#endregion
+//#region src/components/basic-button/index.tsx
+function BasicButton(props) {
+	const { children, ...restProps } = props;
+	const antdButtonProps = { ...restProps };
+	return /* @__PURE__ */ jsx(Button, {
+		type: "primary",
+		...antdButtonProps,
+		children
+	});
+}
+var init_basic_button = __esmMin((() => {}));
+//#endregion
+//#region src/layout/constants.ts
+var DEFAULT_NAMESPACE, ELEMENT_ID_MAIN_CONTENT, CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT, CSS_VARIABLE_LAYOUT_CONTENT_WIDTH, CSS_VARIABLE_LAYOUT_HEADER_HEIGHT, CSS_VARIABLE_LAYOUT_FOOTER_HEIGHT;
+var init_constants$4 = __esmMin((() => {
+	DEFAULT_NAMESPACE = "react-antd-admin";
+	ELEMENT_ID_MAIN_CONTENT = `__${DEFAULT_NAMESPACE}_main_content`;
+	CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT = `--${DEFAULT_NAMESPACE}-content-height`;
+	CSS_VARIABLE_LAYOUT_CONTENT_WIDTH = `--${DEFAULT_NAMESPACE}-content-width`;
+	CSS_VARIABLE_LAYOUT_HEADER_HEIGHT = `--${DEFAULT_NAMESPACE}-header-height`;
+	CSS_VARIABLE_LAYOUT_FOOTER_HEIGHT = `--${DEFAULT_NAMESPACE}-footer-height`;
+}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/layout/constants.ts
+var SIDE_NAVIGATION, TOP_NAVIGATION, TWO_COLUMN_NAVIGATION, MIXED_NAVIGATION;
+var init_constants$3 = __esmMin((() => {
+	SIDE_NAVIGATION = "side-navigation";
+	TOP_NAVIGATION = "top-navigation";
+	TWO_COLUMN_NAVIGATION = "two-column-navigation";
+	MIXED_NAVIGATION = "mixed-navigation";
+}));
+//#endregion
+//#region src/utils/get-app-info/index.ts
+/**
+* @zh 获取构建时注入的应用元信息（版本、依赖、构建时间等）。
+* @en Get the app meta info injected at build time (version, dependencies, build time, ...).
+*
+* 以前各模块直接读取全局 `__APP_INFO__`（由 Vite `define` 注入），导致每个模块工程都要
+* 复制同样的 define 配置（见设计文档 B9）。现统一通过本函数从框架获取，模块无需再依赖
+* 全局注入；框架内部也只有这里读取该全局，避免散落多处的隐式耦合。
+*
+* @example
+* const { version } = getAppInfo().pkg;
+*/
+function getAppInfo() {
+	return __APP_INFO__;
+}
+var init_get_app_info = __esmMin((() => {}));
+//#endregion
+//#region src/utils/get-app-namespace/index.ts
+function getAppNamespace(name) {
+	getAppInfo().pkg.version;
+	throw new Error("VITE_APP_NAMESPACE is not defined in environment variables / 环境变量中未定义 VITE_APP_NAMESPACE");
+}
+var init_get_app_namespace = __esmMin((() => {
+	init_get_app_info();
+}));
+//#endregion
+//#region src/store/preferences/index.ts
+var DEFAULT_PREFERENCES, usePreferencesStore;
+var init_preferences$3 = __esmMin((() => {
+	init_constants$3();
+	init_get_app_namespace();
+	DEFAULT_PREFERENCES = {
+		watermark: false,
+		watermarkContent: "react-antd-admin",
+		enableBackTopButton: true,
+		pageLayout: "layout-right",
+		enableBackendAccess: true,
+		enableFrontendAceess: false,
+		language: "zh-CN",
+		enableDynamicTitle: true,
+		enableCheckUpdates: true,
+		checkUpdatesInterval: 1,
+		theme: "auto",
+		colorBlindMode: false,
+		colorGrayMode: false,
+		themeRadius: 6,
+		builtinTheme: "blue",
+		themeColorPrimary: "#1677ff",
+		transitionProgress: true,
+		transitionLoading: true,
+		transitionEnable: true,
+		transitionName: "fade-slide",
+		navigationStyle: SIDE_NAVIGATION,
+		tabbarEnable: true,
+		tabbarShowIcon: true,
+		tabbarPersist: true,
+		tabbarDraggable: true,
+		tabbarStyleType: "chrome",
+		tabbarShowMore: true,
+		tabbarShowMaximize: true,
+		sidebarEnable: true,
+		sidebarWidth: 210,
+		sideCollapsedWidth: 56,
+		sidebarCollapsed: false,
+		sidebarCollapseShowTitle: true,
+		sidebarExtraCollapsedWidth: 48,
+		firstColumnWidthInTwoColumnNavigation: 80,
+		sidebarTheme: "light",
+		accordion: true,
+		enableFooter: true,
+		fixedFooter: true,
+		companyName: "Condor Hero",
+		companyWebsite: "http://github.com/condorheroblog/",
+		copyrightDate: "2023",
+		ICPNumber: "",
+		ICPLink: ""
+	};
+	usePreferencesStore = create()(persist((set) => ({
+		...DEFAULT_PREFERENCES,
+		/**
+		* 更新偏好设置
+		*/
+		setPreferences: (...args) => {
+			if (args.length === 1) {
+				const preferences = args[0];
+				set(() => {
+					return { ...preferences };
+				});
+			} else if (args.length === 2) {
+				const [key, value] = args;
+				set(() => {
+					return { [key]: value };
+				});
+			}
+		},
+		/**
+		* 更新主题
+		*/
+		changeSiteTheme: (theme) => {
+			set(() => {
+				return { theme };
+			});
+		},
+		/**
+		* 更新语言
+		*/
+		changeLanguage: (language) => {
+			set(() => {
+				return { language };
+			});
+		},
+		/**
+		* 重置状态
+		*/
+		reset: () => {
+			set(() => {
+				return { ...DEFAULT_PREFERENCES };
+			});
+		}
+	}), { name: getAppNamespace("preferences") }));
+}));
+//#endregion
+//#region src/utils/cn/index.ts
+function cn(...inputs) {
+	return twMerge(clsx(inputs));
+}
+var init_cn = __esmMin((() => {}));
+//#endregion
+//#region src/utils/is/index.ts
+/**
+* 判断给定的值是否为有限数字
+* Determines whether the given value is a finite number
+*
+* @param value 待判断的值 / The value to be checked
+* @returns 如果给定的值是有限数字，则返回true；否则返回false / Returns true if the given value is a finite number, otherwise returns false
+*/
+function isNumber(value) {
+	return typeof value === "number" && Number.isFinite(value);
+}
+/**
+* 判断一个值是否为字符串类型
+* Determines whether a value is of the string type
+*
+* @param value 待判断的值 / The value to be checked
+* @returns 返回布尔值，表示该值是否为字符串类型 / Returns a boolean value indicating whether the value is of the string type
+*/
+function isString(value) {
+	return typeof value === "string";
+}
+/**
+* 判断一个值是否为对象类型（排除null）
+* Determines whether a value is of the object type (excluding null)
+*
+* @param value 待判断的值 / The value to be checked
+* @returns 返回布尔值，表示是否为对象类型 / Returns a boolean value indicating whether the value is of the object type
+*/
+function isObject(value) {
+	return typeof value === "object" && value !== null;
+}
+/**
+* 判断一个值是否为 undefined
+* Determines whether a value is undefined
+*
+* @param value 待判断的值 / The value to be checked
+* @returns 如果值为 undefined，则返回 true；否则返回 false / Returns true if the value is undefined, otherwise returns false
+*/
+function isUndefined(value) {
+	return value === void 0;
+}
+var init_is = __esmMin((() => {}));
+//#endregion
+//#region src/components/basic-table/constants.ts
+init_basic_button();
+init_constants$4();
+init_preferences$3();
+init_cn();
+init_is();
+var BASIC_TABLE_ROOT_CLASS_NAME = "basic-table";
+//#endregion
+//#region src/components/basic-table/styles.ts
+/**
+* 显式标注返回的 classes 形状（P3.1 / TS2883，同 P3.5 的 layout-menu、
+* layout-tabbar 修法）：推断类型会引用 jss 的 Classes（非直接依赖，
+* 声明不可移植），这里用结构化等价类型 Record<C, string> 替代。
+*/
+var useStyles$6 = createUseStyles(({ prefixCls, isDark }) => {
+	return { basicTable: { [`& .${prefixCls}-table`]: { [`& .${prefixCls}-table-container`]: { [`& .${prefixCls}-table-content, & .${prefixCls}-table-body`]: {
+		"scrollbar-width": "thin",
+		"scrollbar-color": isDark ? "#909399 transparent" : "#eaeaea transparent",
+		"scrollbar-gutter": "stable"
+	} } } } };
+});
+//#endregion
+//#region src/components/basic-table/index.tsx
+function BasicTable(props) {
+	const classes = useStyles$6();
+	const { t } = useTranslation();
+	const { adaptive } = props;
+	const tableWrapperRef = useRef(null);
+	const size = useSize(tableWrapperRef);
+	const { enableFooter, fixedFooter } = usePreferencesStore();
+	/**
+	* @description 动态表格中为什么设置 scrollY 为 initial
+	* @see https://gist.github.com/condorheroblog/557c18c61084a1296b716bcb1203315e
+	*/
+	const [scrollY, setScrollY] = useState(adaptive ? "initial" : void 0);
+	/**
+	* @description 固定页脚的高度
+	* 如果启用了页脚并且页脚是固定的，则返回页脚的高度，否则返回 0
+	*/
+	const footerHeight = useMemo(() => {
+		if (enableFooter && fixedFooter) return 40;
+		return 0;
+	}, [enableFooter, fixedFooter]);
+	const getPaginationProps = () => {
+		if (props.pagination === false) return false;
+		return {
+			placement: ["bottomStart"],
+			defaultPageSize: 10,
+			showQuickJumper: true,
+			showSizeChanger: true,
+			showTotal: (total) => t("common.pagination", { total }),
+			...props.pagination
+		};
+	};
+	/**
+	* @description 计算分页器的高度
+	* 如果分页器被禁用，则返回 0，否则根据分页器的大小返回相应的高度
+	*
+	*
+	* 无法通过获取 DOM 的方式来计算分页器的高度，因为 pagination 是子组件，父组件无法加载子组件还未加载
+	*/
+	const paginationHeight = useMemo(() => {
+		const paginationProps = getPaginationProps();
+		if (paginationProps === false) return 0;
+		else if (!paginationProps.size) return 64;
+		else return 56;
+	}, [getPaginationProps]);
+	/**
+	* @description 表格高度自适应
+	* 这是一个 hook 方法，等待 antd 修复
+	* @see https://github.com/ant-design/ant-design/issues/23974
+	*/
+	useEffect(() => {
+		if (!isUndefined(props.scroll?.y)) return;
+		if (adaptive && tableWrapperRef.current && size?.height) {
+			const basicTable = tableWrapperRef.current.getElementsByClassName(BASIC_TABLE_ROOT_CLASS_NAME)[0];
+			if (!basicTable) return;
+			if (tableWrapperRef.current.getBoundingClientRect().top > window.innerHeight) return;
+			const tableBody = basicTable.querySelector("div.ant-table-body");
+			if (!tableBody) return;
+			const tableBodyRect = tableBody.getBoundingClientRect();
+			const realOffsetBottom = (isObject(adaptive) ? adaptive.offsetBottom ?? 16 : 16) + paginationHeight + footerHeight;
+			const bodyHeight = window.innerHeight - tableBodyRect.top - realOffsetBottom;
+			/**
+			* @zh scroll.y 设置的是 max-height，所以需要手动设置高度
+			* @en scroll.y sets the max-height, so we need to set the height manually
+			*/
+			tableBody.setAttribute("style", `overflow-y: auto;min-height: ${bodyHeight}px;max-height: ${bodyHeight}px;`);
+			setScrollY(bodyHeight);
+		}
+	}, [
+		size,
+		adaptive,
+		paginationHeight,
+		footerHeight,
+		props.scroll?.y
+	]);
+	const getLoadingProps = () => {
+		if (props.loading === false) return false;
+		if (props.loading === true) return true;
+		return {
+			indicator: /* @__PURE__ */ jsx(LoadingOutlined, { spin: true }),
+			...props.loading
+		};
+	};
+	return /* @__PURE__ */ jsx("div", {
+		className: "h-full",
+		ref: tableWrapperRef,
+		children: /* @__PURE__ */ jsx(ProTable, {
+			cardBordered: true,
+			rowKey: "id",
+			dateFormatter: "string",
+			...props,
+			options: {
+				fullScreen: true,
+				...props.options
+			},
+			rootClassName: cn(BASIC_TABLE_ROOT_CLASS_NAME, props.rootClassName),
+			className: cn(classes.basicTable, props.className),
+			scroll: {
+				y: scrollY,
+				x: "max-content",
+				...props.scroll
+			},
+			loading: getLoadingProps(),
+			pagination: getPaginationProps(),
+			expandable: { ...props.expandable }
+		})
+	});
+}
+//#endregion
+//#region src/components/iframe/index.tsx
+function Iframe() {
+	const matches = useMatches();
+	const { t } = useTranslation();
+	const currentRoute = matches[matches.length - 1];
+	const iframeLink = currentRoute.handle?.iframeLink;
+	const routeTitle = currentRoute.handle?.title;
+	let title;
+	if (isValidElement(routeTitle)) {
+		const children = routeTitle?.props?.children;
+		title = typeof children === "string" ? t(children) : "";
+	} else if (typeof routeTitle === "string") title = routeTitle;
+	else title = "";
+	/**
+	* use this tool https://iframegenerator.top/ to generate the iframe code
+	*/
+	return iframeLink ? /* @__PURE__ */ jsx("iframe", {
+		src: iframeLink,
+		title,
+		width: "100%",
+		height: "100%",
+		loading: "lazy",
+		className: "p-4 rounded-sm"
+	}) : null;
+}
+var init_iframe = __esmMin((() => {})), loginPath, exceptionPath, exception403Path, exception404Path, exception500Path;
+var init_route_path = __esmMin((() => {
+	loginPath = "/login";
+	exceptionPath = "/exception";
+	exception403Path = `${exceptionPath}/403`;
+	exception404Path = `${exceptionPath}/404`;
+	exception500Path = `${exceptionPath}/500`;
+	`${exceptionPath}`;
+}));
+//#endregion
+//#region src/router/extra-info/index.ts
+var init_extra_info = __esmMin((() => {
+	init_route_path();
+}));
+//#endregion
+//#region src/assets/svg/undraw-bug-fixing.svg?react
+var undraw_bug_fixing_default;
+var init_undraw_bug_fixing = __esmMin((() => {
+	undraw_bug_fixing_default = "data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201022.7%20785.81'%3e%3cdefs%3e%3clinearGradient%20id='a'%20x1='678.2'%20x2='678.2'%20y1='821.79'%20y2='493.4'%20gradientTransform='rotate(-2.31%20725.2%20516.777)'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20offset='0'%20stop-color='gray'%20stop-opacity='.25'/%3e%3cstop%20offset='.54'%20stop-color='gray'%20stop-opacity='.12'/%3e%3cstop%20offset='1'%20stop-color='gray'%20stop-opacity='.1'/%3e%3c/linearGradient%3e%3c/defs%3e%3cellipse%20cx='468.63'%20cy='660.88'%20fill='%236c63ff'%20opacity='.1'%20rx='425'%20ry='33'/%3e%3cg%20opacity='.1'%3e%3cpath%20fill='%233f3d56'%20d='M845.05%20472.84c-2.54-7.71-12.84-11.26-23-7.92a24.76%2024.76%200%200%200-4.23%201.83c-.65-.18-1.32-.34-2-.46a22.42%2022.42%200%200%200%20.63-6.79%2024.6%2024.6%200%200%200%2010.9-21.47%2024.63%2024.63%200%200%200%2010.86-21.47%2023.76%2023.76%200%200%200%208.23-9.32c4.9-9.7%202.87-20.6-4.54-24.35s-17.4%201.08-22.3%2010.78a23.69%2023.69%200%200%200-2.63%2012.15%2024.63%2024.63%200%200%200-10.86%2021.47%2024.63%2024.63%200%200%200-10.86%2021.47%2024.64%2024.64%200%200%200-10.9%2021.48%2023.76%2023.76%200%200%200-8.23%209.32%2025.46%2025.46%200%200%200-2.08%205.74%2021.18%2021.18%200%200%200-4.44-4.73%2025.38%2025.38%200%200%200-1-4.5c-3.34-10.17-12.3-16.37-20-13.83s-11.26%2012.83-7.92%2023a23.07%2023.07%200%200%200%207.56%2011.08%2025.38%2025.38%200%200%200%201%204.5c1.94%205.9%205.77%2010.46%2010.15%2012.75a23.23%2023.23%200%200%200-.83%203.9%2025.29%2025.29%200%200%200-7.54%2014.91%2025.27%2025.27%200%200%200-7.54%2014.92%2024.63%2024.63%200%200%200-5%206.81c-4.91%209.7-2.88%2020.61%204.53%2024.35s17.4-1.07%2022.31-10.78a24.62%2024.62%200%200%200%202.5-8.09%2025.29%2025.29%200%200%200%207.54-14.91%2025.27%2025.27%200%200%200%207.54-14.92%2025.21%2025.21%200%200%200%207.45-14.91%2025.21%2025.21%200%200%200%207.56-14.94%2024.11%2024.11%200%200%200%203.39-4%2023.46%2023.46%200%200%200%2012.27-.77%2024.76%2024.76%200%200%200%204.23-1.83%2023.2%2023.2%200%200%200%2013.42-.48c10.13-3.31%2016.36-12.27%2013.83-19.99Z'/%3e%3cg%20opacity='.1'%3e%3cpath%20d='M827.12%20442.44a21.5%2021.5%200%200%201-3.44%202.75%2023%2023%200%200%201-1.11%208.43%2026.18%2026.18%200%200%200%202.1-3.43%2024.64%2024.64%200%200%200%202.45-7.75ZM837.98%20420.97a21.5%2021.5%200%200%201-3.44%202.75%2023%2023%200%200%201-1.11%208.43%2025.65%2025.65%200%200%200%202.1-3.44%2024.85%2024.85%200%200%200%202.45-7.74ZM813.35%20412.98a21.91%2021.91%200%200%201%20.17-4.41%2024.93%2024.93%200%200%200-4.78%206.57%2025.63%2025.63%200%200%200-1.52%203.73%2022.75%2022.75%200%200%201%206.13-5.89ZM744.42%20542.91a23.59%2023.59%200%200%201%202.95-3.38%2022.92%2022.92%200%200%201%20.87-4%2025.09%2025.09%200%200%200-2.29%203.71%2025.59%2025.59%200%200%200-1.53%203.67ZM751.96%20528.01a23.59%2023.59%200%200%201%202.95-3.38%2023%2023%200%200%201%20.83-3.9%2025.68%2025.68%200%200%200-2.2%203.59%2026.76%2026.76%200%200%200-1.58%203.69ZM816.25%20463.91a20.82%2020.82%200%200%201-3.43%202.74%2022.45%2022.45%200%200%201-.63%206.79%2018.75%2018.75%200%200%201%202%20.46%2024.76%2024.76%200%200%201%204.23-1.83c10.18-3.34%2020.47.21%2023%207.92a11.68%2011.68%200%200%201%20.32%206c3.35-3.94%204.74-8.74%203.3-13.14-2.54-7.71-12.84-11.26-23-7.92a24.76%2024.76%200%200%200-4.23%201.83c-.65-.18-1.32-.34-2-.46.19-.8.33-1.59.44-2.39ZM740.7%20550.4a25.09%2025.09%200%200%200-2.29%203.71%2026.56%2026.56%200%200%200-1.54%203.74%2024.48%2024.48%200%200%201%203-3.4%2022.92%2022.92%200%200%201%20.83-4.05ZM802.44%20434.45a22%2022%200%200%201%20.17-4.41%2024.93%2024.93%200%200%200-4.78%206.57%2025.63%2025.63%200%200%200-1.52%203.73%2022.75%2022.75%200%200%201%206.13-5.89ZM786.75%20522.01a24.29%2024.29%200%200%201-1%204.38%2026.67%2026.67%200%200%200%202.09-3.44%2025.49%2025.49%200%200%200%201.63-4%2024.23%2024.23%200%200%201-2.72%203.06ZM771.67%20551.83a24.15%2024.15%200%200%201-1%204.38%2025.65%2025.65%200%200%200%202.1-3.44%2026.47%2026.47%200%200%200%201.63-4%2023.57%2023.57%200%200%201-2.73%203.06ZM779.21%20536.91a24.11%2024.11%200%200%201-1%204.38%2026.67%2026.67%200%200%200%202.14-3.38%2025.49%2025.49%200%200%200%201.63-4%2024.23%2024.23%200%200%201-2.77%203ZM794.29%20507.1a24%2024%200%200%201-1%204.37%2025.89%2025.89%200%200%200%202.09-3.43%2025.48%2025.48%200%200%200%201.64-4.07%2023.22%2023.22%200%200%201-2.73%203.13ZM744.92%20469.39c7.72-2.53%2016.68%203.66%2020%2013.83a25.68%2025.68%200%200%201%201%204.51%2021.18%2021.18%200%200%201%204.44%204.73%2025.53%2025.53%200%200%201%202.08-5.75c.35-.68.73-1.33%201.12-2a21.07%2021.07%200%200%200-4-4.18%2025.38%2025.38%200%200%200-1-4.5c-3.34-10.17-12.3-16.37-20-13.83-4.4%201.44-7.44%205.41-8.62%2010.43a11.69%2011.69%200%200%201%204.98-3.24ZM780.72%20477.39a21.85%2021.85%200%200%201%20.18-4.4%2024.73%2024.73%200%200%200-4.79%206.57%2025.07%2025.07%200%200%200-1.52%203.72%2023%2023%200%200%201%206.13-5.89ZM791.58%20455.91a21.85%2021.85%200%200%201%20.18-4.4%2024.52%2024.52%200%200%200-4.79%206.56%2025.63%2025.63%200%200%200-1.52%203.73%2022.75%2022.75%200%200%201%206.13-5.89ZM764.13%20566.74a24.25%2024.25%200%200%201-1%204.39%2025.73%2025.73%200%200%200%203.73-7.49%2023.57%2023.57%200%200%201-2.73%203.1Z'/%3e%3c/g%3e%3cpath%20fill='%233f3d56'%20d='M859.87%20373.62a23.68%2023.68%200%200%200%208.23-9.32c4.91-9.7%202.88-20.61-4.53-24.36s-17.4%201.08-22.31%2010.79a23.68%2023.68%200%200%200-2.62%2012.18%2024.63%2024.63%200%200%200-10.86%2021.47%2023.61%2023.61%200%200%200-8.23%209.32%2024.69%2024.69%200%200%200-1.51%203.69%2020.85%2020.85%200%200%201%2010.77-8%2012.24%2012.24%200%200%200%2015.54%207.84%2020.85%2020.85%200%200%201%200%2013.41%2025.48%2025.48%200%200%200%202.08-3.4%2023.68%2023.68%200%200%200%202.62-12.15%2024.57%2024.57%200%200%200%2010.86-21.47Z'/%3e%3cpath%20fill='%236c63ff'%20d='M979.23%20235.98a72%2072%200%200%200%208.72-4.83l-32.33-23.62%2038%2019.57a72.13%2072.13%200%200%200%2027-50.31l-64.58.66%2064.72-10.82a72%2072%200%201%200-142.58%2018.28%2072.09%2072.09%200%200%200-13.26%208l33.75%2046.93-40.52-41.08a72.08%2072.08%200%200%200-20.17%2065.61%2072%2072%200%201%200%20101.05%2051.1%2072%2072%200%200%200%2040.2-79.49Z'/%3e%3cpath%20d='M844.35%20217.66a71.77%2071.77%200%200%200-6.35%2046.71%2072%2072%200%201%200%20101.05%2051.1c14.13-6.56-91.08-105.02-94.7-97.81Z'%20opacity='.1'/%3e%3ccircle%20cx='925.49'%20cy='102.72'%20r='10.69'%20fill='%236c63ff'/%3e%3ccircle%20cx='987.93'%20cy='109.58'%20r='10.69'%20fill='%236c63ff'/%3e%3ccircle%20cx='1012.01'%20cy='205.64'%20r='10.69'%20fill='%236c63ff'/%3e%3ccircle%20cx='979.51'%20cy='253.61'%20r='10.69'%20fill='%236c63ff'/%3e%3ccircle%20cx='935.11'%20cy='353.24'%20r='10.69'%20fill='%236c63ff'/%3e%3ccircle%20cx='935.11'%20cy='353.24'%20r='10.69'%20opacity='.1'/%3e%3ccircle%20cx='836.39'%20cy='240.4'%20r='10.69'%20fill='%236c63ff'/%3e%3ccircle%20cx='836.39'%20cy='240.4'%20r='10.69'%20opacity='.1'/%3e%3cpath%20d='M824.99%20416.23c-7.11-3.59-9.26-13.76-5.11-23.14-.22.38-.43.77-.63%201.18-4.91%209.7-2.88%2020.6%204.53%2024.35s17.4-1.08%2022.3-10.78c.21-.4.39-.81.57-1.21-5.09%208.91-14.56%2013.2-21.66%209.6ZM814.43%20437.11c-7.1-3.59-9.26-13.76-5.1-23.15-.22.39-.44.78-.64%201.18-4.91%209.7-2.88%2020.61%204.53%2024.35s17.4-1.07%2022.31-10.78c.2-.4.39-.8.57-1.21-5.1%208.91-14.56%2013.2-21.67%209.61ZM803.87%20457.98c-7.1-3.59-9.26-13.76-5.1-23.14-.22.38-.44.77-.64%201.18-4.91%209.7-2.87%2020.6%204.54%2024.35s17.39-1.08%2022.3-10.78c.2-.4.39-.81.57-1.21-5.09%208.91-14.56%2013.2-21.67%209.6ZM793.35%20478.91c-7.11-3.59-9.26-13.76-5.11-23.14-.22.38-.43.77-.64%201.17-4.9%209.7-2.87%2020.61%204.54%2024.36s17.4-1.08%2022.3-10.79c.21-.4.39-.8.57-1.21-5.12%208.86-14.59%2013.15-21.66%209.61ZM782.76%20499.73c-7.11-3.59-9.26-13.76-5.11-23.14-.22.38-.43.77-.63%201.18-4.91%209.7-2.88%2020.6%204.53%2024.35s17.4-1.08%2022.31-10.78c.2-.4.39-.81.57-1.21-5.08%208.91-14.57%2013.2-21.67%209.6ZM772.2%20520.61c-7.1-3.59-9.26-13.76-5.1-23.14-.22.38-.44.77-.64%201.17-4.91%209.7-2.88%2020.61%204.54%2024.36s17.35-1.09%2022.35-10.79c.2-.4.39-.8.57-1.21-5.15%208.91-14.57%2013.2-21.72%209.61ZM761.64%20541.48c-7.1-3.59-9.26-13.76-5.1-23.14-.22.39-.43.77-.64%201.18-4.9%209.7-2.87%2020.6%204.54%2024.35s17.4-1.08%2022.3-10.78c.21-.4.39-.81.57-1.21-5.09%208.91-14.56%2013.2-21.67%209.6ZM751.09%20562.36c-7.11-3.59-9.26-13.76-5.11-23.14q-.33.57-.63%201.17c-4.91%209.7-2.88%2020.61%204.53%2024.36s17.4-1.08%2022.31-10.79c.2-.4.38-.8.56-1.21-5.09%208.91-14.56%2013.16-21.66%209.61Z'%20opacity='.1'/%3e%3cpath%20d='M744.15%20576.08c-7.1-3.6-9.26-13.76-5.1-23.15-.22.39-.44.78-.64%201.18-4.91%209.7-2.88%2020.61%204.53%2024.35s17.4-1.07%2022.31-10.78c.2-.4.39-.8.57-1.21-5.1%208.91-14.57%2013.2-21.67%209.61Z'%20opacity='.1'/%3e%3cpath%20fill='%236c63ff'%20d='M934.94%20483.17a37.4%2037.4%200%200%200%202-9.79%205.34%205.34%200%201%200-.81-10.62%2037.31%2037.31%200%200%200-19.64-25.31%205.344%205.344%200%201%200-9.54-4.82%205%205%200%200%200-.48%201.43%2037.49%2037.49%200%200%200-32.87%209.85%2037.64%2037.64%200%200%200-9.82-.29l-4.33%2019.71-.26-19a37.42%2037.42%200%201%200%2020%2072%205.28%205.28%200%200%200%202.25%202.16%205.34%205.34%200%200%200%207.32-6.88%2037.35%2037.35%200%200%200%204.8-3.92%2037.45%2037.45%200%200%200%2039.31-19.83l-20.15-3.39Z'/%3e%3cpath%20d='M903.81%20492.74c-7.44-9.82-12-21.45-17.25-32.61a136.38%20136.38%200%200%200-7.07-13.36l-3.94-4.59c-.66.56-1.32%201.14-2%201.75a37.64%2037.64%200%200%200-9.82-.29l-4.33%2019.71-.26-19a37.42%2037.42%200%201%200%2020%2072%205.28%205.28%200%200%200%202.25%202.16%205.34%205.34%200%200%200%207.32-6.88%2037.35%2037.35%200%200%200%204.8-3.92%2037.49%2037.49%200%200%200%2022.44-3.32%2052.71%2052.71%200%200%201-12.14-11.65Z'%20opacity='.1'/%3e%3cpath%20fill='%236c63ff'%20d='M772.06%20450.54a5.34%205.34%200%200%200-4.78-7.75%2037.37%2037.37%200%200%200-11.7-20.83%2037.52%2037.52%200%200%200%201.1-11.7l-19.65-3.35%2019.08-1.2a38%2038%200%200%200-1.41-5.28%205.46%205.46%200%200%200%201.76-2%205.35%205.35%200%200%200-6.59-7.44%2037.42%2037.42%200%200%200-66.79%2030.92%205.25%205.25%200%200%200-2.66%202.5%205.34%205.34%200%200%200%206.75%207.37%2037.53%2037.53%200%200%200%207.09%208.65%2037.4%2037.4%200%200%200%201.74%2023.76l26.35-6.84-23.5%2012.36a37.42%2037.42%200%200%200%2068.91-16.26%205.33%205.33%200%200%200%204.3-2.91Z'/%3e%3cpath%20d='M772.06%20450.54a5.34%205.34%200%200%200-4.78-7.75%2037.37%2037.37%200%200%200-11.7-20.83c.16-.63.3-1.25.42-1.88a13.18%2013.18%200%200%200-1.93%201.71c-3.55%203.89-5.37%209.12-8.88%2013.05-4.14%204.64-10.34%207.06-16.53%207.71s-12.42-.3-18.53-1.49c-5.06-1-10.19-2.16-15.32-1.67-.5%200-1%20.11-1.46.19.3.29.6.58.91.86A37.4%2037.4%200%200%200%20696%20464.2l26.35-6.85-23.5%2012.36a37.42%2037.42%200%200%200%2068.91-16.26%205.33%205.33%200%200%200%204.3-2.91Z'%20opacity='.1'/%3e%3c/g%3e%3cg%20opacity='.1'%3e%3cpath%20fill='%233f3d56'%20d='M89.49%20511.24c1.28-3.89%206.47-5.68%2011.59-4a12.78%2012.78%200%200%201%202.13.92c.33-.09.67-.17%201-.23a11.26%2011.26%200%200%201-.32-3.42%2012.46%2012.46%200%200%201-5.47-10.82%2011.92%2011.92%200%200%201-4.14-4.69%2012%2012%200%200%201-1.33-6.12%2012%2012%200%200%201-4.14-4.7c-2.46-4.88-1.46-10.37%202.29-12.27s8.77.55%2011.24%205.43a12%2012%200%200%201%201.32%206.13%2012.37%2012.37%200%200%201%205.47%2010.81%2012.4%2012.4%200%200%201%205.47%2010.82%2012.37%2012.37%200%200%201%205.47%2010.81%2012%2012%200%200%201%204.15%204.7%2012.66%2012.66%200%200%201%201%202.9%2010.66%2010.66%200%200%201%202.23-2.39%2012.58%2012.58%200%200%201%20.52-2.27c1.69-5.12%206.2-8.24%2010.09-7s5.67%206.47%204%2011.59a11.67%2011.67%200%200%201-3.81%205.59%2012.67%2012.67%200%200%201-.52%202.26%2011.1%2011.1%200%200%201-5.11%206.42%2012.84%2012.84%200%200%201%20.42%202%2012.57%2012.57%200%200%201%202.53%203.43%2012.32%2012.32%200%200%201%201.26%204.08%2012.55%2012.55%200%200%201%202.54%203.43%2012.39%2012.39%200%200%201%201.26%204.08%2012.45%2012.45%200%200%201%202.54%203.44c2.47%204.88%201.45%2010.38-2.28%2012.26s-8.77-.54-11.24-5.43a12.48%2012.48%200%200%201-1.26-4.08%2012.7%2012.7%200%200%201-3.8-7.51%2012.7%2012.7%200%200%201-3.8-7.51%2012.6%2012.6%200%200%201-2.54-3.43%2012.73%2012.73%200%200%201-1.26-4.08%2012.57%2012.57%200%200%201-2.53-3.43%2012.32%2012.32%200%200%201-1.26-4.08%2011.63%2011.63%200%200%201-1.71-2%2011.9%2011.9%200%200%201-6.18-.38%2013.29%2013.29%200%200%201-2.14-.93%2011.61%2011.61%200%200%201-6.75-.24c-5.07-1.69-8.2-6.2-6.93-10.09Z'/%3e%3cg%20opacity='.1'%3e%3cpath%20d='M98.52%20495.91a10.72%2010.72%200%200%200%201.74%201.39%2011.31%2011.31%200%200%200%20.56%204.24%2011.93%2011.93%200%200%201-1.06-1.73%2012.46%2012.46%200%200%201-1.24-3.9ZM93.05%20485.11a11.21%2011.21%200%200%200%201.74%201.38%2011.39%2011.39%200%200%200%20.56%204.25%2012.7%2012.7%200%200%201-2.3-5.63ZM105.48%20481.08a11.11%2011.11%200%200%200-.08-2.22%2012.66%2012.66%200%200%201%202.41%203.31%2013%2013%200%200%201%20.76%201.88%2011.42%2011.42%200%200%200-3.09-2.97ZM140.18%20546.54a11.65%2011.65%200%200%200-1.48-1.7%2012.4%2012.4%200%200%200-.44-2%2013.23%2013.23%200%200%201%201.15%201.86%2013%2013%200%200%201%20.77%201.84ZM136.35%20539.03a11.65%2011.65%200%200%200-1.48-1.7%2011.75%2011.75%200%200%200-.42-2%2012.67%2012.67%200%200%201%201.88%203.68ZM104%20506.75a10.11%2010.11%200%200%200%201.73%201.37%2010.9%2010.9%200%200%200%20.32%203.42%2010%2010%200%200%200-1%20.23%2013.26%2013.26%200%200%200-2.14-.92c-5.12-1.68-10.31.11-11.58%204a5.82%205.82%200%200%200-.17%203%206.93%206.93%200%200%201-1.66-6.61c1.28-3.89%206.47-5.68%2011.59-4a12.78%2012.78%200%200%201%202.13.92c.33-.09.67-.17%201-.23a10.32%2010.32%200%200%201-.22-1.18ZM142.06%20550.31a12.79%2012.79%200%200%201%201.15%201.87%2013%2013%200%200%201%20.77%201.88%2011.74%2011.74%200%200%200-1.48-1.71%2012.4%2012.4%200%200%200-.44-2.04ZM110.95%20491.91a11.08%2011.08%200%200%200-.08-2.22%2012.49%2012.49%200%200%201%202.41%203.31%2012.87%2012.87%200%200%201%20.76%201.87%2011.38%2011.38%200%200%200-3.09-2.96ZM118.86%20536.01a11.94%2011.94%200%200%200%20.49%202.2%2012.63%2012.63%200%200%201-1.88-3.77%2011.72%2011.72%200%200%200%201.39%201.57ZM126.45%20551.03a12.66%2012.66%200%200%200%20.5%202.2%2011.93%2011.93%200%200%201-1.06-1.73%2012.88%2012.88%200%200%201-.82-2%2013%2013%200%200%200%201.38%201.53ZM122.66%20543.52a11.94%2011.94%200%200%200%20.49%202.2%2012.88%2012.88%200%200%201-1.06-1.73%2012.6%2012.6%200%200%201-.82-2%2011.72%2011.72%200%200%200%201.39%201.53ZM115.06%20528.49a11.86%2011.86%200%200%200%20.49%202.21%2012.44%2012.44%200%200%201-1-1.73%2012.23%2012.23%200%200%201-.83-2%2011.13%2011.13%200%200%200%201.34%201.52ZM139.93%20509.5c-3.89-1.28-8.4%201.84-10.08%207a12.58%2012.58%200%200%200-.52%202.27%2010.63%2010.63%200%200%200-2.24%202.38%2012.83%2012.83%200%200%200-1.05-2.9c-.17-.34-.36-.67-.56-1a10.63%2010.63%200%200%201%202-2.1%2012.58%2012.58%200%200%201%20.52-2.27c1.69-5.12%206.2-8.24%2010.09-7a6.93%206.93%200%200%201%204.34%205.26%205.93%205.93%200%200%200-2.5-1.64ZM121.89%20513.53a11.11%2011.11%200%200%200-.08-2.22%2012.49%2012.49%200%200%201%202.41%203.31%2013%2013%200%200%201%20.76%201.88%2011.28%2011.28%200%200%200-3.09-2.97ZM116.42%20502.71a11.13%2011.13%200%200%200-.08-2.22%2012.83%2012.83%200%200%201%202.41%203.31%2013%2013%200%200%201%20.76%201.88%2011.42%2011.42%200%200%200-3.09-2.97ZM130.25%20558.54a11.9%2011.9%200%200%200%20.5%202.21%2012.61%2012.61%200%200%201-1.06-1.74%2012.88%2012.88%200%200%201-.82-2%2013%2013%200%200%200%201.38%201.53Z'/%3e%3c/g%3e%3cpath%20fill='%233f3d56'%20d='M82.02%20461.25a11.92%2011.92%200%200%201-4.14-4.69c-2.47-4.89-1.45-10.38%202.28-12.27s8.77.54%2011.24%205.43a11.93%2011.93%200%200%201%201.32%206.12%2012.4%2012.4%200%200%201%205.47%2010.82%2012%2012%200%200%201%204.15%204.69%2013.23%2013.23%200%200%201%20.76%201.86%2010.57%2010.57%200%200%200-5.43-4%206.16%206.16%200%200%201-7.83%204%2010.52%2010.52%200%200%200%200%206.75%2013.19%2013.19%200%200%201-1-1.71%2012%2012%200%200%201-1.33-6.12%2012.43%2012.43%200%200%201-5.47-10.82Z'/%3e%3cpath%20fill='%236c63ff'%20d='M21.9%20391.91a36.81%2036.81%200%200%201-4.39-2.43l16.28-11.9-19.14%209.85a36.34%2036.34%200%200%201-13.59-25.34l32.54.34-32.61-5.46a36.29%2036.29%200%201%201%2071.81%209.2%2036.73%2036.73%200%200%201%206.68%204l-17%2023.64%2020.41-20.68a36.32%2036.32%200%200%201%2010.16%2033.05%2036.29%2036.29%200%201%201-50.9%2025.74%2036.28%2036.28%200%200%201-20.25-40Z'/%3e%3cpath%20d='M89.85%20382.69a36.12%2036.12%200%200%201%203.2%2023.53%2036.29%2036.29%200%201%201-50.9%2025.74c-7.13-3.31%2045.87-52.9%2047.7-49.27Z'%20opacity='.1'/%3e%3ccircle%20cx='48.97'%20cy='324.78'%20r='5.39'%20fill='%236c63ff'/%3e%3ccircle%20cx='17.51'%20cy='328.24'%20r='5.39'%20fill='%236c63ff'/%3e%3ccircle%20cx='5.39'%20cy='376.63'%20r='5.39'%20fill='%236c63ff'/%3e%3ccircle%20cx='21.76'%20cy='400.8'%20r='5.39'%20fill='%236c63ff'/%3e%3ccircle%20cx='44.12'%20cy='450.99'%20r='5.39'%20fill='%236c63ff'/%3e%3ccircle%20cx='44.12'%20cy='450.99'%20r='5.39'%20opacity='.1'/%3e%3ccircle%20cx='93.85'%20cy='394.14'%20r='5.39'%20fill='%236c63ff'/%3e%3ccircle%20cx='93.85'%20cy='394.14'%20r='5.39'%20opacity='.1'/%3e%3cpath%20d='M99.6%20482.72c3.58-1.81%204.66-6.93%202.57-11.66.11.2.22.39.32.59%202.47%204.89%201.45%2010.38-2.29%2012.27s-8.76-.54-11.23-5.43c-.1-.2-.2-.4-.29-.61%202.57%204.49%207.34%206.65%2010.92%204.84ZM104.91%20493.24c3.58-1.81%204.67-6.94%202.58-11.66.11.19.22.39.32.59%202.47%204.89%201.45%2010.38-2.29%2012.27s-8.76-.54-11.23-5.43c-.11-.2-.2-.41-.29-.61%202.57%204.51%207.35%206.65%2010.91%204.84ZM110.23%20503.75c3.58-1.81%204.67-6.93%202.57-11.66.12.2.22.39.33.6%202.47%204.88%201.44%2010.38-2.29%2012.26s-8.76-.54-11.23-5.43c-.11-.2-.2-.4-.29-.61%202.56%204.49%207.33%206.65%2010.91%204.84ZM115.55%20514.27c3.58-1.81%204.67-6.93%202.57-11.66.11.19.22.39.32.59%202.48%204.89%201.45%2010.38-2.28%2012.27s-8.77-.54-11.24-5.43c-.1-.2-.19-.41-.28-.61%202.56%204.48%207.33%206.65%2010.91%204.84ZM120.87%20524.78c3.58-1.81%204.66-6.93%202.57-11.65.11.19.22.39.32.59%202.47%204.89%201.45%2010.38-2.28%2012.27s-8.77-.55-11.24-5.43c-.1-.21-.19-.41-.29-.61%202.57%204.48%207.34%206.64%2010.92%204.83ZM126.19%20535.3c3.58-1.81%204.66-6.93%202.57-11.66.11.2.22.39.32.59%202.47%204.89%201.45%2010.38-2.28%2012.27s-8.77-.54-11.24-5.43c-.1-.2-.2-.4-.29-.61%202.57%204.45%207.34%206.65%2010.92%204.84ZM131.51%20545.82c3.57-1.81%204.66-6.94%202.57-11.66.11.19.22.39.32.59%202.47%204.89%201.45%2010.38-2.29%2012.27s-8.76-.55-11.23-5.43c-.1-.21-.2-.41-.29-.61%202.57%204.48%207.34%206.65%2010.92%204.84ZM136.82%20556.33c3.58-1.81%204.67-6.93%202.57-11.66.12.2.22.39.33.6%202.47%204.88%201.44%2010.38-2.29%2012.26s-8.76-.54-11.23-5.43c-.11-.2-.2-.4-.29-.61%202.57%204.49%207.33%206.65%2010.91%204.84Z'%20opacity='.1'/%3e%3cpath%20d='M140.35%20563.24c3.58-1.81%204.66-6.93%202.57-11.66.11.2.22.39.32.6%202.47%204.88%201.45%2010.38-2.28%2012.26s-8.77-.54-11.24-5.43c-.1-.2-.2-.4-.29-.61%202.54%204.51%207.31%206.65%2010.92%204.84Z'%20opacity='.1'/%3e%3cpath%20fill='%236c63ff'%20d='M44.21%20516.44a18.57%2018.57%200%200%201-1-4.93%202.69%202.69%200%201%201%20.41-5.35%2018.82%2018.82%200%200%201%209.89-12.75%202.694%202.694%200%201%201%204.81-2.43%202.44%202.44%200%200%201%20.24.72%2018.92%2018.92%200%200%201%2016.56%205%2018.68%2018.68%200%200%201%205-.14l2.18%209.92.05-9.57a18.85%2018.85%200%201%201-10.08%2036.29%202.76%202.76%200%200%201-1.13%201.09%202.7%202.7%200%200%201-3.7-3.47%2018.84%2018.84%200%200%201-2.41-2%2018.87%2018.87%200%200%201-19.8-10l10.15-1.71Z'/%3e%3cpath%20d='M59.89%20521.26c3.75-5%206.05-10.8%208.69-16.42a66.7%2066.7%200%200%201%203.56-6.74l2-2.31c.34.29.67.58%201%20.88a18.68%2018.68%200%200%201%205-.14l2.18%209.92.03-9.54a18.85%2018.85%200%201%201-10.08%2036.29%202.76%202.76%200%200%201-1.13%201.09%202.7%202.7%200%200%201-3.7-3.47%2018.84%2018.84%200%200%201-2.41-2%2019%2019%200%200%201-11.31-1.67%2026.59%2026.59%200%200%200%206.17-5.89Z'%20opacity='.1'/%3e%3cpath%20fill='%236c63ff'%20d='M126.26%20500a2.68%202.68%200%200%201%201.19-3.61%202.64%202.64%200%200%201%201.22-.29%2018.85%2018.85%200%200%201%205.89-10.5%2018.71%2018.71%200%200%201-.55-5.89l9.89-1.66-9.61-.61a18.65%2018.65%200%200%201%20.72-2.66%202.64%202.64%200%200%201-.89-1%202.7%202.7%200%200%201%203.32-3.75%2018.63%2018.63%200%200%201%206.87-5.93%2018.84%2018.84%200%200%201%2026.77%2021.5%202.69%202.69%200%200%201%20.16%204.87%202.7%202.7%200%200%201-2.22.1%2018.74%2018.74%200%200%201-3.57%204.34%2018.9%2018.9%200%200%201-.87%2012l-13.23-3.48%2011.83%206.23a18.86%2018.86%200%200%201-32.83-1.54%2019.11%2019.11%200%200%201-1.94-6.65%202.67%202.67%200%200%201-2.15-1.47Z'/%3e%3cpath%20d='M126.26%20500a2.68%202.68%200%200%201%201.19-3.61%202.64%202.64%200%200%201%201.22-.29%2018.85%2018.85%200%200%201%205.89-10.5c-.08-.31-.15-.63-.21-.94a7.27%207.27%200%200%201%201%20.86c1.79%202%202.71%204.59%204.47%206.57a12.91%2012.91%200%200%200%208.33%203.89%2031.54%2031.54%200%200%200%209.33-.75%2027.35%2027.35%200%200%201%207.72-.85l.74.1-.46.43a18.9%2018.9%200%200%201-.87%2012l-13.26-3.48%2011.83%206.23a18.86%2018.86%200%200%201-32.83-1.54%2019.11%2019.11%200%200%201-1.94-6.65%202.67%202.67%200%200%201-2.15-1.47Z'%20opacity='.1'/%3e%3c/g%3e%3cpath%20fill='%236c63ff'%20d='M346.35%2051.91a20.23%2020.23%200%200%200-11.74%201.28%2017.32%2017.32%200%200%201-14.1%200%2019.76%2019.76%200%200%200-16.58.33%2010.28%2010.28%200%200%201-4.77%201.19c-6.72%200-12.31-6.77-13.47-15.7a13.07%2013.07%200%200%200%203.36-3.62c3.94-6.35%2010-10.43%2016.89-10.43s12.89%204%2016.83%2010.31a13%2013%200%200%200%2011.16%206.14h.18c5.3-.03%209.93%204.26%2012.24%2010.5Z'%20opacity='.1'/%3e%3cpath%20fill='%236c63ff'%20d='m366.77%2023.91-10.86%206.89%206.59-12a10.74%2010.74%200%200%200-6.57-2.34h-.17a12.89%2012.89%200%200%201-2.25-.17l-3.69%202.34%201.58-2.87a13.19%2013.19%200%200%201-6.44-4.85l-6.61%204.13%204.16-7.57C338.66%202.84%20333.46%200%20327.75%200c-6.85%200-13%204.08-16.9%2010.43a12.62%2012.62%200%200%201-11.17%206h-.33c-7.56%200-13.7%208.57-13.7%2019.16s6.14%2019.15%2013.7%2019.15a10.28%2010.28%200%200%200%204.77-1.19%2019.72%2019.72%200%200%201%2016.58-.32%2017.37%2017.37%200%200%200%2014.1%200%2019.75%2019.75%200%200%201%2016.43.32%2010.35%2010.35%200%200%200%204.72%201.16c7.57%200%2013.7-8.57%2013.7-19.15a24.36%2024.36%200%200%200-2.88-11.65ZM120.35%20190.45a29%2029%200%200%200-16.77%201.82%2024.71%2024.71%200%200%201-20.14-.05%2028.22%2028.22%200%200%200-23.68.47%2014.75%2014.75%200%200%201-6.82%201.7c-9.6%200-17.59-9.67-19.25-22.43a18.41%2018.41%200%200%200%204.8-5.17c5.63-9.07%2014.35-14.9%2024.14-14.9s18.4%205.76%2024%2014.73a18.52%2018.52%200%200%200%2016%208.77h.25c7.58-.01%2014.2%206.12%2017.47%2015.06Z'%20opacity='.1'/%3e%3cpath%20fill='%236c63ff'%20d='m149.55%20150.4-15.52%209.84%209.42-17.13a15.34%2015.34%200%200%200-9.39-3.35h-.25a18.16%2018.16%200%200%201-3.22-.24l-5.24%203.39%202.26-4.1a18.7%2018.7%200%200%201-9.2-7l-9.42%206%205.93-10.9c-5.51-6.61-12.93-10.66-21.09-10.66-9.79%200-18.51%205.82-24.14%2014.89a18.05%2018.05%200%200%201-16%208.61h-.53c-10.81%200-19.57%2012.25-19.57%2027.37s8.76%2027.37%2019.57%2027.37a14.61%2014.61%200%200%200%206.82-1.71%2028.22%2028.22%200%200%201%2023.68-.46%2024.71%2024.71%200%200%200%2020.14.05%2028.25%2028.25%200%200%201%2023.48.45%2014.65%2014.65%200%200%200%206.74%201.67c10.81%200%2019.57-12.26%2019.57-27.37a34.76%2034.76%200%200%200-4.04-16.72ZM747.97%2090.91a20.24%2020.24%200%200%201%2011.74%201.28%2017.29%2017.29%200%200%200%2014.09%200%2019.76%2019.76%200%200%201%2016.58.33%2010.31%2010.31%200%200%200%204.77%201.19c6.72%200%2012.32-6.77%2013.48-15.7a12.93%2012.93%200%200%201-3.36-3.62c-3.92-6.37-10.05-10.48-16.92-10.48s-12.88%204-16.82%2010.31a13%2013%200%200%201-11.18%206.17h-.17c-5.32-.01-9.96%204.28-12.21%2010.52Z'%20opacity='.1'/%3e%3cpath%20fill='%236c63ff'%20d='m727.49%2062.91%2010.86%206.87-6.6-12a10.76%2010.76%200%200%201%206.57-2.34h.18a13%2013%200%200%200%202.25-.17l3.68%202.34-1.58-2.87a13.21%2013.21%200%200%200%206.5-4.83l6.59%204.18-4.17-7.57c3.86-4.63%209-7.47%2014.77-7.47%206.85%200%2013%204.08%2016.9%2010.43a12.61%2012.61%200%200%200%2011.17%206h.36c7.57%200%2013.7%208.57%2013.7%2019.16s-6.13%2019.15-13.7%2019.15a10.34%2010.34%200%200%201-4.77-1.19%2019.72%2019.72%200%200%200-16.58-.32%2017.35%2017.35%200%200%201-14.09%200%2019.77%2019.77%200%200%200-16.44.32%2010.32%2010.32%200%200%201-4.72%201.16c-7.56%200-13.7-8.57-13.7-19.15a24.36%2024.36%200%200%201%202.82-11.7Z'%20opacity='.1'/%3e%3cellipse%20cx='615.63'%20cy='756.88'%20fill='%236c63ff'%20opacity='.1'%20rx='115'%20ry='20'/%3e%3cpath%20fill='%23d0d2d5'%20d='m555.44%20661.88-178.19-2.29.53-4.57%208.61-75.39h156.49l11.51%2075.39.88%205.72.17%201.14z'/%3e%3cpath%20d='M555.27%20660.74h-88.92l-89.1-1.15.53-4.57h176.61l.88%205.72z'%20opacity='.1'/%3e%3cpath%20fill='%23d0d2d5'%20d='M347.55%20656.17H584v5.71H347.55z'/%3e%3cpath%20fill='%233f3d56'%20d='M809.59%20126.83a14.87%2014.87%200%200%200-14.8-14.92H134.47a14.87%2014.87%200%200%200-14.8%2014.94V527.1h689.92Z'/%3e%3cpath%20fill='%23d0d2d5'%20d='M119.67%20523.1v46.88a14.8%2014.8%200%200%200%2014.8%2014.8h660.32a14.8%2014.8%200%200%200%2014.8-14.8V523.1Z'/%3e%3cpath%20fill='%23fff'%20d='M148.23%20137.01h636.23v359.81H148.23z'/%3e%3cpath%20fill='%236c63ff'%20d='M468.06%20566.99a15.4%2015.4%200%200%200%2012.13-5.89%2016.06%2016.06%200%200%200%201.2-1.76l-8.47-1.43%209.15.06a15.42%2015.42%200%200%200%20.29-12.21l-12.27%206.36%2011.32-8.32a15.42%2015.42%200%201%200-25.47%2017.26%2015.4%2015.4%200%200%200%2012.12%205.93Z'/%3e%3cpath%20d='m483.48%20584.77%2071.09%2071.4-10.91-71.4h-60.18z'%20opacity='.1'/%3e%3cpath%20fill='%23444053'%20d='M147.73%20137.05h636.92v21.02H147.73z'%20opacity='.1'/%3e%3crect%20width='191.9'%20height='12.79'%20x='368.87'%20y='140.71'%20fill='%236c63ff'%20opacity='.3'%20rx='.58'/%3e%3cpath%20fill='%233f3d56'%20d='M555.07%20148.43h-.47l-.17-.15a3.89%203.89%200%200%200%20.9-2.49%203.78%203.78%200%201%200-3.77%203.81%203.9%203.9%200%200%200%202.49-.91l.17.15v.47l2.93%202.93.87-.88Zm-3.51%200a2.64%202.64%200%201%201%202.63-2.64%202.62%202.62%200%200%201-2.63%202.64Z'/%3e%3ccircle%20cx='159.18'%20cy='147.56'%20r='3.85'%20fill='%23fa5959'%20opacity='.8'/%3e%3ccircle%20cx='169.77'%20cy='147.56'%20r='3.85'%20fill='%23fed253'%20opacity='.8'/%3e%3ccircle%20cx='180.37'%20cy='147.56'%20r='3.85'%20fill='%238ccf4d'%20opacity='.8'/%3e%3cpath%20fill='%236c63ff'%20d='M500.05%20291.4c-8.73-11.6-21.38-18.92-35.46-18.92s-26.73%207.32-35.46%2018.92a38.39%2038.39%200%200%200%208.4%2012.65%2038.28%2038.28%200%200%200%2062.52-12.65Z'/%3e%3cpath%20fill='%236c63ff'%20d='M424.52%20298.19a9.17%209.17%200%200%201-1.76-1%207.06%207.06%200%200%201-1.94-2.51%207.18%207.18%200%201%200-11.72%201.74%208%208%200%200%200%201.7%201.37%204.94%204.94%200%200%201%201.91%202%2014.44%2014.44%200%200%200%203.32%204.36%2029%2029%200%200%200%204.55%203.2%2066.31%2066.31%200%200%200-3.74%2019.56%2027.05%2027.05%200%200%200-7.62%201.23%2012.29%2012.29%200%200%200-3.53%201.76%208.48%208.48%200%200%200-.87-.06%207.19%207.19%200%201%200%206.73%209.72%204.59%204.59%200%200%201%203.71-3%2016.75%2016.75%200%200%201%201.85-.12%2064.4%2064.4%200%200%200%208.55%2026.67c-4.24%203.29-6.85%206.88-7.95%2010.86a3%203%200%200%200-.57.41%206.81%206.81%200%200%200-.84.78%207.18%207.18%200%201%200%2012.05%202.35%204.71%204.71%200%200%201%201.17-5.08c.48-.45%201-.93%201.7-1.46%208.11%209.47%2017.76%2015.54%2029.81%2016.26v-64.25c-15.93-.87-29.81-11.24-36.51-24.79Zm99.83%2031.72a7.93%207.93%200%200%200-.87.06%2013.56%2013.56%200%200%200-3.53-1.76%2026.86%2026.86%200%200%200-7.62-1.23%2067.76%2067.76%200%200%200-3.74-19.55%2029%2029%200%200%200%204.55-3.2%2015.58%2015.58%200%200%200%203.44-4.57%204.22%204.22%200%200%201%201.77-1.75%207.18%207.18%200%201%200-10-3.17%206.82%206.82%200%200%201-1.94%202.51%2018.85%2018.85%200%200%201-1.76%201.29c-6.7%2013.54-20.57%2023.62-36.48%2024.49v64.31c12-.72%2021.71-6.82%2029.81-16.26.63.5%201.16.95%201.61%201.37a4.86%204.86%200%200%201%201.26%205.23%207.18%207.18%200%201%200%2012.08-2.33%206.81%206.81%200%200%200-.84-.78c-.33-.26-.57-.41-.57-.41-1.1-4-3.7-7.57-8-10.86a64.4%2064.4%200%200%200%208.55-26.67%2015.9%2015.9%200%200%201%201.77.12%204.8%204.8%200%200%201%203.85%203%207.18%207.18%200%200%200%2013.85-2.18%207.29%207.29%200%200%200-7.19-7.66Z'/%3e%3cpath%20fill='url(%23a)'%20d='M769.65%20802.31a9.56%209.56%200%200%200-2.17-2.41c-4.37-4.13-6.4-10.19-7.48-16.13s-1.39-12-3.12-17.81a58.74%2058.74%200%200%200-3.52-8.67c-1-2.14-2.26-6.33-4.09-7.83a2.7%202.7%200%200%200-1.26-.61%2014.85%2014.85%200%200%200-3.62-4.82c-2.86-2.59-6.35-4.65-8.26-8a18%2018%200%200%200-1.93-3.29c-1.29-1.42-3.33-2-4.52-3.5-1.55-1.94-1.2-4.72-1-7.19s0-5.43-2.14-6.73c-1.28-.79-2.93-.71-4.26-1.41-2-1-2.79-3.52-2.75-5.77s.74-4.44.92-6.69c.56-7.16-4.16-14.28-2.34-21.22.69-2.63%202.27-4.91%203.44-7.36a15.37%2015.37%200%200%200%201-2.54%2035.73%2035.73%200%200%200%209.74%202.35c-5.51-12.36-4.11-26.72-6.68-40l.33-.45a20.84%2020.84%200%200%200%204.22-11.86c0-4.94-2.31-9.56-3.35-14.4-.89-4.11-.85-8.41-2-12.45a37.65%2037.65%200%200%200-3.16-7.22q-1.87-3.47-3.93-6.83-1.92-6.36-3.85-12.72c-1.8-5.95-3.65-12-7.15-17.14-1.28-1.88-1.67-5.7-3.64-6.84a8.81%208.81%200%200%200-5.2-.91c-2.78-1.56-5.22-3.81-5.57-6.89a6.68%206.68%200%200%201%20.2-2h.34c4.4-.4%206.63-4.28%208.92-7.68%203.7-5.5%202.29-12.94%200-19.2a13%2013%200%200%200-3-5.29c-3.21-3-8.29-2.34-12.43-3.79-1.39-.48-2.69-1.21-4.11-1.55-2.75-.64-5.63.26-8.15%201.53s-4.87%202.91-7.51%203.91-5.9%201.79-6.55%204.5a5%205%200%200%200%20.22%202.73%2010.18%2010.18%200%200%200%203.09%204.46%2017.81%2017.81%200%200%200%2010.87%2024.82%2051.01%2051.01%200%200%201%202.12%203.73c1.16%202.24%202.14%204.88%201.74%207.28a22.45%2022.45%200%200%200-2%202.45c-2.87%204-4.5%208.69-6%2013.37a141.65%20141.65%200%200%200-4.83%2018.27c-2.44%205.19-5.42%2010.15-7.19%2015.6a35.21%2035.21%200%200%201-9.38-1.26l-8.44-1.91c-2.94-.67-6-1.39-8.3-3.33-1.22-1-2.17-2.33-3.41-3.32s-3.73-2.15-5.09-1.33a4%204%200%200%200-.69.53c-1.24-2.51-2.42-5-3.86-7.43-2.07-3.4-5.15-6.51-9.05-7.16a9.21%209.21%200%200%200-6.79%201.58c-2.28%201.62-3.71%205-2%207.28a13.29%2013.29%200%200%200%201.39%201.42%2029.2%2029.2%200%200%201%203.09%204.29%2021.91%2021.91%200%200%200%2013.49%208.76l-.35%201c-.71%202.08-2.22%204.59-1.84%206.75l37.54%2012.85a23.13%2023.13%200%200%200%207.56%201.67%2012.21%2012.21%200%200%200%203-.4v2c.1%2013.19-2%2026.29-2.39%2039.47-.07%202.41%200%205%201.52%206.88%201.7%202.06%204.72%202.47%207.35%202q.95-.16%201.86-.42a69.33%2069.33%200%200%201%201.92%2010.11l2.48%2017.86a27.14%2027.14%200%200%201%20.39%205.54c-.29%204.19-2.5%207.94-4.1%2011.81s-2.55%208.5-.45%2012.12c.66%201.12%201.57%202.07%202.16%203.23a13.14%2013.14%200%200%201%201%205.68q.23%208.08.44%2016.18a1.83%201.83%200%200%200-1.26.25c-2.08%201.62-1.85%209.33-2%2011.72-.16%204%200%208.08-.22%2012.12a72.22%2072.22%200%200%201-2.61%2016.09%2010.29%2010.29%200%200%201-2.29%204.61%209.74%209.74%200%200%201-4.07%202.11%2046.49%2046.49%200%200%201-15.41%202.1c-2.11-.07-4.31-.27-6.27.53s-3.54%203-2.83%205c.61%201.68%202.46%202.48%204.13%203.11a65.53%2065.53%200%200%201%2011%205.06%2029.74%2029.74%200%200%200%204.25%202.41%2021.91%2021.91%200%200%200%204.38%201.08l17.73%203.06c3.63.62%208%201%2010.31-2%201.25-1.62%201.43-3.82%201.37-5.88-.1-4-.9-8.07-.38-12.07a37.14%2037.14%200%200%201%201.86-6.93q2.65-7.87%205.32-15.73c1.78-5.26%203.58-10.57%204.27-16.09.25-2%20.23-4.28-1.3-5.53a3.54%203.54%200%200%200-1.32-.68c-.06-4.82-.69-9.65-.42-14.47.07-1.2.19-2.4.29-3.61a17.61%2017.61%200%200%201%202.47%202.92c1.71%202.68%202.34%206.22%204.95%208%202.22%201.52%205.51%201.44%207.07%203.64a10.26%2010.26%200%200%201%201.12%202.71%2019.32%2019.32%200%200%200%204%206.35%2032%2032%200%200%200%202.47%206.34q2.21%204.67%204.4%209.31a108.59%20108.59%200%200%200%205%209.77%2027.55%2027.55%200%200%201%203.35%206.46c1.41%204.94-.89%2010.36-4.53%2014s-8.44%205.73-13.17%207.68a3.71%203.71%200%200%200-1.34.8%202.59%202.59%200%200%200-.61%201.74c0%202.31%201.9%204.29%204.08%205a15.26%2015.26%200%200%200%206.83.25c12.78-1.55%2025.52-4.67%2036.82-10.88a13%2013%200%200%200%204.39-3.39%205.13%205.13%200%200%200%20.73-5.21Z'%20transform='translate(-88.65%20-57.09)'/%3e%3cpath%20fill='%232f2e41'%20d='M626.99%20520.97q3.2%204.91%206%2010.06a37%2037%200%200%201%203.17%207.17c1.16%204%201.13%208.27%202%2012.35%201%204.8%203.34%209.38%203.34%2014.3a20.56%2020.56%200%200%201-4.22%2011.76%2055.82%2055.82%200%200%201-8.82%209.1%20187.62%20187.62%200%200%201-12.48-61.21c-.1-2.9-.12-5.89.94-8.6.65-1.7%203.77-6.36%205.78-4.53.73.67.92%203.69%201.37%204.7a36.13%2036.13%200%200%200%202.92%204.9Z'/%3e%3cpath%20d='M626.99%20520.97q3.2%204.91%206%2010.06a37%2037%200%200%201%203.17%207.17c1.16%204%201.13%208.27%202%2012.35%201%204.8%203.34%209.38%203.34%2014.3a20.56%2020.56%200%200%201-4.22%2011.76%2055.82%2055.82%200%200%201-8.82%209.1%20187.62%20187.62%200%200%201-12.48-61.21c-.1-2.9-.12-5.89.94-8.6.65-1.7%203.77-6.36%205.78-4.53.73.67.92%203.69%201.37%204.7a36.13%2036.13%200%200%200%202.92%204.9Z'%20opacity='.1'/%3e%3cpath%20fill='%23d0d2d5'%20d='M363.35%20384.54c-7.91%207.9-8.86%2011.38-13.61%2012.95s-21.84%2010.42-16.47%2020.23l14.44%209.54.42.28%202.21%206.64-21.84%2038.88s-36-16.46-39.53%207.89-1.29%2031-2.24%2044%20.31%2016.76-2.86%2016.76-4.42-8.54-4.42-8.54-.2-.39-.55-1.12c-4.71-9.79-36.68-81.66%2014.53-131.06%200%200%2023.72-1.56%2029.43-28.76%203.94-18.8%2017.72-17.18%2026.88-13.35a30.38%2030.38%200%200%201%208.22%204.83%2040.48%2040.48%200%200%201%205.89%207c2.61%204.12%204.03%209.29-.5%2013.83Z'/%3e%3cpath%20d='m348.13%20427.54%202.21%206.64-21.84%2038.88s-36-16.46-39.53%207.89-1.29%2031-2.24%2044%20.31%2016.76-2.86%2016.76-4.42-8.54-4.42-8.54-.2-.39-.55-1.12c-1.59-12.16-9.65-83.29%2019.57-79.51%200%200%2023.71%2011.08%2027.5%206.66%203-3.5%2016.32-23.63%2021.74-31.89ZM363.85%20370.65l-14.44%2016.41s-16.77%2022.44-20.25%2021.49a16.23%2016.23%200%200%200-3.17-.37%206.16%206.16%200%200%201-4-10.38c5.72-6%2016.26-17.39%2016.95-19.92s7.4-13.62%2010.76-19.05a30.38%2030.38%200%200%201%208.22%204.83%2040.48%2040.48%200%200%201%205.93%206.99Z'%20opacity='.1'/%3e%3cpath%20fill='%23454b69'%20d='M772.41%20606.74c-2.45%204.9-15%2023.28-20.49%2031.31l-2.57%203.78s-1%206.64-17.39-1.59-401.48-170.72-401.48-170.72l-2.61-7.84%2019-28.45L768.94%20596.3s6.64%204.11%203.47%2010.44Z'/%3e%3cpath%20d='m751.92%20638.05-2.57%203.78s-1%206.64-17.39-1.59-401.48-170.72-401.48-170.72l-2.61-7.84Z'%20opacity='.1'/%3e%3cpath%20fill='%23fbbebe'%20d='M519.64%20531.91c-3.91-.64-8.25-.33-11.29%202.21a9.29%209.29%200%200%200-3.24%206.16c-.26%202.77%201.35%206.06%204.13%206.27a13.17%2013.17%200%200%200%202-.13%2029.89%2029.89%200%200%201%205.24.44%2021.39%2021.39%200%200%200%2018.23-7.36c2.39-3-.76-4.3-3.58-4.9-3.86-.82-7.63-2.07-11.49-2.69Z'/%3e%3cpath%20fill='%233f3d56'%20d='m586.52%20622.22%202.48%2017.62a26.84%2026.84%200%200%201%20.38%205.51c-.29%204.15-2.5%207.87-4.09%2011.71s-2.56%208.44-.45%2012c.65%201.11%201.56%202.06%202.15%203.21a12.92%2012.92%200%200%201%201%205.63l.68%2025a157.33%20157.33%200%200%200%2023.18-.13%201.29%201.29%200%200%200%20.84-.26%201.36%201.36%200%200%200%20.29-.91c.34-5.85-.68-11.71-.35-17.56.12-2.14.42-4.27.46-6.42.12-8.71-4.18-17.24-2.88-25.85a57%2057%200%200%201%201.6-6.43c4.11-15%203.24-30.76%202.33-46.25a1.09%201.09%200%200%200-.2-.7%201.06%201.06%200%200%200-.54-.29%2028.45%2028.45%200%200%200-25.78%204.9c-1.09.88-3.84%201.73-4.56%202.78-1%201.46.31%202.92.89%204.47a56.89%2056.89%200%200%201%202.57%2011.97Z'/%3e%3cpath%20d='m586.52%20622.22%202.48%2017.62a26.84%2026.84%200%200%201%20.38%205.51c-.29%204.15-2.5%207.87-4.09%2011.71s-2.56%208.44-.45%2012c.65%201.11%201.56%202.06%202.15%203.21a12.92%2012.92%200%200%201%201%205.63l.68%2025a157.33%20157.33%200%200%200%2023.18-.13%201.29%201.29%200%200%200%20.84-.26%201.36%201.36%200%200%200%20.29-.91c.34-5.85-.68-11.71-.35-17.56.12-2.14.42-4.27.46-6.42.12-8.71-4.18-17.24-2.88-25.85a57%2057%200%200%201%201.6-6.43c4.11-15%203.24-30.76%202.33-46.25a1.09%201.09%200%200%200-.2-.7%201.06%201.06%200%200%200-.54-.29%2028.45%2028.45%200%200%200-25.78%204.9c-1.09.88-3.84%201.73-4.56%202.78-1%201.46.31%202.92.89%204.47a56.89%2056.89%200%200%201%202.57%2011.97Z'%20opacity='.1'/%3e%3cpath%20fill='%233f3d56'%20d='M632.89%20616.91c-1.17%202.43-2.74%204.69-3.44%207.3-1.82%206.89%202.89%2014%202.33%2021.06-.18%202.23-.87%204.4-.92%206.63s.77%204.71%202.75%205.74c1.33.68%203%20.61%204.25%201.39%202.11%201.29%202.35%204.22%202.14%206.68s-.56%205.21%201%207.13c1.19%201.49%203.23%202.07%204.51%203.48a17.17%2017.17%200%200%201%201.93%203.26c1.91%203.34%205.4%205.38%208.26%208s5.28%206.46%204%2010.09c-.94%202.66-3.58%204.3-6.12%205.55a64.93%2064.93%200%200%201-14.57%205.15%203.52%203.52%200%200%201-1.67.09%203.57%203.57%200%200%201-1.46-1c-2.95-2.89-6-5.92-7.36-9.81a10.07%2010.07%200%200%200-1.12-2.68c-1.56-2.19-4.85-2.11-7.07-3.62-2.6-1.77-3.23-5.28-4.93-7.93s-4.19-4.23-6-6.56c-3.06-3.88-3.81-9.06-6-13.49-.93-1.88-2.12-3.64-2.86-5.6a30.58%2030.58%200%200%201-1.37-7.24c-1.41-11.68-5-23.44-2.74-35%20.5-2.54%201.27-5%201.59-7.62.55-4.53-.32-9.17.35-13.69a3.77%203.77%200%200%201%201.51-2.91%204%204%200%200%201%201.72-.35%20117.28%20117.28%200%200%201%2017.78.4c3%20.29%206.36.9%208.16%203.35%201.53%202.1%201.45%204.91%201.94%207.46.61%203.14%202.2%204.85%203.87%207.31s.77%204.89-.46%207.43Z'/%3e%3cpath%20fill='%232f2e41'%20d='M609.82%20698.17c1.58%200%203.33-.1%204.55.9%201.52%201.25%201.54%203.54%201.3%205.49-.7%205.48-2.49%2010.75-4.28%2016l-5.32%2015.61a36.65%2036.65%200%200%200-1.86%206.88c-.52%204%20.28%208%20.38%2012%200%202-.13%204.22-1.38%205.83-2.26%202.91-6.67%202.57-10.3%202l-17.71-3a21.07%2021.07%200%200%201-4.38-1.07%2030.61%2030.61%200%200%201-4.25-2.39%2065.42%2065.42%200%200%200-11-5c-1.66-.62-3.52-1.41-4.12-3.08-.71-2%20.87-4.2%202.83-5s4.15-.6%206.27-.54a47%2047%200%200%200%2015.4-2.08%209.74%209.74%200%200%200%204.06-2.1%2010%2010%200%200%200%202.34-4.71%2070.17%2070.17%200%200%200%202.68-16c.21-4%20.07-8%20.23-12%20.1-2.37-.13-10%201.95-11.63%201.59-1.22%208.13%202.15%2010.28%202.64a50%2050%200%200%200%2012.33%201.25ZM668.16%20709.29c1.73%205.73%202%2011.79%203.12%2017.68s3.1%2011.9%207.47%2016a9.87%209.87%200%200%201%202.17%202.4%205.06%205.06%200%200%201-.75%205.23%2013.13%2013.13%200%200%201-4.39%203.37c-11.29%206.16-24%209.27-36.81%2010.81a15.51%2015.51%200%200%201-6.82-.25c-2.18-.74-4.11-2.7-4.07-5a2.55%202.55%200%200%201%20.6-1.73%203.73%203.73%200%200%201%201.35-.79c4.72-1.94%209.51-4.05%2013.16-7.63s5.94-9%204.53-13.86a27.42%2027.42%200%200%200-3.37-6.41%20108.35%20108.35%200%200%201-5-9.69l-4.4-9.23c-1.29-2.7-2.59-5.48-2.81-8.46a40.6%2040.6%200%200%200%2016.22-2.6%2025.51%2025.51%200%200%200%206.67-4c1.7-1.42%203.25-4.07%205.54-2.22%201.84%201.48%203%205.65%204.08%207.76a57%2057%200%200%201%203.51%208.62Z'/%3e%3cpath%20fill='%23fbbebe'%20d='M603.68%20480.1c.44%203.84%204.16%206.37%207.71%207.89l-22.47%207.17c1.45-2.78.28-6.18-1.16-9a50.93%2050.93%200%200%200-4-6.41c-.22-.31-.47-.7-.31-1.06a1.12%201.12%200%200%201%20.63-.49c4.62-2.06%209.38-4.19%2014.43-4.94%201.46-.21%204.22-.79%205.31.69s-.35%204.38-.14%206.15Z'/%3e%3cpath%20d='M603.68%20480.1c.44%203.84%204.16%206.37%207.71%207.89l-22.47%207.17c1.45-2.78.28-6.18-1.16-9a50.93%2050.93%200%200%200-4-6.41c-.22-.31-.47-.7-.31-1.06a1.12%201.12%200%200%201%20.63-.49c4.62-2.06%209.38-4.19%2014.43-4.94%201.46-.21%204.22-.79%205.31.69s-.35%204.38-.14%206.15Z'%20opacity='.1'/%3e%3ccircle%20cx='590.62'%20cy='465.59'%20r='17.62'%20fill='%23fbbebe'/%3e%3cpath%20fill='%232f2e41'%20d='M575.35%20610.59c1.71%202.05%204.72%202.45%207.35%202%206.15-1%2011.18-5.53%2017.2-7.16%207.38-2%2015.19.57%2022.16%203.72s13.9%207%2021.52%207.54c-6.89-15.36-2.95-33.84-9.54-49.33-1.61-3.79-3.86-7.44-4.22-11.54-.45-5.09%202.09-10%202.48-15.06.36-4.51-1-9-2.3-13.3l-4.82-15.84c-1.8-5.91-3.65-11.92-7.14-17-1.29-1.87-1.68-5.66-3.64-6.79-4.28-2.47-10.77.64-15.41.81s-8.87%203.47-11.58%207.2c-2.87%203.94-4.5%208.63-6%2013.27a126.15%20126.15%200%200%200-5.33%2021.23c-.15%201.08-.28%202.16-.38%203.25-1%2010.27.46%2020.6.54%2030.92v.07c.1%2013.09-2%2026.1-2.39%2039.18-.04%202.39.02%205%201.5%206.83Z'/%3e%3cpath%20d='M576.27%20564.52c3.45-.87%206.57-3.1%209.25-5.54a38.67%2038.67%200%200%200%206.14-7%2049.86%2049.86%200%200%200%205.29-11.07%20129.36%20129.36%200%200%200%207-32.27c.26-3%20.34-6.22-1.45-8.6a7.24%207.24%200%200%200-8.75-2.12c-2.36%201.15-3.89%203.48-5.31%205.71-2.81%204.42-5.64%208.9-7.45%2013.82-.8%202.18-1.39%204.42-2.17%206.61a61%2061%200%200%201-2.74%206.33c-.15%201.08-.28%202.16-.38%203.25-.93%2010.27.49%2020.56.57%2030.88Z'%20opacity='.1'/%3e%3cpath%20fill='%232f2e41'%20d='M602.45%20498.11c1.79%202.38%201.71%205.63%201.46%208.59a129.18%20129.18%200%200%201-7%2032.27%2049.43%2049.43%200%200%201-5.29%2011.16%2039.07%2039.07%200%200%201-6.14%207c-3.4%203.1-7.54%205.87-12.15%205.91a23.16%2023.16%200%200%201-7.56-1.65l-37.55-12.78c-.38-2.14%201.13-4.64%201.84-6.7l2-5.93c.57-1.64%201.23-3.41%202.72-4.3s3.85.33%205.09%201.32%202.18%202.29%203.4%203.3c2.31%201.92%205.36%202.64%208.3%203.3l8.43%201.89a35.2%2035.2%200%200%200%209.38%201.25c2.35-7.18%206.82-13.5%209.35-20.62.78-2.18%201.37-4.43%202.18-6.61%201.8-4.92%204.64-9.39%207.45-13.82%201.41-2.22%202.94-4.55%205.31-5.71a7.23%207.23%200%200%201%208.78%202.13ZM596.24%20469.57a8.89%208.89%200%200%200-1.06-3.3%202.77%202.77%200%200%200-3-1.32c-1.76.55-2.35%203.27-4.19%203.36-1.24.06-2.13-1.2-2.52-2.38s-.6-2.53-1.53-3.36a5.7%205.7%200%200%200-2.18-1c-4.27-1.35-8.68-3.84-10.1-8.09a4.84%204.84%200%200%201-.23-2.71c.65-2.69%204-3.5%206.55-4.47s5-2.63%207.5-3.89%205.4-2.15%208.15-1.51a42.47%2042.47%200%200%201%204.11%201.53c4.14%201.44%209.21.77%2012.42%203.76a12.83%2012.83%200%200%201%203%205.24c2.24%206.22%203.66%2013.6-.05%2019.06-2.29%203.37-4.51%207.22-8.91%207.63-5.12.43-7.15-4.21-7.96-8.55Z'/%3e%3cg%20opacity='.1'%3e%3cpath%20d='M588.42%20463.81c-.39-1.18-.6-2.53-1.52-3.36a5.7%205.7%200%200%200-2.18-1c-4.28-1.35-8.68-3.84-10.11-8.09a4.93%204.93%200%200%201-.22-2.71%203.39%203.39%200%200%201%20.53-1.19c-1.63.71-3.05%201.65-3.45%203.31a4.84%204.84%200%200%200%20.23%202.71c1.42%204.25%205.83%206.74%2010.1%208.09a5.7%205.7%200%200%201%202.18%201c.93.83%201.13%202.17%201.53%203.36s1.28%202.44%202.52%202.38%201.84-1.19%202.63-2.14c-1.09-.14-1.88-1.26-2.24-2.36ZM607.14%20475.97c-5.14.47-7.17-4.21-8-8.52a8.7%208.7%200%200%200-1-3.3%202.78%202.78%200%200%200-3-1.32%205.32%205.32%200%200%200-2.21%202%203%203%200%200%201%202.26%201.4%208.89%208.89%200%200%201%201.06%203.3c.81%204.31%202.84%209%208%208.52a8.25%208.25%200%200%200%205.28-2.74%207.46%207.46%200%200%201-2.39.66Z'/%3e%3c/g%3e%3cellipse%20cx='813.11'%20cy='655.78'%20fill='%236c63ff'%20rx='32.29'%20ry='6.21'/%3e%3cellipse%20cx='812.57'%20cy='653.14'%20fill='%233f3d56'%20rx='3.76'%20ry='4.92'/%3e%3cellipse%20cx='812.57'%20cy='647.12'%20fill='%233f3d56'%20rx='3.76'%20ry='4.92'/%3e%3cellipse%20cx='812.57'%20cy='641.11'%20fill='%233f3d56'%20rx='3.76'%20ry='4.92'/%3e%3cellipse%20cx='812.57'%20cy='635.09'%20fill='%233f3d56'%20rx='3.76'%20ry='4.92'/%3e%3cellipse%20cx='812.57'%20cy='629.07'%20fill='%233f3d56'%20rx='3.76'%20ry='4.92'/%3e%3cellipse%20cx='812.57'%20cy='623.06'%20fill='%233f3d56'%20rx='3.76'%20ry='4.92'/%3e%3cellipse%20cx='812.57'%20cy='617.04'%20fill='%233f3d56'%20rx='3.76'%20ry='4.92'/%3e%3cpath%20fill='%236c63ff'%20d='M826.64%20575.91a18.19%2018.19%200%200%200%201.4-2.06l-9.88-1.62%2010.69.07a18.11%2018.11%200%200%200%20.34-14.27l-14.34%207.44%2013.22-9.72a18%2018%200%201%200-29.72%2020.16%2017.92%2017.92%200%200%200-2.06%203.28l12.83%206.67-13.68-4.59a18%2018%200%200%200%202.91%2016.88%2018%2018%200%201%200%2028.31%200%2018%2018%200%200%200%200-22.27Z'/%3e%3cpath%20d='M794.47%20587.01a17.91%2017.91%200%200%200%203.88%2011.14%2018%2018%200%201%200%2028.31%200c2.39-3.07-32.19-13.16-32.19-11.14Z'%20opacity='.1'/%3e%3cellipse%20cx='148.42'%20cy='776.87'%20fill='%236c63ff'%20rx='46.49'%20ry='8.94'/%3e%3cellipse%20cx='147.64'%20cy='773.07'%20fill='%233f3d56'%20rx='5.41'%20ry='7.09'/%3e%3cellipse%20cx='147.64'%20cy='764.41'%20fill='%233f3d56'%20rx='5.41'%20ry='7.09'/%3e%3cellipse%20cx='147.64'%20cy='755.75'%20fill='%233f3d56'%20rx='5.41'%20ry='7.09'/%3e%3cellipse%20cx='147.64'%20cy='747.09'%20fill='%233f3d56'%20rx='5.41'%20ry='7.09'/%3e%3cellipse%20cx='147.64'%20cy='738.43'%20fill='%233f3d56'%20rx='5.41'%20ry='7.09'/%3e%3cellipse%20cx='147.64'%20cy='729.76'%20fill='%233f3d56'%20rx='5.41'%20ry='7.09'/%3e%3cellipse%20cx='147.64'%20cy='721.1'%20fill='%233f3d56'%20rx='5.41'%20ry='7.09'/%3e%3cpath%20fill='%236c63ff'%20d='M167.9%20661.84a27.23%2027.23%200%200%200%202-3l-14.22-2.34%2015.38.12a26%2026%200%200%200%20.49-20.55l-20.62%2010.74%2019-14a25.93%2025.93%200%201%200-42.83%2029%2025.83%2025.83%200%200%200-3%204.72l18.47%209.6-19.69-6.61a25.93%2025.93%200%200%200%204.26%2024.39%2025.93%2025.93%200%201%200%2040.76%200%2025.92%2025.92%200%200%200%200-32.06Z'/%3e%3cpath%20d='M121.59%20677.91a25.85%2025.85%200%200%200%205.55%2016%2025.93%2025.93%200%201%200%2040.76%200c3.45-4.42-46.31-18.95-46.31-16Z'%20opacity='.1'/%3e%3c/svg%3e";
+}));
+//#endregion
+//#region src/components/page-error/index.tsx
+function PageError({ error, resetErrorBoundary }) {
+	const navigate = useNavigate();
+	const { t } = useTranslation();
+	const enableDynamicTitle = usePreferencesStore((state) => state.enableDynamicTitle);
+	const goHome = () => {
+		resetErrorBoundary();
+		navigate(VITE_BASE_HOME_PATH$2);
+	};
+	const refresh = () => {
+		location.reload();
+	};
+	useEffect(() => {
+		if (enableDynamicTitle) document.title = t("exception.pageErrorTitle");
+	}, [enableDynamicTitle]);
+	return /* @__PURE__ */ jsx(Result, {
+		status: "error",
+		icon: /* @__PURE__ */ jsx("div", {
+			className: "w-7/12 md:w-3/12 xl:w-2/12 inline-block",
+			children: /* @__PURE__ */ jsx(undraw_bug_fixing_default, {})
+		}),
+		title: error?.message ?? t("exception.pageErrorTitle"),
+		extra: /* @__PURE__ */ jsxs(Space, {
+			size: 20,
+			children: [/* @__PURE__ */ jsx(Button, {
+				icon: /* @__PURE__ */ jsx(ArrowLeftOutlined, {}),
+				type: "primary",
+				onClick: goHome,
+				children: t("common.backHome")
+			}), /* @__PURE__ */ jsx(Button, {
+				icon: /* @__PURE__ */ jsx(ReloadOutlined, { rotate: 90 }),
+				onClick: refresh,
+				children: t("common.refresh")
+			})]
+		}),
+		children: /* @__PURE__ */ jsx(Typography.Paragraph, {
+			type: "warning",
+			className: "text-center",
+			children: error?.stack
+		})
+	});
+}
+var VITE_BASE_HOME_PATH$2;
+var init_page_error = __esmMin((() => {
+	init_undraw_bug_fixing();
+	init_preferences$3();
+	({VITE_BASE_HOME_PATH: VITE_BASE_HOME_PATH$2} = {});
+}));
+//#endregion
+//#region src/utils/is-dark-theme/index.ts
+/**
+* 判断当前主题是否为深色主题
+*
+* @param theme 主题名称，可选值为 'dark'、'light' 或 'auto'
+* @returns 如果当前主题为深色主题，则返回 true；否则返回 false
+*/
+function isDarkTheme(theme) {
+	let dark = theme === "dark";
+	if (theme === "auto") dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+	return dark;
+}
+var init_is_dark_theme = __esmMin((() => {}));
+//#endregion
+//#region src/utils/is-light-theme/index.ts
+/**
+* 判断当前主题是否为浅色主题
+*
+* @param theme 主题名称，可以是 "light"（浅色）、"dark"（深色）或 "auto"（自动）
+* @returns 如果当前主题为浅色主题，则返回 true；否则返回 false
+*/
+function isLightTheme(theme) {
+	let light = theme === "light";
+	if (theme === "auto") light = window.matchMedia("(prefers-color-scheme: light)").matches;
+	return light;
+}
+var init_is_light_theme = __esmMin((() => {}));
+//#endregion
+//#region src/hooks/use-preferences/index.ts
+/**
+* 包装下用户偏好设置的参数，不需要存储在 localStorage 中，但是为了方便使用的变量可以在这里出现。
+*
+* @returns 返回包含用户偏好设置的对象，包括主题、是否为默认设置、是否为深色主题、是否为浅色主题
+*/
+function usePreferences() {
+	const preferences = usePreferencesStore();
+	const { theme } = preferences;
+	const isDefault = useMemo(() => {
+		return Object.entries(DEFAULT_PREFERENCES).every(([key, value]) => {
+			return preferences[key] === value;
+		});
+	}, [preferences]);
+	return {
+		...preferences,
+		isDefault,
+		isDark: isDarkTheme(theme),
+		isLight: isLightTheme(theme)
+	};
+}
+var init_use_preferences = __esmMin((() => {
+	init_preferences$3();
+	init_is_dark_theme();
+	init_is_light_theme();
+}));
+//#endregion
+//#region src/hooks/use-current-route/index.ts
+/**
+* 获取当前路由信息
+*
+* @returns 当前路由的匹配结果
+*/
+function useCurrentRoute() {
+	const matches = useMatches();
+	return useMemo(() => {
+		return matches[matches.length - 1];
+	}, [matches, location]);
+}
+var init_use_current_route = __esmMin((() => {}));
+//#endregion
+//#region src/hooks/use-device-type/index.ts
+/**
+* 判断当前设备类型（移动设备、iPad、PC 等）
+*
+*/
+function useDeviceType() {
+	/**
+	* useResponsive 默认的断点为：
+	* @see https://ahooks.js.org/hooks/use-responsive
+	* {
+	*   xs: 0,
+	*   sm: 576,
+	*   md: 768,
+	*   lg: 992,
+	*   xl: 1200,
+	* }
+	*/
+	const responsive = useResponsive();
+	return {
+		isMobile: responsive.xs && !responsive.sm || responsive.sm && !responsive.md,
+		isIpad: responsive.md && !responsive.xl,
+		isPC: responsive.xl
+	};
+}
+var init_use_device_type = __esmMin((() => {}));
+//#endregion
+//#region src/hooks/use-css-var/index.ts
+/**
+* @see https://soorria.com/snippets/use-css-var-react
+*/
+function useCssVar(name, root = defaultRoot, options = {}) {
+	const controls = useMemo(() => ({
+		set: (value) => root.style.setProperty(name, value),
+		get: () => root.style.getPropertyValue(name),
+		remove: () => root.style.removeProperty(name)
+	}), [name, root]);
+	useEffect(() => {
+		if (options?.initialValue) controls.set(options.initialValue);
+	}, [options?.initialValue]);
+	useEffect(() => {
+		return () => controls.remove();
+	}, [controls]);
+	return controls;
+}
+var defaultRoot;
+var init_use_css_var = __esmMin((() => {
+	defaultRoot = typeof document !== "undefined" ? document.body : void 0;
+}));
+//#endregion
+//#region src/utils/dom/index.ts
+/**
+* @zh 获取元素在可视区域的矩形
+* @en Get the visible rectangle of an element in the viewport
+* @param element
+*/
+function getElementVisibleRect(element) {
+	if (!element) return {
+		bottom: 0,
+		height: 0,
+		left: 0,
+		right: 0,
+		top: 0,
+		width: 0
+	};
+	const rect = element.getBoundingClientRect();
+	const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+	const top = Math.max(rect.top, 0);
+	const bottom = Math.min(rect.bottom, viewHeight);
+	const viewWidth = Math.max(document.documentElement.clientWidth, window.innerWidth);
+	const left = Math.max(rect.left, 0);
+	const right = Math.min(rect.right, viewWidth);
+	return {
+		bottom,
+		height: Math.max(0, bottom - top),
+		left,
+		right,
+		top,
+		width: Math.max(0, right - left)
+	};
+}
+var init_dom = __esmMin((() => {}));
+//#endregion
+//#region src/hooks/use-layout-style/index.ts
+/**
+* @zh 获取布局内容区域的样式
+* @en Get the style of the layout content area
+*/
+function useLayoutContentStyle() {
+	const contentElement = useRef(null);
+	const [visibleDomRect, setVisibleDomRect] = useState(null);
+	const resizeObserverRef = useRef(null);
+	const contentHeightControls = useCssVar(CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT);
+	const contentWidthControls = useCssVar(CSS_VARIABLE_LAYOUT_CONTENT_WIDTH);
+	const overlayStyle = useMemo(() => {
+		const { height, left, top, width } = visibleDomRect || {};
+		return {
+			height: `${height}px`,
+			left: `${left}px`,
+			position: "fixed",
+			top: `${top}px`,
+			width: `${width}px`,
+			zIndex: 150
+		};
+	}, [visibleDomRect]);
+	const debouncedCalcHeight = useDebounceFn((_entries) => {
+		const rect = getElementVisibleRect(contentElement.current);
+		setVisibleDomRect(rect);
+		if (rect) {
+			contentHeightControls.set(`${rect.height}px`);
+			contentWidthControls.set(`${rect.width}px`);
+		}
+	}, { wait: 16 });
+	useEffect(() => {
+		if (contentElement.current && !resizeObserverRef.current) {
+			const resizeObserver = new ResizeObserver(debouncedCalcHeight.run);
+			resizeObserverRef.current = resizeObserver;
+			resizeObserver.observe(contentElement.current);
+		}
+		return () => {
+			resizeObserverRef.current?.disconnect();
+			resizeObserverRef.current = null;
+		};
+	}, [debouncedCalcHeight]);
+	return {
+		contentElement,
+		overlayStyle,
+		visibleDomRect
+	};
+}
+function useLayoutHeaderStyle() {
+	const cssVarControls = useCssVar(CSS_VARIABLE_LAYOUT_HEADER_HEIGHT);
+	return {
+		getLayoutHeaderHeight: () => {
+			return Number.parseInt(`${cssVarControls.get()}`, 10);
+		},
+		setLayoutHeaderHeight: (height) => {
+			cssVarControls.set(`${height}px`);
+		}
+	};
+}
+function useLayoutFooterStyle() {
+	const cssVarControls = useCssVar(CSS_VARIABLE_LAYOUT_FOOTER_HEIGHT);
+	return {
+		getLayoutFooterHeight: () => {
+			return Number.parseInt(`${cssVarControls.get()}`, 10);
+		},
+		setLayoutFooterHeight: (height) => {
+			cssVarControls.set(`${height}px`);
+		}
+	};
+}
+var init_use_layout_style = __esmMin((() => {
+	init_use_css_var();
+	init_constants$4();
+	init_dom();
+}));
+//#endregion
+//#region src/store/tabs.ts
+var initialState$4, useTabsStore;
+var init_tabs = __esmMin((() => {
+	init_preferences$3();
+	init_get_app_namespace();
+	initialState$4 = {
+		/**
+		* @zh 标签页集合
+		* @en Tab collection.
+		*/
+		openTabs: /* @__PURE__ */ new Map([]),
+		/**
+		* @zh 当前激活的标签页
+		* @en The currently active tab.
+		*/
+		activeKey: "",
+		/**
+		* @zh 标签页是否处于刷新状态
+		* @en Whether it is in a refresh state.
+		*/
+		isRefresh: false,
+		/**
+		* @zh 标签页是否最大化
+		* @en Whether the tab is maximized.
+		*/
+		isMaximize: false
+	};
+	useTabsStore = create()(persist((set) => ({
+		...initialState$4,
+		/**
+		* @zh 设置标签页是否处于刷新状态
+		* @en Set whether the tab is in a refresh state.
+		*/
+		setIsRefresh: (state) => {
+			set({ isRefresh: state });
+		},
+		/**
+		* @zh 设置标签页
+		* @en Set the tab.
+		*/
+		setActiveKey: (routePath) => {
+			set({ activeKey: routePath });
+		},
+		/**
+		* @zh 在最前面插入标签页
+		* @en Insert a tab at the front.
+		*/
+		insertBeforeTab: (routePath, tabProps) => {
+			set((state) => {
+				if (routePath.length) {
+					const newMap = /* @__PURE__ */ new Map([[routePath, tabProps]]);
+					for (const [key, value] of state.openTabs) newMap.set(key, value);
+					return { openTabs: newMap };
+				}
+				return state;
+			});
+		},
+		/**
+		* @zh 添加标签页
+		* @en Add a tab.
+		*/
+		addTab: (routePath, tabProps) => {
+			set((state) => {
+				if (routePath.length) {
+					const newTabs = new Map(state.openTabs);
+					/**
+					* 1. 如果 tab 已经存在，则更新 historyState 属性，所以不去重，且 ...newTabs.get(routePath) 是为了保证首页的 closable 属性不被覆盖
+					* 2. 如果 tab 不存在，则添加到 Map 中
+					*/
+					newTabs.set(routePath, {
+						...newTabs.get(routePath),
+						...tabProps
+					});
+					return { openTabs: newTabs };
+				}
+				return state;
+			});
+		},
+		/**
+		* @zh 移除标签页
+		* @en Remove a tab.
+		*/
+		removeTab: (routePath) => {
+			set((state) => {
+				const homePath = void 0;
+				if (routePath === homePath) return state;
+				const newTabs = new Map(state.openTabs);
+				newTabs.delete(routePath);
+				let newActiveKey = state.activeKey;
+				if (routePath === state.activeKey) newActiveKey = Array.from(newTabs.keys()).at(-1) || homePath;
+				if (newTabs.size === 0) {
+					newTabs.set(homePath, state.openTabs.get(homePath));
+					newActiveKey = homePath;
+				}
+				return {
+					openTabs: newTabs,
+					activeKey: newActiveKey
+				};
+			});
+		},
+		/**
+		* @zh 关闭右侧标签页
+		* @en Close tabs on the right.
+		*/
+		closeRightTabs: (routePath) => {
+			set((state) => {
+				const newTabs = /* @__PURE__ */ new Map();
+				let found = false;
+				let activeKeyFound = false;
+				let newActiveKey = state.activeKey;
+				for (const [key, value] of state.openTabs) {
+					if (found) break;
+					newTabs.set(key, value);
+					if (key === routePath) found = true;
+					if (key === state.activeKey) activeKeyFound = true;
+				}
+				if (!activeKeyFound) newActiveKey = routePath;
+				return {
+					openTabs: newTabs,
+					activeKey: newActiveKey
+				};
+			});
+		},
+		/**
+		* @zh 关闭左侧标签页
+		* @en Close tabs on the left.
+		*/
+		closeLeftTabs: (routePath) => {
+			set((state) => {
+				const newTabs = /* @__PURE__ */ new Map();
+				const homePath = void 0;
+				let found = false;
+				let newActiveKey = state.activeKey;
+				let activeKeyOnRight = false;
+				newTabs.set(homePath, state.openTabs.get(homePath));
+				for (const [key, value] of state.openTabs) {
+					if (key === homePath) continue;
+					if (found || key === routePath) {
+						newTabs.set(key, value);
+						found = true;
+					}
+					if (key === state.activeKey && found) activeKeyOnRight = true;
+				}
+				if (!activeKeyOnRight) newActiveKey = routePath;
+				return {
+					openTabs: newTabs,
+					activeKey: newActiveKey
+				};
+			});
+		},
+		/**
+		* @zh 关闭其他标签页
+		* @en Close other tabs.
+		*/
+		closeOtherTabs: (routePath) => {
+			set((state) => {
+				const newTabs = /* @__PURE__ */ new Map();
+				const homePath = void 0;
+				newTabs.set(homePath, state.openTabs.get(homePath));
+				if (routePath !== homePath && state.openTabs.has(routePath)) newTabs.set(routePath, state.openTabs.get(routePath));
+				let newActiveKey = state.activeKey;
+				if (!newTabs.has(state.activeKey)) newActiveKey = routePath;
+				return {
+					openTabs: newTabs,
+					activeKey: newActiveKey
+				};
+			});
+		},
+		/**
+		* @zh 关闭所有标签页
+		* @en Close all tabs.
+		*/
+		closeAllTabs: () => {
+			set((state) => {
+				const newTabs = /* @__PURE__ */ new Map();
+				const homePath = void 0;
+				newTabs.set(homePath, state.openTabs.get(homePath));
+				return {
+					openTabs: newTabs,
+					activeKey: homePath
+				};
+			});
+		},
+		/**
+		* @zh 更改标签页顺序
+		* @en Change tab order.
+		*/
+		changeTabOrder: (from, to) => {
+			set((state) => {
+				const newTabs = Array.from(state.openTabs.entries());
+				const [movedTab] = newTabs.splice(from, 1);
+				newTabs.splice(to, 0, movedTab);
+				return { openTabs: new Map(newTabs) };
+			});
+		},
+		/**
+		* @zh 切换标签页最大化状态
+		* @en Toggle tab maximization status
+		* @param {boolean} state - 最大化状态
+		*/
+		toggleMaximize: (state) => {
+			set({ isMaximize: state });
+		},
+		/**
+		* @zh 设置标签页标题
+		* @en Set the tab title
+		*/
+		setTableTitle: (routePath, title) => {
+			set((state) => {
+				const newTabs = new Map(state.openTabs);
+				const targetTab = newTabs.get(routePath);
+				if (targetTab) {
+					targetTab.newTabTitle = title;
+					newTabs.set(routePath, targetTab);
+					return { openTabs: newTabs };
+				}
+				return state;
+			});
+		},
+		/**
+		* @zh 重置标签页标题（删除自定义的标题）
+		* @en Reset the tab title (delete custom titles)
+		*/
+		resetTableTitle: (routePath) => {
+			set((state) => {
+				const newTabs = new Map(state.openTabs);
+				const targetTab = newTabs.get(routePath);
+				if (targetTab) {
+					delete targetTab.newTabTitle;
+					newTabs.set(routePath, targetTab);
+					return { openTabs: newTabs };
+				}
+				return state;
+			});
+		},
+		/**
+		* @zh 重置所有标签页的状态
+		* @en Reset all tab states
+		*/
+		resetTabs: () => {
+			set(() => {
+				return { ...initialState$4 };
+			});
+		}
+	}), {
+		name: getAppNamespace("tabbar"),
+		/**
+		* activeKey 不需要持久化存储
+		*
+		* 假如页面路由为 /home
+		* 手动在地址栏输入 /about
+		* activeKey 仍为 /home 导致 src/layout/layout-tabbar/index.tsx 的自动导航功能失效
+		* @see https://github.com/condorheroblog/react-antd-admin/issues/1
+		*/
+		partialize: (state) => {
+			return Object.fromEntries(Object.entries(state).filter(([key]) => !["activeKey"].includes(key)));
+		},
+		/**
+		* openTabs 是一个 Map，持久化存储需要手动管理
+		* How do I use it with Map and Set
+		* @see https://github.com/pmndrs/zustand/blob/v5.0.1/docs/integrations/persisting-store-data.md#how-do-i-use-it-with-map-and-set
+		*/
+		storage: {
+			getItem: (name) => {
+				const str = sessionStorage.getItem(name);
+				const isPersist = usePreferencesStore.getState().tabbarPersist;
+				if (!str || !isPersist) return null;
+				const existingValue = JSON.parse(str);
+				return {
+					...existingValue,
+					state: {
+						...existingValue.state,
+						openTabs: new Map(existingValue.state.openTabs)
+					}
+				};
+			},
+			setItem: (name, newValue) => {
+				const str = JSON.stringify({
+					...newValue,
+					state: {
+						...newValue.state,
+						openTabs: Array.from(newValue.state.openTabs.entries())
+					}
+				});
+				sessionStorage.setItem(name, str);
+			},
+			removeItem: (name) => sessionStorage.removeItem(name)
+		}
+	}));
+}));
+//#endregion
+//#region src/layout/hooks/use-layout.ts
+/**
+* 获取当前页面的布局类型信息
+*
+* @returns 返回包含当前布局类型信息的对象，包含：
+* - currentLayout: 当前导航类型
+* - isSideNav: 是否为侧边导航
+* - isTopNav: 是否为顶部导航
+* - isMixedNav: 是否为混合导航
+* - isTwoColumnNav: 是否为双列导航
+*/
+function useLayout() {
+	const { isMobile } = useDeviceType();
+	const navigationStyle = usePreferencesStore((state) => state.navigationStyle);
+	const sidebarWidth = usePreferencesStore((state) => state.sidebarWidth);
+	const sideCollapsedWidth = usePreferencesStore((state) => state.sideCollapsedWidth);
+	const firstColumnWidthInTwoColumnNavigation = usePreferencesStore((state) => state.firstColumnWidthInTwoColumnNavigation);
+	/**
+	* 当前导航类型
+	*/
+	const currentLayout = useMemo(() => isMobile ? SIDE_NAVIGATION : navigationStyle, [isMobile, navigationStyle]);
+	/**
+	* 是否为侧边导航
+	*/
+	const isSideNav = useMemo(() => currentLayout === SIDE_NAVIGATION, [currentLayout]);
+	/**
+	* 是否为顶部导航
+	*/
+	const isTopNav = useMemo(() => currentLayout === TOP_NAVIGATION, [currentLayout]);
+	/**
+	* 是否为双列导航
+	*/
+	const isTwoColumnNav = useMemo(() => currentLayout === TWO_COLUMN_NAVIGATION, [currentLayout]);
+	return {
+		currentLayout,
+		isSideNav,
+		isTopNav,
+		isMixedNav: useMemo(() => currentLayout === MIXED_NAVIGATION, [currentLayout]),
+		isTwoColumnNav,
+		sidebarWidth,
+		sideCollapsedWidth,
+		firstColumnWidthInTwoColumnNavigation
+	};
+}
+var init_use_layout = __esmMin((() => {
+	init_use_device_type();
+	init_constants$3();
+	init_preferences$3();
+}));
+//#endregion
+//#region src/layout/hooks/index.ts
+var init_hooks = __esmMin((() => {
+	init_use_layout();
+}));
+//#endregion
+//#region src/store/global.ts
+var initialState$3, useGlobalStore;
+var init_global = __esmMin((() => {
+	initialState$3 = { 
+	/**
+	* @zh 全局加载动画是否显示
+	* @en Whether the global spinning animation is shown
+	*/
+globalSpin: false };
+	useGlobalStore = create((set) => ({
+		...initialState$3,
+		openGlobalSpin: () => {
+			return set({ globalSpin: true });
+		},
+		closeGlobalSpin: () => {
+			return set({ globalSpin: false });
+		}
+	}));
+}));
+//#endregion
+//#region src/components/global-spin/index.tsx
+function GlobalSpin({ children, className }) {
+	const classes = useStyles$5();
+	const spinning = useGlobalStore((state) => state.globalSpin);
+	/**
+	* 接口返回结果时间过短，页面可能会出现闪烁，使用 useSpinDelay 优化 Spin
+	*
+	* @see https://github.com/ant-design/ant-design/issues/51828
+	*/
+	const loading = useSpinDelay(spinning, {
+		delay: 500,
+		minDuration: 200
+	});
+	if (!usePreferencesStore((state) => state.transitionLoading)) return children;
+	return /* @__PURE__ */ jsx(Spin, {
+		delay: 300,
+		spinning: loading,
+		classNames: { root: cn(classes.rootSpin, className) },
+		children
+	});
+}
+var useStyles$5;
+var init_global_spin = __esmMin((() => {
+	init_global();
+	init_preferences$3();
+	init_cn();
+	useStyles$5 = createUseStyles({ rootSpin: {
+		"height": "100%",
+		"& .ant-spin-container": { height: "100%" },
+		"& .ant-spin-spinning": { maxHeight: "100% !important" }
+	} });
+}));
+//#endregion
+//#region src/components/scrollbar/index.tsx
+/**
+* @see https://github.com/Grsmto/simplebar/tree/master/packages/simplebar-react
+*/
+function Scrollbar({ ref, children, ...other }) {
+	return /* @__PURE__ */ jsx(SimpleBar, {
+		autoHide: true,
+		scrollableNodeProps: { ref },
+		clickOnTrack: false,
+		...other,
+		className: cn("h-full", other.className),
+		children
+	});
+}
+var init_scrollbar = __esmMin((() => {
+	init_cn();
+}));
+//#endregion
+//#region src/layout/keep-alive-layer/index.tsx
+/**
+* KeepAlive 固定层（P2.1）。
+*
+* 设计要点（设计文档 §4.4 / B13 / R9）：
+* - 从 `ContainerLayout → LayoutContent` 上移为 shell 固定层组件，缓存逻辑不再耦合
+*   某个具体布局组件；后续布局去中心化（handle.layout）不会影响缓存是否生效。
+* - `exclude` 改由 module-loader 汇总各模块 `handle.keepAlive` 计算
+*   （`getKeepAliveExcludeKeys`），而非 access store 的 flatRouteList。
+* - 只包裹「页面 outlet」本身：顶部 chrome（header / sidebar / tabbar）在 KeepAlive
+*   之外渲染，因此整站 chrome 不进入缓存，避免切回路由时 chrome 状态错位。
+*
+* 注意：这里刻意不把 KeepAlive 直接包在 LayoutRoot 的 <Outlet/> 外层，否则会把
+* chrome 一起缓存，违背「整站 chrome 不消失 / 状态不错位」的约束。
+*/
+function KeepAliveLayer() {
+	const { pathname, search } = useLocation();
+	const outlet = useOutlet();
+	const aliveRef = useKeepAliveRef();
+	const isRefresh = useTabsStore((state) => state.isRefresh);
+	const openTabs = useTabsStore((state) => state.openTabs);
+	const tabbarEnable = usePreferencesStore((state) => state.tabbarEnable);
+	const transitionName = usePreferencesStore((state) => state.transitionName);
+	const transitionEnable = usePreferencesStore((state) => state.transitionEnable);
+	/**
+	* to distinguish different pages to cache
+	*/
+	const cacheKey = useMemo(() => {
+		return pathname + search;
+	}, [pathname, search]);
+	/**
+	* 关闭当前 / 右侧 / 左侧 / 其他 / 全部标签页时，清除对应缓存
+	*/
+	useEffect(() => {
+		(aliveRef.current?.getCacheNodes?.())?.forEach((node) => {
+			if (!openTabs.has(node.cacheKey)) aliveRef.current?.destroy(node.cacheKey);
+		});
+	}, [openTabs]);
+	/**
+	* 关闭多 tab 功能时，清空所有非当前页面缓存
+	*/
+	useEffect(() => {
+		if (!tabbarEnable) (aliveRef.current?.getCacheNodes?.())?.forEach((node) => {
+			if (node.cacheKey !== cacheKey) aliveRef.current?.destroy(node.cacheKey);
+		});
+	}, [tabbarEnable]);
+	useEffect(() => {
+		if (tabbarEnable && isRefresh) aliveRef.current?.refresh();
+	}, [isRefresh]);
+	const keepAliveExclude = useMemo(() => {
+		/**
+		* 不开启多 tab 时不需要 KeepAlive，把所有路由放进 exclude 仅保留切换动画
+		*/
+		if (!tabbarEnable) return getAllRoutePathKeys();
+		return getKeepAliveExcludeKeys();
+	}, [tabbarEnable]);
+	return /* @__PURE__ */ jsx(KeepAlive, {
+		max: 20,
+		transition: true,
+		duration: 300,
+		cacheNodeClassName: transitionEnable ? `keepalive-${transitionName}` : void 0,
+		exclude: keepAliveExclude,
+		activeCacheKey: cacheKey,
+		aliveRef,
+		children: outlet
+	});
+}
+var init_keep_alive_layer = __esmMin((() => {
+	init_module_loader();
+	init_preferences$3();
+	init_tabs();
+}));
+//#endregion
+//#region src/layout/layout-footer/index.tsx
+function LayoutFooter({ className }) {
+	const { enableFooter, companyName, companyWebsite, copyrightDate, ICPNumber, ICPLink } = usePreferencesStore();
+	if (!enableFooter) return null;
+	return /* @__PURE__ */ jsxs("footer", {
+		className: cn("h-10 flex flex-wrap shrink-0 items-center justify-center text-xs md:text-sm text-colorTextSecondary", className),
+		children: [
+			ICPNumber ? /* @__PURE__ */ jsxs("span", { children: [/* @__PURE__ */ jsx("a", {
+				href: ICPLink,
+				rel: "noreferrer noopener",
+				target: "_blank",
+				children: ICPNumber
+			}), "\xA0"] }) : null,
+			"Copyright ©\xA0",
+			copyrightDate,
+			copyrightDate ? /* @__PURE__ */ jsx(Fragment, { children: "\xA0" }) : "",
+			companyName ? /* @__PURE__ */ jsx("span", { children: /* @__PURE__ */ jsxs("a", {
+				href: companyWebsite,
+				rel: "noreferrer noopener",
+				target: "_blank",
+				children: [companyName, "\xA0"]
+			}) }) : null,
+			"All right reserved"
+		]
+	});
+}
+var init_layout_footer = __esmMin((() => {
+	init_preferences$3();
+	init_cn();
+}));
+//#endregion
+//#region src/layout/layout-content/index.tsx
+function LayoutContent() {
+	const { token: { colorBgLayout } } = theme.useToken();
+	const { contentElement } = useLayoutContentStyle();
+	const enableFooter = usePreferencesStore((state) => state.enableFooter);
+	const fixedFooter = usePreferencesStore((state) => state.fixedFooter);
+	/**
+	* 缓存层（KeepAlive）已上移至 shell 固定层 KeepAliveLayer，只包裹页面 outlet，
+	* 此处仅负责内容区的滚动容器与页脚（chrome 不进入缓存）。
+	*/
+	return /* @__PURE__ */ jsx("main", {
+		id: ELEMENT_ID_MAIN_CONTENT,
+		ref: contentElement,
+		className: "relative overflow-y-auto overflow-x-hidden grow",
+		style: { backgroundColor: colorBgLayout },
+		children: /* @__PURE__ */ jsx(Scrollbar, { children: /* @__PURE__ */ jsx(GlobalSpin, { children: /* @__PURE__ */ jsxs("div", {
+			className: "flex flex-col h-full",
+			children: [/* @__PURE__ */ jsx("div", {
+				style: { height: `var(${CSS_VARIABLE_LAYOUT_CONTENT_HEIGHT})` },
+				children: /* @__PURE__ */ jsx(KeepAliveLayer, {})
+			}), enableFooter && !fixedFooter ? /* @__PURE__ */ jsx(LayoutFooter, {}) : null]
+		}) }) })
+	});
+}
+var init_layout_content = __esmMin((() => {
+	init_global_spin();
+	init_scrollbar();
+	init_use_layout_style();
+	init_constants$4();
+	init_keep_alive_layer();
+	init_layout_footer();
+	init_preferences$3();
+}));
+//#endregion
+//#region src/layout/widgets/global-search/components/search-footer.tsx
+function SearchFooter({ searchItems }) {
+	const { t } = useTranslation();
+	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(Divider, { className: "mt-2 my-0" }), /* @__PURE__ */ jsxs("div", {
+		className: "px-4 py-2 flex items-center justify-between text-xs",
+		children: [/* @__PURE__ */ jsxs("div", {
+			className: "flex items-center",
+			children: [
+				/* @__PURE__ */ jsx("span", {
+					className: "flex items-center justify-center p-1 h-5 rounded-md bg-[#F3F4F5] dark:bg-[#26313C]",
+					children: /* @__PURE__ */ jsx(ArrowUpOutlined, {})
+				}),
+				/* @__PURE__ */ jsx("span", {
+					className: "flex items-center justify-center p-1 h-5 rounded-md bg-[#F3F4F5] dark:bg-[#26313C] ml-2",
+					children: /* @__PURE__ */ jsx(ArrowDownOutlined, {})
+				}),
+				/* @__PURE__ */ jsx("span", {
+					className: "ml-2",
+					children: t("widgets.search.navigate")
+				}),
+				/* @__PURE__ */ jsx("span", {
+					className: "flex items-center justify-center p-1 h-5 rounded-md bg-[#F3F4F5] dark:bg-[#26313C] ml-2",
+					children: "ESC"
+				}),
+				/* @__PURE__ */ jsx("span", {
+					className: "ml-2",
+					children: t("widgets.search.close")
+				}),
+				/* @__PURE__ */ jsx("span", {
+					className: "flex items-center justify-center p-1 h-5 rounded-md bg-[#F3F4F5] dark:bg-[#26313C] ml-2",
+					children: /* @__PURE__ */ jsx(EnterOutlined, {})
+				}),
+				/* @__PURE__ */ jsx("span", {
+					className: "ml-2",
+					children: t("widgets.search.select")
+				})
+			]
+		}), /* @__PURE__ */ jsx("span", { children: t("widgets.search.total", { total: searchItems }) })]
+	})] });
+}
+var init_search_footer = __esmMin((() => {}));
+//#endregion
+//#region src/layout/widgets/global-search/components/search-panel.tsx
+function SearchPanel({ menuItem, active, enter, setActiveKey, showCloseButton, removeHistoryItem }) {
+	const { t } = useTranslation();
+	const isExternalLink = isValidElement(menuItem?.label);
+	function handleMouseEnter(key) {
+		setActiveKey(key);
+	}
+	return /* @__PURE__ */ jsx(Fragment, { children: /* @__PURE__ */ jsx("li", {
+		"data-search-item": menuItem.key,
+		onMouseEnter: () => {
+			handleMouseEnter(menuItem.key);
+		},
+		onClick: () => enter(isExternalLink),
+		className: clsx("flex flex-col bg-colorBgLayout cursor-pointer px-4 py-4 rounded-md mb-2", active ? "text-colorBgContainer" : "text-colorText", { "bg-primaryActive": active }),
+		children: /* @__PURE__ */ jsxs("div", {
+			className: "flex items-center justify-between",
+			children: [/* @__PURE__ */ jsxs("div", {
+				className: "flex items-center",
+				children: [menuItem.icon && /* @__PURE__ */ jsx("div", {
+					className: "mr-3",
+					children: menuItem.icon
+				}), /* @__PURE__ */ jsx("span", { children: isValidElement(menuItem?.label) ? cloneElement(menuItem.label, {}, t(menuItem.label?.props?.children)) : t(`${menuItem?.label}`) })]
+			}), /* @__PURE__ */ jsxs("div", {
+				className: "flex items-center gap-2",
+				children: [/* @__PURE__ */ jsx("div", {
+					className: "opacity-50",
+					children: menuItem.key
+				}), /* @__PURE__ */ jsx(Button, {
+					className: clsx({ hidden: !showCloseButton }, active ? "text-colorBgContainer!" : "text-colorText!"),
+					size: "small",
+					ghost: false,
+					type: "text",
+					shape: "circle",
+					icon: /* @__PURE__ */ jsx(CloseOutlined, {}),
+					onClick: (e) => {
+						e.stopPropagation();
+						removeHistoryItem(menuItem.key);
+					}
+				})]
+			})]
+		})
+	}) });
+}
+var init_search_panel = __esmMin((() => {}));
+//#endregion
+//#region src/layout/widgets/global-search/index.tsx
+/**
+* @zh 偏平化可跳转的菜单项
+* @en Flat menu item that can be jumped
+*/
+function transformMenuToFlatMenu(menus, flatMap = []) {
+	if (menus && menus.length === 0) return [];
+	return menus.reduce((acc, cur) => {
+		if (!cur.children) acc.push(cur);
+		if (cur.children && cur.children.length > 0) transformMenuToFlatMenu(cur.children, flatMap);
+		return acc;
+	}, flatMap);
+}
+function GlobalSearch() {
+	const wholeMenus = useAccessStore((state) => state.wholeMenus);
+	const { isMobile } = useDeviceType();
+	const [open, setOpen] = useState(false);
+	const navigate = useNavigate();
+	const [keyword, setKeyword] = useState("");
+	const [activeKey, setActiveKey] = useState("");
+	const [resultOptions, setResultOptions] = useState([]);
+	const { t } = useTranslation();
+	const inputRef = useRef(null);
+	const listRef = useRef(null);
+	const [searchHistory = [], setSearchHistory] = useLocalStorageState(searchHistoryLocalStorageKey, { defaultValue: [] });
+	const searchMenuList = useMemo(() => transformMenuToFlatMenu(wholeMenus), [wholeMenus]);
+	function onClose() {
+		setOpen(false);
+	}
+	function handleClose() {
+		onClose();
+		setResultOptions([]);
+		setKeyword("");
+		setActiveKey("");
+	}
+	/**
+	* @zh 将指定索引的元素滚动到视图中
+	* @en Scroll the specified index element into view
+	*/
+	function scrollSelectedIntoView(index) {
+		if (listRef.current) listRef.current.children[index]?.scrollIntoView({
+			behavior: "smooth",
+			block: "nearest"
+		});
+	}
+	/**
+	* @zh 从搜索历史中移除指定的记录
+	* @en Remove the specified record from search history
+	*/
+	function removeHistoryItem(key) {
+		setSearchHistory((prev) => prev.filter((item) => item !== key));
+	}
+	function getActivePathIndex() {
+		return resultOptions.findIndex((item) => item.key === activeKey);
+	}
+	function handleKeyPress(direction) {
+		const { length } = resultOptions;
+		if (length === 0) return;
+		const index = getActivePathIndex();
+		if (index === -1) return;
+		const activeIndex = (index + direction + length) % length;
+		const activeNameKey = resultOptions[activeIndex].key;
+		setActiveKey(activeNameKey);
+		scrollSelectedIntoView(activeIndex);
+	}
+	const { run: setSearch } = useDebounceFn((e) => {
+		const inputValue = e.target.value?.trim()?.toLocaleLowerCase();
+		if (!inputValue) {
+			setResultOptions([]);
+			setActiveKey("");
+			return;
+		}
+		const matchRoutes = searchMenuList.filter((menuItem) => {
+			let labelText = "";
+			if (isValidElement(menuItem.label)) labelText = menuItem.label.props.children;
+			if (isString(menuItem.label)) labelText = menuItem.label;
+			const translatedLowerCaseLabel = t(labelText)?.toLocaleLowerCase();
+			return translatedLowerCaseLabel?.includes(inputValue) || match(translatedLowerCaseLabel, inputValue);
+		});
+		const activeName = matchRoutes[0]?.key ?? "";
+		setActiveKey(activeName);
+		setResultOptions(matchRoutes);
+	}, { wait: 100 });
+	const handleChange = (e) => {
+		const inputValue = e.target.value?.trim();
+		setKeyword(inputValue);
+	};
+	/** key up */
+	function handleUp() {
+		handleKeyPress(-1);
+	}
+	/** key down */
+	function handleDown() {
+		handleKeyPress(1);
+	}
+	/**
+	* @zh 快捷键打开搜索面板
+	* @en Shortcut key to open the search panel
+	*/
+	useKeyPress(["meta.K"], () => {
+		if (!open) setOpen(true);
+	});
+	/** key enter */
+	function handleEnter(isExternalLink) {
+		if (resultOptions.length === 0 || activeKey === "") return;
+		if (!searchHistory?.includes(activeKey)) setSearchHistory([...searchHistory ?? [], activeKey]);
+		handleClose();
+		if (isExternalLink) window.open(activeKey);
+		else navigate(activeKey);
+	}
+	useKeyPress("Escape", handleClose);
+	useKeyPress("Enter", () => handleEnter());
+	useKeyPress("uparrow", handleUp);
+	useKeyPress("downarrow", handleDown);
+	useEffect(() => {
+		if (!keyword.length && Array.isArray(searchHistory)) setResultOptions(searchMenuList.filter((item) => searchHistory?.includes(item.key)));
+	}, [keyword, searchHistory]);
+	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsxs("div", {
+		onClick: () => setOpen((open) => !open),
+		className: "group flex justify-center items-center gap-2 md:bg-colorBgLayout px-3 py-1.5 rounded-full cursor-pointer text-colorTextSecondary hover:text-colorText md:mr-2.5",
+		children: [
+			/* @__PURE__ */ jsx(SearchOutlined, {}),
+			/* @__PURE__ */ jsx("span", {
+				className: "hidden text-xs duration-300 md:block",
+				children: t("common.search")
+			}),
+			/* @__PURE__ */ jsxs("span", {
+				className: "bg-colorBgContainer relative hidden rounded-sm rounded-r-xl px-1.5 py-1 text-xs leading-none group-hover:opacity-100 md:block",
+				children: ["⌘", /* @__PURE__ */ jsx("kbd", { children: "K" })]
+			})
+		]
+	}), /* @__PURE__ */ jsx(Modal, {
+		open,
+		onCancel: () => handleClose(),
+		afterOpenChange: (open) => {
+			if (open) inputRef.current?.focus();
+		},
+		keyboard: true,
+		title: /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx("div", {
+			className: "mr-17",
+			children: /* @__PURE__ */ jsx(Input, {
+				ref: inputRef,
+				value: keyword,
+				onChange: handleChange,
+				onInput: setSearch,
+				variant: "outlined",
+				placeholder: t("widgets.search.placeholder"),
+				allowClear: true,
+				autoFocus: true,
+				prefix: /* @__PURE__ */ jsx(SearchOutlined, {}),
+				name: "global-search-input",
+				className: "mx-4 mt-4"
+			})
+		}), /* @__PURE__ */ jsx(Divider, { className: "my-4" })] }),
+		footer: isMobile ? null : /* @__PURE__ */ jsx(SearchFooter, { searchItems: resultOptions.length }),
+		style: isMobile ? {
+			margin: 0,
+			maxWidth: "100%",
+			top: 0,
+			paddingBottom: 0
+		} : void 0,
+		styles: {
+			body: {
+				flexGrow: "1",
+				overflow: "hidden"
+			},
+			container: {
+				padding: 0,
+				height: isMobile ? "100vh" : void 0,
+				display: isMobile ? "flex" : "block",
+				flexDirection: isMobile ? "column" : "row"
+			}
+		},
+		width: isMobile ? "100%" : 580,
+		children: /* @__PURE__ */ jsx(Scrollbar, {
+			style: { maxHeight: isMobile ? "100%" : "450px" },
+			children: /* @__PURE__ */ jsx("ul", {
+				className: "px-4 pb-4 md:pb-0",
+				ref: listRef,
+				children: resultOptions.length === 0 ? /* @__PURE__ */ jsx(Empty, {
+					className: "my-8",
+					styles: { image: { height: 40 } },
+					image: keyword.length ? /* @__PURE__ */ jsx(SearchOutlined, {
+						className: "text-colorTextTertiary",
+						style: { fontSize: 40 }
+					}) : Empty.PRESENTED_IMAGE_SIMPLE,
+					description: keyword.length ? `${t("widgets.search.noResults")} ${JSON.stringify(keyword)}` : t("widgets.search.noRecent")
+				}) : resultOptions.map((item) => /* @__PURE__ */ jsx(SearchPanel, {
+					active: item.key === activeKey,
+					enter: handleEnter,
+					removeHistoryItem,
+					setActiveKey,
+					menuItem: item,
+					showCloseButton: keyword.length === 0
+				}, item.key))
+			})
+		})
+	})] });
+}
+var searchHistoryLocalStorageKey;
+var init_global_search = __esmMin((() => {
+	init_scrollbar();
+	init_use_device_type();
+	init_access();
+	init_is();
+	init_search_footer();
+	init_search_panel();
+	searchHistoryLocalStorageKey = `__search-history-${location.hostname}__`;
+}));
+//#endregion
+//#region src/api/notifications/index.ts
+function fetchNotifications() {
+	return request.get("notifications").json();
+}
+var init_notifications = __esmMin((() => {
+	init_request();
+}));
+//#endregion
+//#region ~icons/svg/embedded.jsx
+var svgEmbedded, ForwardRef$20;
+var init_embedded = __esmMin((() => {
+	svgEmbedded = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 24 24",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M20 5v14H4V5zm0-2H4c-1.11 0-2 .89-2 2v14c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2m-2 12H6v2h12zm-8-8H6v6h4zm2 2h6V7h-6zm6 2h-6v2h6z"
+		})]
+	});
+	ForwardRef$20 = forwardRef(svgEmbedded);
+}));
+//#endregion
+//#region ~icons/svg/external.jsx
+var svgExternal, ForwardRef$19;
+var init_external = __esmMin((() => {
+	svgExternal = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 24 24",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M4 7v12h15v2H4c-2 0-2-2-2-2V7zm17-2v10H8V5zm.3-2H7.7C6.76 3 6 3.7 6 4.55v10.9c0 .86.76 1.55 1.7 1.55h13.6c.94 0 1.7-.69 1.7-1.55V4.55C23 3.7 22.24 3 21.3 3M9 6h3v5H9zm11 8H9v-2h11zm0-6h-6V6h6zm0 3h-6V9h6z"
+		})]
+	});
+	ForwardRef$19 = forwardRef(svgExternal);
+}));
+//#endregion
+//#region ~icons/svg/layout-center.jsx
+var svgLayoutCenter, ForwardRef$18;
+var init_layout_center = __esmMin((() => {
+	svgLayoutCenter = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 1024 1024",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			d: "M284 862c-17.673 0-32-14.327-32-32V194c0-17.673 14.327-32 32-32h456c17.673 0 32 14.327 32 32v636c0 17.673-14.327 32-32 32zm40-72h376V234H324zm-152 72h-56a8 8 0 01-8-8V170a8 8 0 018-8h56a8 8 0 018 8v684a8 8 0 01-8 8m736 0h-56a8 8 0 01-8-8V170a8 8 0 018-8h56a8 8 0 018 8v684a8 8 0 01-8 8",
+			fill: "currentColor"
+		})]
+	});
+	ForwardRef$18 = forwardRef(svgLayoutCenter);
+}));
+//#endregion
+//#region ~icons/svg/layout-left.jsx
+var svgLayoutLeft, ForwardRef$17;
+var init_layout_left = __esmMin((() => {
+	svgLayoutLeft = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 1024 1024",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			d: "M426.667 128a42.667 42.667 0 00-85.334 0zm-85.334 768a42.667 42.667 0 1085.334 0zm-143.445-13.952-19.37 38.016zm-55.936-55.936 38.016-19.37zm740.096 0-38.016-19.37zm-55.936 55.936-19.37-38.016zm0-740.096-19.37 38.016zm55.936 55.936 38.016-19.37zm-684.16-55.936 19.37 38.016zm-55.936 55.936 38.016 19.37zM341.333 128v768h85.334V128zm-8.533 42.667h358.4V85.333H332.8zM853.333 332.8v358.4h85.334V332.8zM691.2 853.333H332.8v85.334h358.4zM170.667 691.2V332.8H85.333v358.4zM332.8 853.333c-36.565 0-61.397 0-80.597-1.621-18.688-1.493-28.288-4.267-34.944-7.68l-38.742 76.032c20.694 10.539 42.752 14.763 66.731 16.725 23.467 1.878 52.395 1.878 87.552 1.878zM85.333 691.2c0 35.157 0 64.043 1.878 87.552 1.962 23.979 6.186 46.037 16.725 66.73l76.032-38.74c-3.413-6.657-6.187-16.214-7.68-34.945-1.621-19.2-1.621-44.032-1.621-80.597zM217.26 844.032a85.33 85.33 0 01-37.291-37.29l-76.032 38.74a170.67 170.67 0 0074.581 74.582zM853.333 691.2c0 36.565 0 61.397-1.621 80.597-1.493 18.688-4.267 28.288-7.68 34.944l76.032 38.742c10.539-20.694 14.763-42.752 16.725-66.731 1.92-23.467 1.878-52.395 1.878-87.552zM691.2 938.667c35.157 0 64.043 0 87.552-1.878 23.979-1.962 46.037-6.186 66.73-16.725l-38.74-76.032c-6.657 3.413-16.214 6.187-34.945 7.68-19.2 1.579-44.032 1.621-80.597 1.621zM844.032 806.74a85.33 85.33 0 01-37.29 37.291l38.74 76.032a170.67 170.67 0 0074.582-74.581zM691.2 170.667c36.565 0 61.397 0 80.597 1.621 18.688 1.493 28.288 4.267 34.944 7.68l38.742-76.032c-20.694-10.539-42.752-14.763-66.731-16.725-23.467-1.878-52.395-1.878-87.552-1.878zM938.667 332.8c0-35.157 0-64.043-1.878-87.552-1.962-23.979-6.186-46.037-16.725-66.73l-76.032 38.74c3.413 6.657 6.187 16.214 7.68 34.945 1.621 19.2 1.621 44.032 1.621 80.597zM806.74 179.968a85.33 85.33 0 0137.291 37.29l76.032-38.74a170.67 170.67 0 00-74.581-74.582zM332.8 85.333c-35.157 0-64.043 0-87.552 1.878-23.979 1.962-46.037 6.186-66.73 16.725l38.74 76.032c6.657-3.413 16.214-6.187 34.945-7.68 19.2-1.621 44.032-1.621 80.597-1.621zM170.667 332.8c0-36.565 0-61.397 1.621-80.597 1.493-18.688 4.267-28.288 7.68-34.944l-76.032-38.742c-10.539 20.694-14.763 42.752-16.725 66.731-1.878 23.467-1.878 52.395-1.878 87.552zm7.85-228.864a170.67 170.67 0 00-74.581 74.581l76.032 38.742a85.33 85.33 0 0137.29-37.291z",
+			fill: "currentColor"
+		})]
+	});
+	ForwardRef$17 = forwardRef(svgLayoutLeft);
+}));
+//#endregion
+//#region ~icons/svg/layout-right.jsx
+var svgLayoutRight, ForwardRef$16;
+var init_layout_right = __esmMin((() => {
+	svgLayoutRight = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 1024 1024",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			d: "M682.667 128a42.667 42.667 0 10-85.334 0zm-85.334 768a42.667 42.667 0 1085.334 0zm-399.445-13.952-19.37 38.016zm-55.936-55.936 38.016-19.37zm740.096 0-38.016-19.37zm-55.936 55.936-19.37-38.016zm0-740.096-19.37 38.016zm55.936 55.936 38.016-19.37zm-684.16-55.936 19.37 38.016zm-55.936 55.936 38.016 19.37zM597.333 128v768h85.334V128zM332.8 170.667h358.4V85.333H332.8zM853.333 332.8v358.4h85.334V332.8zM691.2 853.333H332.8v85.334h358.4zM170.667 691.2V332.8H85.333v358.4zM332.8 853.333c-36.565 0-61.397 0-80.597-1.621-18.688-1.493-28.288-4.267-34.944-7.68l-38.742 76.032c20.694 10.539 42.752 14.763 66.731 16.725 23.467 1.878 52.395 1.878 87.552 1.878zM85.333 691.2c0 35.157 0 64.043 1.878 87.552 1.962 23.979 6.186 46.037 16.725 66.73l76.032-38.74c-3.413-6.657-6.187-16.214-7.68-34.945-1.621-19.2-1.621-44.032-1.621-80.597zM217.26 844.032a85.33 85.33 0 01-37.291-37.29l-76.032 38.74a170.67 170.67 0 0074.581 74.582zM853.333 691.2c0 36.565 0 61.397-1.621 80.597-1.493 18.688-4.267 28.288-7.68 34.944l76.032 38.742c10.539-20.694 14.763-42.752 16.725-66.731 1.92-23.467 1.878-52.395 1.878-87.552zM691.2 938.667c35.157 0 64.043 0 87.552-1.878 23.979-1.962 46.037-6.186 66.73-16.725l-38.74-76.032c-6.657 3.413-16.214 6.187-34.945 7.68-19.2 1.579-44.032 1.621-80.597 1.621zM844.032 806.74a85.33 85.33 0 01-37.29 37.291l38.74 76.032a170.67 170.67 0 0074.582-74.581zM691.2 170.667c36.565 0 61.397 0 80.597 1.621 18.688 1.493 28.288 4.267 34.944 7.68l38.742-76.032c-20.694-10.539-42.752-14.763-66.731-16.725-23.467-1.878-52.395-1.878-87.552-1.878zM938.667 332.8c0-35.157 0-64.043-1.878-87.552-1.962-23.979-6.186-46.037-16.725-66.73l-76.032 38.74c3.413 6.657 6.187 16.214 7.68 34.945 1.621 19.2 1.621 44.032 1.621 80.597zM806.74 179.968a85.33 85.33 0 0137.291 37.29l76.032-38.74a170.67 170.67 0 00-74.581-74.582zM332.8 85.333c-35.157 0-64.043 0-87.552 1.878-23.979 1.962-46.037 6.186-66.73 16.725l38.74 76.032c6.657-3.413 16.214-6.187 34.945-7.68 19.2-1.621 44.032-1.621 80.597-1.621zM170.667 332.8c0-36.565 0-61.397 1.621-80.597 1.493-18.688 4.267-28.288 7.68-34.944l-76.032-38.742c-10.539 20.694-14.763 42.752-16.725 66.731-1.878 23.467-1.878 52.395-1.878 87.552zm7.85-228.864a170.67 170.67 0 00-74.581 74.581l76.032 38.742a85.33 85.33 0 0137.29-37.291z",
+			fill: "currentColor"
+		})]
+	});
+	ForwardRef$16 = forwardRef(svgLayoutRight);
+}));
+//#endregion
+//#region ~icons/svg/mixed-navigation.jsx
+var svgMixedNavigation, ForwardRef$15;
+var init_mixed_navigation = __esmMin((() => {
+	svgMixedNavigation = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 104 66",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsxs("g", {
+			fill: "none",
+			children: [
+				/* @__PURE__ */ jsx("rect", {
+					width: 104,
+					height: 66,
+					x: .135,
+					y: .135,
+					fill: "currentColor",
+					fillOpacity: .02,
+					rx: 4
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#1677ff",
+					d: "M-.074-.058h104.079v9.07H-.074z"
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 7.525,
+					height: 2.789,
+					x: 15.582,
+					y: 3.208,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#fff",
+					d: "M98.198 2.872c0-.543.457-1 1-1h1.925c.544 0 1 .457 1 1v2.4c0 .543-.456 1-1 1h-1.925c-.543 0-1-.457-1-1z"
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 44.131,
+					height: 21.519,
+					x: 53.379,
+					y: 13.457,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "currentColor",
+					fillOpacity: .08,
+					d: "M19.44 15.742c0-1.086.79-2 1.73-2h23.185c.94 0 1.73.914 1.73 2v17.25c0 1.086-.79 2-1.73 2H21.17c-.94 0-1.73-.914-1.73-2z"
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 78.394,
+					height: 21.654,
+					x: 19.936,
+					y: 39.347,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 7.525,
+					height: 2.789,
+					x: 28.149,
+					y: 3.073,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 7.525,
+					height: 2.789,
+					x: 41.257,
+					y: 3.208,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 7.525,
+					height: 2.789,
+					x: 54.23,
+					y: 3.073,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 7.784,
+					height: 7.138,
+					x: 1.533,
+					y: .881,
+					fill: "#fff",
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#69b1ff",
+					d: "M-.064 9.031h15.446v56.812H-.064z"
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#e5e5e5",
+					d: "M2.387 15.38c0-.203.272-.374.595-.374h7.982c.323 0 .595.17.595.375v3.235c0 .204-.272.375-.595.375H2.982c-.323 0-.595-.171-.595-.375zm0 13.053c0-.203.272-.375.595-.375h7.982c.323 0 .595.172.595.375v3.236c0 .203-.272.375-.595.375H2.982c-.323 0-.595-.172-.595-.375zm-.211 12.842c0-.203.272-.375.596-.375h7.981c.324 0 .596.172.596.375v3.236c0 .204-.272.375-.596.375H2.772c-.324 0-.596-.171-.596-.375zm0 13.053c0-.204.272-.375.596-.375h7.981c.324 0 .596.171.596.375v3.235c0 .204-.272.375-.596.375H2.772c-.324 0-.596-.17-.596-.375z"
+				})
+			]
+		})]
+	});
+	ForwardRef$15 = forwardRef(svgMixedNavigation);
+}));
+//#endregion
+//#region ~icons/svg/outside-page.jsx
+var svgOutsidePage, ForwardRef$14;
+var init_outside_page = __esmMin((() => {
+	svgOutsidePage = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 24 24",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M5 2c0-.55-.45-1-1-1s-1 .45-1 1v4H2c-.55 0-1 .45-1 1v5h6V7c0-.55-.45-1-1-1H5zm4 14c0 1.3.84 2.4 2 2.82V22c0 .55.45 1 1 1s1-.45 1-1v-3.18c1.16-.41 2-1.51 2-2.82v-2H9zm-8 0c0 1.3.84 2.4 2 2.82V22c0 .55.45 1 1 1s1-.45 1-1v-3.18C6.16 18.4 7 17.3 7 16v-2H1zM21 6V2c0-.55-.45-1-1-1s-1 .45-1 1v4h-1c-.55 0-1 .45-1 1v5h6V7c0-.55-.45-1-1-1zm-8-4c0-.55-.45-1-1-1s-1 .45-1 1v4h-1c-.55 0-1 .45-1 1v5h6V7c0-.55-.45-1-1-1h-1zm4 14c0 1.3.84 2.4 2 2.82V22c0 .55.45 1 1 1s1-.45 1-1v-3.18c1.16-.41 2-1.51 2-2.82v-2h-6z"
+		})]
+	});
+	ForwardRef$14 = forwardRef(svgOutsidePage);
+}));
+//#endregion
+//#region ~icons/svg/profile-card.jsx
+var svgProfileCard, ForwardRef$13;
+var init_profile_card = __esmMin((() => {
+	svgProfileCard = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 24 24",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "none",
+			stroke: "currentColor",
+			strokeLinecap: "round",
+			strokeLinejoin: "round",
+			strokeWidth: 2,
+			d: "M15 9h3m-3 3h3m-3 3h3m-6 1c-.306-.613-.933-1-1.618-1H7.618c-.685 0-1.312.387-1.618 1M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1m7 5a2 2 0 11-4 0 2 2 0 014 0"
+		})]
+	});
+	ForwardRef$13 = forwardRef(svgProfileCard);
+}));
+//#endregion
+//#region ~icons/svg/server-error.jsx
+var svgServerError, ForwardRef$12;
+var init_server_error = __esmMin((() => {
+	svgServerError = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 1189 1024",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsxs("g", {
+			fill: "currentColor",
+			children: [
+				/* @__PURE__ */ jsx("path", { d: "M694.148 784.901c-19.59-1.19-34.65-17.956-33.885-37.743s17.087-35.313 36.719-34.94c19.632.362 35.375 16.498 35.406 36.305a37.06 37.06 0 01-11.482 26.345 36.44 36.44 0 01-26.748 10.033zm-122.756 0c-19.6-1.19-34.66-17.956-33.895-37.743.775-19.787 17.097-35.313 36.719-34.94 19.642.362 35.374 16.498 35.405 36.305a37.06 37.06 0 01-11.48 26.345 36.44 36.44 0 01-26.749 10.033m-437.734-72.218h215.37v72.218h-215.37zm-58.15-86.874H10.891v202.524a44.15 44.15 0 0013.912 31.744 43.4 43.4 0 0032.395 11.688h767.255a44.48 44.48 0 0032.075-12.03 45.23 45.23 0 0014.233-31.402V625.81zm620.264-463.127c-20.966 1.603-39.47-13.706-41.995-34.754.797-20.14 16.653-36.358 36.616-37.464 20.15-.435 37.36 14.584 39.833 34.754-.207 19.57-15.112 35.788-34.454 37.464m-122.766 0a41.87 41.87 0 01-35.53-17.377 34.44 34.44 0 010-36.378 39.17 39.17 0 0141.529-17.553 39.51 39.51 0 0130.616 33.295 36 36 0 01-9.981 27.162 35.38 35.38 0 01-26.634 10.85M133.658 89.926h215.37v72.756h-215.37zM806.147 3.04H76.583c-34.382-.9-63.137 26.169-64.605 60.83v185.685H873.45V63.86c-2.586-35.219-32.313-62.07-67.304-60.819m-672.49 405.607H349.03v72.208H133.658zm436.121 0a38.73 38.73 0 0135.54 21.722 33.86 33.86 0 01-7.55 39.087 43.34 43.34 0 01-41.446 8.689 37.96 37.96 0 01-24.773-33.12c1.407-20.325 18.039-36.15 38.23-36.378m122.767 0c20.149-.434 37.36 14.574 39.843 34.744-.807 20.139-16.653 36.357-36.616 37.464-20.15.434-37.36-14.584-39.843-34.754.28-20.356 16.425-36.874 36.616-37.454M10.892 567.72h858.246V321.753H7.664z" }),
+				/* @__PURE__ */ jsx("path", { d: "M871.496 424.08c40.133 0 78.631 7.293 115.485 21.888 36.854 14.584 68.525 34.857 94.746 61.057a303.4 303.4 0 0163.333 92.387c15.825 35.396 23.748 72.953 23.748 112.661 0 39.719-7.913 77.266-23.748 112.66-15.836 35.396-36.864 66.199-63.344 92.399-26.479 26.2-57.881 47.01-94.735 62.68a292.2 292.2 0 01-115.485 23.501c-40.132 0-78.082-7.83-113.85-23.5-35.757-15.67-66.88-36.481-93.37-62.681-26.48-26.21-47.497-56.734-63.333-92.398-15.836-35.395-23.759-72.942-23.759-112.66s7.923-77.266 23.76-112.662c15.825-35.385 36.853-66.187 63.332-92.387 26.48-26.21 57.334-46.473 93.37-61.057 36.047-14.585 73.987-21.887 113.85-21.887" }),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#fff",
+					d: "M898.565 713.263 1006.24 605.67a13.074 13.074 0 00.062-18.442 12.93 12.93 0 00-18.37-.052L880.226 694.768l-106.765-107.55a12.96 12.96 0 00-18.37-.032 13.095 13.095 0 00-.03 18.463l106.754 107.53L754.18 820.7a13.074 13.074 0 009.154 22.29c3.31 0 6.62-1.261 9.164-3.795l107.645-107.54L987.9 840.186a12.93 12.93 0 0018.37.03 13.084 13.084 0 00.021-18.452L898.576 713.263z"
+				})
+			]
+		})]
+	});
+	ForwardRef$12 = forwardRef(svgServerError);
+}));
+//#endregion
+//#region ~icons/svg/side-navigation.jsx
+var svgSideNavigation, ForwardRef$11;
+var init_side_navigation = __esmMin((() => {
+	svgSideNavigation = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 104 66",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsxs("g", {
+			fill: "none",
+			children: [
+				/* @__PURE__ */ jsx("rect", {
+					width: 104,
+					height: 66,
+					fill: "currentColor",
+					fillOpacity: .02,
+					rx: 4
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#1677ff",
+					d: "M-3.378 3.62A4.492 4.025 0 011.114-.406h26.358V66H1.114a4.492 4.025 0 01-4.492-4.025z"
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 17.66,
+					height: 2.789,
+					x: 4.906,
+					y: 23.884,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 9.811,
+					height: 9.706,
+					x: 8.83,
+					y: 5.881,
+					fill: "#fff",
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#fff",
+					d: "M4.906 35.833c0-.758.637-1.395 1.395-1.395h14.87c.758 0 1.395.637 1.395 1.395v-.001c0 .758-.637 1.395-1.395 1.395H6.301a1.41 1.41 0 01-1.395-1.395z"
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 17.66,
+					height: 2.789,
+					x: 4.906,
+					y: 44.992,
+					fill: "#fff",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 17.66,
+					height: 2.789,
+					x: 4.906,
+					y: 55.546,
+					fill: "#fff",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 73.539,
+					height: 9.07,
+					x: 28.98,
+					y: 1.429,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 3.925,
+					height: 4.4,
+					x: 32.039,
+					y: 3.899,
+					fill: "#b2b2b2",
+					rx: 1
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 3.925,
+					height: 4.4,
+					x: 80.751,
+					y: 3.629,
+					fill: "#b2b2b2",
+					rx: 1
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 3.925,
+					height: 4.4,
+					x: 87.582,
+					y: 3.494,
+					fill: "#b2b2b2",
+					rx: 1
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 3.925,
+					height: 4.4,
+					x: 94.685,
+					y: 3.629,
+					fill: "#b2b2b2",
+					rx: 1
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 45.631,
+					height: 21.519,
+					x: 56.052,
+					y: 14.613,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 22.83,
+					height: 20.978,
+					x: 29.385,
+					y: 14.613,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 72.458,
+					height: 21.654,
+					x: 28.98,
+					y: 39.482,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				})
+			]
+		})]
+	});
+	ForwardRef$11 = forwardRef(svgSideNavigation);
+}));
+//#endregion
+//#region ~icons/svg/top-navigation.jsx
+var svgTopNavigation, ForwardRef$10;
+var init_top_navigation = __esmMin((() => {
+	svgTopNavigation = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 104 66",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsxs("g", {
+			fill: "none",
+			children: [
+				/* @__PURE__ */ jsx("rect", {
+					width: 104,
+					height: 66,
+					x: .135,
+					y: .135,
+					fill: "currentColor",
+					fillOpacity: .02,
+					rx: 4
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#1677ff",
+					d: "M-.074-.058h104.079v9.07H-.074z"
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 7.525,
+					height: 2.789,
+					x: 15.582,
+					y: 3.208,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#fff",
+					d: "M98.198 2.872c0-.543.457-1 1-1h1.925c.544 0 1 .457 1 1v2.4c0 .543-.456 1-1 1h-1.925c-.543 0-1-.457-1-1z"
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 53.604,
+					height: 21.519,
+					x: 43.484,
+					y: 13.667,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "currentColor",
+					fillOpacity: .08,
+					d: "M3.44 15.532c0-1.087 1.033-2 2.263-2h30.33c1.23 0 2.263.913 2.263 2V32.78c0 1.086-1.033 2-2.263 2H5.703c-1.23 0-2.264-.914-2.264-2V15.53z"
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 95.025,
+					height: 21.654,
+					x: 3.304,
+					y: 39.347,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 7.525,
+					height: 2.789,
+					x: 28.149,
+					y: 3.073,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 7.525,
+					height: 2.789,
+					x: 41.257,
+					y: 3.208,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 7.525,
+					height: 2.789,
+					x: 54.23,
+					y: 3.073,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 7.784,
+					height: 7.138,
+					x: 1.533,
+					y: .881,
+					fill: "#fff",
+					rx: 2
+				})
+			]
+		})]
+	});
+	ForwardRef$10 = forwardRef(svgTopNavigation);
+}));
+//#endregion
+//#region ~icons/svg/two-column-navigation.jsx
+var svgTwoColumnNavigation, ForwardRef$9;
+var init_two_column_navigation = __esmMin((() => {
+	svgTwoColumnNavigation = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		xmlns: "http://www.w3.org/2000/svg",
+		width: "1em",
+		height: "1em",
+		viewBox: "0 0 104 66",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsxs("g", {
+			fill: "none",
+			children: [
+				/* @__PURE__ */ jsx("rect", {
+					width: 104,
+					height: 66,
+					x: .135,
+					y: .135,
+					fill: "currentColor",
+					fillOpacity: .02,
+					rx: 4
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#1677ff",
+					d: "M-3.378 3.754A1.934 4.025 0 01-1.444-.27H9.904v66.405H-1.444a1.934 4.025 0 01-1.934-4.024z"
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 5.474,
+					height: 2.789,
+					x: 1.641,
+					y: 15.461,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 8.189,
+					height: 7.679,
+					x: .587,
+					y: 1.422,
+					fill: "#fff",
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 75.92,
+					height: 9.07,
+					x: 25.383,
+					y: 1.429,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 3.925,
+					height: 4.4,
+					x: 27.915,
+					y: 3.693,
+					fill: "#b2b2b2",
+					rx: 1
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 3.925,
+					height: 4.4,
+					x: 80.751,
+					y: 3.629,
+					fill: "#b2b2b2",
+					rx: 1
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 3.925,
+					height: 4.4,
+					x: 87.789,
+					y: 3.7,
+					fill: "#b2b2b2",
+					rx: 1
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 3.925,
+					height: 4.4,
+					x: 94.685,
+					y: 3.629,
+					fill: "#b2b2b2",
+					rx: 1
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 42.929,
+					height: 21.519,
+					x: 58.754,
+					y: 14.613,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 28.369,
+					height: 20.978,
+					x: 26.143,
+					y: 14.613,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 75.095,
+					height: 21.654,
+					x: 26.343,
+					y: 39.688,
+					fill: "currentColor",
+					fillOpacity: .08,
+					rx: 2
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 5.474,
+					height: 2.789,
+					x: 1.798,
+					y: 28.395,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 5.474,
+					height: 2.789,
+					x: 1.641,
+					y: 41.802,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("rect", {
+					width: 5.474,
+					height: 2.789,
+					x: 1.641,
+					y: 55.366,
+					fill: "#e5e5e5",
+					rx: 1.395
+				}),
+				/* @__PURE__ */ jsx("path", {
+					fill: "#69b1ff",
+					d: "M9.855-.026h12.493v65.721H9.855z"
+				})
+			]
+		})]
+	});
+	ForwardRef$9 = forwardRef(svgTwoColumnNavigation);
+}));
+//#endregion
+//#region src/icons/local-icons.ts
+var EmbeddedIcon, ExternalIcon, LayoutCenterIcon, LayoutLeftIcon, LayoutRightIcon, MixedNavigationIcon, OutsidePageIcon, ProfileCardIcon, ServerErrorIcon, SideNavigationIcon, TopNavigationIcon, TwoColumnNavigationIcon;
+var init_local_icons = __esmMin((() => {
+	init_embedded();
+	init_external();
+	init_layout_center();
+	init_layout_left();
+	init_layout_right();
+	init_mixed_navigation();
+	init_outside_page();
+	init_profile_card();
+	init_server_error();
+	init_side_navigation();
+	init_top_navigation();
+	init_two_column_navigation();
+	EmbeddedIcon = ForwardRef$20;
+	ExternalIcon = ForwardRef$19;
+	LayoutCenterIcon = ForwardRef$18;
+	LayoutLeftIcon = ForwardRef$17;
+	LayoutRightIcon = ForwardRef$16;
+	MixedNavigationIcon = ForwardRef$15;
+	OutsidePageIcon = ForwardRef$14;
+	ProfileCardIcon = ForwardRef$13;
+	ServerErrorIcon = ForwardRef$12;
+	SideNavigationIcon = ForwardRef$11;
+	TopNavigationIcon = ForwardRef$10;
+	TwoColumnNavigationIcon = ForwardRef$9;
+}));
+//#endregion
+//#region ~icons/ri/account-circle-line.jsx
+var riAccountCircleLine, ForwardRef$8;
+var init_account_circle_line = __esmMin((() => {
+	riAccountCircleLine = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		viewBox: "0 0 24 24",
+		width: "1em",
+		height: "1em",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2m.16 14a6.98 6.98 0 0 0-5.147 2.256A7.97 7.97 0 0 0 12 20a7.97 7.97 0 0 0 5.167-1.892A6.98 6.98 0 0 0 12.16 16M12 4a8 8 0 0 0-6.384 12.821A8.98 8.98 0 0 1 12.16 14a8.97 8.97 0 0 1 6.362 2.634A8 8 0 0 0 12 4m0 1a4 4 0 1 1 0 8a4 4 0 0 1 0-8m0 2a2 2 0 1 0 0 4a2 2 0 0 0 0-4"
+		})]
+	});
+	ForwardRef$8 = forwardRef(riAccountCircleLine);
+}));
+//#endregion
+//#region ~icons/ri/contrast-fill.jsx
+var riContrastFill, ForwardRef$7;
+var init_contrast_fill = __esmMin((() => {
+	riContrastFill = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		viewBox: "0 0 24 24",
+		width: "1em",
+		height: "1em",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M12 21.997c-5.523 0-10-4.477-10-10s4.477-10 10-10s10 4.477 10 10s-4.477 10-10 10m0-2v-16a8 8 0 0 0 0 16"
+		})]
+	});
+	ForwardRef$7 = forwardRef(riContrastFill);
+}));
+//#endregion
+//#region ~icons/ri/fullscreen-exit-line.jsx
+var riFullscreenExitLine, ForwardRef$6;
+var init_fullscreen_exit_line = __esmMin((() => {
+	riFullscreenExitLine = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		viewBox: "0 0 24 24",
+		width: "1em",
+		height: "1em",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M18 7h4v2h-6V3h2zM8 9H2V7h4V3h2zm10 8v4h-2v-6h6v2zM8 15v6H6v-4H2v-2z"
+		})]
+	});
+	ForwardRef$6 = forwardRef(riFullscreenExitLine);
+}));
+//#endregion
+//#region ~icons/ri/fullscreen-line.jsx
+var riFullscreenLine, ForwardRef$5;
+var init_fullscreen_line = __esmMin((() => {
+	riFullscreenLine = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		viewBox: "0 0 24 24",
+		width: "1em",
+		height: "1em",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M8 3v2H4v4H2V3zM2 21v-6h2v4h4v2zm20 0h-6v-2h4v-4h2zm0-12h-2V5h-4V3h6z"
+		})]
+	});
+	ForwardRef$5 = forwardRef(riFullscreenLine);
+}));
+//#endregion
+//#region ~icons/ri/mail-check-line.jsx
+var riMailCheckLine, ForwardRef$4;
+var init_mail_check_line = __esmMin((() => {
+	riMailCheckLine = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		viewBox: "0 0 24 24",
+		width: "1em",
+		height: "1em",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M22 14h-2V7.238l-7.928 7.1L4 7.216V19h10v2H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1zM4.511 5l7.55 6.662L19.502 5zM19 22l-3.536-3.535l1.415-1.415L19 19.172l3.535-3.536l1.415 1.414z"
+		})]
+	});
+	ForwardRef$4 = forwardRef(riMailCheckLine);
+}));
+//#endregion
+//#region ~icons/ri/moon-line.jsx
+var riMoonLine, ForwardRef$3;
+var init_moon_line = __esmMin((() => {
+	riMoonLine = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		viewBox: "0 0 24 24",
+		width: "1em",
+		height: "1em",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12S6.477 2 12 2h.1A6.98 6.98 0 0 0 10 7m-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938A8 8 0 0 0 4 12"
+		})]
+	});
+	ForwardRef$3 = forwardRef(riMoonLine);
+}));
+//#endregion
+//#region ~icons/ri/reactjs-line.jsx
+var riReactjsLine, ForwardRef$2;
+var init_reactjs_line = __esmMin((() => {
+	riReactjsLine = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		viewBox: "0 0 24 24",
+		width: "1em",
+		height: "1em",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M12.001 13.5a1.5 1.5 0 1 1 0-3a1.5 1.5 0 0 1 0 3m-.528 2.994q.262.316.528.609q.266-.292.528-.609a25 25 0 0 1-1.056 0m-1.995-.125a21 21 0 0 1-2.285-.367q-.113.525-.17 1.015c-.19 1.583.075 2.545.478 2.777s1.368-.019 2.645-.974q.395-.296.794-.655a21 21 0 0 1-1.462-1.796m7.331-.367a21 21 0 0 1-2.285.367a21 21 0 0 1-1.462 1.796q.4.36.794.655c1.277.955 2.242 1.207 2.645.974c.403-.232.667-1.194.479-2.777a11 11 0 0 0-.17-1.015m1.45-.388c.577 2.639.274 4.74-1.008 5.48s-3.253-.048-5.25-1.867c-1.997 1.819-3.968 2.606-5.25 1.866s-1.585-2.84-1.009-5.48C3.168 14.794 1.501 13.48 1.501 12s1.667-2.793 4.241-3.613c-.576-2.64-.273-4.74 1.009-5.48s3.253.047 5.25 1.866c1.997-1.819 3.968-2.606 5.25-1.866s1.585 2.84 1.009 5.48c2.573.82 4.24 2.133 4.24 3.613s-1.668 2.794-4.241 3.614m-7.32-9.779q-.398-.359-.793-.655C8.869 4.225 7.904 3.973 7.5 4.206c-.403.232-.667 1.194-.479 2.778q.06.49.17 1.015a21 21 0 0 1 2.286-.368q.714-.981 1.462-1.796m3.585 1.796a21 21 0 0 1 2.285.368q.113-.526.17-1.015c.19-1.584-.075-2.546-.478-2.778s-1.368.019-2.645.974q-.395.296-.794.655q.748.815 1.462 1.796m-1.995-.125q-.262-.316-.528-.609q-.265.293-.528.609a25 25 0 0 1 1.056 0m-4.156 7.198a25 25 0 0 1-.528-.914q-.143.385-.263.762q.386.083.79.152m1.932.234a23 23 0 0 0 3.392 0A23 23 0 0 0 15.393 12a23 23 0 0 0-1.696-2.938a23 23 0 0 0-3.392 0A23 23 0 0 0 8.609 12a23 23 0 0 0 1.696 2.938m5.852-4.728q.143-.385.263-.761a18 18 0 0 0-.79-.153a25 25 0 0 1 .527.914M6.131 9.837q-.51.165-.964.36c-1.465.628-2.166 1.338-2.166 1.803s.7 1.175 2.166 1.803q.454.195.964.36c.222-.7.497-1.426.825-2.163a21 21 0 0 1-.825-2.163m1.45-.388q.121.375.264.76a25 25 0 0 1 .528-.913q-.405.069-.791.153m10.29 4.714q.51-.165.964-.36C20.3 13.175 21 12.465 21 12s-.7-1.175-2.166-1.803q-.454-.195-.965-.36c-.22.7-.496 1.426-.824 2.163c.328.737.603 1.463.825 2.163m-1.45.389q-.122-.377-.264-.762a25 25 0 0 1-.528.914q.405-.07.791-.152"
+		})]
+	});
+	ForwardRef$2 = forwardRef(riReactjsLine);
+}));
+//#endregion
+//#region ~icons/ri/sun-line.jsx
+var riSunLine, ForwardRef$1;
+var init_sun_line = __esmMin((() => {
+	riSunLine = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		viewBox: "0 0 24 24",
+		width: "1em",
+		height: "1em",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M12 18a6 6 0 1 1 0-12a6 6 0 0 1 0 12m0-2a4 4 0 1 0 0-8a4 4 0 0 0 0 8M11 1h2v3h-2zm0 19h2v3h-2zM3.515 4.929l1.414-1.414L7.05 5.636L5.636 7.05zM16.95 18.364l1.414-1.414l2.121 2.121l-1.414 1.414zm2.121-14.85l1.414 1.415l-2.121 2.121l-1.414-1.414zM5.636 16.95l1.414 1.414l-2.121 2.121l-1.414-1.414zM23 11v2h-3v-2zM4 11v2H1v-2z"
+		})]
+	});
+	ForwardRef$1 = forwardRef(riSunLine);
+}));
+//#endregion
+//#region ~icons/ri/user-settings-line.jsx
+var riUserSettingsLine, ForwardRef;
+var init_user_settings_line = __esmMin((() => {
+	riUserSettingsLine = ({ title, titleId, ...props }, ref) => /* @__PURE__ */ jsxs("svg", {
+		viewBox: "0 0 24 24",
+		width: "1em",
+		height: "1em",
+		ref,
+		"aria-labelledby": titleId,
+		...props,
+		children: [title ? /* @__PURE__ */ jsx("title", {
+			id: titleId,
+			children: title
+		}) : null, /* @__PURE__ */ jsx("path", {
+			fill: "currentColor",
+			d: "M12 14v2a6 6 0 0 0-6 6H4a8 8 0 0 1 8-8m0-1c-3.315 0-6-2.685-6-6s2.685-6 6-6s6 2.685 6 6s-2.685 6-6 6m0-2c2.21 0 4-1.79 4-4s-1.79-4-4-4s-4 1.79-4 4s1.79 4 4 4m2.595 7.811a3.5 3.5 0 0 1 0-1.622l-.992-.573l1-1.732l.992.573A3.5 3.5 0 0 1 17 14.645V13.5h2v1.145c.532.158 1.012.44 1.405.812l.992-.573l1 1.732l-.991.573a3.5 3.5 0 0 1 0 1.622l.991.573l-1 1.732l-.992-.573a3.5 3.5 0 0 1-1.405.812V22.5h-2v-1.145a3.5 3.5 0 0 1-1.405-.812l-.992.573l-1-1.732zM18 19.5a1.5 1.5 0 1 0 0-3a1.5 1.5 0 0 0 0 3"
+		})]
+	});
+	ForwardRef = forwardRef(riUserSettingsLine);
+}));
+//#endregion
+//#region src/icons/ri.ts
+var RiAccountCircleLine, RiContrastFill, RiFullscreenExitLine, RiFullscreenLine, RiMailCheckLine, RiMoonIcon, RiReactjsLine, RiSunIcon, RiUserSettingsLine;
+var init_ri = __esmMin((() => {
+	init_account_circle_line();
+	init_contrast_fill();
+	init_fullscreen_exit_line();
+	init_fullscreen_line();
+	init_mail_check_line();
+	init_moon_line();
+	init_reactjs_line();
+	init_sun_line();
+	init_user_settings_line();
+	RiAccountCircleLine = ForwardRef$8;
+	RiContrastFill = ForwardRef$7;
+	RiFullscreenExitLine = ForwardRef$6;
+	RiFullscreenLine = ForwardRef$5;
+	RiMailCheckLine = ForwardRef$4;
+	RiMoonIcon = ForwardRef$3;
+	RiReactjsLine = ForwardRef$2;
+	RiSunIcon = ForwardRef$1;
+	RiUserSettingsLine = ForwardRef;
+}));
+//#endregion
+//#region src/icons/menu-icons.ts
+var menuIcons;
+var init_menu_icons = __esmMin((() => {
+	init_local_icons();
+	init_ri();
+	menuIcons = {
+		EmbeddedIcon,
+		HomeOutlined,
+		SafetyOutlined,
+		CloudOutlined,
+		FileTextOutlined,
+		LockOutlined,
+		EyeOutlined,
+		NodeExpandOutlined,
+		SisternodeOutlined,
+		SubnodeOutlined,
+		OutsidePageIcon,
+		AntDesignOutlined,
+		ContainerOutlined,
+		ExternalIcon,
+		RiReactjsLine,
+		SettingOutlined,
+		UserOutlined,
+		TeamOutlined,
+		MenuOutlined,
+		ApartmentOutlined,
+		RiAccountCircleLine,
+		ProfileCardIcon,
+		RiUserSettingsLine,
+		CopyrightOutlined
+	};
+}));
+//#endregion
+//#region src/icons/index.ts
+var init_icons = __esmMin((() => {
+	init_local_icons();
+	init_menu_icons();
+	init_ri();
+}));
+//#endregion
+//#region src/layout/widgets/notification/index.tsx
+var useStyles$4, NotificationPopup;
+var init_notification = __esmMin((() => {
+	init_icons();
+	init_cn();
+	useStyles$4 = createUseStyles(({ token }) => ({ notification: {
+		"& .ant-popover-inner": { padding: 0 },
+		"& .ant-list-footer": { borderTop: `1px solid ${token.colorBorder}` },
+		"& .ant-list-items": {
+			height: 380,
+			overflowY: "auto"
+		}
+	} }));
+	NotificationPopup = ({ dot, notifications, onEventChange, ...restProps }) => {
+		const [open, action] = useToggle();
+		const classes = useStyles$4();
+		const { t } = useTranslation();
+		const close = () => {
+			action.set(false);
+		};
+		const handleViewAll = () => {
+			onEventChange && onEventChange("viewAll");
+			close();
+		};
+		const handleMakeAll = () => {
+			onEventChange && onEventChange("makeAll");
+		};
+		const handleClear = () => {
+			onEventChange && onEventChange("clear");
+		};
+		const handleClick = (item) => {
+			onEventChange && onEventChange("read", item);
+		};
+		dot = useMemo(() => {
+			return !!notifications?.filter((item) => !item.isRead).length;
+		}, [notifications]);
+		return /* @__PURE__ */ jsx(Popover, {
+			placement: "bottomLeft",
+			classNames: { root: clsx(classes.notification, "w-72 md:w-96 right-4") },
+			open,
+			arrow: false,
+			trigger: "click",
+			onOpenChange: action.set,
+			content: /* @__PURE__ */ jsx(List, {
+				size: "small",
+				bordered: true,
+				header: /* @__PURE__ */ jsxs("div", {
+					className: "flex items-center justify-between",
+					children: [/* @__PURE__ */ jsx("div", { children: t("widgets.notifications") }), /* @__PURE__ */ jsx(Tooltip, {
+						title: notifications?.length ? t("widgets.markAllAsRead") : null,
+						children: /* @__PURE__ */ jsx(BasicButton, {
+							disabled: !notifications?.length,
+							onClick: handleMakeAll,
+							type: "text",
+							icon: /* @__PURE__ */ jsx(RiMailCheckLine, {})
+						})
+					})]
+				}),
+				footer: /* @__PURE__ */ jsxs("div", {
+					className: "flex items-center justify-between",
+					children: [/* @__PURE__ */ jsx(BasicButton, {
+						disabled: !notifications?.length,
+						type: "text",
+						onClick: handleClear,
+						children: t("widgets.clearNotifications")
+					}), /* @__PURE__ */ jsx(BasicButton, {
+						onClick: handleViewAll,
+						children: t("widgets.viewAll")
+					})]
+				}),
+				dataSource: notifications,
+				renderItem: (item) => /* @__PURE__ */ jsxs(List.Item, {
+					className: "relative justify-start gap-5 hover:bg-gray-100 cursor-pointer",
+					onClick: () => handleClick(item),
+					children: [
+						!item.isRead && /* @__PURE__ */ jsx("span", { className: "absolute w-2 h-2 rounded bg-primary right-2 top-2" }),
+						/* @__PURE__ */ jsx("span", {
+							className: "relative flex w-10 h-10 overflow-hidden rounded-full shrink-0",
+							children: /* @__PURE__ */ jsx("img", {
+								src: item.avatar,
+								className: "object-cover w-full h-full aspect-square",
+								role: "img"
+							})
+						}),
+						/* @__PURE__ */ jsxs("div", {
+							className: "flex flex-col gap-1 leading-none",
+							children: [
+								/* @__PURE__ */ jsx("p", {
+									className: "font-semibold",
+									children: item.title
+								}),
+								/* @__PURE__ */ jsx("p", {
+									className: "my-1 text-xs text-muted-foreground line-clamp-2",
+									children: item.message
+								}),
+								/* @__PURE__ */ jsx("p", {
+									className: "text-xs text-muted-foreground line-clamp-2",
+									children: item.date
+								})
+							]
+						})
+					]
+				})
+			}),
+			children: /* @__PURE__ */ jsx(BasicButton, {
+				size: "large",
+				type: "text",
+				...restProps,
+				className: cn("relative group", restProps.className),
+				icon: /* @__PURE__ */ jsx(BellOutlined, { className: "group-hover:animate-wiggle" }),
+				children: dot && /* @__PURE__ */ jsx("span", { className: "bg-blue-600 absolute right-2 top-1.5 h-2 w-2 rounded" })
+			})
+		});
+	};
+}));
+//#endregion
+//#region src/layout/widgets/notification/notification-container.tsx
+function NotificationContainer({ ...restProps }) {
+	const [notifications, setNotifications] = useState([]);
+	useEffect(() => {
+		fetchNotifications().then((res) => {
+			setNotifications(Array.from({ length: 20 }).flatMap(() => res.result));
+		});
+	}, []);
+	return /* @__PURE__ */ jsx(NotificationPopup, {
+		notifications,
+		...restProps
+	});
+}
+var init_notification_container = __esmMin((() => {
+	init_notifications();
+	init_notification();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/switch-item.tsx
+function SwitchItem({ tooltip, children, disabled, checked, name, onChange, ...restProps }) {
+	return /* @__PURE__ */ jsxs("div", {
+		className: "hover:bg-gray-100 dark:hover:bg-gray-700 my-1 flex w-full items-center justify-between rounded-md px-2 py-2.5",
+		children: [/* @__PURE__ */ jsxs("div", {
+			className: "flex gap-2",
+			children: [/* @__PURE__ */ jsx("span", {
+				className: "flex items-center text-sm",
+				children
+			}), tooltip ? /* @__PURE__ */ jsx(Tooltip, {
+				title: tooltip,
+				children: /* @__PURE__ */ jsx(QuestionCircleOutlined, {})
+			}) : null]
+		}), /* @__PURE__ */ jsx(Switch, {
+			disabled,
+			checked,
+			size: "default",
+			onChange: () => onChange?.(name, !checked),
+			...restProps
+		})]
+	});
+}
+var init_switch_item = __esmMin((() => {}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/animation/index.tsx
+function Animation() {
+	const transitionEnable = usePreferencesStore((state) => state.transitionEnable);
+	const transitionLoading = usePreferencesStore((state) => state.transitionLoading);
+	const transitionProgress = usePreferencesStore((state) => state.transitionProgress);
+	const transitionName = usePreferencesStore((state) => state.transitionName);
+	const setPreferences = usePreferencesStore((state) => state.setPreferences);
+	const { t } = useTranslation();
+	function handleClick(value) {
+		setPreferences("transitionName", value);
+	}
+	return /* @__PURE__ */ jsxs(Fragment, { children: [
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "transitionProgress",
+			checked: transitionProgress,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.animation.progress")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "transitionLoading",
+			checked: transitionLoading,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.animation.loading")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "transitionEnable",
+			checked: transitionEnable,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.animation.transition")
+		}),
+		/* @__PURE__ */ jsx("ul", {
+			className: "w-full flex flex-wrap justify-between gap-x-3 gap-y-5 list-none px-0",
+			children: transitionPreset.map((item) => /* @__PURE__ */ jsx("li", {
+				onClick: () => handleClick(item),
+				className: cn("relative p-2 outline outline-1 outline-gray-300 dark:outline-gray-700 cursor-pointer rounded-md", "before:content-[''] before:absolute before:left-1/2 before:top-1/2 before:h-0 before:w-0 before:rounded-sm before:opacity-0 before:outline before:outline-2 before:outline-transparent", item === transitionName ? "" : "before:transition-all before:duration-300", item === transitionName ? "" : "before:hover:outline-blue-600 dark:before:hover:outline-blue-700 before:hover:left-0 before:hover:top-0 before:hover:h-full before:hover:w-full before:hover:p-1 before:hover:opacity-100", { "outline-2 outline-blue-600 dark:outline-blue-700": item === transitionName }),
+				children: /* @__PURE__ */ jsx("div", {
+					className: cn("dark:bg-gray-700", "bg-gray-100 h-10 w-12 rounded-md text-xs flex items-center justify-center text-center", {
+						"fade-slide": item === "fade-slide",
+						"fade": item === "fade",
+						"fade-up": item === "fade-up",
+						"fade-down": item === "fade-down",
+						"fade-zoom": item === "fade-zoom"
+					}),
+					children: /* @__PURE__ */ jsx("span", {
+						className: "scale-75 text-opacity-75",
+						children: item
+					})
+				})
+			}, item))
+		})
+	] });
+}
+var transitionPreset;
+var init_animation = __esmMin((() => {
+	init_preferences$3();
+	init_cn();
+	init_switch_item();
+	transitionPreset = [
+		"fade",
+		"fade-slide",
+		"fade-up",
+		"fade-down",
+		"fade-zoom"
+	];
+}));
+//#endregion
+//#region src/layout/widgets/preferences/text-input.tsx
+function TextInput({ children, disabled, value, name, onChange }) {
+	const handleChange = (event) => {
+		if (event) onChange?.(name, event.target.value);
+	};
+	return /* @__PURE__ */ jsxs("div", {
+		className: "hover:bg-gray-100 dark:hover:bg-gray-700 my-1 flex w-full items-center justify-between rounded-md px-2 py-2.5",
+		children: [/* @__PURE__ */ jsx("span", {
+			className: "flex items-center text-sm",
+			children
+		}), /* @__PURE__ */ jsx(Input, {
+			className: "w-40",
+			disabled,
+			allowClear: true,
+			value,
+			onChange: handleChange
+		})]
+	});
+}
+var init_text_input = __esmMin((() => {}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/footer/index.tsx
+function PreferencesFooter() {
+	const { t } = useTranslation();
+	const { enableFooter, fixedFooter, companyName, companyWebsite, copyrightDate, ICPNumber, ICPLink, setPreferences } = usePreferencesStore();
+	return /* @__PURE__ */ jsxs(Fragment, { children: [
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "enableFooter",
+			checked: enableFooter,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.footer.showFooter")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "fixedFooter",
+			checked: fixedFooter,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.footer.fixedFooter")
+		}),
+		/* @__PURE__ */ jsx(TextInput, {
+			name: "companyName",
+			value: companyName,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.footer.companyName")
+		}),
+		/* @__PURE__ */ jsx(TextInput, {
+			name: "companyWebsite",
+			value: companyWebsite,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.footer.companyWebsite")
+		}),
+		/* @__PURE__ */ jsx(TextInput, {
+			name: "copyrightDate",
+			value: copyrightDate,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.footer.copyrightDate")
+		}),
+		/* @__PURE__ */ jsx(TextInput, {
+			name: "ICPNumber",
+			value: ICPNumber,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.footer.ICPNumber")
+		}),
+		/* @__PURE__ */ jsx(TextInput, {
+			name: "ICPLink",
+			value: ICPLink,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.footer.ICPLink")
+		})
+	] });
+}
+var init_footer = __esmMin((() => {
+	init_preferences$3();
+	init_switch_item();
+	init_text_input();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/select-item.tsx
+function SelectItem({ children, items, disabled, value, name }) {
+	const { setPreferences } = usePreferencesStore();
+	return /* @__PURE__ */ jsxs("div", {
+		className: "hover:bg-gray-100 dark:hover:bg-gray-700 my-1 flex w-full items-center justify-between rounded-md px-2 py-2.5",
+		children: [/* @__PURE__ */ jsx("span", {
+			className: "flex items-center text-sm",
+			children
+		}), /* @__PURE__ */ jsx(Select, {
+			className: "w-2/5",
+			options: items,
+			disabled,
+			value,
+			onChange: (value) => setPreferences(name, value)
+		})]
+	});
+}
+var init_select_item = __esmMin((() => {
+	init_preferences$3();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/general/utils.ts
+var getLanguageItems;
+var init_utils$2 = __esmMin((() => {
+	getLanguageItems = () => {
+		return [{
+			label: "简体中文",
+			key: "zh-CN",
+			value: "zh-CN"
+		}, {
+			label: "English",
+			key: "en-US",
+			value: "en-US"
+		}];
+	};
+}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/general/index.tsx
+function General() {
+	const { t } = useTranslation();
+	const { language, enableDynamicTitle, watermark, watermarkContent, enableCheckUpdates, enableBackTopButton, setPreferences } = usePreferencesStore();
+	return /* @__PURE__ */ jsxs(Fragment, { children: [
+		/* @__PURE__ */ jsx(SelectItem, {
+			name: "language",
+			value: language,
+			items: getLanguageItems(),
+			children: t("preferences.general.language")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "enableDynamicTitle",
+			checked: enableDynamicTitle,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.general.dynamicTitle")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "enableCheckUpdates",
+			checked: enableCheckUpdates,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.general.enableCheckUpdate")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "enableBackTopButton",
+			checked: enableBackTopButton,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.general.enableBackTopButton")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "watermark",
+			checked: watermark,
+			onChange: (name, value) => setPreferences(name, value),
+			tooltip: t("preferences.general.watermarkTip"),
+			children: t("preferences.general.watermark")
+		}),
+		/* @__PURE__ */ jsx(TextInput, {
+			name: "watermarkContent",
+			value: watermarkContent,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.general.watermarkContent")
+		})
+	] });
+}
+var init_general = __esmMin((() => {
+	init_preferences$3();
+	init_select_item();
+	init_switch_item();
+	init_text_input();
+	init_utils$2();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/layout/index.tsx
+function PreferencesLayout() {
+	const navigationStyle = usePreferencesStore((state) => state.navigationStyle);
+	const setPreferences = usePreferencesStore((state) => state.setPreferences);
+	const { t } = useTranslation();
+	const navigationPreset = [
+		{
+			name: t("preferences.layout.sideNavigation"),
+			tip: t("preferences.layout.sideNavigationTip"),
+			icon: /* @__PURE__ */ jsx(SideNavigationIcon, { className: "h-[0.63em] text-[4rem] en-US:text-[9rem]" }),
+			type: SIDE_NAVIGATION
+		},
+		{
+			name: t("preferences.layout.topNavigation"),
+			tip: t("preferences.layout.topNavigationTip"),
+			icon: /* @__PURE__ */ jsx(TopNavigationIcon, { className: "h-[0.63em] text-[4rem] en-US:text-[9rem]" }),
+			type: TOP_NAVIGATION
+		},
+		{
+			name: t("preferences.layout.twoColumnNavigation"),
+			tip: t("preferences.layout.twoColumnNavigationTip"),
+			icon: /* @__PURE__ */ jsx(TwoColumnNavigationIcon, { className: "h-[0.63em] text-[4rem] en-US:text-[9rem]" }),
+			type: TWO_COLUMN_NAVIGATION
+		},
+		{
+			name: t("preferences.layout.mixedNavigation"),
+			tip: t("preferences.layout.mixedNavigationTip"),
+			icon: /* @__PURE__ */ jsx(MixedNavigationIcon, { className: "h-[0.63em] text-[4rem] en-US:text-[9rem]" }),
+			type: MIXED_NAVIGATION
+		}
+	];
+	function handleClick(value) {
+		setPreferences("navigationStyle", value);
+	}
+	return /* @__PURE__ */ jsx(Fragment, { children: /* @__PURE__ */ jsx("ul", {
+		className: "w-full flex flex-wrap justify-between gap-1 en-US:gap-y-3 px-0 list-none",
+		children: navigationPreset.map((item) => /* @__PURE__ */ jsx("li", {
+			onClick: () => handleClick(item.type),
+			children: /* @__PURE__ */ jsxs("dl", {
+				className: "mb-0",
+				children: [/* @__PURE__ */ jsx("dd", {
+					className: cn("relative p-1 outline outline-1 outline-gray-300 dark:outline-gray-700 rounded-md cursor-pointer", "before:content-[''] before:absolute before:left-1/2 before:top-1/2 before:h-0 before:w-0 before:rounded-sm before:opacity-0 before:outline before:outline-2 before:outline-transparent", item.type === navigationStyle ? "" : "before:transition-all before:duration-300", item.type === navigationStyle ? "" : "before:hover:outline-blue-600 dark:before:hover:outline-blue-700 before:hover:left-0 before:hover:top-0 before:hover:h-full before:hover:w-full before:hover:p-1 before:hover:opacity-100", { "outline-2 outline-blue-600 dark:outline-blue-700": item.type === navigationStyle }),
+					children: item.icon
+				}), /* @__PURE__ */ jsxs("dt", {
+					className: "mt-2.5 flex gap-1 justify-center text-xs opacity-90",
+					children: [/* @__PURE__ */ jsx("span", {
+						className: "",
+						children: item.name
+					}), /* @__PURE__ */ jsx(Tooltip, {
+						title: item.tip,
+						placement: "bottom",
+						children: /* @__PURE__ */ jsx(QuestionCircleOutlined, { className: "cursor-help" })
+					})]
+				})]
+			})
+		}, item.type))
+	}) });
+}
+var init_layout = __esmMin((() => {
+	init_icons();
+	init_constants$3();
+	init_preferences$3();
+	init_cn();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/number-input-spinner.tsx
+function NumberInputSpinner({ children, disabled, value, name, onChange, min, max }) {
+	const handleChange = (v) => {
+		if (v && isNumber(v)) onChange?.(name, v);
+	};
+	return /* @__PURE__ */ jsxs("div", {
+		className: "hover:bg-gray-100 dark:hover:bg-gray-700 my-1 flex w-full items-center justify-between rounded-md px-2 py-2.5",
+		children: [/* @__PURE__ */ jsx("span", {
+			className: "flex items-center text-sm",
+			children
+		}), /* @__PURE__ */ jsx(InputNumber, {
+			className: "w-40",
+			min,
+			max,
+			precision: 0,
+			changeOnWheel: true,
+			mode: "spinner",
+			disabled,
+			value,
+			onChange: handleChange
+		})]
+	});
+}
+var init_number_input_spinner = __esmMin((() => {
+	init_is();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/sidebar/index.tsx
+function Sidebar() {
+	const { accordion, sidebarEnable, sidebarCollapsed, sidebarWidth, setPreferences, sideCollapsedWidth, sidebarTheme, firstColumnWidthInTwoColumnNavigation } = usePreferencesStore();
+	const { t } = useTranslation();
+	const sidebarPreset = [
+		{
+			label: t("preferences.sidebar.enable"),
+			name: "sidebarEnable",
+			value: sidebarEnable,
+			disabled: false
+		},
+		{
+			label: t("preferences.sidebar.collapsed"),
+			name: "sidebarCollapsed",
+			value: sidebarCollapsed,
+			disabled: !sidebarEnable
+		},
+		{
+			label: t("preferences.sidebar.accordion"),
+			name: "accordion",
+			value: accordion,
+			disabled: !sidebarEnable
+		}
+	];
+	const handleChange = (name, value) => {
+		setPreferences(name, value);
+	};
+	return /* @__PURE__ */ jsxs(Fragment, { children: [
+		sidebarPreset.map((item) => {
+			return /* @__PURE__ */ jsx(SwitchItem, {
+				name: item.name,
+				checked: item.value,
+				onChange: handleChange,
+				children: item.label,
+				disabled: item.disabled
+			}, item.name);
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "sidebarTheme",
+			checked: sidebarTheme === "light",
+			onChange: (name, value) => setPreferences(name, value ? "light" : "dark"),
+			children: t("preferences.sidebar.sidebarTheme"),
+			disabled: !sidebarEnable,
+			unCheckedChildren: /* @__PURE__ */ jsx(RiContrastFill, {}),
+			checkedChildren: /* @__PURE__ */ jsx(RiMoonIcon, {})
+		}),
+		/* @__PURE__ */ jsx(NumberInputSpinner, {
+			min: 40,
+			max: 80,
+			name: "sideCollapsedWidth",
+			value: sideCollapsedWidth,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.sidebar.collapsedWidth")
+		}),
+		/* @__PURE__ */ jsx(NumberInputSpinner, {
+			min: 180,
+			max: 320,
+			name: "sidebarWidth",
+			value: sidebarWidth,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.sidebar.width")
+		}),
+		/* @__PURE__ */ jsx(NumberInputSpinner, {
+			min: 50,
+			max: 250,
+			name: "firstColumnWidthInTwoColumnNavigation",
+			value: firstColumnWidthInTwoColumnNavigation,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.sidebar.firstColumnWidthInTwoColumnNavigation")
+		})
+	] });
+}
+var init_sidebar = __esmMin((() => {
+	init_icons();
+	init_number_input_spinner();
+	init_preferences$3();
+	init_switch_item();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/tabbar/index.tsx
+function Tabbar() {
+	const { t } = useTranslation();
+	const { tabbarEnable, tabbarShowIcon, tabbarPersist, tabbarDraggable, tabbarStyleType, tabbarShowMore, tabbarShowMaximize, setPreferences } = usePreferencesStore();
+	const styleItems = [
+		{
+			label: t("preferences.tabbar.styleType.chrome"),
+			value: "chrome"
+		},
+		{
+			label: t("preferences.tabbar.styleType.plain"),
+			value: "plain"
+		},
+		{
+			label: t("preferences.tabbar.styleType.card"),
+			value: "card"
+		},
+		{
+			label: t("preferences.tabbar.styleType.brisk"),
+			value: "brisk"
+		}
+	];
+	return /* @__PURE__ */ jsxs(Fragment, { children: [
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "tabbarEnable",
+			checked: tabbarEnable,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.tabbar.enable")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "tabbarPersist",
+			checked: tabbarPersist,
+			disabled: !tabbarEnable,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.tabbar.persist")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "tabbarDraggable",
+			checked: tabbarDraggable,
+			disabled: true,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.tabbar.draggable")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "tabbarShowIcon",
+			checked: tabbarShowIcon,
+			disabled: true,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.tabbar.icon")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "tabbarShowMore",
+			checked: tabbarShowMore,
+			disabled: !tabbarEnable,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.tabbar.showMore")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "tabbarShowMaximize",
+			checked: tabbarShowMaximize,
+			disabled: !tabbarEnable,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.tabbar.showMaximize")
+		}),
+		/* @__PURE__ */ jsx(SelectItem, {
+			name: "tabbarStyleType",
+			value: tabbarStyleType,
+			disabled: !tabbarEnable,
+			items: styleItems,
+			children: t("preferences.tabbar.styleType.title")
+		})
+	] });
+}
+var init_tabbar = __esmMin((() => {
+	init_preferences$3();
+	init_select_item();
+	init_switch_item();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/theme/builtin.tsx
+function BuiltinTheme() {
+	const { builtinTheme, themeColorPrimary, setPreferences } = usePreferencesStore();
+	const [color, setColor] = useState(builtinTheme === "custom" ? themeColorPrimary : "#1677ff");
+	const { t } = useTranslation();
+	const builtinThemePresets = [
+		{
+			label: t("preferences.theme.builtin.red"),
+			value: "red",
+			color: "#f5222d"
+		},
+		{
+			label: t("preferences.theme.builtin.volcano"),
+			value: "volcano",
+			color: "#fa541c"
+		},
+		{
+			label: t("preferences.theme.builtin.orange"),
+			value: "orange",
+			color: "#fa8c16"
+		},
+		{
+			label: t("preferences.theme.builtin.gold"),
+			value: "gold",
+			color: "#faad14"
+		},
+		{
+			label: t("preferences.theme.builtin.yellow"),
+			value: "yellow",
+			color: "#fadb14"
+		},
+		{
+			label: t("preferences.theme.builtin.lime"),
+			value: "lime",
+			color: "#a0d911"
+		},
+		{
+			label: t("preferences.theme.builtin.green"),
+			value: "green",
+			color: "#52c41a"
+		},
+		{
+			label: t("preferences.theme.builtin.cyan"),
+			value: "cyan",
+			color: "#13c2c2"
+		},
+		{
+			label: /* @__PURE__ */ jsxs(Fragment, { children: [
+				/* @__PURE__ */ jsx("span", { children: t("preferences.theme.builtin.blue") }),
+				/* @__PURE__ */ jsx("br", { className: "zh-CN:hidden" }),
+				/* @__PURE__ */ jsxs("span", { children: [
+					"(",
+					t("preferences.theme.builtin.title"),
+					")"
+				] })
+			] }),
+			value: "blue",
+			color: "#1677ff"
+		},
+		{
+			label: t("preferences.theme.builtin.geekblue"),
+			value: "geekblue",
+			color: "#2f54eb"
+		},
+		{
+			label: t("preferences.theme.builtin.purple"),
+			value: "purple",
+			color: "#722ed1"
+		},
+		{
+			label: t("preferences.theme.builtin.magenta"),
+			value: "magenta",
+			color: "#eb2f96"
+		},
+		{
+			label: t("preferences.theme.builtin.gray"),
+			value: "gray",
+			color: "#bfbfbf"
+		},
+		{
+			label: t("preferences.theme.builtin.custom"),
+			value: "custom",
+			color: "#1677ff"
+		}
+	];
+	const handleColorChange = (aggregationColor) => {
+		const newColor = `#${aggregationColor.toHex()}`;
+		setColor(newColor);
+		setPreferences({
+			builtinTheme: "custom",
+			themeColorPrimary: newColor
+		});
+	};
+	function handleClick(value) {
+		setPreferences({
+			builtinTheme: value,
+			themeColorPrimary: builtinThemePresets.find((item) => item.value === value)?.color
+		});
+	}
+	return /* @__PURE__ */ jsx(Fragment, { children: /* @__PURE__ */ jsx("ul", {
+		className: "flex justify-between flex-wrap w-full gap-3 p-0 m-0 list-none",
+		children: builtinThemePresets.map((item) => {
+			const innerBlock = /* @__PURE__ */ jsx("li", {
+				onClick: () => handleClick(item.value),
+				children: /* @__PURE__ */ jsxs("dl", {
+					className: "mb-0",
+					children: [/* @__PURE__ */ jsx("dd", {
+						className: cn("relative py-4 px-9 outline outline-1 outline-gray-300 dark:outline-gray-700 rounded-md cursor-pointer", "before:content-[''] before:absolute before:left-1/2 before:top-1/2 before:h-0 before:w-0 before:rounded-sm before:opacity-0 before:outline before:outline-2 before:outline-transparent", item.value === builtinTheme ? "" : "before:transition-all before:duration-300", item.value === builtinTheme ? "" : "before:hover:outline-blue-600 dark:before:hover:outline-blue-700 before:hover:left-0 before:hover:top-0 before:hover:h-full before:hover:w-full before:hover:p-1 before:hover:opacity-100", { "outline-2 outline-blue-600 dark:outline-blue-700": item.value === builtinTheme }),
+						children: /* @__PURE__ */ jsxs("div", {
+							className: "rounded-md size-5",
+							style: { backgroundColor: item.value === "custom" ? color : item.color },
+							children: [/* @__PURE__ */ jsx("span", {
+								className: "hidden",
+								children: item.label
+							}), /* @__PURE__ */ jsx("span", {
+								className: "hidden",
+								children: item.color
+							})]
+						})
+					}), /* @__PURE__ */ jsx("dt", {
+						className: "mt-2.5 flex gap-1 justify-center text-xs opacity-90",
+						children: /* @__PURE__ */ jsx("span", {
+							className: "",
+							children: item.label
+						})
+					})]
+				})
+			}, item.value);
+			if (item.value === "custom") return /* @__PURE__ */ jsx(ColorPicker, {
+				value: color,
+				onChangeComplete: handleColorChange,
+				children: innerBlock
+			}, item.value);
+			return innerBlock;
+		})
+	}) });
+}
+var init_builtin = __esmMin((() => {
+	init_preferences$3();
+	init_cn();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/theme/theme.tsx
+function SiteTheme() {
+	const { t } = useTranslation();
+	const { theme, colorBlindMode, colorGrayMode, themeRadius, changeSiteTheme, setPreferences } = usePreferencesStore();
+	const themePresets = [
+		{
+			name: t("preferences.theme.light"),
+			icon: /* @__PURE__ */ jsx(RiSunIcon, { className: "text-xl" }),
+			type: "light"
+		},
+		{
+			name: t("preferences.theme.dark"),
+			icon: /* @__PURE__ */ jsx(RiMoonIcon, { className: "text-xl" }),
+			type: "dark"
+		},
+		{
+			name: t("preferences.theme.followSystem"),
+			icon: /* @__PURE__ */ jsx(RiContrastFill, { className: "text-xl" }),
+			type: "auto"
+		}
+	];
+	function handleClick(value) {
+		changeSiteTheme(value);
+	}
+	const handleChange = (newValue) => {
+		setPreferences("themeRadius", newValue);
+	};
+	return /* @__PURE__ */ jsxs(Fragment, { children: [
+		/* @__PURE__ */ jsx("ul", {
+			className: "flex justify-between w-full gap-3 p-0 m-0 list-none",
+			children: themePresets.map((item) => /* @__PURE__ */ jsx("li", {
+				onClick: () => handleClick(item.type),
+				children: /* @__PURE__ */ jsxs("dl", {
+					className: "mb-0",
+					children: [/* @__PURE__ */ jsx("dd", {
+						className: cn("relative py-4 px-10 outline outline-1 outline-gray-300 dark:outline-gray-700 rounded-md cursor-pointer", "before:content-[''] before:absolute before:left-1/2 before:top-1/2 before:h-0 before:w-0 before:rounded-sm before:opacity-0 before:outline before:outline-2 before:outline-transparent", item.type === theme ? "" : "before:transition-all before:duration-300", item.type === theme ? "" : "before:hover:outline-blue-600 dark:before:hover:outline-blue-700 before:hover:left-0 before:hover:top-0 before:hover:h-full before:hover:w-full before:hover:p-1 before:hover:opacity-100", { "outline-2 outline-blue-600 dark:outline-blue-700": item.type === theme }),
+						children: item.icon
+					}), /* @__PURE__ */ jsx("dt", {
+						className: "mt-2.5 flex gap-1 justify-center text-xs opacity-90",
+						children: /* @__PURE__ */ jsx("span", {
+							className: "",
+							children: item.name
+						})
+					})]
+				})
+			}, item.type))
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "colorBlindMode",
+			checked: colorBlindMode,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.theme.colorBlindMode")
+		}),
+		/* @__PURE__ */ jsx(SwitchItem, {
+			name: "colorGrayMode",
+			checked: colorGrayMode,
+			onChange: (name, value) => setPreferences(name, value),
+			children: t("preferences.theme.grayMode")
+		}),
+		/* @__PURE__ */ jsxs("div", {
+			className: "flex justify-between w-full rounded-md px-2 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-700",
+			children: [
+				/* @__PURE__ */ jsx("span", {
+					className: "flex items-center text-sm",
+					children: t("preferences.theme.radius")
+				}),
+				/* @__PURE__ */ jsx("div", {
+					className: "w-1/3",
+					children: /* @__PURE__ */ jsx(Slider, {
+						rootClassName: "w-full",
+						min: 0,
+						max: 16,
+						onChange: handleChange,
+						value: themeRadius
+					})
+				}),
+				/* @__PURE__ */ jsx("div", { children: /* @__PURE__ */ jsx(InputNumber, {
+					keyboard: true,
+					changeOnWheel: true,
+					className: "ml-4",
+					min: 0,
+					max: 16,
+					value: themeRadius,
+					onChange: handleChange
+				}) })
+			]
+		})
+	] });
+}
+var init_theme$1 = __esmMin((() => {
+	init_icons();
+	init_preferences$3();
+	init_cn();
+	init_switch_item();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/theme/index.ts
+var init_theme = __esmMin((() => {
+	init_builtin();
+	init_theme$1();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/blocks/index.ts
+var init_blocks = __esmMin((() => {
+	init_animation();
+	init_footer();
+	init_general();
+	init_layout();
+	init_sidebar();
+	init_tabbar();
+	init_theme();
+}));
+//#endregion
+//#region src/layout/widgets/preferences/index.tsx
+function Preferences({ ...restProps }) {
+	const { t } = useTranslation();
+	const navigate = useNavigate();
+	const [isOpen, setIsOpen] = useState(false);
+	const { isMobile } = useDeviceType();
+	const { reset, isDefault, isDark } = usePreferences();
+	const preferences = usePreferencesStore();
+	const logout = useAuthStore((state) => state.logout);
+	const clearAndLogout = async () => {
+		await logout();
+		usePreferencesStore.persist.clearStorage();
+		navigate(loginPath);
+	};
+	const handleCopyPreferences = async () => {
+		const data = JSON.stringify(preferences, null, 2);
+		await navigator.clipboard.writeText(data);
+		window.$modal?.success?.({
+			title: t("preferences.copyPreferencesSuccessTitle"),
+			content: t("preferences.copyPreferencesSuccess")
+		});
+	};
+	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(BasicButton, {
+		type: "text",
+		...restProps,
+		onClick: (e) => {
+			restProps?.onClick?.(e);
+			setIsOpen(true);
+		},
+		children: /* @__PURE__ */ jsx(SettingOutlined, {})
+	}), /* @__PURE__ */ jsx(ConfigProvider, {
+		theme: { 
+		/**
+		* 当侧边栏深色模式，且是顶部导航或者混合导航时，会影响下面组件的样式，所以这里要重置算法
+		*/
+algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm },
+		children: /* @__PURE__ */ jsxs(Drawer, {
+			title: t("preferences.title"),
+			placement: "right",
+			onClose: () => {
+				setIsOpen(false);
+			},
+			extra: /* @__PURE__ */ jsx(Badge, {
+				style: {
+					width: 8,
+					height: 8
+				},
+				dot: !isDefault,
+				color: "blue",
+				offset: [-5, 5],
+				children: /* @__PURE__ */ jsx(BasicButton, {
+					onPointerDown: () => !isDefault && reset(),
+					type: "text",
+					icon: /* @__PURE__ */ jsx(RedoOutlined, { rotate: 270 })
+				})
+			}),
+			footer: /* @__PURE__ */ jsxs("div", {
+				className: "flex justify-between",
+				children: [/* @__PURE__ */ jsx(BasicButton, {
+					icon: /* @__PURE__ */ jsx(CopyOutlined, { rotate: 180 }),
+					onPointerDown: handleCopyPreferences,
+					children: t("preferences.copyPreferences")
+				}), /* @__PURE__ */ jsx(BasicButton, {
+					type: "text",
+					onPointerDown: clearAndLogout,
+					children: t("preferences.clearAndLogout")
+				})]
+			}),
+			...isMobile ? { width: "100vw" } : {},
+			open: isOpen,
+			id: preferencesContentId,
+			children: [/* @__PURE__ */ jsxs("div", {
+				style: {
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "center"
+				},
+				children: [
+					/* @__PURE__ */ jsx(Divider, { children: t("preferences.general.title") }),
+					/* @__PURE__ */ jsx(General, {}),
+					/* @__PURE__ */ jsx(Divider, { children: t("preferences.theme.title") }),
+					/* @__PURE__ */ jsx(SiteTheme, {}),
+					/* @__PURE__ */ jsx(Divider, { children: t("preferences.theme.builtin.title") }),
+					/* @__PURE__ */ jsx(BuiltinTheme, {}),
+					/* @__PURE__ */ jsx(Divider, { children: t("preferences.layout.title") }),
+					/* @__PURE__ */ jsx(PreferencesLayout, {}),
+					/* @__PURE__ */ jsx(Divider, { children: t("preferences.sidebar.title") }),
+					/* @__PURE__ */ jsx(Sidebar, {}),
+					/* @__PURE__ */ jsx(Divider, { children: t("preferences.tabbar.title") }),
+					/* @__PURE__ */ jsx(Tabbar, {}),
+					/* @__PURE__ */ jsx(Divider, { children: t("preferences.animation.title") }),
+					/* @__PURE__ */ jsx(Animation, {}),
+					/* @__PURE__ */ jsx(Divider, { children: t("preferences.footer.title") }),
+					/* @__PURE__ */ jsx(PreferencesFooter, {})
+				]
+			}), /* @__PURE__ */ jsx(FloatButton.BackTop, {
+				icon: /* @__PURE__ */ jsx(RocketOutlined, {}),
+				target: () => document.querySelector(`#${preferencesContentId} .ant-drawer-body`)
+			})]
+		})
+	})] });
+}
+var preferencesContentId;
+var init_preferences$2 = __esmMin((() => {
+	init_basic_button();
+	init_use_device_type();
+	init_use_preferences();
+	init_extra_info();
+	init_auth();
+	init_preferences$3();
+	init_blocks();
+	preferencesContentId = "__react-antd-admin__preferences_drawer__";
+}));
+//#endregion
+//#region src/components/fullscreen-button/index.tsx
+var FullscreenButton$1;
+var init_fullscreen_button$1 = __esmMin((() => {
+	init_basic_button();
+	FullscreenButton$1 = ({ target, fullscreenIcon, fullscreenExitIcon, ...restProps }) => {
+		const [isFullscreen, { toggleFullscreen }] = useFullscreen(target);
+		return /* @__PURE__ */ jsx(BasicButton, {
+			type: "text",
+			...restProps,
+			icon: !isFullscreen ? fullscreenIcon ?? /* @__PURE__ */ jsx(FullscreenOutlined, {}) : fullscreenExitIcon ?? /* @__PURE__ */ jsx(FullscreenExitOutlined, {}),
+			onClick: toggleFullscreen
+		});
+	};
+}));
+//#endregion
+//#region src/layout/layout-header/components/fullscreen-button.tsx
+function FullscreenButton({ target, ...restProps }) {
+	return /* @__PURE__ */ jsx(FullscreenButton$1, {
+		...restProps,
+		target,
+		fullscreenExitIcon: /* @__PURE__ */ jsx(RiFullscreenExitLine, {}),
+		fullscreenIcon: /* @__PURE__ */ jsx(RiFullscreenLine, {})
+	});
+}
+var init_fullscreen_button = __esmMin((() => {
+	init_fullscreen_button$1();
+	init_icons();
+}));
+//#endregion
+//#region src/hooks/use-language/index.ts
+function useLanguage() {
+	const { i18n } = useTranslation();
+	const { changeLanguage } = usePreferencesStore();
+	const handleChangeLanguage = useCallback(async (locale) => {
+		changeLanguage(locale);
+		await i18n.changeLanguage(locale);
+	}, [changeLanguage, i18n]);
+	return useMemo(() => ({
+		language: i18n.language,
+		setLanguage: handleChangeLanguage
+	}), [handleChangeLanguage, i18n.language]);
+}
+var init_use_language = __esmMin((() => {
+	init_preferences$3();
+}));
+//#endregion
+//#region src/layout/layout-header/components/language-button.tsx
+function LanguageButton({ ...restProps }) {
+	const { language, setLanguage } = useLanguage();
+	const items = getLanguageItems();
+	const onClick = ({ key }) => {
+		setLanguage(key);
+	};
+	return /* @__PURE__ */ jsx(Dropdown, {
+		menu: {
+			items,
+			onClick,
+			selectable: true,
+			selectedKeys: [language]
+		},
+		trigger: ["click"],
+		arrow: false,
+		placement: "bottom",
+		children: /* @__PURE__ */ jsx(BasicButton, {
+			type: "text",
+			...restProps,
+			children: /* @__PURE__ */ jsx(TranslationOutlined, {})
+		})
+	});
+}
+var init_language_button = __esmMin((() => {
+	init_basic_button();
+	init_use_language();
+	init_utils$2();
+}));
+//#endregion
+//#region src/layout/layout-header/components/theme-button.tsx
+function injectViewTransitionStyles() {
+	if (isBrowser) {
+		const styleId = "theme-switch-view-transition-styles";
+		if (!document.getElementById(styleId)) {
+			const style = document.createElement("style");
+			style.id = styleId;
+			style.textContent = `
+        html.stop-transition * {
+          transition: none !important;
+        }
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+          animation: none;
+          mix-blend-mode: normal;
+        }
+        ::view-transition-old(root),
+        .dark::view-transition-new(root) {
+          z-index: 999999999;
+        }
+        ::view-transition-new(root),
+        .dark::view-transition-old(root) {
+          z-index: 1;
+        }
+      `;
+			document.head.appendChild(style);
+		}
+	}
+}
+/**
+* @zh 主题切换组件
+* 允许用户通过按钮切换网站的亮色和暗色主题
+*
+* @en Theme Button Component
+* Allows users to toggle between light and dark themes of the website via a button
+*/
+function ThemeButton({ ...restProps }) {
+	const { isDark, changeSiteTheme } = usePreferences();
+	useEffect(() => {
+		injectViewTransitionStyles();
+	}, []);
+	function toggleTheme(event) {
+		if (!(!!document.startViewTransition && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) || !event) {
+			changeSiteTheme(isDark ? "light" : "dark");
+			return;
+		}
+		const x = event.clientX;
+		const y = event.clientY;
+		const endRadius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+		document.startViewTransition(() => {
+			flushSync(() => {
+				changeSiteTheme(isDark ? "light" : "dark");
+			});
+		}).ready.then(() => {
+			const clipPath = [`circle(0px at ${x}px ${y}px)`, `circle(${endRadius}px at ${x}px ${y}px)`];
+			document.documentElement.animate({ clipPath: isDark ? [...clipPath].reverse() : clipPath }, {
+				duration: 500,
+				easing: "ease-in",
+				fill: "forwards",
+				pseudoElement: isDark ? "::view-transition-old(root)" : "::view-transition-new(root)"
+			});
+		});
+	}
+	return /* @__PURE__ */ jsx(BasicButton, {
+		type: "text",
+		...restProps,
+		icon: isDark ? /* @__PURE__ */ jsx(RiSunIcon, {}) : /* @__PURE__ */ jsx(RiMoonIcon, {}),
+		onPointerDown: (e) => {
+			restProps?.onPointerDown?.(e);
+			toggleTheme(e);
+		}
+	});
+}
+var isBrowser;
+var init_theme_button = __esmMin((() => {
+	init_basic_button();
+	init_use_preferences();
+	init_icons();
+	isBrowser = typeof window !== "undefined";
+}));
+//#endregion
+//#region src/utils/is-windows-os/index.ts
+/**
+* 检查当前运行环境是否为 Windows OS。
+*
+* 通过检查 navigator.userAgent 字符串来判断当前运行环境。
+*/
+function isWindowsOs() {
+	return /windows|win32/i.test(navigator.userAgent);
+}
+var init_is_windows_os = __esmMin((() => {}));
+//#endregion
+//#region src/layout/layout-header/components/user-menu.tsx
+function UserMenu({ ...restProps }) {
+	const navigate = useNavigate();
+	const { t } = useTranslation();
+	const avatar = useUserStore((state) => state.avatar);
+	const logout = useAuthStore((state) => state.logout);
+	const onClick = async ({ key }) => {
+		if (key === "logout") {
+			await logout();
+			navigate(loginPath);
+		}
+		if (key === "personal-center") navigate("/personal-center/my-profile");
+	};
+	const altView = useMemo(() => isWindowsOs() ? "Alt" : "⌥", [isWindowsOs]);
+	const items = [{
+		label: t("personal-center:menu.personalCenter"),
+		key: "personal-center",
+		icon: /* @__PURE__ */ jsx(RiAccountCircleLine, {}),
+		extra: `${altView}P`
+	}, {
+		label: t("authority.logout"),
+		key: "logout",
+		icon: /* @__PURE__ */ jsx(LogoutOutlined, {}),
+		extra: `${altView}Q`
+	}];
+	useKeyPress(["alt.P"], () => {
+		navigate("/personal-center/my-profile");
+	});
+	useKeyPress(["alt.Q"], () => {
+		onClick({ key: "logout" });
+	});
+	return /* @__PURE__ */ jsx(Dropdown, {
+		menu: {
+			items,
+			onClick
+		},
+		arrow: false,
+		placement: "bottomRight",
+		trigger: ["click"],
+		children: /* @__PURE__ */ jsx(BasicButton, {
+			type: "text",
+			...restProps,
+			className: cn(restProps.className, "rounded-full px-1"),
+			children: /* @__PURE__ */ jsx(Avatar, { src: avatar })
+		})
+	});
+}
+var init_user_menu = __esmMin((() => {
+	init_basic_button();
+	init_icons();
+	init_extra_info();
+	init_auth();
+	init_user();
+	init_cn();
+	init_is_windows_os();
+}));
+//#endregion
+//#region src/layout/layout-header/index.tsx
+function LayoutHeader({ className, children }) {
+	const { token: { Menu } } = theme.useToken();
+	const { sidebarCollapsed, setPreferences, isDark, sidebarTheme } = usePreferences();
+	const { isMobile } = useDeviceType();
+	const isMaximize = useTabsStore((state) => state.isMaximize);
+	const { isTopNav, isMixedNav } = useLayout();
+	const isFixedDarkTheme = isDark || sidebarTheme === "dark" && (isMixedNav || isTopNav);
+	return /* @__PURE__ */ jsx(ConfigProvider, {
+		theme: { algorithm: isFixedDarkTheme ? theme.darkAlgorithm : theme.defaultAlgorithm },
+		children: /* @__PURE__ */ jsxs("header", {
+			className: cn("flex-shrink-0 flex gap-5 justify-between items-center transition-all md:px-4", { "overflow-hidden": isMaximize }, className),
+			style: {
+				background: isFixedDarkTheme ? Menu?.darkItemBg : Menu?.itemBg,
+				height: isMaximize ? 0 : 48
+			},
+			children: [
+				isMobile ? /* @__PURE__ */ jsx(Button, {
+					type: "text",
+					icon: sidebarCollapsed ? /* @__PURE__ */ jsx(MenuUnfoldOutlined, {}) : /* @__PURE__ */ jsx(MenuFoldOutlined, {}),
+					onClick: () => setPreferences("sidebarCollapsed", !sidebarCollapsed),
+					className: "h-full"
+				}) : null,
+				/* @__PURE__ */ jsx("div", {
+					className: "flex items-center grow h-full overflow-hidden",
+					children
+				}),
+				/* @__PURE__ */ jsxs("div", {
+					className: "flex items-center",
+					children: [
+						/* @__PURE__ */ jsx(GlobalSearch, {}),
+						/* @__PURE__ */ jsx(Preferences, { ...buttonProps }),
+						/* @__PURE__ */ jsx(ThemeButton, { ...buttonProps }),
+						/* @__PURE__ */ jsx(LanguageButton, { ...buttonProps }),
+						/* @__PURE__ */ jsx(FullscreenButton, {
+							...buttonProps,
+							target: document.documentElement
+						}),
+						/* @__PURE__ */ jsx(NotificationContainer, { ...buttonProps }),
+						/* @__PURE__ */ jsx(UserMenu, { ...buttonProps })
+					]
+				})
+			]
+		})
+	});
+}
+var buttonProps;
+var init_layout_header = __esmMin((() => {
+	init_use_device_type();
+	init_use_preferences();
+	init_use_layout();
+	init_global_search();
+	init_notification_container();
+	init_preferences$2();
+	init_tabs();
+	init_cn();
+	init_constants$4();
+	init_fullscreen_button();
+	init_language_button();
+	init_theme_button();
+	init_user_menu();
+	buttonProps = {
+		size: "large",
+		className: "px-[11px]"
+	};
+}));
+//#endregion
+//#region src/router/utils/remove-trailing-slash.ts
+/**
+* @zh 移除路径末尾的斜杠
+* @en Remove trailing slashes from a path
+* @param {string} pathname - The path to remove trailing slashes from
+* @returns {string} The path with trailing slashes removed
+* @example
+* removeTrailingSlash('/about/') // return '/about'
+* removeTrailingSlash('/about')  // return '/about'
+*/
+function removeTrailingSlash(pathname) {
+	return pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+}
+var init_remove_trailing_slash = __esmMin((() => {}));
+//#endregion
+//#region src/layout/layout-menu/style.ts
+var useStyles$3;
+var init_style$1 = __esmMin((() => {
+	useStyles$3 = createUseStyles({ menuBackgroundColor: { "& .ant-menu-submenu-selected .ant-menu-submenu-title": { backgroundColor: "var(--ant-menu-item-selected-bg)" } } });
+}));
+//#endregion
+//#region src/layout/layout-menu/utils.ts
+/**
+* 将菜单树中的所有 label 转换为国际化文本
+* @param menus 原始菜单数组
+* @param t Translation 函数
+* @returns 转换后的菜单数组
+*/
+function translateMenus(menus, t) {
+	return menus.map((menu) => {
+		let translatedLabel = menu.label;
+		if (isValidElement(menu.label)) {
+			const translatedChildren = t(menu.label.props.children);
+			translatedLabel = cloneElement(menu.label, {}, translatedChildren ?? "");
+		}
+		if (isString(menu.label)) translatedLabel = t(menu.label);
+		const translatedMenu = {
+			...menu,
+			label: translatedLabel
+		};
+		if (menu.children && menu.children.length > 0) translatedMenu.children = translateMenus(menu.children, t);
+		return translatedMenu;
+	});
+}
+/**
+* 通过路径查找根菜单
+*
+* @param menus 菜单列表
+* @param path 菜单路径，可选
+* @returns 包含查找到的菜单、根菜单和根菜单路径的对象
+*/
+function findRootMenuByPath(menus, path) {
+	let findMenu = null;
+	let rootMenu = null;
+	let rootMenuPath = null;
+	if (!path) return {
+		findMenu: null,
+		rootMenu: null,
+		rootMenuPath: null
+	};
+	const find = (list, targetPath, parents = []) => {
+		for (const menu of list) {
+			if (menu.key === targetPath) {
+				findMenu = menu;
+				if (parents.length === 0) {
+					rootMenu = menu;
+					rootMenuPath = menu.key;
+				} else {
+					rootMenu = parents[0];
+					rootMenuPath = parents[0].key;
+				}
+				return true;
+			}
+			if (menu.children && menu.children.length > 0) {
+				if (find(menu.children, targetPath, [...parents, menu])) return true;
+			}
+		}
+		return false;
+	};
+	find(menus, path);
+	return {
+		findMenu,
+		rootMenu,
+		rootMenuPath
+	};
+}
+/**
+* 递归查找第一个子菜单路径下的最深层级的第一个菜单项
+*
+* @param splitSideNavItems 菜单列表
+* @returns 找到的最深层级的第一个菜单项
+*/
+function findDeepestFirstItem(splitSideNavItems) {
+	if (!splitSideNavItems || splitSideNavItems.length === 0) return null;
+	const firstItem = splitSideNavItems[0];
+	if (firstItem.children && firstItem.children.length > 0) return findDeepestFirstItem(firstItem.children);
+	return firstItem;
+}
+/**
+* 获取菜单项的父级键
+*
+* @param menuItems 菜单项数组
+* @returns 返回记录每个菜单项键对应的父级键数组的对象
+*/
+function getParentKeys(menuItems) {
+	const parentKeyMap = {};
+	function traverse(items, parentKeys = []) {
+		for (const item of items) {
+			parentKeyMap[item.key] = [...parentKeys];
+			if (Array.isArray(item.children) && item.children.length) traverse(item.children, [...parentKeys, item.key]);
+		}
+	}
+	traverse(menuItems);
+	return parentKeyMap;
+}
+var init_utils$1 = __esmMin((() => {
+	init_is();
+}));
+//#endregion
+//#region src/layout/layout-menu/index.tsx
+function LayoutMenu({ mode = "inline", autoExpandCurrentMenu, handleMenuSelect, menus = emptyArray$2 }) {
+	const classes = useStyles$3();
+	const matches = useMatches();
+	const wholeMenus = useAccessStore((state) => state.wholeMenus);
+	const { sidebarCollapsed, sidebarTheme, isDark, accordion } = usePreferences();
+	const [openKeys, setOpenKeys] = useState([]);
+	const { isMobile } = useDeviceType();
+	const menuParentKeys = useMemo(() => {
+		return getParentKeys(wholeMenus);
+	}, [wholeMenus]);
+	const getSelectedKeys = useMemo(() => {
+		const currentActiveMatch = matches.findLast((routeItem) => routeItem.handle?.currentActiveMenu);
+		if (currentActiveMatch?.handle?.currentActiveMenu) {
+			const activeMenuPath = removeTrailingSlash(currentActiveMatch.handle.currentActiveMenu);
+			return [...menuParentKeys[activeMenuPath] || [], activeMenuPath];
+		}
+		const latestVisibleMatch = matches.findLast((routeItem) => routeItem.handle?.hideInMenu !== true);
+		if (latestVisibleMatch?.id) {
+			const routePath = removeTrailingSlash(latestVisibleMatch.id);
+			return [...menuParentKeys[routePath] || [], routePath];
+		}
+		return [];
+	}, [matches, menuParentKeys]);
+	const menuInlineCollapsedProp = useMemo(() => {
+		if (mode === "inline") return { inlineCollapsed: isMobile ? false : sidebarCollapsed };
+		return {};
+	}, [
+		mode,
+		isMobile,
+		sidebarCollapsed
+	]);
+	const handleOpenChange = (keys) => {
+		/**
+		* 1. 手风琴模式，点击菜单项，自动关闭其他菜单
+		* 2. 非手风琴模式且菜单是收起的，鼠标悬浮菜单自动关闭其他菜单
+		*
+		* 为什么不使用 antd menu 案例中的代码：
+		* @see https://ant.design/components/menu-cn#menu-demo-sider-current
+		* 原因：非手风琴模式下打开多个菜单，切换到手风琴模式下，点击菜单项，不会自动关闭其他菜单
+		*/
+		if (accordion || sidebarCollapsed) {
+			const currentOpenKey = keys.find((key) => !openKeys.includes(key));
+			if (currentOpenKey !== void 0) {
+				const parentKeys = menuParentKeys[currentOpenKey] || [];
+				setOpenKeys([...parentKeys, currentOpenKey]);
+			} else {
+				const currentCloseKey = openKeys.find((key) => !keys.includes(key));
+				if (currentCloseKey) setOpenKeys(menuParentKeys[currentCloseKey]);
+			}
+		} else setOpenKeys(keys);
+	};
+	const menuOpenProps = useMemo(() => {
+		if (autoExpandCurrentMenu) return {
+			openKeys,
+			onOpenChange: handleOpenChange
+		};
+		return {};
+	}, [
+		autoExpandCurrentMenu,
+		openKeys,
+		handleOpenChange
+	]);
+	/**
+	* 侧边菜单展开时，自动展开激活的菜单
+	* 侧边菜单收起时，自动关闭所有激活的菜单
+	* @see https://github.com/user-attachments/assets/df2d7b63-acf4-4faa-bea6-7616b7e69621
+	*/
+	useEffect(() => {
+		if (sidebarCollapsed) setOpenKeys([]);
+		else if (accordion) setOpenKeys(getSelectedKeys);
+		else setOpenKeys((prevOpenKeys) => {
+			if (prevOpenKeys.length === 0) return getSelectedKeys;
+			return prevOpenKeys;
+		});
+	}, [
+		matches,
+		sidebarCollapsed,
+		getSelectedKeys
+	]);
+	return /* @__PURE__ */ jsx(Menu, {
+		/**
+		* min-w-0 flex-auto 解决在 Flex 布局中，Menu 没有按照预期响应式省略菜单
+		* @see https://ant-design.antgroup.com/components/menu#why-menu-do-not-responsive-collapse-in-flex-layout
+		*/
+		className: cn("!border-none min-w-0 flex-auto", { 
+		/**
+		* @zh 当侧边菜单折叠时，添加背景色
+		* @en When the side menu is collapsed, add background color
+		*/
+[classes.menuBackgroundColor]: sidebarCollapsed }),
+		inlineIndent: 16,
+		...menuInlineCollapsedProp,
+		style: { height: isMobile ? "100%" : "initial" },
+		mode,
+		theme: isDark ? "dark" : sidebarTheme,
+		items: menus,
+		...menuOpenProps,
+		selectedKeys: getSelectedKeys,
+		/**
+		* 使用 onClick 替代 onSelect 事件，原因是当子路由激活父菜单时，点击父菜单依然可以正常导航。
+		* @see https://github.com/user-attachments/assets/cf67a973-f210-45e4-8278-08727ab1b8ce
+		*/
+		onClick: ({ key }) => handleMenuSelect?.(key, mode)
+	});
+}
+var emptyArray$2;
+var init_layout_menu = __esmMin((() => {
+	init_use_device_type();
+	init_use_preferences();
+	init_remove_trailing_slash();
+	init_access();
+	init_cn();
+	init_style$1();
+	init_utils$1();
+	emptyArray$2 = [];
+}));
+//#endregion
+//#region src/layout/layout-menu/use-menu.ts
+function useMenu() {
+	const wholeMenus = useAccessStore((state) => state.wholeMenus);
+	const { isMixedNav, isTwoColumnNav } = useLayout();
+	const navigate = useNavigate();
+	const { t } = useTranslation();
+	const translatedMenus = translateMenus(wholeMenus, t);
+	const { pathname } = useCurrentRoute();
+	const matches = useMatches();
+	/**
+	* 混合菜单模式下需要拆分 menu 的 items
+	*/
+	const shouldSplitMenuItems = useMemo(() => isMixedNav || isTwoColumnNav, [isMixedNav, isTwoColumnNav]);
+	/**
+	* 混合导航模式下，侧边导航的顶级菜单 key
+	*/
+	const sideNavMenuKeyInSplitMode = useMemo(() => {
+		if (!shouldSplitMenuItems) return "";
+		const activeMenuPath = matches.findLast((routeItem) => routeItem.handle?.currentActiveMenu)?.handle?.currentActiveMenu;
+		const targetPath = activeMenuPath ? removeTrailingSlash(activeMenuPath) : removeTrailingSlash(pathname);
+		const { rootMenuPath } = findRootMenuByPath(translatedMenus, targetPath);
+		return rootMenuPath ?? "";
+	}, [
+		shouldSplitMenuItems,
+		pathname,
+		matches
+	]);
+	const splitSideNavItems = useMemo(() => {
+		const foundMenu = translatedMenus.find((item) => item?.key === sideNavMenuKeyInSplitMode);
+		if (!foundMenu) return [];
+		return foundMenu?.children ?? [foundMenu];
+	}, [sideNavMenuKeyInSplitMode, translatedMenus]);
+	/**
+	* 头部菜单
+	*/
+	const topNavItems = useMemo(() => {
+		if (!shouldSplitMenuItems) return translatedMenus;
+		return translatedMenus.map((item) => {
+			return {
+				...item,
+				children: void 0
+			};
+		});
+	}, [shouldSplitMenuItems, translatedMenus]);
+	/**
+	* 侧边菜单
+	*/
+	const sideNavItems = useMemo(() => {
+		return shouldSplitMenuItems ? splitSideNavItems : translatedMenus;
+	}, [
+		shouldSplitMenuItems,
+		splitSideNavItems,
+		translatedMenus
+	]);
+	/**
+	* 菜单点击事件处理
+	*/
+	const handleMenuSelect = (key, mode) => {
+		if (key === removeTrailingSlash(pathname)) return;
+		if (!shouldSplitMenuItems || mode !== "horizontal") {
+			if (/http(s)?:/.test(key)) window.open(key);
+			else navigate(key);
+		} else {
+			const targetMenu = findDeepestFirstItem(translatedMenus.find((item) => item?.key === key)?.children ?? []);
+			if (!targetMenu) navigate(key);
+			else navigate(targetMenu.key);
+		}
+	};
+	return {
+		handleMenuSelect,
+		sideNavMenuKeyInSplitMode,
+		topNavItems,
+		sideNavItems
+	};
+}
+var init_use_menu = __esmMin((() => {
+	init_use_current_route();
+	init_remove_trailing_slash();
+	init_access();
+	init_hooks();
+	init_utils$1();
+}));
+//#endregion
+//#region src/layout/widgets/sider-trigger/index.tsx
+function SiderTrigger({ className }) {
+	const { sidebarCollapsed, setPreferences, sidebarTheme } = usePreferences();
+	return /* @__PURE__ */ jsx(BasicButton, {
+		type: "text",
+		style: {
+			boxShadow: "0px -3px 5px 0 rgb(29, 35, 41, 0.05)",
+			height: 40
+		},
+		icon: sidebarCollapsed ? /* @__PURE__ */ jsx(MenuUnfoldOutlined, {}) : /* @__PURE__ */ jsx(MenuFoldOutlined, {}),
+		onClick: () => setPreferences("sidebarCollapsed", !sidebarCollapsed),
+		className: cn("w-full rounded-none border-t", className, sidebarTheme === "dark" ? "border-t-[#303030]" : "border-t-colorBorderSecondary")
+	});
+}
+var init_sider_trigger = __esmMin((() => {
+	init_basic_button();
+	init_use_preferences();
+	init_cn();
+	init_constants$4();
+}));
+//#endregion
+//#region src/assets/svg/logo.svg?url
+var logo_default;
+var init_logo$1 = __esmMin((() => {
+	logo_default = "data:image/svg+xml,%3csvg%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2085%2084'%3e%3cpath%20d='M44.9903%201.13755L61.3489%2017.3023C62.8848%2018.82%2062.8848%2021.2797%2061.3489%2022.7966C59.813%2024.3143%2057.3238%2024.3143%2055.7888%2022.7966L44.9903%2012.127C43.4544%2010.6093%2040.9652%2010.6093%2039.4302%2012.127L12.2732%2038.9622C10.7372%2040.4799%2010.7372%2042.9396%2012.2732%2044.4565L39.4302%2071.2917C40.9661%2072.8094%2043.4553%2072.8094%2044.9903%2071.2917L55.7888%2060.6213C57.3247%2059.1036%2059.8139%2059.1036%2061.3489%2060.6213C62.8848%2062.139%2062.8848%2064.5987%2061.3489%2066.1156L44.9903%2082.2803C43.4544%2083.798%2040.9652%2083.798%2039.4302%2082.2803L1.15193%2044.4565C-0.383976%2042.9388%20-0.383976%2040.4791%201.15193%2038.9622L39.4293%201.13838C40.9652%20-0.379323%2043.4553%20-0.379322%2044.9903%201.13755Z'%20fill='url(%23paint0_linear_1_12)'/%3e%3cpath%20d='M66.91%2028.2918C68.4459%2026.7741%2070.9351%2026.7741%2072.4702%2028.2918L83.2686%2038.9622C84.8045%2040.4799%2084.8045%2042.9396%2083.2686%2044.4565L72.4702%2055.127C70.9343%2056.6447%2068.445%2056.6447%2066.91%2055.127C65.3741%2053.6093%2065.3741%2051.1495%2066.91%2049.6327L72.1474%2044.4573C73.6833%2042.9396%2073.6833%2040.4799%2072.1474%2038.963L66.91%2033.7877C65.3741%2032.2692%2065.3741%2029.8095%2066.91%2028.2918Z'%20fill='url(%23paint1_linear_1_12)'/%3e%3cpath%20d='M41.3659%2043C41.3659%2043.5551%2041.5907%2044.0875%2041.9909%2044.48C42.3912%2044.8725%2042.934%2045.093%2043.5%2045.093C44.066%2045.093%2044.6088%2044.8725%2045.0091%2044.48C45.4093%2044.0875%2045.6342%2043.5551%2045.6342%2043C45.6342%2042.4449%2045.4093%2041.9125%2045.0091%2041.52C44.6088%2041.1275%2044.066%2040.907%2043.5%2040.907C42.934%2040.907%2042.3912%2041.1275%2041.9909%2041.52C41.5907%2041.9125%2041.3659%2042.4449%2041.3659%2043Z'%20fill='%2361DAFB'/%3e%3cpath%20d='M60%2042.4911C60%2040.0563%2057.285%2037.947%2053.0652%2036.6714C54.1284%2032.1816%2053.7532%2028.6495%2051.7518%2027.432C49.7468%2026.2146%2046.6565%2027.6375%2043.5%2030.8517C40.3435%2027.6375%2037.2532%2026.2146%2035.2482%2027.432C33.2468%2028.6495%2032.8716%2032.1855%2033.9348%2036.6714C29.7151%2037.947%2027%2040.0563%2027%2042.4911C27%2044.926%2029.7151%2047.0352%2033.9348%2048.3108C32.8716%2052.7968%2033.2468%2056.3328%2035.2482%2057.5502C35.7411%2057.8527%2036.3003%2058%2036.911%2058C38.3716%2058%2040.1411%2057.1548%2042.0615%2055.5108C42.5398%2055.0998%2043.0217%2054.6346%2043.5%2054.146C43.9783%2054.6346%2044.4602%2055.0998%2044.9385%2055.5108C46.8589%2057.1548%2048.6247%2058%2050.089%2058C50.6997%2058%2051.2589%2057.8527%2051.7518%2057.5502C53.7532%2056.3328%2054.1284%2052.8007%2053.0652%2048.3108C57.285%2047.0352%2060%2044.926%2060%2042.4911ZM51.0344%2028.7425C52.3331%2029.5335%2052.6054%2032.3988%2051.6819%2036.2954C50.3318%2035.9697%2048.8602%2035.7254%2047.293%2035.5742C46.3843%2034.221%2045.4462%2032.9997%2044.5043%2031.9296C46.6823%2029.708%2048.7057%2028.5022%2050.0963%2028.5022C50.4495%2028.4983%2050.7659%2028.5797%2051.0344%2028.7425ZM48.0987%2045.2905C47.591%2046.221%2047.0538%2047.1128%2046.5057%2047.9658C45.5455%2048.0433%2044.5448%2048.086%2043.5%2048.086C42.4589%2048.086%2041.4582%2048.0433%2040.498%2047.9658C39.9462%2047.1128%2039.4127%2046.2171%2038.905%2045.2905C38.3863%2044.3406%2037.9227%2043.4062%2037.5033%2042.4911C37.9227%2041.5761%2038.3863%2040.6417%2038.905%2039.6918C39.4237%2038.7419%2039.9609%2037.854%2040.5017%2037.0126C41.4619%2036.9351%2042.4625%2036.8924%2043.5037%2036.8924C44.5448%2036.8924%2045.5455%2036.9351%2046.5057%2037.0126C47.0465%2037.8501%2047.5836%2038.7419%2048.1023%2039.6879C48.6211%2040.6378%2049.0846%2041.5722%2049.504%2042.4873C49.0809%2043.4062%2048.6174%2044.3406%2048.0987%2045.2905ZM50.2619%2044.2669C50.6739%2045.2982%2051.0124%2046.2869%2051.292%2047.233C50.3759%2047.4501%2049.39%2047.6362%2048.3378%2047.7758C48.6799%2047.2136%2049.0147%2046.6398%2049.3421%2046.0465C49.6659%2045.4495%2049.9712%2044.8562%2050.2619%2044.2669ZM43.5%2051.9787C42.8488%2051.2343%2042.2087%2050.4239%2041.5796%2049.5515C42.2087%2049.5826%2042.8488%2049.602%2043.5%2049.602C44.1512%2049.602%2044.7913%2049.5826%2045.4204%2049.5515C44.7913%2050.4239%2044.1512%2051.2343%2043.5%2051.9787ZM38.6622%2047.7758C37.61%2047.6362%2036.6278%2047.4501%2035.708%2047.233C35.9876%2046.2869%2036.3261%2045.2982%2036.7381%2044.2669C37.0288%2044.8562%2037.3304%2045.4495%2037.6579%2046.0465C37.9853%2046.6359%2038.3201%2047.2097%2038.6622%2047.7758ZM36.7381%2040.7154C36.3261%2039.684%2035.9876%2038.6953%2035.708%2037.7493C36.6241%2037.5322%2037.6064%2037.3461%2038.6585%2037.2065C38.3201%2037.7648%2037.9816%2038.3386%2037.6579%2038.9357C37.3341%2039.5328%2037.0288%2040.126%2036.7381%2040.7154ZM43.5%2033.0036C44.1365%2033.7286%2044.7803%2034.5467%2045.4167%2035.4346C44.7876%2035.4036%2044.1512%2035.3842%2043.5%2035.3842C42.8488%2035.3842%2042.2124%2035.4036%2041.5833%2035.4346C42.2197%2034.5467%2042.8635%2033.7286%2043.5%2033.0036ZM49.3385%2038.9357C49.011%2038.3425%2048.6763%2037.7687%2048.3378%2037.2065C49.39%2037.3461%2050.3722%2037.5322%2051.2883%2037.7493C51.0087%2038.6953%2050.6702%2039.684%2050.2582%2040.7154C49.9712%2040.126%2049.6659%2039.5328%2049.3385%2038.9357ZM35.9656%2028.7425C36.2304%2028.5797%2036.5468%2028.5022%2036.9074%2028.5022C38.298%2028.5022%2040.3177%2029.708%2042.4957%2031.9296C41.5538%2032.9997%2040.6157%2034.2249%2039.707%2035.5742C38.1435%2035.7254%2036.6682%2035.9697%2035.3181%2036.2954C34.3946%2032.3949%2034.6706%2029.5296%2035.9656%2028.7425ZM28.4348%2042.4911C28.4348%2040.9092%2030.6532%2039.2265%2034.3211%2038.1254C34.7294%2039.5212%2035.2629%2040.9868%2035.9214%2042.4911C35.2666%2043.9955%2034.7294%2045.4611%2034.3211%2046.8569C30.6532%2045.7558%2028.4348%2044.0692%2028.4348%2042.4911ZM41.1565%2054.336C38.9602%2056.2165%2037.0692%2056.9105%2035.9656%2056.2436C34.6669%2055.4527%2034.3946%2052.5874%2035.3181%2048.6908C36.6682%2049.0165%2038.1398%2049.2608%2039.707%2049.412C40.6047%2050.7496%2041.5428%2051.9748%2042.4957%2053.0643C42.0505%2053.5179%2041.6054%2053.9522%2041.1565%2054.336ZM51.0344%2056.2436C49.9344%2056.9144%2048.0398%2056.2204%2045.8435%2054.336C45.3983%2053.9522%2044.9495%2053.5179%2044.5007%2053.0643C45.4572%2051.9748%2046.3916%2050.7496%2047.2893%2049.412C48.8528%2049.2608%2050.3281%2049.0165%2051.6783%2048.6869C52.6054%2052.5874%2052.3294%2055.4527%2051.0344%2056.2436ZM52.6826%2046.8569C52.2742%2045.4611%2051.7408%2043.9955%2051.0823%2042.4911C51.7371%2040.9868%2052.2742%2039.5212%2052.6826%2038.1254C56.3505%2039.2304%2058.5689%2040.9131%2058.5689%2042.4911C58.5652%2044.0692%2056.3468%2045.7558%2052.6826%2046.8569Z'%20fill='%2361DAFB'/%3e%3cdefs%3e%3clinearGradient%20id='paint0_linear_1_12'%20x1='76.1703'%20y1='41.7094'%20x2='-5.08475'%20y2='41.7094'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20stop-color='%2347B4E0'/%3e%3cstop%20offset='0.1718'%20stop-color='%231588E0'/%3e%3cstop%20offset='1'%20stop-color='%236EB4E0'/%3e%3c/linearGradient%3e%3clinearGradient%20id='paint1_linear_1_12'%20x1='75.0889'%20y1='56.2647'%20x2='75.0889'%20y2='27.1539'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20offset='0.0322'%20stop-color='%23F0776F'/%3e%3cstop%20offset='0.5032'%20stop-color='%23F0656F'/%3e%3cstop%20offset='1'%20stop-color='%23F0606F'/%3e%3c/linearGradient%3e%3c/defs%3e%3c/svg%3e";
+}));
+//#endregion
+//#region src/layout/widgets/logo/index.tsx
+/**
+* @zh 高度 48px
+* @en The height is 48px
+*/
+function Logo({ sidebarCollapsed, className }) {
+	const navigate = useNavigate();
+	return /* @__PURE__ */ jsxs("div", {
+		style: { height: 48 },
+		className: clsx("flex items-center justify-center gap-2 cursor-pointer", className),
+		onClick: () => navigate(void 0),
+		children: [/* @__PURE__ */ jsx("img", {
+			src: logo_default,
+			alt: "logo",
+			width: 32,
+			height: 32
+		}), /* @__PURE__ */ jsx(Title$3, {
+			level: 1,
+			className: clsx("text-sm m-0", { hidden: sidebarCollapsed }),
+			ellipsis: true,
+			children: void 0
+		})]
+	});
+}
+var Title$3;
+var init_logo = __esmMin((() => {
+	init_logo$1();
+	init_constants$4();
+	({Title: Title$3} = Typography);
+}));
+//#endregion
+//#region src/layout/layout-mixed-sidebar/first-column-menu.tsx
+function FirstColumnMenu({ handleMenuSelect, menus = emptyArray$1, sideNavMenuKeyInSplitMode }) {
+	const classes = useStyles$2();
+	const { firstColumnWidthInTwoColumnNavigation, isDark, sidebarTheme } = usePreferences();
+	return /* @__PURE__ */ jsxs("div", {
+		style: { width: firstColumnWidthInTwoColumnNavigation },
+		className: clsx("border-r h-full", sidebarTheme === "dark" ? "border-r-[#303030]" : "border-r-colorBorderSecondary"),
+		children: [/* @__PURE__ */ jsx(Logo, { sidebarCollapsed: true }), /* @__PURE__ */ jsx(Scrollbar, {
+			style: { height: `calc(100% - 48px)` },
+			children: /* @__PURE__ */ jsx(ConfigProvider, {
+				theme: { components: { Menu: { collapsedWidth: firstColumnWidthInTwoColumnNavigation - 1 } } },
+				children: /* @__PURE__ */ jsx(Menu, {
+					mode: "vertical",
+					selectedKeys: [sideNavMenuKeyInSplitMode ?? ""],
+					className: clsx(classes.menu),
+					items: menus,
+					theme: isDark ? "dark" : sidebarTheme,
+					/**
+					* 使用 onClick 替代 onSelect 事件，原因是当子路由激活父菜单时，点击父菜单依然可以正常导航。
+					* @see https://github.com/user-attachments/assets/cf67a973-f210-45e4-8278-08727ab1b8ce
+					*/
+					onClick: ({ key }) => handleMenuSelect?.(key, "horizontal")
+				})
+			})
+		})]
+	});
+}
+var useStyles$2, emptyArray$1;
+var init_first_column_menu = __esmMin((() => {
+	init_scrollbar();
+	init_use_preferences();
+	init_constants$4();
+	init_logo();
+	useStyles$2 = createUseStyles(({ token }) => {
+		return { menu: { "& .ant-menu-item": {
+			"gap": token.sizeXS,
+			"height": "60px",
+			"display": "flex",
+			"flexDirection": "column",
+			"alignItems": "center",
+			"justifyContent": "center",
+			"& .ant-menu-title-content": {
+				lineHeight: "initial",
+				margin: "0px !important",
+				fontSize: token.fontSizeIcon
+			}
+		} } };
+	});
+	emptyArray$1 = [];
+}));
+//#endregion
+//#region src/layout/layout-mixed-sidebar/index.tsx
+/**
+* 双列布局侧边栏
+*/
+function LayoutMixedSidebar({ computedSidebarWidth = zero, sideNavItems = emptyArray, topNavItems = emptyArray, handleMenuSelect, sideNavMenuKeyInSplitMode }) {
+	const { isDark, sidebarTheme, sidebarCollapsed, firstColumnWidthInTwoColumnNavigation } = usePreferences();
+	const { token: { Menu } } = theme.useToken();
+	const isFixedDarkTheme = isDark || sidebarTheme === "dark";
+	return /* @__PURE__ */ jsx(ConfigProvider, {
+		theme: { algorithm: isFixedDarkTheme ? theme.darkAlgorithm : theme.defaultAlgorithm },
+		children: /* @__PURE__ */ jsxs("aside", {
+			className: "fixed left-0 top-0 bottom-0 flex",
+			style: {
+				backgroundColor: isFixedDarkTheme ? Menu?.darkItemBg : Menu?.itemBg,
+				boxShadow: "3px 0 5px 0 rgb(29, 35, 41, 0.05)"
+			},
+			children: [/* @__PURE__ */ jsx(FirstColumnMenu, {
+				sideNavMenuKeyInSplitMode,
+				menus: topNavItems,
+				handleMenuSelect
+			}), /* @__PURE__ */ jsxs("div", {
+				style: { width: computedSidebarWidth - firstColumnWidthInTwoColumnNavigation },
+				className: "relative transition-all",
+				children: [
+					!sidebarCollapsed ? /* @__PURE__ */ jsx(Typography.Title, {
+						level: 1,
+						ellipsis: true,
+						className: "flex items-center my-0 pl-2 text-lg mx-3",
+						style: { height: 52 },
+						children: void 0
+					}) : null,
+					/* @__PURE__ */ jsx("div", {
+						className: "overflow-hidden",
+						style: { height: sidebarCollapsed ? `calc(100%  - 40px)` : `calc(100% - 52px - 40px)` },
+						children: /* @__PURE__ */ jsx(Scrollbar, { children: /* @__PURE__ */ jsx(LayoutMenu, {
+							autoExpandCurrentMenu: true,
+							menus: sideNavItems,
+							handleMenuSelect
+						}) })
+					}),
+					/* @__PURE__ */ jsx(SiderTrigger, {})
+				]
+			})]
+		})
+	});
+}
+var emptyArray, zero;
+var init_layout_mixed_sidebar = __esmMin((() => {
+	init_scrollbar();
+	init_use_preferences();
+	init_constants$4();
+	init_layout_menu();
+	init_sider_trigger();
+	init_first_column_menu();
+	emptyArray = [];
+	zero = 0;
+}));
+//#endregion
+//#region src/layout/layout-mobile-menu/index.tsx
+function LayoutMobileMenu() {
+	const classes = useStyles$1();
+	const { token: { Menu } } = theme.useToken();
+	const { sidebarCollapsed, setPreferences, isDark, sidebarTheme } = usePreferences();
+	const { isMobile } = useDeviceType();
+	const { sideNavItems, handleMenuSelect } = useMenu();
+	return isMobile ? /* @__PURE__ */ jsx(Drawer, {
+		styles: { body: { backgroundColor: isDark || sidebarTheme === "dark" ? Menu?.darkItemBg : Menu?.itemBg } },
+		open: sidebarCollapsed,
+		placement: "left",
+		width: "clamp(200px, 50vw, 210px)",
+		className: cn(classes.drawerStyles),
+		onClose: () => setPreferences("sidebarCollapsed", false),
+		children: /* @__PURE__ */ jsx(Scrollbar, { children: /* @__PURE__ */ jsx(LayoutMenu, {
+			autoExpandCurrentMenu: true,
+			menus: sideNavItems,
+			handleMenuSelect
+		}) })
+	}) : null;
+}
+var useStyles$1;
+var init_layout_mobile_menu = __esmMin((() => {
+	init_scrollbar();
+	init_use_device_type();
+	init_use_preferences();
+	init_cn();
+	init_layout_menu();
+	init_use_menu();
+	useStyles$1 = createUseStyles({ drawerStyles: {
+		"& .ant-drawer-body": {
+			"padding": 0,
+			"&>ul": { paddingTop: "1em" }
+		},
+		"& .ant-drawer-header": { display: "none" }
+	} });
+}));
+//#endregion
+//#region src/layout/layout-sidebar/index.tsx
+function LayoutSidebar({ children, computedSidebarWidth }) {
+	const { sidebarCollapsed, sidebarTheme, isDark } = usePreferences();
+	const { token: { Menu } } = theme.useToken();
+	const isFixedDarkTheme = isDark || sidebarTheme === "dark";
+	return /* @__PURE__ */ jsx(ConfigProvider, {
+		theme: { algorithm: isFixedDarkTheme ? theme.darkAlgorithm : theme.defaultAlgorithm },
+		children: /* @__PURE__ */ jsxs("aside", {
+			style: {
+				width: computedSidebarWidth + 1,
+				backgroundColor: isFixedDarkTheme ? Menu?.darkItemBg : Menu?.itemBg,
+				boxShadow: "3px 0 5px 0 rgb(29, 35, 41, 0.05)"
+			},
+			className: "fixed top-0 bottom-0 left-0 overflow-x-hidden overflow-y-auto transition-all border-r border-r-colorBorderSecondary",
+			children: [
+				/* @__PURE__ */ jsx(Logo, { sidebarCollapsed }),
+				/* @__PURE__ */ jsx("div", {
+					className: "overflow-hidden",
+					style: { height: `calc(100% - 48px - 40px)` },
+					children: /* @__PURE__ */ jsx(Scrollbar, { children })
+				}),
+				/* @__PURE__ */ jsx(SiderTrigger, {})
+			]
+		})
+	});
+}
+var init_layout_sidebar = __esmMin((() => {
+	init_scrollbar();
+	init_use_preferences();
+	init_constants$4();
+	init_logo();
+	init_sider_trigger();
+}));
+//#endregion
+//#region src/layout/layout-tabbar/components/draggable-tab-bar.tsx
+function DraggableTabNode({ className, children, ...props }) {
+	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props["data-node-key"] });
+	const style = {
+		...props.style,
+		transform: CSS.Translate.toString({
+			x: transform?.x || 0,
+			y: 0,
+			scaleX: 1,
+			scaleY: 1
+		}),
+		transition,
+		cursor: isDragging ? "move" : "pointer"
+	};
+	const clonedProps = {
+		ref: setNodeRef,
+		...props,
+		style,
+		className,
+		...attributes,
+		...listeners
+	};
+	return cloneElement(children, clonedProps);
+}
+function DraggableTabBar({ tabBarProps, DefaultTabBar, tabItems, items, onClickMenu }) {
+	const sensor = useSensor(PointerSensor, { activationConstraint: { distance: 5 } });
+	const changeTabOrder = useTabsStore((state) => state.changeTabOrder);
+	const onDragEnd = ({ active, over }) => {
+		if (active.id !== over?.id) changeTabOrder(active?.data?.current?.sortable?.index, over?.data?.current?.sortable?.index);
+	};
+	return /* @__PURE__ */ jsx(DndContext, {
+		sensors: [sensor],
+		collisionDetection: closestCenter,
+		onDragEnd,
+		children: /* @__PURE__ */ jsx(SortableContext, {
+			items: tabItems.map((i) => i.key),
+			strategy: horizontalListSortingStrategy,
+			children: /* @__PURE__ */ jsx(DefaultTabBar, {
+				...tabBarProps,
+				children: (node) => {
+					return /* @__PURE__ */ jsx(Dropdown, {
+						menu: {
+							items: items(node.key),
+							onClick: ({ key: menuKey }) => onClickMenu(menuKey, node.key)
+						},
+						trigger: ["contextMenu"],
+						children: tabItems.some((tabItem) => tabItem.key === node.key && tabItem.draggable === false) ? node : /* @__PURE__ */ jsx(DraggableTabNode, {
+							...node.props,
+							children: node
+						})
+					}, node.key);
+				}
+			})
+		})
+	});
+}
+var init_draggable_tab_bar = __esmMin((() => {
+	init_tabs();
+}));
+//#endregion
+//#region src/layout/layout-tabbar/components/tab-maximize.tsx
+/**
+* 切换标签页最大化 / 最小化
+*
+* @returns 返回标签页最大化 / 最小化的按钮组件
+*/
+function TabMaximize({ className }) {
+	/**
+	* useShallow - it may cause infinite loops in zustand v5
+	* https://github.com/pmndrs/zustand/blob/v5.0.0/docs/migrations/migrating-to-v5.md#requiring-stable-selector-outputs
+	*/
+	const { isMaximize } = useTabsStore(useShallow((state) => ({ isMaximize: state.isMaximize })));
+	const { toggleMaximize } = useTabsStore(useShallow((state) => ({ toggleMaximize: state.toggleMaximize })));
+	/** 切换最大化 / 最小化 */
+	const onClick = () => {
+		toggleMaximize(!isMaximize);
+	};
+	return /* @__PURE__ */ jsx(BasicButton, {
+		className: cn(className),
+		type: "text",
+		size: "middle",
+		icon: isMaximize ? /* @__PURE__ */ jsx(FullscreenExitOutlined, {}) : /* @__PURE__ */ jsx(FullscreenOutlined, {}),
+		onClick
+	});
+}
+var init_tab_maximize = __esmMin((() => {
+	init_basic_button();
+	init_tabs();
+	init_cn();
+}));
+//#endregion
+//#region src/layout/layout-tabbar/hooks/use-dropdown-menu.tsx
+/**
+* 自定义钩子，用于处理标签页的下拉菜单
+* @returns {[Function, Function]} 返回一个元组，包含菜单项生成函数和菜单点击处理函数
+*/
+function useDropdownMenu() {
+	const { t } = useTranslation();
+	const { openTabs, activeKey, removeTab, closeLeftTabs, closeRightTabs, closeOtherTabs, closeAllTabs, setIsRefresh } = useTabsStore();
+	const { refresh } = useKeepAliveContext();
+	/**
+	* 生成菜单项
+	* @param {string} tabKey - 当前标签页的键
+	* @returns {MenuProps["items"]} 菜单项配置
+	*/
+	const items = useCallback((tabKey) => {
+		const isOnlyTab = openTabs.size === 2 && openTabs.has(homePath);
+		const isLastTab = Array.from(openTabs.keys()).pop() === tabKey;
+		return [
+			{
+				key: TabActionKeys.REFRESH,
+				icon: /* @__PURE__ */ jsx(RedoOutlined, { rotate: 270 }),
+				label: t("preferences.tabbar.contextMenu.refresh"),
+				disabled: activeKey !== tabKey
+			},
+			{
+				key: TabActionKeys.CLOSE,
+				icon: /* @__PURE__ */ jsx(CloseOutlined, {}),
+				label: t("preferences.tabbar.contextMenu.close"),
+				disabled: tabKey === homePath
+			},
+			{ type: "divider" },
+			{
+				key: TabActionKeys.CLOSE_LEFT,
+				icon: /* @__PURE__ */ jsx(VerticalAlignBottomOutlined, { rotate: 90 }),
+				label: t("preferences.tabbar.contextMenu.closeLeft"),
+				disabled: tabKey === homePath || isOnlyTab
+			},
+			{
+				key: TabActionKeys.CLOSE_RIGHT,
+				icon: /* @__PURE__ */ jsx(VerticalAlignTopOutlined, { rotate: 90 }),
+				label: t("preferences.tabbar.contextMenu.closeRight"),
+				disabled: tabKey === homePath || isOnlyTab || isLastTab
+			},
+			{ type: "divider" },
+			{
+				key: TabActionKeys.CLOSE_OTHERS,
+				icon: /* @__PURE__ */ jsx(VerticalAlignMiddleOutlined, { rotate: 90 }),
+				label: t("preferences.tabbar.contextMenu.closeOthers"),
+				disabled: tabKey === homePath || isOnlyTab
+			},
+			{
+				key: TabActionKeys.CLOSE_ALL,
+				icon: /* @__PURE__ */ jsx(SwapOutlined, {}),
+				label: t("preferences.tabbar.contextMenu.closeAll"),
+				disabled: tabKey === homePath
+			}
+		];
+	}, [
+		t,
+		activeKey,
+		homePath,
+		openTabs
+	]);
+	/**
+	* 定义菜单操作与对应的处理函数
+	*/
+	const actions = useMemo(() => ({
+		[TabActionKeys.REFRESH]: (currentPath) => {
+			refresh(currentPath);
+			setIsRefresh(true);
+		},
+		[TabActionKeys.CLOSE]: removeTab,
+		[TabActionKeys.CLOSE_RIGHT]: closeRightTabs,
+		[TabActionKeys.CLOSE_LEFT]: closeLeftTabs,
+		[TabActionKeys.CLOSE_OTHERS]: closeOtherTabs,
+		[TabActionKeys.CLOSE_ALL]: closeAllTabs
+	}), [
+		removeTab,
+		closeRightTabs,
+		closeLeftTabs,
+		closeOtherTabs,
+		closeAllTabs
+	]);
+	return [items, useCallback((menuKey, nodeKey) => {
+		const action = actions[menuKey];
+		if (action) action(nodeKey);
+	}, [actions])];
+}
+var homePath, TabActionKeys;
+var init_use_dropdown_menu = __esmMin((() => {
+	init_tabs();
+	homePath = void 0;
+	TabActionKeys = {
+		REFRESH: "refresh",
+		CLOSE: "close",
+		CLOSE_RIGHT: "closeRight",
+		CLOSE_LEFT: "closeLeft",
+		CLOSE_OTHERS: "closeOthers",
+		CLOSE_ALL: "closeAll"
+	};
+}));
+//#endregion
+//#region src/layout/layout-tabbar/components/tab-options.tsx
+/**
+* TabOptions组件
+* 用于显示标签页的操作选项下拉菜单
+* @param {TabOptionsProps} props - 组件属性
+* @returns {JSX.Element} TabOptions组件
+*/
+function TabOptions({ activeKey, className }) {
+	const [isOpen, setIsOpen] = useState(false);
+	const [items, onClickMenu] = useDropdownMenu();
+	/**
+	* 处理下拉菜单的显示状态变化
+	* @param {boolean} open - 菜单是否打开
+	*/
+	const onOpenChange = (open) => {
+		setIsOpen(open);
+	};
+	/**
+	* 处理菜单项点击事件
+	* @param {object} param - 点击事件参数
+	* @param {string} param.key - 被点击的菜单项的key
+	*/
+	const onClick = ({ key }) => {
+		onClickMenu(key, activeKey);
+		setIsOpen(false);
+	};
+	return /* @__PURE__ */ jsx(Dropdown, {
+		trigger: ["click"],
+		menu: {
+			items: items(activeKey),
+			onClick
+		},
+		open: isOpen,
+		onOpenChange,
+		children: /* @__PURE__ */ jsx(BasicButton, {
+			className: cn(className),
+			size: "middle",
+			type: "text",
+			icon: /* @__PURE__ */ jsx(DownOutlined, {})
+		})
+	});
+}
+var init_tab_options = __esmMin((() => {
+	init_basic_button();
+	init_cn();
+	init_use_dropdown_menu();
+}));
+//#endregion
+//#region src/layout/layout-tabbar/style.ts
+var useStyles;
+var init_style = __esmMin((() => {
+	useStyles = createUseStyles(({ token }) => {
+		return {
+			tabsContainer: {
+				backgroundColor: token.colorBgContainer,
+				borderTop: `1px solid ${token.colorBorderSecondary}`,
+				borderBottom: `1px solid ${token.colorBorderSecondary}`
+			},
+			resetTabs: {
+				"& .ant-tabs-nav::before": { display: "none" },
+				"& .ant-tabs-nav": {
+					"margin": 0,
+					"& .ant-tabs-tab": {
+						transition: "inherit",
+						marginLeft: "0px !important",
+						border: "none !important",
+						borderRadius: "0px !important",
+						paddingTop: "0.3em !important",
+						paddingBottom: "0.3em !important"
+					}
+				}
+			},
+			brisk: {
+				"& .ant-tabs-nav": { "& .ant-tabs-tab": { borderRight: `1px solid ${token.colorBorder} !important` } },
+				"& .ant-tabs-ink-bar": {
+					backgroundColor: token.colorPrimary,
+					visibility: "visible !important"
+				}
+			},
+			plain: { "& .ant-tabs-nav": { "& .ant-tabs-tab": { borderRight: `1px solid ${token.colorBorder} !important` } } },
+			chrome: { "& .ant-tabs-nav": {
+				"& .ant-tabs-nav-list": { gap: "5px" },
+				"& .ant-tabs-tab:not(.ant-tabs-tab-active)": {
+					"backgroundColor": token.colorBgContainer,
+					"position": "relative",
+					"borderRadius": "7px !important",
+					"padding": "0px 12px !important",
+					"marginTop": "3px",
+					"marginBottom": "3px",
+					"&:hover": {
+						backgroundColor: token.colorBorder,
+						color: "inherit"
+					},
+					"&:hover::before": {
+						content: "' '",
+						height: "100%",
+						width: "1px",
+						backgroundColor: token.colorBgContainer,
+						left: "-3px",
+						position: "absolute"
+					},
+					"&:hover::after": { display: "none" },
+					"&::after": {
+						content: "' '",
+						position: "absolute",
+						right: "-3px",
+						width: "1px",
+						height: "16px",
+						backgroundColor: token.colorBorder
+					}
+				},
+				"& .ant-tabs-tab-active": {
+					"marginTop": "3px",
+					"padding": "0px 12px 3px !important",
+					"backgroundColor": token.colorPrimaryBg,
+					"borderTopLeftRadius": "7px !important",
+					"borderTopRightRadius": "7px !important",
+					"position": "relative",
+					"&::before": {
+						content: "' '",
+						position: "absolute",
+						left: "-7px",
+						bottom: "0",
+						width: "7px",
+						height: "7px",
+						backgroundColor: token.colorPrimaryBg,
+						transform: "rotate(-90deg)",
+						zIndex: 1,
+						clipPath: "path('M 0 0 A 7 7 0 0 0 7 7 L 0 7 Z')"
+					},
+					"&>div::before": {
+						content: "' '",
+						height: "100%",
+						width: "1px",
+						backgroundColor: token.colorBgContainer,
+						left: "-3px",
+						position: "absolute"
+					},
+					"&::after": {
+						content: "' '",
+						position: "absolute",
+						right: "-7px",
+						bottom: "0",
+						width: "7px",
+						height: "7px",
+						zIndex: 1,
+						backgroundColor: token.colorPrimaryBg,
+						clipPath: "path('M 0 0 A 7 7 0 0 0 7 7 L 0 7 Z')"
+					}
+				}
+			} },
+			card: {
+				"& .ant-tabs-nav-list": { gap: "5px" },
+				"& .ant-tabs-nav": {
+					"& .ant-tabs-tab": {
+						"backgroundColor": token.colorBgContainer,
+						"border": `1px solid ${token.colorBorder} !important`,
+						"position": "relative",
+						"borderRadius": "7px !important",
+						"padding": "0px 12px !important",
+						"marginTop": "3px",
+						"marginBottom": "3px",
+						"&:hover": {
+							backgroundColor: token.colorBorder,
+							color: "inherit"
+						}
+					},
+					"& .ant-tabs-tab-active": { backgroundColor: token.colorBgTextActive }
+				}
+			}
+		};
+	});
+}));
+//#endregion
+//#region src/layout/layout-tabbar/index.tsx
+/**
+* LayoutTabbar 组件
+* 用于渲染和管理应用程序的标签页导航
+*/
+function LayoutTabbar() {
+	const classes = useStyles();
+	const navigate = useNavigate();
+	const location = useLocation();
+	const { t } = useTranslation();
+	const currentRoute = useCurrentRoute();
+	const { tabbarStyleType, tabbarShowMaximize, tabbarShowMore } = usePreferencesStore();
+	const { flatRouteList } = useAccessStore();
+	const { activeKey, isRefresh, setActiveKey, setIsRefresh, openTabs, addTab, insertBeforeTab } = useTabsStore();
+	const [items, onClickMenu] = useDropdownMenu();
+	const tabItems = Array.from(openTabs.values()).map((item) => {
+		const tabLabel = item.newTabTitle ?? item.label;
+		return {
+			...item,
+			label: /* @__PURE__ */ jsx("div", {
+				className: "relative flex items-center gap-1",
+				children: isString(tabLabel) ? t(tabLabel) : tabLabel
+			})
+		};
+	});
+	/**
+	* 自动重置刷新状态
+	*/
+	useEffect(() => {
+		if (isRefresh) {
+			const timer = setTimeout(() => {
+				setIsRefresh(false);
+			}, 500);
+			return () => clearTimeout(timer);
+		}
+	}, [isRefresh, setIsRefresh]);
+	/**
+	* 处理标签页切换
+	* @param {string} key - 被选中的标签页的key
+	*/
+	const handleChangeTabs = useCallback((key) => {
+		const historyState = openTabs.get(key)?.historyState || {
+			search: "",
+			hash: ""
+		};
+		navigate(key + historyState.search + historyState.hash);
+	}, [openTabs]);
+	/**
+	* 处理标签页编辑（关闭）
+	* @param {React.MouseEvent | React.KeyboardEvent | string} key - 被编辑的标签页的key
+	* @param {string} action - 编辑动作，这里只处理 "remove"
+	*/
+	const handleEditTabs = useCallback((key, action) => {
+		if (action === "remove") onClickMenu(TabActionKeys.CLOSE, key);
+	}, [onClickMenu]);
+	/**
+	* 自定义渲染标签栏，添加右键菜单功能
+	* @param {object} tabBarProps - 标签栏属性
+	* @param {React.ComponentType} DefaultTabBar - 默认标签栏组件
+	* @returns {JSX.Element} 渲染的标签栏
+	*/
+	const renderTabBar = useCallback((tabBarProps, DefaultTabBar) => {
+		return /* @__PURE__ */ jsx(DraggableTabBar, {
+			DefaultTabBar,
+			tabBarProps,
+			items,
+			tabItems,
+			onClickMenu
+		});
+	}, [
+		tabItems,
+		items,
+		onClickMenu
+	]);
+	/**
+	* 生成标签栏额外内容
+	*/
+	const tabBarExtraContent = useMemo(() => ({ right: /* @__PURE__ */ jsxs("div", {
+		className: "flex items-center",
+		style: { height: 35 },
+		children: [
+			/* @__PURE__ */ jsx(Button, {
+				icon: /* @__PURE__ */ jsx(RedoOutlined, {
+					rotate: 270,
+					className: clsx({ "animate-spin": isRefresh })
+				}),
+				size: "middle",
+				type: "text",
+				className: clsx("rounded-none h-full border-l border-l-colorBorderSecondary"),
+				onClick: () => onClickMenu(TabActionKeys.REFRESH, activeKey)
+			}),
+			tabbarShowMaximize ? /* @__PURE__ */ jsx(TabMaximize, { className: "h-full border-l rounded-none border-l-colorBorderSecondary" }) : null,
+			tabbarShowMore ? /* @__PURE__ */ jsx(TabOptions, {
+				activeKey,
+				className: "h-full border-l rounded-none border-l-colorBorderSecondary"
+			}) : null
+		]
+	}) }), [
+		isRefresh,
+		activeKey,
+		onClickMenu,
+		tabbarShowMore,
+		tabbarShowMaximize
+	]);
+	/**
+	* 活动标签页被关闭，自动导航到合适路由
+	*
+	* Warning：除了初次进入系统（例如登录），项目中请统一使用 navigate(import.meta.env.VITE_BASE_HOME_PATH) 替代直接使用 navigate("/")，原因如下：
+	* 1. 直接导航到根路径("/")会导致路由根组件重新渲染
+	* 2. 此组件将无法正确监听到 location 变化
+	* 3. 会造成 activeKey 状态保持为上一个活动标签页（显示异常）
+	* 4. 结果 location.pathname 是新的，activeKey 状态却是上一个活动标签页，导致导航异常。
+	*/
+	useEffect(() => {
+		/**
+		* 以下动作会触发活动标签页被关闭：
+		* 1. 关闭当前标签页
+		* 2. 当使用 关闭左边/右边/其他/所有标签页 功能，激活的标签页被关闭
+		*
+		* 此时 activeKey 是最新的，location.pathname 还未更新，使用 navigate 导航到最新的活动标签页，防止显示异常。
+		*
+		* 初次进入应用，activeKey 值为空，不触发自动导航
+		*/
+		const historyState = openTabs.get(activeKey)?.historyState || {
+			search: "",
+			hash: ""
+		};
+		const activeFullPath = activeKey + historyState.search + historyState.hash;
+		const currentFullpath = location.pathname + location.search + location.hash;
+		if (activeKey.length > 0 && activeFullPath !== currentFullpath) navigate(activeFullPath);
+	}, [activeKey]);
+	/**
+	* 用户刷新当前页面，但不是默认 Tab 页面时，需要添加默认 Tab
+	*/
+	useEffect(() => {
+		if (!Array.from(openTabs.keys()).includes(void 0)) {
+			const routeTitle = flatRouteList[void 0]?.handle?.title;
+			insertBeforeTab(void 0, {
+				key: void 0,
+				label: isValidElement(routeTitle) ? routeTitle.props?.children : routeTitle,
+				closable: false,
+				draggable: false
+			});
+		}
+	}, [
+		openTabs,
+		insertBeforeTab,
+		flatRouteList
+	]);
+	/**
+	* 监听路由变化，添加标签页和激活标签页
+	*/
+	useEffect(() => {
+		const activePath = location.pathname;
+		const normalizedPath = removeTrailingSlash(activePath);
+		if (normalizedPath !== activeKey) {
+			setActiveKey(normalizedPath);
+			const routeTitle = currentRoute.handle?.title;
+			addTab(normalizedPath, {
+				key: normalizedPath,
+				label: isValidElement(routeTitle) ? routeTitle?.props?.children : routeTitle,
+				historyState: {
+					search: location.search,
+					hash: location.hash
+				},
+				closable: normalizedPath !== void 0,
+				draggable: normalizedPath !== void 0
+			});
+		}
+	}, [
+		location,
+		currentRoute,
+		setActiveKey,
+		addTab
+	]);
+	return /* @__PURE__ */ jsx("div", {
+		className: classes.tabsContainer,
+		children: /* @__PURE__ */ jsx(Tabs, {
+			className: clsx(classes.resetTabs, tabbarStyleType === "brisk" ? classes.brisk : "", tabbarStyleType === "plain" ? classes.plain : "", tabbarStyleType === "chrome" ? classes.chrome : "", tabbarStyleType === "card" ? classes.card : ""),
+			size: "small",
+			hideAdd: true,
+			animated: true,
+			onChange: handleChangeTabs,
+			activeKey: removeTrailingSlash(activeKey),
+			type: "editable-card",
+			onEdit: handleEditTabs,
+			items: tabItems,
+			renderTabBar,
+			tabBarExtraContent
+		})
+	});
+}
+var init_layout_tabbar = __esmMin((() => {
+	init_use_current_route();
+	init_remove_trailing_slash();
+	init_access();
+	init_preferences$3();
+	init_tabs();
+	init_is();
+	init_constants$4();
+	init_draggable_tab_bar();
+	init_tab_maximize();
+	init_tab_options();
+	init_use_dropdown_menu();
+	init_style();
+}));
+//#endregion
+//#region src/layout/widgets/breadcrumb-views/index.tsx
+function BreadcrumbViews() {
+	const { t } = useTranslation();
+	const matches = useMatches();
+	return /* @__PURE__ */ jsx(Breadcrumb, {
+		className: "hidden md:block",
+		separator: "->",
+		itemRender,
+		items: matches.filter((match) => match.handle && !match.pathname.endsWith("/")).map((match) => {
+			return {
+				title: isString(match.handle?.title) ? t(match.handle?.title) : match.handle?.title,
+				path: match.pathname
+			};
+		})
+	});
+}
+var itemRender;
+var init_breadcrumb_views = __esmMin((() => {
+	init_is();
+	itemRender = (route, params, routes) => {
+		return routes.indexOf(route) === routes.length - 1 || !route.path ? /* @__PURE__ */ jsx("span", { children: route.title }) : /* @__PURE__ */ jsx("span", { children: route.title });
+	};
+}));
+//#endregion
+//#region src/layout/container-layout/index.tsx
+/**
+* Please do not use this component through lazy, otherwise the switching routing page will flash.
+* 请不要通过 lazy 使用这个组件，否则切换路由页面会发生闪动。
+*
+* NO:
+* const ContainerLayout = lazy(() => import("#src/layout/container-layout"));
+*
+* YES:
+* import ContainerLayout from "#src/layout/container-layout";
+*/
+function ContainerLayout() {
+	const screens = useBreakpoint();
+	const { isTopNav, isTwoColumnNav, isMixedNav, sidebarWidth, sideCollapsedWidth, firstColumnWidthInTwoColumnNavigation } = useLayout();
+	const isMaximize = useTabsStore((state) => state.isMaximize);
+	const { watermark, watermarkContent, enableFooter, fixedFooter, enableBackTopButton, tabbarEnable, sidebarEnable, sidebarCollapsed, setPreferences } = usePreferencesStore();
+	const { isMobile } = useDeviceType();
+	const { sideNavItems, topNavItems, handleMenuSelect, sideNavMenuKeyInSplitMode } = useMenu();
+	const { setLayoutHeaderHeight } = useLayoutHeaderStyle();
+	const { setLayoutFooterHeight } = useLayoutFooterStyle();
+	useEffect(() => {
+		if (screens.lg && !screens.xl) setPreferences("sidebarCollapsed", true);
+		else if (screens.xl) setPreferences("sidebarCollapsed", false);
+		else if (screens.xs || screens.sm && !screens.md) setPreferences("sidebarCollapsed", false);
+	}, [screens]);
+	const sidebarEnableState = useMemo(() => !isTopNav && sidebarEnable, [isTopNav, sidebarEnable]);
+	const computedSidebarWidth = useMemo(() => {
+		if (isMaximize || isMobile) return 0;
+		const currentSidebarWidth = sidebarCollapsed ? sideCollapsedWidth : sidebarWidth;
+		if (isTwoColumnNav) return currentSidebarWidth + (firstColumnWidthInTwoColumnNavigation ?? 0);
+		if (sidebarEnableState) return currentSidebarWidth;
+		return 0;
+	}, [
+		isMobile,
+		isMaximize,
+		isTwoColumnNav,
+		sidebarEnableState,
+		sidebarWidth,
+		sidebarCollapsed,
+		sideCollapsedWidth,
+		firstColumnWidthInTwoColumnNavigation
+	]);
+	/**
+	* @zh 计算 header 和 tabbar 的高度
+	* @en Calculate the height of header and tabbar
+	*/
+	const headerWrapperHeight = useMemo(() => {
+		let height = 48;
+		if (tabbarEnable) height += 35;
+		return height;
+	}, [tabbarEnable, 35]);
+	useEffect(() => {
+		setLayoutHeaderHeight(isMaximize ? 35 : headerWrapperHeight);
+	}, [headerWrapperHeight, isMaximize]);
+	useEffect(() => {
+		setLayoutFooterHeight(40);
+	}, []);
+	return /* @__PURE__ */ jsx(Watermark, {
+		content: watermark ? watermarkContent : "",
+		children: /* @__PURE__ */ jsxs("section", {
+			style: { paddingLeft: computedSidebarWidth },
+			className: cn("transition-all flex flex-col h-screen"),
+			children: [
+				/* @__PURE__ */ jsx(LayoutHeader, { children: isTopNav || isMixedNav ? /* @__PURE__ */ jsxs(Fragment, { children: [isTopNav ? /* @__PURE__ */ jsx(Logo, {
+					sidebarCollapsed: false,
+					className: "mr-8"
+				}) : null, /* @__PURE__ */ jsx(LayoutMenu, {
+					mode: "horizontal",
+					menus: topNavItems,
+					handleMenuSelect
+				})] }) : /* @__PURE__ */ jsx(BreadcrumbViews, {}) }),
+				tabbarEnable ? /* @__PURE__ */ jsx(LayoutTabbar, {}) : null,
+				/* @__PURE__ */ jsx(LayoutMobileMenu, {}),
+				sidebarEnableState && !isTwoColumnNav ? /* @__PURE__ */ jsx(LayoutSidebar, {
+					computedSidebarWidth,
+					children: /* @__PURE__ */ jsx(LayoutMenu, {
+						autoExpandCurrentMenu: true,
+						menus: sideNavItems,
+						handleMenuSelect
+					})
+				}) : null,
+				isTwoColumnNav ? /* @__PURE__ */ jsx(LayoutMixedSidebar, {
+					sideNavMenuKeyInSplitMode,
+					computedSidebarWidth,
+					sideNavItems,
+					topNavItems,
+					handleMenuSelect
+				}) : null,
+				/* @__PURE__ */ jsx(LayoutContent, {}),
+				enableFooter && fixedFooter ? /* @__PURE__ */ jsx(LayoutFooter, { className: "bg-colorBgContainer" }) : null,
+				enableBackTopButton ? /* @__PURE__ */ jsx(FloatButton.BackTop, {
+					icon: /* @__PURE__ */ jsx(RocketOutlined, {}),
+					target: () => document.querySelector(`#${ELEMENT_ID_MAIN_CONTENT} .simplebar-content-wrapper`) || document
+				}) : null
+			]
+		})
+	});
+}
+var useBreakpoint;
+var init_container_layout = __esmMin((() => {
+	init_use_device_type();
+	init_use_layout_style();
+	init_preferences$3();
+	init_tabs();
+	init_cn();
+	init_constants$4();
+	init_hooks();
+	init_layout_content();
+	init_layout_footer();
+	init_layout_header();
+	init_layout_menu();
+	init_use_menu();
+	init_layout_mixed_sidebar();
+	init_layout_mobile_menu();
+	init_layout_sidebar();
+	init_layout_tabbar();
+	init_breadcrumb_views();
+	init_logo();
+	({useBreakpoint} = Grid);
+}));
+//#endregion
+//#region src/layout/parent-layout/index.tsx
+function ParentLayout() {
+	const currentOutlet = useOutlet();
+	return /* @__PURE__ */ jsx(Suspense, { children: currentOutlet });
+}
+var init_parent_layout = __esmMin((() => {}));
+//#endregion
+//#region src/router/utils/resolve-layout.ts
+/**
+* 根据路由 `handle.layout` 解析所用布局组件（P2.2，设计文档 D9）。
+*
+* - `"parent"` → ParentLayout（自身含 Outlet，用于嵌套菜单场景）
+* - `"container"` → ContainerLayout（整站 chrome：header / sidebar / tabbar / footer）
+* - `"none"` / 未声明 → Outlet（无 chrome，页面 / 子路由直接渲染）
+*
+* 未声明即 `none` 是 D9 的目标态（P2.7 dogfooding 验证后自迁移期默认 `container` 翻转）：
+* 布局必须显式声明，框架不做隐式推导；后端下发的父级路由需在 handle 中携带 layout。
+*/
+function resolveLayoutComponent(handle) {
+	switch (handle?.layout) {
+		case "parent": return ParentLayout;
+		case "container": return ContainerLayout;
+		default: return Outlet;
+	}
+}
+/**
+* 递归为缺少 Component 的父级路由按 `handle.layout` 注入布局组件（P2.7，US-8）。
+*
+* 模块路由不再直接 import ContainerLayout / ParentLayout，由框架在
+* module-loader 出口统一包裹；已有 Component 的路由（页面组件）不受影响。
+* 纯函数：返回新路由树，不修改模块 definition 中的原对象。
+*/
+function resolveRouteLayouts(routes) {
+	return routes.map((route) => {
+		const resolved = !route.Component && route.children?.length ? {
+			...route,
+			Component: resolveLayoutComponent(route.handle)
+		} : route;
+		return resolved.children?.length ? {
+			...resolved,
+			children: resolveRouteLayouts(resolved.children)
+		} : resolved;
+	});
+}
+var init_resolve_layout = __esmMin((() => {
+	init_container_layout();
+	init_parent_layout();
+}));
+//#endregion
+//#region src/router/utils/flatten-routes.ts
+/**
+* 将路由扁平化为一个对象，键为路由的 path，值为路由对象
+*/
+function flattenRoutes(routes) {
+	const result = {};
+	function traverse(items, parent) {
+		items.forEach((item) => {
+			if (item.index && parent?.path) result[`${parent.path}/`] = item;
+			if (item.path) result[item.path] = item;
+			if (item.children && item.children.length > 0) traverse(item.children, item);
+		});
+	}
+	traverse(routes);
+	return result;
+}
+var init_flatten_routes = __esmMin((() => {}));
+//#endregion
+//#region src/module-loader/keep-alive.ts
+/** 汇总一组模块定义里的全部路由（供扁平化与 exclude 计算） */
+function collectAllRoutes(definitions) {
+	const routes = [];
+	for (const definition of definitions) routes.push(...definition.routes);
+	return routes;
+}
+/**
+* 纯函数：从一组路由中收集 `handle.keepAlive === false` 的路由 key。
+* key 与 `flattenRoutes` 产出的键一致，从而能和 KeepAlive 的 `activeCacheKey`
+* （= pathname）精确匹配。
+*
+* 这是 P2.1 把 exclude 计算从 access store 的 `flatRouteList` 反转到
+* module-loader 的核心：缓存是否排除只取决于「模块声明」，不再依赖某条路由
+* 是否套了 ContainerLayout（见设计文档 B13 / R9）。
+*/
+function collectKeepAliveExcludes(routes) {
+	const flat = flattenRoutes(routes);
+	return Object.entries(flat).reduce((acc, [key, value]) => {
+		if (value.handle?.keepAlive === false) acc.push(key);
+		return acc;
+	}, []);
+}
+/** 纯函数：收集所有路由 key（关闭多 tab 时用于整体排除，仅保留切换动画） */
+function collectAllRoutePaths(routes) {
+	return Object.keys(flattenRoutes(routes));
+}
+/** 基于一组模块定义计算 exclude key（供单元测试） */
+function getKeepAliveExcludes(definitions) {
+	return collectKeepAliveExcludes(collectAllRoutes(definitions));
+}
+/** 基于一组模块定义计算全部路由 key（供单元测试） */
+function getAllRoutePaths(definitions) {
+	return collectAllRoutePaths(collectAllRoutes(definitions));
+}
+var init_keep_alive = __esmMin((() => {
+	init_flatten_routes();
+}));
+//#endregion
 //#region src/module-loader/index.ts
-var modules = /* @__PURE__ */ new Map();
-var registeredStores = /* @__PURE__ */ new Map();
-var registeredApiPrefixes = /* @__PURE__ */ new Map();
 function createModuleContext(definition) {
 	return {
 		module: {
@@ -154,6 +5363,3317 @@ function getRegisteredStore(name) {
 function getRegisteredApiPrefix(moduleName) {
 	return registeredApiPrefixes.get(moduleName);
 }
+/**
+* 当前已加载（非 error）模块的全部定义，供 keep-alive 聚合使用。
+*/
+function loadedDefinitions() {
+	return Array.from(modules.values()).filter((instance) => instance.status !== "error").map((instance) => instance.definition);
+}
+/**
+* KeepAlive exclude key：各模块路由中 `handle.keepAlive === false` 的路径集合。
+* 由 module-loader 汇总，不再依赖 access store 的 flatRouteList（B13）。
+*/
+function getKeepAliveExcludeKeys() {
+	return getKeepAliveExcludes(loadedDefinitions());
+}
+/** 全部路由 key：关闭多 tab 时整体排除，仅保留切换动画 */
+function getAllRoutePathKeys() {
+	return getAllRoutePaths(loadedDefinitions());
+}
+var modules, registeredStores, registeredApiPrefixes;
+var init_module_loader = __esmMin((() => {
+	init_resolve_layout();
+	init_request();
+	init_keep_alive();
+	modules = /* @__PURE__ */ new Map();
+	registeredStores = /* @__PURE__ */ new Map();
+	registeredApiPrefixes = /* @__PURE__ */ new Map();
+}));
+//#endregion
+//#region src/plugins/loading.ts
+/**
+* Preview loading page.
+* https://github.com/user-attachments/assets/110701a8-2cf4-4e5f-a07e-b832da4e1586
+*/
+function setupLoading() {
+	/**
+	* @see https://github.com/pure-admin/vue-pure-admin/blob/cd21f1e050011d8f761094bf8a1e110fb8a33959/index.html#L20-L81
+	* This CSS code from https://github.com/pure-admin/vue-pure-admin
+	* @author pure-admin
+	*/
+	const loading = `
+<style>
+#${loadingContainerId} {
+	position: fixed;
+	inset: 0;
+	z-index: 9999999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+	width: 100vw;
+	background-color: ${isDarkTheme(usePreferencesStore.getState().theme) ? "#181818" : "transparent"};
+	overflow: hidden;
+}
+#${loadingId},
+#${loadingId}::before,
+#${loadingId}::after {
+	width: 2.5em;
+	height: 2.5em;
+	border-radius: 50%;
+	animation: animation-loader 1.8s infinite ease-in-out;
+	animation-fill-mode: both;
+}
+
+#${loadingId} {
+	position: relative;
+	top: 0;
+	margin: 80px auto;
+	font-size: 10px;
+	color: ${usePreferencesStore.getState().themeColorPrimary};
+	text-indent: -9999em;
+	transform: translateZ(0);
+	transform: translate(-50%, 0);
+	animation-delay: -0.16s;
+}
+
+#${loadingId}::before,
+#${loadingId}::after {
+	position: absolute;
+	top: 0;
+	content: "";
+}
+
+#${loadingId}::before {
+	left: -3.5em;
+	animation-delay: -0.32s;
+}
+
+#${loadingId}::after {
+	left: 3.5em;
+}
+
+@keyframes animation-loader {
+	0%,
+	80%,
+	100% {
+		box-shadow: 0 2.5em 0 -1.3em;
+	}
+
+	40% {
+		box-shadow: 0 2.5em 0 0;
+	}
+}
+</style>
+<div id="${loadingId}"></div>
+`;
+	if (!document.getElementById("loading-container-e8a3a985")) {
+		const loadingDiv = document.createElement("div");
+		loadingDiv.id = loadingContainerId;
+		loadingDiv.innerHTML = `<!-- A loading animation displayed before code loads, driven by setupLoading function -->${loading}`;
+		const app = document.getElementById("root");
+		if (app) app.before(loadingDiv);
+	}
+}
+var loadingId, loadingContainerId;
+var init_loading = __esmMin((() => {
+	init_preferences$3();
+	init_is_dark_theme();
+	loadingId = "loading-e8a3a985";
+	loadingContainerId = "loading-container-e8a3a985";
+}));
+//#endregion
+//#region src/plugins/hide-loading.ts
+function hideLoading() {
+	const loadingElement = document.querySelector(`#${loadingContainerId}`);
+	loadingElement?.setAttribute("style", "visibility: hidden; opacity: 0; transition: all 0.6s ease-out;");
+	loadingElement?.addEventListener("transitionend", () => {
+		loadingElement.remove();
+	}, { once: true });
+}
+var init_hide_loading = __esmMin((() => {
+	init_loading();
+}));
+//#endregion
+//#region src/locales/zh-CN/authority.json
+var welcomeBack$1, loginDescription$1, pageTitle$1, pageDescription$1, layout$3, username$3, password$3, login$1, loginInProgress$1, loginSuccess$1, codeLogin$1, forgotPassword$1, retryAfterText$1, code$3, mobile$3, mobileLogin$1, sendCode$1, sendText$1, forgotPasswordSubtitle$1, email$3, sendResetLink$1, logout$1, register$1, alreadyHaveAnAccount$1, goToLogin$1, goToRegister$1, noAccountYet$1, confirmPassword$3, logoutConfirm$1, agree$3, privacyPolicy$1, termsOfService$1, authority_default$1;
+var init_authority$1 = __esmMin((() => {
+	welcomeBack$1 = "欢迎回来";
+	loginDescription$1 = "请输入帐户信息开始管理项目";
+	pageTitle$1 = "开箱即用的中后台管理系统";
+	pageDescription$1 = "简单、轻量、易于使用";
+	layout$3 = {
+		"alignLeft": "左对齐",
+		"alignCenter": "居中对齐",
+		"alignRight": "右对齐"
+	};
+	username$3 = "用户名";
+	password$3 = "密码";
+	login$1 = "登录";
+	loginInProgress$1 = "登录中...";
+	loginSuccess$1 = "登录成功";
+	codeLogin$1 = "验证码登录";
+	forgotPassword$1 = "忘记密码";
+	retryAfterText$1 = "{{ count }} 秒后重试";
+	code$3 = "验证码";
+	mobile$3 = "手机号码";
+	mobileLogin$1 = "手机号登录";
+	sendCode$1 = "获取验证码";
+	sendText$1 = "{{ second }} 秒后重新获取";
+	forgotPasswordSubtitle$1 = "输入您的电子邮件，我们将向您发送重置密码的连接";
+	email$3 = "邮箱";
+	sendResetLink$1 = "发送重置链接";
+	logout$1 = "退出登录";
+	register$1 = "注册";
+	alreadyHaveAnAccount$1 = "已有账号？";
+	goToLogin$1 = "去登录";
+	goToRegister$1 = "去注册";
+	noAccountYet$1 = "还没有账号？";
+	confirmPassword$3 = "确认密码";
+	logoutConfirm$1 = "确认退出登录吗？";
+	agree$3 = "我已阅读并同意《<0>隐私政策</0>》和《<1>服务条款</1>》";
+	privacyPolicy$1 = "隐私政策";
+	termsOfService$1 = "服务条款";
+	authority_default$1 = {
+		welcomeBack: welcomeBack$1,
+		loginDescription: loginDescription$1,
+		pageTitle: pageTitle$1,
+		pageDescription: pageDescription$1,
+		layout: layout$3,
+		username: username$3,
+		password: password$3,
+		login: login$1,
+		loginInProgress: loginInProgress$1,
+		loginSuccess: loginSuccess$1,
+		codeLogin: codeLogin$1,
+		forgotPassword: forgotPassword$1,
+		retryAfterText: retryAfterText$1,
+		code: code$3,
+		mobile: mobile$3,
+		mobileLogin: mobileLogin$1,
+		sendCode: sendCode$1,
+		sendText: sendText$1,
+		forgotPasswordSubtitle: forgotPasswordSubtitle$1,
+		email: email$3,
+		sendResetLink: sendResetLink$1,
+		logout: logout$1,
+		register: register$1,
+		alreadyHaveAnAccount: alreadyHaveAnAccount$1,
+		goToLogin: goToLogin$1,
+		goToRegister: goToRegister$1,
+		noAccountYet: noAccountYet$1,
+		confirmPassword: confirmPassword$3,
+		logoutConfirm: logoutConfirm$1,
+		agree: agree$3,
+		privacyPolicy: privacyPolicy$1,
+		termsOfService: termsOfService$1
+	};
+})), appLoading$1, back$1, backHome$1, warning$1, confirm$1, fail$1, success$1, deleteSuccess$1, confirmDelete$1, view$1, edit$1, error$1, index$1, upload$1, noData$1, action$1, add$1, addSuccess$1, backToHome$1, batchDelete$1, cancel$1, close$1, check$1, expandColumn$1, columnSetting$1, config$1, keywordSearch$1, modify$1, modifySuccess$1, pleaseCheckValue$1, refresh$1, reset$1, search$3, tip$1, tipMessage$1, trigger$1, update$1, updateSuccess$1, userCenter$1, name$1, id$1, status$1, enabled$1, deactivated$1, activated$1, disabled$1, createTime$1, updateTime$1, remark$1, demoOnly$1, pagination$1, expandAll$1, collapseAll$1, checkAll$1, cancelAll$1, common_default$1;
+var init_common$1 = __esmMin((() => {
+	appLoading$1 = "资源正在加载中...";
+	back$1 = "返回";
+	backHome$1 = "返回首页";
+	warning$1 = "警告";
+	confirm$1 = "确认";
+	fail$1 = "失败";
+	success$1 = "成功";
+	deleteSuccess$1 = "删除成功";
+	confirmDelete$1 = "确认删除吗？";
+	view$1 = "查看";
+	edit$1 = "编辑";
+	error$1 = "错误";
+	index$1 = "序号";
+	upload$1 = "上传";
+	noData$1 = "暂无数据";
+	action$1 = "操作";
+	add$1 = "新增";
+	addSuccess$1 = "添加成功";
+	backToHome$1 = "返回首页";
+	batchDelete$1 = "批量删除";
+	cancel$1 = "取消";
+	close$1 = "关闭";
+	check$1 = "勾选";
+	expandColumn$1 = "展开列";
+	columnSetting$1 = "列设置";
+	config$1 = "配置";
+	keywordSearch$1 = "请输入关键词搜索";
+	modify$1 = "修改";
+	modifySuccess$1 = "修改成功";
+	pleaseCheckValue$1 = "请检查输入的值是否合法";
+	refresh$1 = "刷新";
+	reset$1 = "重置";
+	search$3 = "搜索";
+	tip$1 = "提示";
+	tipMessage$1 = "确定执行本次操作?";
+	trigger$1 = "触发";
+	update$1 = "更新";
+	updateSuccess$1 = "更新成功";
+	userCenter$1 = "个人中心";
+	name$1 = "名称";
+	id$1 = "标识";
+	status$1 = "状态";
+	enabled$1 = "启用";
+	deactivated$1 = "停用";
+	activated$1 = "激活";
+	disabled$1 = "禁用";
+	createTime$1 = "创建时间";
+	updateTime$1 = "更新时间";
+	remark$1 = "备注";
+	demoOnly$1 = "仅演示，操作后不生效";
+	pagination$1 = "共 {{total}} 条";
+	expandAll$1 = "展开所有";
+	collapseAll$1 = "折叠所有";
+	checkAll$1 = "选择所有";
+	cancelAll$1 = "取消所有";
+	common_default$1 = {
+		appLoading: appLoading$1,
+		back: back$1,
+		backHome: backHome$1,
+		warning: warning$1,
+		confirm: confirm$1,
+		"delete": "删除",
+		fail: fail$1,
+		success: success$1,
+		deleteSuccess: deleteSuccess$1,
+		confirmDelete: confirmDelete$1,
+		view: view$1,
+		edit: edit$1,
+		error: error$1,
+		index: index$1,
+		upload: upload$1,
+		noData: noData$1,
+		action: action$1,
+		add: add$1,
+		addSuccess: addSuccess$1,
+		backToHome: backToHome$1,
+		batchDelete: batchDelete$1,
+		cancel: cancel$1,
+		close: close$1,
+		check: check$1,
+		expandColumn: expandColumn$1,
+		columnSetting: columnSetting$1,
+		config: config$1,
+		keywordSearch: keywordSearch$1,
+		modify: modify$1,
+		modifySuccess: modifySuccess$1,
+		pleaseCheckValue: pleaseCheckValue$1,
+		refresh: refresh$1,
+		reset: reset$1,
+		search: search$3,
+		"switch": "切换",
+		tip: tip$1,
+		tipMessage: tipMessage$1,
+		trigger: trigger$1,
+		update: update$1,
+		updateSuccess: updateSuccess$1,
+		userCenter: userCenter$1,
+		yes: "是",
+		no: "否",
+		name: name$1,
+		id: id$1,
+		status: status$1,
+		enabled: enabled$1,
+		deactivated: deactivated$1,
+		activated: activated$1,
+		disabled: disabled$1,
+		createTime: createTime$1,
+		updateTime: updateTime$1,
+		remark: remark$1,
+		demoOnly: demoOnly$1,
+		pagination: pagination$1,
+		expandAll: expandAll$1,
+		collapseAll: collapseAll$1,
+		checkAll: checkAll$1,
+		cancelAll: cancelAll$1
+	};
+})), notFoundSubTitle$1, unknownComponentTitle$1, unknownComponentSubTitle$1, pageErrorTitle$1, exception_default$1;
+var init_exception$1 = __esmMin((() => {
+	notFoundSubTitle$1 = "抱歉，您访问的页面不存在。";
+	unknownComponentTitle$1 = "未知组件";
+	unknownComponentSubTitle$1 = "抱歉，当前路由没有对应的组件，请联系开发人员。";
+	pageErrorTitle$1 = "槽糕！出错了！";
+	exception_default$1 = {
+		notFoundTitle: "404",
+		notFoundSubTitle: notFoundSubTitle$1,
+		unknownComponentTitle: unknownComponentTitle$1,
+		unknownComponentSubTitle: unknownComponentSubTitle$1,
+		pageErrorTitle: pageErrorTitle$1
+	};
+}));
+//#endregion
+//#region src/locales/zh-CN/form.json
+var required$1, length$1, username$2, password$2, code$2, mobile$2, telephone$1, email$2, confirmPassword$2, agree$2, alphanumeric$1, unifiedSocialCreditCode$1, form_default$1;
+var init_form$1 = __esmMin((() => {
+	required$1 = "必填项";
+	length$1 = "只支持 {{length}} 个字符";
+	username$2 = {
+		"required": "请输入用户名",
+		"invalid": "4 到 16 位，支持字母、数字、下划线和减号"
+	};
+	password$2 = {
+		"required": "请输入密码",
+		"invalid": "8-16 位必须包含字母和数字"
+	};
+	code$2 = { "required": "请输入验证码" };
+	mobile$2 = {
+		"required": "请输入手机号码",
+		"invalid": "手机号码格式错误"
+	};
+	telephone$1 = {
+		"required": "请输入座机号码",
+		"invalid": "座机号码格式错误"
+	};
+	email$2 = {
+		"required": "请输入邮箱",
+		"invalid": "邮箱格式错误"
+	};
+	confirmPassword$2 = {
+		"required": "请再次输入密码",
+		"invalid": "两次输入的密码不一致"
+	};
+	agree$2 = { "required": "请同意隐私政策和条款" };
+	alphanumeric$1 = {
+		"required": "请输入字母或数字",
+		"invalid": "请输入字母或数字"
+	};
+	unifiedSocialCreditCode$1 = {
+		"required": "请输入统一社会信用代码",
+		"invalid": "请输入正确的统一社会信用代码"
+	};
+	form_default$1 = {
+		required: required$1,
+		length: length$1,
+		username: username$2,
+		password: password$2,
+		code: code$2,
+		mobile: mobile$2,
+		telephone: telephone$1,
+		email: email$2,
+		confirmPassword: confirmPassword$2,
+		agree: agree$2,
+		alphanumeric: alphanumeric$1,
+		unifiedSocialCreditCode: unifiedSocialCreditCode$1
+	};
+}));
+//#endregion
+//#region src/locales/zh-CN/preferences.json
+var title$1, copyPreferences$1, copyPreferencesSuccessTitle$1, copyPreferencesSuccess$1, clearAndLogout$1, theme$2, layout$2, sidebar$1, tabbar$1, animation$1, general$1, footer$1, preferences_default$1;
+var init_preferences$1 = __esmMin((() => {
+	title$1 = "偏好设置";
+	copyPreferences$1 = "复制偏好设置";
+	copyPreferencesSuccessTitle$1 = "复制成功";
+	copyPreferencesSuccess$1 = "复制成功，请在 `src/store/preferences/index.ts` 内进行覆盖";
+	clearAndLogout$1 = "清空缓存 & 退出登录";
+	theme$2 = {
+		"title": "主题",
+		"followSystem": "跟随系统",
+		"light": "浅色",
+		"dark": "深色",
+		"colorBlindMode": "色弱模式",
+		"grayMode": "灰色模式",
+		"radius": "圆角",
+		"builtin": {
+			"title": "内置主题",
+			"red": "薄暮",
+			"volcano": "火山",
+			"orange": "日暮",
+			"gold": "金盏花",
+			"yellow": "日出",
+			"lime": "青柠",
+			"green": "极光绿",
+			"cyan": "明青",
+			"blue": "拂晓蓝",
+			"geekblue": "极客蓝",
+			"purple": "酱紫",
+			"magenta": "法式洋红",
+			"gray": "中性灰",
+			"custom": "自定义"
+		}
+	};
+	layout$2 = {
+		"title": "布局",
+		"topNavigation": "顶部导航",
+		"topNavigationTip": "菜单在顶部位置",
+		"sideNavigation": "侧边导航",
+		"sideNavigationTip": "菜单在侧边位置",
+		"twoColumnNavigation": "双列导航",
+		"twoColumnNavigationTip": "垂直双列菜单在侧边位置",
+		"mixedNavigation": "混合导航",
+		"mixedNavigationTip": "一级导航在顶部，二级导航在侧边"
+	};
+	sidebar$1 = {
+		"title": "侧边栏",
+		"width": "宽度",
+		"enable": "显示侧边栏",
+		"collapsedWidth": "折叠菜单宽度",
+		"collapsed": "折叠菜单",
+		"collapsedShowTitle": "折叠显示菜单名",
+		"firstColumnWidthInTwoColumnNavigation": "双列导航第一列宽度",
+		"sidebarTheme": "侧边栏主题",
+		"accordion": "手风琴菜单",
+		"autoActivateChild": "自动激活子菜单",
+		"autoActivateChildTip": "点击顶层菜单时,自动激活第一个子菜单或者上一次激活的子菜单",
+		"expandOnHover": "鼠标悬停展开",
+		"expandOnHoverTip": "鼠标在折叠区域悬浮时，`启用`则展开当前子菜单，`禁用`则展开整个侧边栏"
+	};
+	tabbar$1 = {
+		"title": "标签栏",
+		"enable": "启用标签栏",
+		"icon": "显示标签栏图标",
+		"showMore": "显示更多按钮",
+		"showMaximize": "显示最大化按钮",
+		"persist": "持久化标签页",
+		"draggable": "启动拖拽排序",
+		"styleType": {
+			"title": "标签页风格",
+			"chrome": "谷歌",
+			"card": "卡片",
+			"plain": "朴素",
+			"brisk": "轻快"
+		},
+		"contextMenu": {
+			"refresh": "重新加载",
+			"close": "关闭",
+			"pin": "固定",
+			"unpin": "取消固定",
+			"closeLeft": "关闭左侧标签页",
+			"closeRight": "关闭右侧标签页",
+			"closeOthers": "关闭其它标签页",
+			"closeAll": "关闭全部标签页",
+			"openInNewWindow": "在新窗口打开",
+			"maximize": "最大化",
+			"restoreMaximize": "还原"
+		}
+	};
+	animation$1 = {
+		"title": "动画",
+		"loading": "页面切换 Loading",
+		"transition": "页面切换动画",
+		"progress": "页面切换进度条"
+	};
+	general$1 = {
+		"title": "通用",
+		"language": "语言",
+		"dynamicTitle": "动态标题",
+		"watermark": "水印",
+		"watermarkTip": "水印外号网站牛皮癣，不推荐使用",
+		"watermarkContent": "水印内容",
+		"enableCheckUpdate": "定时检查更新",
+		"enableBackTopButton": "显示返回顶部按钮"
+	};
+	footer$1 = {
+		"title": "底栏",
+		"showFooter": "显示底栏",
+		"fixedFooter": "固定底栏",
+		"companyName": "公司名称",
+		"companyWebsite": "公司官网",
+		"copyrightDate": "版权年份",
+		"ICPNumber": "ICP 备案号",
+		"ICPLink": "ICP 备案链接"
+	};
+	preferences_default$1 = {
+		title: title$1,
+		copyPreferences: copyPreferences$1,
+		copyPreferencesSuccessTitle: copyPreferencesSuccessTitle$1,
+		copyPreferencesSuccess: copyPreferencesSuccess$1,
+		clearAndLogout: clearAndLogout$1,
+		theme: theme$2,
+		layout: layout$2,
+		sidebar: sidebar$1,
+		tabbar: tabbar$1,
+		animation: animation$1,
+		general: general$1,
+		footer: footer$1
+	};
+}));
+//#endregion
+//#region src/locales/zh-CN/widgets.json
+var document$2, qa$1, setting$1, logoutTip$1, viewAll$1, notifications$1, markAllAsRead$1, clearNotifications$1, versionMonitorTitle$1, versionMonitorContent$1, versionMonitorConfirm$1, versionMonitorCancel$1, search$2, widgets_default$1;
+var init_widgets$1 = __esmMin((() => {
+	document$2 = "文档";
+	qa$1 = "问题 & 帮助";
+	setting$1 = "设置";
+	logoutTip$1 = "是否退出登录？";
+	viewAll$1 = "查看所有消息";
+	notifications$1 = "通知";
+	markAllAsRead$1 = "全部标记为已读";
+	clearNotifications$1 = "清空";
+	versionMonitorTitle$1 = "系统版本更新通知";
+	versionMonitorContent$1 = "检测到系统有新版本发布，是否立即刷新页面？";
+	versionMonitorConfirm$1 = "立即刷新";
+	versionMonitorCancel$1 = "稍后再说";
+	search$2 = {
+		"placeholder": "输入关键字搜索菜单（支持拼音）",
+		"title": "搜索",
+		"select": "选择",
+		"navigate": "导航",
+		"close": "关闭",
+		"noResults": "未找到搜索结果",
+		"noRecent": "没有搜索历史",
+		"total": "共 {{total}} 项"
+	};
+	widgets_default$1 = {
+		document: document$2,
+		qa: qa$1,
+		setting: setting$1,
+		logoutTip: logoutTip$1,
+		viewAll: viewAll$1,
+		notifications: notifications$1,
+		markAllAsRead: markAllAsRead$1,
+		clearNotifications: clearNotifications$1,
+		versionMonitorTitle: versionMonitorTitle$1,
+		versionMonitorContent: versionMonitorContent$1,
+		versionMonitorConfirm: versionMonitorConfirm$1,
+		versionMonitorCancel: versionMonitorCancel$1,
+		search: search$2
+	};
+}));
+//#endregion
+//#region src/locales/en-US/authority.json
+var welcomeBack, loginDescription, pageTitle, pageDescription, layout$1, username$1, password$1, login, loginInProgress, loginSuccess, codeLogin, forgotPassword, retryAfterText, code$1, mobile$1, mobileLogin, sendCode, sendText, forgotPasswordSubtitle, email$1, sendResetLink, logout, register, alreadyHaveAnAccount, goToLogin, goToRegister, noAccountYet, confirmPassword$1, logoutConfirm, agree$1, privacyPolicy, termsOfService, authority_default;
+var init_authority = __esmMin((() => {
+	welcomeBack = "Welcome Back";
+	loginDescription = "Login to your account";
+	pageTitle = "Out-of-the-box Admin System";
+	pageDescription = "A simple, lightweight, and easy-to-use";
+	layout$1 = {
+		"alignLeft": "Align Left",
+		"alignCenter": "Align Center",
+		"alignRight": "Align Right"
+	};
+	username$1 = "Username";
+	password$1 = "Password";
+	login = "Login";
+	loginInProgress = "Login in progress ...";
+	loginSuccess = "Login Successful";
+	codeLogin = "Code Login";
+	forgotPassword = "Forgot Password";
+	retryAfterText = "{{ count }} seconds later you can try again";
+	code$1 = "Security code";
+	mobile$1 = "Mobile";
+	mobileLogin = "Mobile Login";
+	sendCode = "Get Security code";
+	sendText = "Resend in {{ second }} s";
+	forgotPasswordSubtitle = "Enter your email and we'll send you instructions to reset your password";
+	email$1 = "Email";
+	sendResetLink = "Send Reset Link";
+	logout = "Logout";
+	register = "Register";
+	alreadyHaveAnAccount = "Already have an account?";
+	goToLogin = "Go to Login";
+	goToRegister = "Go to Register";
+	noAccountYet = "No account yet?";
+	confirmPassword$1 = "Confirm Password";
+	logoutConfirm = "Are you sure to logout?";
+	agree$1 = "I have read and agree to <0>Privacy Policy</0> and <1>Terms of Service</1>";
+	privacyPolicy = "Privacy Policy";
+	termsOfService = "Terms of Service";
+	authority_default = {
+		welcomeBack,
+		loginDescription,
+		pageTitle,
+		pageDescription,
+		layout: layout$1,
+		username: username$1,
+		password: password$1,
+		login,
+		loginInProgress,
+		loginSuccess,
+		codeLogin,
+		forgotPassword,
+		retryAfterText,
+		code: code$1,
+		mobile: mobile$1,
+		mobileLogin,
+		sendCode,
+		sendText,
+		forgotPasswordSubtitle,
+		email: email$1,
+		sendResetLink,
+		logout,
+		register,
+		alreadyHaveAnAccount,
+		goToLogin,
+		goToRegister,
+		noAccountYet,
+		confirmPassword: confirmPassword$1,
+		logoutConfirm,
+		agree: agree$1,
+		privacyPolicy,
+		termsOfService
+	};
+})), appLoading, back, backHome, warning, confirm, fail, success, deleteSuccess, confirmDelete, view, edit, error, index, upload, noData, action, addSuccess, backToHome, batchDelete, cancel, close, check, expandColumn, columnSetting, config, keywordSearch, modify, modifySuccess, pleaseCheckValue, refresh, reset, search$1, tipMessage, trigger, update, updateSuccess, userCenter, name, status, enabled, deactivated, activated, disabled, createTime, updateTime, remark, demoOnly, pagination, expandAll, collapseAll, checkAll, cancelAll, common_default;
+var init_common = __esmMin((() => {
+	appLoading = "Loading Resources...";
+	back = "Back";
+	backHome = "Back to Home";
+	warning = "Warning";
+	confirm = "Confirm";
+	fail = "Fail";
+	success = "Success";
+	deleteSuccess = "Deleted successfully";
+	confirmDelete = "Are you sure to delete?";
+	view = "View";
+	edit = "Edit";
+	error = "Error";
+	index = "Index";
+	upload = "Upload";
+	noData = "No data";
+	action = "Action";
+	addSuccess = "Added successfully";
+	backToHome = "Back to Home";
+	batchDelete = "Batch Delete";
+	cancel = "Cancel";
+	close = "Close";
+	check = "Check";
+	expandColumn = "Expand Column";
+	columnSetting = "Column Setting";
+	config = "Config";
+	keywordSearch = "Please enter keywords to search";
+	modify = "Modify";
+	modifySuccess = "Modified successfully";
+	pleaseCheckValue = "Please check if the input value is valid";
+	refresh = "Refresh";
+	reset = "Reset";
+	search$1 = "Search";
+	tipMessage = "Confirm to perform this operation?";
+	trigger = "Trigger";
+	update = "Update";
+	updateSuccess = "Updated successfully";
+	userCenter = "User Center";
+	name = "Name";
+	status = "Status";
+	enabled = "Enabled";
+	deactivated = "Deactivated";
+	activated = "Activated";
+	disabled = "Disabled";
+	createTime = "Creation Time";
+	updateTime = "Update Time";
+	remark = "Remark";
+	demoOnly = "Demo only, operations do not take effect";
+	pagination = "Total {{total}} items";
+	expandAll = "Expand All";
+	collapseAll = "Collapse All";
+	checkAll = "Check All";
+	cancelAll = "Cancel All";
+	common_default = {
+		appLoading,
+		back,
+		backHome,
+		warning,
+		confirm,
+		"delete": "Delete",
+		fail,
+		success,
+		deleteSuccess,
+		confirmDelete,
+		view,
+		edit,
+		error,
+		index,
+		upload,
+		noData,
+		action,
+		add: "Add",
+		addSuccess,
+		backToHome,
+		batchDelete,
+		cancel,
+		close,
+		check,
+		expandColumn,
+		columnSetting,
+		config,
+		keywordSearch,
+		modify,
+		modifySuccess,
+		pleaseCheckValue,
+		refresh,
+		reset,
+		search: search$1,
+		"switch": "Switch",
+		tip: "Tip",
+		tipMessage,
+		trigger,
+		update,
+		updateSuccess,
+		userCenter,
+		yes: "Yes",
+		no: "No",
+		name,
+		id: "Id",
+		status,
+		enabled,
+		deactivated,
+		activated,
+		disabled,
+		createTime,
+		updateTime,
+		remark,
+		demoOnly,
+		pagination,
+		expandAll,
+		collapseAll,
+		checkAll,
+		cancelAll
+	};
+})), notFoundSubTitle, unknownComponentTitle, unknownComponentSubTitle, pageErrorTitle, exception_default;
+var init_exception = __esmMin((() => {
+	notFoundSubTitle = "Sorry, the page you visited does not exist.";
+	unknownComponentTitle = "Unknown Component";
+	unknownComponentSubTitle = "Sorry, the current route has no corresponding component, please contact the developer.";
+	pageErrorTitle = "Oops! Something went wrong!";
+	exception_default = {
+		notFoundTitle: "404",
+		notFoundSubTitle,
+		unknownComponentTitle,
+		unknownComponentSubTitle,
+		pageErrorTitle
+	};
+}));
+//#endregion
+//#region src/locales/en-US/form.json
+var required, length, username, password, code, mobile, telephone, email, confirmPassword, agree, alphanumeric, unifiedSocialCreditCode, form_default;
+var init_form = __esmMin((() => {
+	required = "Please input";
+	length = "Only supports {{length}} characters";
+	username = {
+		"required": "Please enter your username",
+		"invalid": "Please enter a username of 4 to 16 characters, supporting letters, numbers, underscores, and hyphens"
+	};
+	password = {
+		"required": "Please enter your password",
+		"invalid": "The password is 8-16 characters and must contain letters and numbers"
+	};
+	code = { "required": "Please enter the security code" };
+	mobile = {
+		"required": "Please enter your mobile number",
+		"invalid": "The phone number format is incorrect"
+	};
+	telephone = {
+		"required": "Please enter your telephone number",
+		"invalid": "The telephone number format is incorrect"
+	};
+	email = {
+		"required": "Please enter your email",
+		"invalid": "The email format is incorrect"
+	};
+	confirmPassword = {
+		"required": "Please enter the password again",
+		"invalid": "The password does not match"
+	};
+	agree = { "required": "Please agree to the privacy policy and terms of service" };
+	alphanumeric = {
+		"required": "Please enter letters or numbers",
+		"invalid": "Please enter only letters or numbers"
+	};
+	unifiedSocialCreditCode = {
+		"required": "Please enter the Unified Social Credit Code",
+		"invalid": "Please enter a valid Unified Social Credit Code"
+	};
+	form_default = {
+		required,
+		length,
+		username,
+		password,
+		code,
+		mobile,
+		telephone,
+		email,
+		confirmPassword,
+		agree,
+		alphanumeric,
+		unifiedSocialCreditCode
+	};
+}));
+//#endregion
+//#region src/locales/en-US/preferences.json
+var title, copyPreferences, copyPreferencesSuccessTitle, copyPreferencesSuccess, clearAndLogout, theme$1, layout, sidebar, tabbar, animation, general, footer, preferences_default;
+var init_preferences = __esmMin((() => {
+	title = "Preferences";
+	copyPreferences = "Copy Preferences";
+	copyPreferencesSuccessTitle = "Copy successful";
+	copyPreferencesSuccess = "Copy successful, please override in `src/store/preferences/index.ts`";
+	clearAndLogout = "Clear Cache & Logout";
+	theme$1 = {
+		"title": "Theme",
+		"followSystem": "Follow System",
+		"light": "Light",
+		"dark": "Dark",
+		"colorBlindMode": "Color Blind Mode",
+		"grayMode": "Gray Mode",
+		"radius": "Radius",
+		"builtin": {
+			"title": "Built-in",
+			"red": "Dust Red",
+			"volcano": "Volcano",
+			"orange": "Sunset Orange",
+			"gold": "Calendula Gold",
+			"yellow": "Sunrise Yellow",
+			"lime": "Lime",
+			"green": "Polar Green",
+			"cyan": "Cyan",
+			"blue": "DayBreak Blue",
+			"geekblue": "Geek Blue",
+			"purple": "Golden Purple",
+			"magenta": "Magenta",
+			"gray": "Gray",
+			"custom": "Custom"
+		}
+	};
+	layout = {
+		"title": "Layout",
+		"topNavigation": "Top Navigation",
+		"topNavigationTip": "Menu at the top position",
+		"sideNavigation": "Side Navigation",
+		"sideNavigationTip": "Menu at the side position",
+		"twoColumnNavigation": "Two Column Navigation",
+		"twoColumnNavigationTip": "Vertical two-column menu at the side position",
+		"mixedNavigation": "Mixed Navigation",
+		"mixedNavigationTip": "Primary navigation at the top, secondary navigation at the side"
+	};
+	sidebar = {
+		"title": "Sidebar",
+		"width": "Width",
+		"enable": "Show Sidebar",
+		"collapsedWidth": "Collpase Menu Width",
+		"collapsed": "Collpase Menu",
+		"collapsedShowTitle": "Show Menu Title",
+		"firstColumnWidthInTwoColumnNavigation": "First Column Width in Two-Column Navigation",
+		"sidebarTheme": "Sidebar Theme",
+		"accordion": "Accordion Menu",
+		"autoActivateChild": "Auto Activate SubMenu",
+		"autoActivateChildTip": "`Enabled` to automatically activate the submenu while click menu.",
+		"expandOnHover": "Expand On Hover",
+		"expandOnHoverTip": "When the mouse hovers over menu, \n `Enabled` to expand children menus \n `Disabled` to expand whole sidebar."
+	};
+	tabbar = {
+		"title": "Tabbar",
+		"enable": "Enable Tab Bar",
+		"icon": "Show Tabbar Icon",
+		"showMore": "Show More Button",
+		"showMaximize": "Show Maximize Button",
+		"persist": "Persist Tabs",
+		"draggable": "Enable Draggable Sort",
+		"styleType": {
+			"title": "Tabs Style",
+			"chrome": "Chrome",
+			"card": "Card",
+			"plain": "Plain",
+			"brisk": "Brisk"
+		},
+		"contextMenu": {
+			"refresh": "Refresh",
+			"close": "Close",
+			"pin": "Pin",
+			"unpin": "Unpin",
+			"closeLeft": "Close Left Tabs",
+			"closeRight": "Close Right Tabs",
+			"closeOthers": "Close Other Tabs",
+			"closeAll": "Close All Tabs",
+			"openInNewWindow": "Open in New Window",
+			"maximize": "Maximize",
+			"restoreMaximize": "Restore"
+		}
+	};
+	animation = {
+		"title": "Animation",
+		"loading": "Page Loading",
+		"transition": "Page Transition",
+		"progress": "Page Progress"
+	};
+	general = {
+		"title": "General",
+		"language": "Language",
+		"dynamicTitle": "Dynamic Title",
+		"watermark": "Watermark",
+		"watermarkTip": "Watermark nickname website psoriasis, not recommended",
+		"watermarkContent": "Watermark Content",
+		"enableCheckUpdate": "Check Update",
+		"enableBackTopButton": "Back Top Button"
+	};
+	footer = {
+		"title": "Footer",
+		"showFooter": "Show Footer",
+		"fixedFooter": "Fixed Footer",
+		"companyName": "Company Name",
+		"companyWebsite": "Company Website",
+		"copyrightDate": "Copyright Date",
+		"ICPNumber": "ICP Number",
+		"ICPLink": "ICP Link"
+	};
+	preferences_default = {
+		title,
+		copyPreferences,
+		copyPreferencesSuccessTitle,
+		copyPreferencesSuccess,
+		clearAndLogout,
+		theme: theme$1,
+		layout,
+		sidebar,
+		tabbar,
+		animation,
+		general,
+		footer
+	};
+})), document$1, setting, logoutTip, viewAll, notifications, markAllAsRead, clearNotifications, versionMonitorTitle, versionMonitorContent, versionMonitorConfirm, versionMonitorCancel, search, widgets_default;
+var init_widgets = __esmMin((() => {
+	document$1 = "Document";
+	setting = "Settings";
+	logoutTip = "Do you want to logout?";
+	viewAll = "View All Messages";
+	notifications = "Notifications";
+	markAllAsRead = "Make All as Read";
+	clearNotifications = "Clear";
+	versionMonitorTitle = "System Version Update Notification";
+	versionMonitorContent = "A new version of the system has been detected, do you want to refresh the page now?";
+	versionMonitorConfirm = "Refresh Now";
+	versionMonitorCancel = "Later";
+	search = {
+		"placeholder": "Enter keyword to search menu",
+		"title": "Search",
+		"select": "Select",
+		"navigate": "Navigate",
+		"close": "Close",
+		"noResults": "No Search Results Found",
+		"noRecent": "No Search History",
+		"total": "Total {{total}} items"
+	};
+	widgets_default = {
+		document: document$1,
+		qa: "Q&A",
+		setting,
+		logoutTip,
+		viewAll,
+		notifications,
+		markAllAsRead,
+		clearNotifications,
+		versionMonitorTitle,
+		versionMonitorContent,
+		versionMonitorConfirm,
+		versionMonitorCancel,
+		search
+	};
+}));
+//#endregion
+//#region src/locales/helper.ts
+function getZhCnLang() {
+	return organizeLanguageFiles(/* @__PURE__ */ Object.assign({
+		"./zh-CN/authority.json": authority_default$1,
+		"./zh-CN/common.json": common_default$1,
+		"./zh-CN/exception.json": exception_default$1,
+		"./zh-CN/form.json": form_default$1,
+		"./zh-CN/preferences.json": preferences_default$1,
+		"./zh-CN/widgets.json": widgets_default$1
+	}));
+}
+function getEnUsLang() {
+	return organizeLanguageFiles(/* @__PURE__ */ Object.assign({
+		"./en-US/authority.json": authority_default,
+		"./en-US/common.json": common_default,
+		"./en-US/exception.json": exception_default,
+		"./en-US/form.json": form_default,
+		"./en-US/preferences.json": preferences_default,
+		"./en-US/widgets.json": widgets_default
+	}));
+}
+function organizeLanguageFiles(files) {
+	const result = {};
+	for (const key in files) {
+		const data = files[key];
+		const fileArr = key?.split("/");
+		const fileName = fileArr[fileArr?.length - 1];
+		if (!fileName) continue;
+		const name = fileName.split(".json")[0];
+		if (name) result[name] = data;
+	}
+	return result;
+}
+var init_helper = __esmMin((() => {
+	init_authority$1();
+	init_common$1();
+	init_exception$1();
+	init_form$1();
+	init_preferences$1();
+	init_widgets$1();
+	init_authority();
+	init_common();
+	init_exception();
+	init_form();
+	init_preferences();
+	init_widgets();
+}));
+//#endregion
+//#region src/locales/t.tsx
+/**
+* @zh 此函数没有任何意义，仅用于对 lokalise.i18n-ally 插件获取更好良好的语言提示支持。
+* @en This function has no practical meaning; it is only used to obtain better language prompt support for the lokalise.i18n-ally plugin.
+*
+* @link https://github.com/i18next/react-i18next/issues/1058
+* @zh 官方不推荐在纯 JS 或者 TS 文件场景下如何使用 react-i18next，且目前没有较好的解决方案。
+* @en The official recommendation does not cover how to use react-i18next in pure JS or TS file scenarios, and there is currently no good solution.
+*
+*/
+function $t(path) {
+	return path;
+}
+var init_t = __esmMin((() => {}));
+var init_locales = __esmMin((() => {
+	init_helper();
+	init_t();
+	getZhCnLang(), getEnUsLang();
+	i18next.use(initReactI18next);
+}));
+//#endregion
+//#region src/pages/privacy-policy/index.tsx
+var privacy_policy_exports$1 = /* @__PURE__ */ __exportAll({ default: () => PrivacyPolicy$1 });
+function PrivacyPolicy$1() {
+	const { t } = useTranslation();
+	return /* @__PURE__ */ jsx("div", {
+		className: "p-4 dark:bg-black",
+		children: /* @__PURE__ */ jsx(Typography.Title, {
+			level: 1,
+			children: t("authority.privacyPolicy")
+		})
+	});
+}
+var init_privacy_policy$1 = __esmMin((() => {}));
+//#endregion
+//#region src/router/routes/external/privacy-policy.ts
+var privacy_policy_exports = /* @__PURE__ */ __exportAll({ default: () => routes$3 });
+var PrivacyPolicy, routes$3;
+var init_privacy_policy = __esmMin((() => {
+	init_locales();
+	PrivacyPolicy = lazy(() => Promise.resolve().then(() => (init_privacy_policy$1(), privacy_policy_exports$1)));
+	routes$3 = [{
+		path: "/privacy-policy",
+		Component: Outlet,
+		handle: {
+			hideInMenu: true,
+			title: $t("authority.privacyPolicy")
+		},
+		children: [{
+			index: true,
+			Component: PrivacyPolicy,
+			handle: { title: $t("authority.privacyPolicy") }
+		}]
+	}];
+}));
+//#endregion
+//#region src/pages/terms-of-service/index.tsx
+var terms_of_service_exports$1 = /* @__PURE__ */ __exportAll({ default: () => TermsOfService$1 });
+function TermsOfService$1() {
+	const { t } = useTranslation();
+	return /* @__PURE__ */ jsx("div", {
+		className: "p-4 dark:bg-black",
+		children: /* @__PURE__ */ jsx(Typography.Title, {
+			level: 1,
+			children: /* @__PURE__ */ jsx(Fragment, { children: t("authority.termsOfService") })
+		})
+	});
+}
+var init_terms_of_service$1 = __esmMin((() => {}));
+//#endregion
+//#region src/router/routes/external/terms-of-service.ts
+var terms_of_service_exports = /* @__PURE__ */ __exportAll({ default: () => routes$2 });
+var TermsOfService, routes$2;
+var init_terms_of_service = __esmMin((() => {
+	init_locales();
+	TermsOfService = lazy(() => Promise.resolve().then(() => (init_terms_of_service$1(), terms_of_service_exports$1)));
+	routes$2 = [{
+		path: "/terms-of-service",
+		Component: Outlet,
+		handle: {
+			hideInMenu: true,
+			title: $t("authority.termsOfService")
+		},
+		children: [{
+			index: true,
+			Component: TermsOfService,
+			handle: { title: $t("authority.termsOfService") }
+		}]
+	}];
+}));
+//#endregion
+//#region src/router/utils/ascending.ts
+/** 按照路由中 order 升序来排序路由 */
+function ascending(arr) {
+	return arr.map((routeItem, routeIndex) => ({
+		...routeItem,
+		handle: {
+			...routeItem.handle,
+			order: routeItem?.handle?.order || routeIndex + 2
+		}
+	})).sort((a, b) => {
+		return a?.handle?.order - b?.handle?.order;
+	});
+}
+var init_ascending = __esmMin((() => {}));
+//#endregion
+//#region src/router/utils/add-route-id-by-path.ts
+/**
+* 为路由对象添加一个唯一的 ID，替代路由自动生成的 id，该 ID 默认为路由的路径（path）
+* {
+*   path: '/dashboard',
+* }
+*
+* 转化后
+*
+* {
+*   path: '/dashboard',
+*   id: '/dashboard',
+* }
+*/
+function addRouteIdByPath(routes, parentId = "") {
+	return routes.map((route) => {
+		const newRoute = {
+			...route,
+			id: route.index ? `${parentId}/` : route.path
+		};
+		if (newRoute.children && newRoute.children.length > 0) newRoute.children = addRouteIdByPath(newRoute.children, route.path);
+		return newRoute;
+	});
+}
+var init_add_route_id_by_path = __esmMin((() => {}));
+//#endregion
+//#region src/router/utils/merge-route-modules.tsx
+function mergeRouteModules(...routes) {
+	return routes.flatMap((modules) => {
+		return Object.keys(modules).reduce((list, key) => {
+			const mod = modules[key].default ?? {};
+			const modList = Array.isArray(mod) ? [...mod] : [mod];
+			return [...list, ...addRouteIdByPath(modList)];
+		}, []);
+	});
+}
+var init_merge_route_modules = __esmMin((() => {
+	init_add_route_id_by_path();
+}));
+//#endregion
+//#region src/utils/tree/index.ts
+/**
+* @description 构造树型结构数据
+* @param data 数据源
+* @param id id字段 默认id
+* @param parentId 父节点字段，默认parentId
+* @param children 子节点字段，默认children
+* @returns 追加字段后的树
+*/
+function handleTree(data, id, parentId, children) {
+	if (!Array.isArray(data)) {
+		console.warn("data must be an array");
+		return [];
+	}
+	const config = {
+		id: id || "id",
+		parentId: parentId || "parentId",
+		childrenList: children || "children"
+	};
+	const childrenListMap = {};
+	const nodeIds = {};
+	const tree = [];
+	for (const d of data) {
+		const parentId = d[config.parentId];
+		childrenListMap[parentId] ??= [];
+		nodeIds[d[config.id]] = d;
+		childrenListMap[parentId].push(d);
+	}
+	for (const d of data) if (nodeIds[d[config.parentId]] == null) tree.push(d);
+	for (const t of tree) adaptToChildrenList(t);
+	function adaptToChildrenList(o) {
+		if (childrenListMap[o[config.id]] !== null) o[config.childrenList] = childrenListMap[o[config.id]];
+		if (o[config.childrenList]) for (const c of o[config.childrenList]) adaptToChildrenList(c);
+	}
+	return tree;
+}
+/**
+* @zh_CN 遍历树形结构，并返回所有节点中指定的值。
+* @param tree 树形结构数组
+* @param getValue 获取节点值的函数
+* @param options 作为子节点数组的可选属性名称。
+* @returns 所有节点中指定的值的数组
+*/
+function traverseTreeValues(tree, getValue, options) {
+	const result = [];
+	const { childProps } = options || { childProps: "children" };
+	const dfs = (treeNode) => {
+		const value = getValue(treeNode);
+		result.push(value);
+		const children = treeNode?.[childProps];
+		if (!children) return;
+		if (children.length > 0) for (const child of children) dfs(child);
+	};
+	for (const treeNode of tree) dfs(treeNode);
+	return result.filter(Boolean);
+}
+/**
+* 根据条件过滤给定树结构的节点，并以原有顺序返回所有匹配节点的数组。
+* @param tree 要过滤的树结构的根节点数组。
+* @param filter 用于匹配每个节点的条件。
+* @param options 作为子节点数组的可选属性名称。
+* @returns 包含所有匹配节点的数组。
+*/
+function filterTree(tree, filter, options) {
+	const { childProps } = options || { childProps: "children" };
+	const _filterTree = (nodes) => {
+		return nodes.filter((node) => {
+			if (filter(node)) {
+				if (node[childProps]) node[childProps] = _filterTree(node[childProps]);
+				return true;
+			}
+			return false;
+		});
+	};
+	return _filterTree(tree);
+}
+/**
+* 根据条件重新映射给定树结构的节点
+* @param tree 要过滤的树结构的根节点数组。
+* @param mapper 用于map每个节点的条件。
+* @param options 作为子节点数组的可选属性名称。
+*/
+function mapTree(tree, mapper, options) {
+	const { childProps } = options || { childProps: "children" };
+	return tree.map((node) => {
+		const mapperNode = mapper(node);
+		if (mapperNode[childProps]) mapperNode[childProps] = mapTree(mapperNode[childProps], mapper, options);
+		return mapperNode;
+	});
+}
+var init_tree = __esmMin((() => {}));
+//#endregion
+//#region src/assets/svg/banner.svg?react
+var banner_default;
+var init_banner = __esmMin((() => {
+	banner_default = "data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201024%201024'%20version='1.1'%20%3e%3cpath%20fill='%232466F8'%20d='m589.09%20205.63-20.05-.58-21.9-.42c-3.867-23.067-7.8-41.467-11.8-55.2A1363.569%201363.569%200%200%200%20521%20103.28c-1.42-4.29-4.22-7.94-9.26-5.24-2.4%201.28-3.88%206.09-4.7%208.51a711.111%20711.111%200%200%200-25.67%2098.01l-24.34.62a590.52%20590.52%200%200%200-18.78.5c-.6.027-.713-.457-.34-1.45l11.51-32.69c1.827-2.22%203.053-4.05%203.68-5.49%202.173-4.993%204.84-12.147%208-21.46a356.454%20356.454%200%200%201%2010-20.48%20307.167%20307.167%200%200%201%2015.51-26.19%2018.07%2018.07%200%200%200%202.78-3.04%205310.178%205310.178%200%200%201%2015.19-21.06c.873-1.207%201.72-2.863%202.54-4.97l4.85-5.89a1.088%201.088%200%200%201%201.65-.05c2.34%202.56%204.55%205.17%206.63%207.83%2030.86%2039.42%2053.82%2086.63%2068.84%20134.89Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M507.12%2068.85c-.82%202.107-1.667%203.763-2.54%204.97a5295.54%205295.54%200%200%200-15.19%2021.06%2018.073%2018.073%200%200%201-2.78%203.04%20302.356%20302.356%200%200%201%2020.51-29.07ZM547.14%20204.63l-8.71-.17-22.72-.23a.753.753%200%200%201-.75-.76c.113-21.313.21-42.72.29-64.22.007-2.58-.03-5.113-.11-7.6a.567.567%200%200%200-.48-.53l-.33-.04a.864.864%200%200%200-.893.49.83.83%200%200%200-.077.35l.19%2070.87c.007%201.027-.503%201.543-1.53%201.55l-30.65.22a711.111%20711.111%200%200%201%2025.67-98.01c.82-2.42%202.3-7.23%204.7-8.51%205.04-2.7%207.84.95%209.26%205.24%205.053%2015.3%209.833%2030.683%2014.34%2046.15%204%2013.733%207.933%2032.133%2011.8%2055.2Z'%20/%3e%3cpath%20fill='%232466F8'%20d='m630.36%20116.34%207.13.05a.761.761%200%200%201%20.76.75l.05%204.86a.768.768%200%200%201-.216.54.735.735%200%200%201-.244.168.744.744%200%200%201-.29.062l-7.17.12a.763.763%200%200%200-.75.74l-.13%207.26a.762.762%200%200%201-.76.74l-4.71-.04a.761.761%200%200%201-.76-.75l-.16-7.32a.76.76%200%200%200-.75-.74l-7.72-.13a.762.762%200%200%201-.75-.76l.04-4.58a.758.758%200%200%201%20.74-.76l7.75-.18a.76.76%200%200%200%20.74-.75l.13-7.47a.763.763%200%200%201%20.222-.518.763.763%200%200%201%20.518-.222l4.57-.08a.756.756%200%200%201%20.77.74l.24%207.54a.758.758%200%200%200%20.75.73Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='m321.54%20115.71-.86%2024.67a1.442%201.442%200%200%201-.481%201.033%201.445%201.445%200%200%201-1.079.367l-3.91-.3a1.45%201.45%200%200%201-1.33-1.61l2.8-24.49a1.448%201.448%200%200%201%201.53-1.28l1.96.11a1.452%201.452%200%200%201%201.37%201.5ZM300.62%20138.61c.76.893.7%201.723-.18%202.49-.16.14-.343.24-.55.3-1.413.447-2.617.183-3.61-.79-3.84-3.747-7.547-7.913-11.12-12.5-.747-.953-.67-1.84.23-2.66l.59-.52c1.133-1.027%202.193-.957%203.18.21l11.46%2013.47ZM350.817%20124.654l-.044-.041a1.51%201.51%200%200%200-2.134.086l-13.522%2014.654a1.51%201.51%200%200%200%20.086%202.134l.044.04a1.51%201.51%200%200%200%202.134-.085l13.522-14.655a1.509%201.509%200%200%200-.086-2.133ZM538.43%20204.46a176.559%20176.559%200%200%200-7.06%2035.2c-15.36-6.18-29.653-4.83-42.88%204.05-8.507%205.707-14.293%2013.71-17.36%2024.01.82-9.247%201.81-17.19%202.97-23.83%202.66-15.23%204.85-25.94%204.89-38.19%200-.327-.163-.49-.49-.49l-21.47-.03%2024.34-.62%2030.65-.22c1.027-.007%201.537-.523%201.53-1.55l-.19-70.87a.83.83%200%200%201%20.293-.637.867.867%200%200%201%20.677-.203l.33.04c.13.021.249.085.336.181.088.097.138.22.144.349.08%202.487.117%205.02.11%207.6-.08%2021.5-.177%2042.907-.29%2064.22a.758.758%200%200%200%20.216.537.74.74%200%200%200%20.534.223l22.72.23Zm-23.42%201.811a.592.592%200%200%200-.175-.424.596.596%200%200%200-.423-.177h-.04a.604.604%200%200%200-.556.369.625.625%200%200%200-.046.23l-.04%2023.38a.592.592%200%200%200%20.175.424.596.596%200%200%200%20.424.177h.04a.603.603%200%200%200%20.601-.599l.04-23.38ZM346.62%20162.53c-19.7%203.49-39.15%206.11-58.33%2012.08%201.067-13.76%207.783-23.153%2020.15-28.18%2015.04-6.12%2031.37%201.93%2038.18%2016.1Z'%20/%3e%3cpath%20fill='%231350CE'%20d='m449.42%20171.54%2011.68-26.95c-3.16%209.313-5.827%2016.467-8%2021.46-.627%201.44-1.853%203.27-3.68%205.49Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M346.62%20162.53c5.63%2012.98%202.84%2028.49-8.53%2037.59-3.16%202.527-5.82%206.253-7.98%2011.18a94.737%2094.737%200%200%200-23.38-1.22c-2.653-4.32-6.117-8.797-10.39-13.43-5.633-6.1-8.317-13.447-8.05-22.04%2019.18-5.97%2038.63-8.59%2058.33-12.08Zm-21.369%205.362a.627.627%200%200%200-.505-.485.651.651%200%200%200-.245.005l-.039.009a.627.627%200%200%200-.485.505.637.637%200%200%200%20.004.246l1.508%206.856a.622.622%200%200%200%20.276.395.63.63%200%200%200%20.475.085l.039-.009a.646.646%200%200%200%20.225-.098.64.64%200%200%200%20.26-.407.651.651%200%200%200-.005-.245l-1.508-6.857Zm6.299%2018.018-1.58-5.33a.15.15%200%200%200-.18-.11l-.06.02c-.267.079-.439.438-.479.999-.039.56.058%201.277.269%201.991l.07.23c.211.713.519%201.365.856%201.815.337.45.677.66.944.585l.06-.02a.153.153%200%200%200%20.086-.07.156.156%200%200%200%20.014-.11Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='m324.501%20167.412-.04.009a.631.631%200%200%200-.48.75l1.508%206.857a.63.63%200%200%200%20.751.48l.039-.009a.631.631%200%200%200%20.48-.75l-1.508-6.857a.63.63%200%200%200-.75-.48ZM331.55%20185.91a.156.156%200%200%201-.014.11.157.157%200%200%201-.086.07l-.06.02c-.267.075-.607-.135-.944-.585-.338-.45-.645-1.102-.856-1.815l-.07-.23c-.211-.714-.308-1.431-.269-1.991.04-.561.212-.92.479-.999l.06-.02a.15.15%200%200%201%20.18.11l1.58%205.33Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='M437.91%20204.23c-.373.993-.26%201.477.34%201.45a590.52%20590.52%200%200%201%2018.78-.5l21.47.03c.327%200%20.49.163.49.49-.04%2012.25-2.23%2022.96-4.89%2038.19-1.16%206.64-2.15%2014.583-2.97%2023.83a44.296%2044.296%200%200%200-1.48%2015.27c-2.92%208.3-2.21%2015.57-3.04%2023.7-2.51%2024.55-1.48%2048-2.83%2071.97-.28%204.867-1.447%209.19-3.5%2012.97-1.1%202.027-1.787%203.893-2.06%205.6a39.305%2039.305%200%200%200-.47%205.72c-.127%2010.533-.35%2021.233-.67%2032.1-.133%204.38.65%208.057%202.35%2011.03%202.23%203.89%203.37%208.08%203.47%2012.32.147%205.64.21%2011.353.19%2017.14a.91.91%200%200%201-.42.77%207.666%207.666%200%200%201-2.68%201.16c-.46.1-.497.287-.11.56a15.31%2015.31%200%200%201%202.52%202.19c.38.407.357.43-.07.07a4.965%204.965%200%200%201-.89-.98.242.242%200%200%200-.164-.102.232.232%200%200%200-.098.007.23.23%200%200%200-.088.045l-.21.16c-.013.013-.007.037.02.07l3.41%204.21c.233.287.343.613.33.98a462.086%20462.086%200%200%200-.24%2032.19c.33%2012.07-.28%2024.05-.54%2035.99-.073%203.293-.75%206.497-2.03%209.61-.127.313-.357.47-.69.47l-25.85.16-23.53.3c-1.06.013-1.59-.51-1.59-1.57v-30.62l-.16-29.21c.653-9.34.97-20.423.95-33.25-.04-27.253-.073-53.363-.1-78.33-.02-13.49.27-26.52%201.5-40.08%202.367-26.167%204.24-43.837%205.62-53.01%201.713-11.42%203.557-22.86%205.53-34.32%201.207-7.007%202.483-13.543%203.83-19.61%202.93-13.16%205.4-27.21%2010.57-39.17Zm17.615%2051.558a.558.558%200%200%200-.087-.428.569.569%200%200%200-.363-.241l-.059-.011a.569.569%200%200%200-.669.451l-1.312%206.753a.558.558%200%200%200%20.087.428.569.569%200%200%200%20.363.241l.059.011a.569.569%200%200%200%20.669-.451l1.312-6.753Zm-2.116%2011.991a.556.556%200%200%200-.106-.408.547.547%200%200%200-.362-.214l-.04-.005a.55.55%200%200%200-.621.468l-1.409%2010.021a.556.556%200%200%200%20.106.408.547.547%200%200%200%20.362.214l.04.005a.55.55%200%200%200%20.621-.468l1.409-10.021Zm-2.098%2015.063a.496.496%200%200%200-.453-.544l-.04-.003a.51.51%200%200%200-.194.02.511.511%200%200%200-.294.245.517.517%200%200%200-.055.187l-1.086%2011.931a.496.496%200%200%200%20.453.543l.04.004a.51.51%200%200%200%20.194-.02.511.511%200%200%200%20.294-.245.516.516%200%200%200%20.055-.188l1.086-11.93Zm-7.131%2089.408c1.153-4.127%201.8-8.05%201.94-11.77.19-5.37%201.37-10.9%201.07-16.28-.26-4.747.033-9.233.88-13.46a.675.675%200%200%200-.108-.508.666.666%200%200%200-.442-.272l-.27-.05a.362.362%200%200%200-.284.079.367.367%200%200%200-.136.261c-.6%209.287-1.187%2018.877-1.76%2028.77-.193%203.333-.79%207.55-1.79%2012.65a.54.54%200%200%200%20.43.63l.31.05a.136.136%200%200%200%20.096-.019.152.152%200%200%200%20.064-.081Zm-2.17%208.65c-.76.75-.92%201.92-1.15%202.96-.14.6-.013.663.38.19.767-.913%201.21-1.873%201.33-2.88.073-.627-.113-.717-.56-.27Zm-3.87%2040.91c-1.39-5.35-1.95-11.84-1.93-17.36.027-5.353%201.287-10.683%203.78-15.99.073-.167.027-.287-.14-.36l-.24-.1a.459.459%200%200%200-.6.24c-1.993%204.72-3.197%209.137-3.61%2013.25-.92%209.107.31%2018.313%203.69%2027.62a317.845%20317.845%200%200%200%204%2010.39c.12.3.33.39.63.27l.29-.12a.294.294%200%200%200%20.171-.164.296.296%200%200%200-.001-.236%20117.817%20117.817%200%200%201-6.04-17.44Zm11.22%2033.11c-.61-1.5-.86-3.11-1.53-4.63-.293-.673-.513-.647-.66.08-.14.713-.077%201.443.19%202.19a121.008%20121.008%200%200%200%207.28%2016.43c.053.1.14.147.26.14l.56-.03c.313-.02.397-.17.25-.45a150.77%20150.77%200%200%201-6.35-13.73Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='m547.14%20204.63%2021.9.42c12.18%2012.41%2015.08%2026.24%2015.64%2043.01.52%2015.407.283%2031.93-.71%2049.57-.02.393-.213.52-.58.38-2.28-.88-4.517-1.18-6.71-.9-7.51.93-7.93%207.99-7.9%2014.12.03%208.61-.88%2019.74%2011.72%2018.57.427-.033.673.16.74.58%203.29%2020.55%204.83%2041.28%203.88%2061.89-1.64%2035.5-2.52%2070.7-.94%20106.33.54%2012.273%202.647%2023.633%206.32%2034.08l.58%202.82a16.04%2016.04%200%200%201-4.9-.66c-4.28-1.28-8.547-2.61-12.8-3.99-2.713-.88-4.78-2.27-6.2-4.17a25.709%2025.709%200%200%200-4.19-4.38c-1.69-1.39-1.76-5.5-1.84-7.56%201.287.82%202.263%202.013%202.93%203.58.133.3.35.387.65.26l4.39-1.8c-.28-2.747-1.08-5.487-2.4-8.22.273-1.133-.267-1.903-1.62-2.31a.908.908%200%200%201-.63-.62l-.52-1.54c.687-4.693-.12-7.147-2.42-7.36l3.55-4.32%2012.6-11.31c.893-.807.74-1.207-.46-1.2-3.113.027-6.313.087-9.6.18-1.95.05-3.78-.54-5.31-1.82-7.527-6.32-14.627-12.63-21.3-18.93a33.503%2033.503%200%200%200-6.06-4.55.911.911%200%200%200-1.3.43l-.63%201.51c-.133-.887-.08-1.683.16-2.39a.806.806%200%200%201%20.69-.56l10.38-1.29%2013.99-.35c.347-.007.59-.17.73-.49%201.833-4.073%203.267-8.093%204.3-12.06%206.05-23.19-3.33-45.13-24.04-56.84a139.339%20139.339%200%200%200-7.2-25.95c1.707-.06%202.347-.443%201.92-1.15%201.867-11.04%203.94-22.253%206.22-33.64.487-2.433.787-5.66.9-9.68%2024.41-21.41%2019.59-58.45-9.7-72.66a176.559%20176.559%200%200%201%207.06-35.2l8.71.17Zm15.15%20249.89%2014.84%2012.76c.147.127.21.093.19-.1a.457.457%200%200%200-.15-.32%20126.16%20126.16%200%200%200-14.88-12.34c-.467-.807-.94-1.18-1.42-1.12-.313.04-.35.163-.11.37.46.393.97.643%201.53.75Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M589.09%20205.63a542.245%20542.245%200%200%200%204.46%2016.66c2.067%207.3%203.553%2012.85%204.46%2016.65a618.388%20618.388%200%200%201%2012.7%2072.13l-9.32-.19a6.808%206.808%200%200%200-1.56.16c-.973.227-1.297.693-.97%201.4.033.08.097.12.19.12l10.68-.28a.805.805%200%200%201%20.74.4l.31.48c.14.313.233.677.28%201.09a714.75%20714.75%200%200%201%204.55%2060.75c.507%2015.953.413%2042.203-.28%2078.75-.12%206.38.063%2022.313.55%2047.8l.14%2026.24c.007%201.007-.487%201.577-1.48%201.71l-4.31.6c-.973.133-1.523-.287-1.65-1.26-1.29-9.73-6.32-14.16-16.11-10.55-3.66%201.36-3.5%205.6-1.73%208.4-.38%201.193-.507%202.067-.38%202.62l.14%203.37c-3.673-10.447-5.78-21.807-6.32-34.08-1.58-35.63-.7-70.83.94-106.33.95-20.61-.59-41.34-3.88-61.89-.067-.42-.313-.613-.74-.58-12.6%201.17-11.69-9.96-11.72-18.57-.03-6.13.39-13.19%207.9-14.12%202.193-.28%204.43.02%206.71.9.367.14.56.013.58-.38.993-17.64%201.23-34.163.71-49.57-.56-16.77-3.46-30.6-15.64-43.01l20.05.58Zm5.93%20106.08a.687.687%200%200%200-.379-.655.69.69%200%200%200-.256-.068l-10.378-.671a.67.67%200%200%200-.493.168.673.673%200%200%200-.23.467l-.004.06a.673.673%200%200%200%20.168.492.684.684%200%200%200%20.467.23l10.378.671a.67.67%200%200%200%20.493-.168.673.673%200%200%200%20.23-.467l.004-.059Zm-2.5%2085.31c.733-9.707.537-18.987-.59-27.84a241.99%20241.99%200%200%200-2.48-15.38c-.073-.387-.257-.447-.55-.18l-.19.18a1.256%201.256%200%200%200-.39%201.18c3.12%2015.96%203.937%2031.907%202.45%2047.84a1.293%201.293%200%200%200%20.47%201.14l.23.2a.373.373%200%200%200%20.39.057.366.366%200%200%200%20.22-.327c.113-2.14.26-4.43.44-6.87ZM514.411%20205.67h-.04a.6.6%200%200%200-.601.599l-.04%2023.38a.6.6%200%200%200%20.599.601h.04a.6.6%200%200%200%20.601-.599l.04-23.38a.6.6%200%200%200-.599-.601ZM330.11%20211.3l-1.93%204.89-19.66.14-1.79-6.25a94.737%2094.737%200%200%201%2023.38%201.22Z'%20/%3e%3cpath%20fill='%231350CE'%20d='m308.52%20216.33%2019.66-.14c1.487%202.08%201.61%204.29.37%206.63-.14.26-.197.54-.17.84.2%202.64%201.76%205.5-2.18%206.49a1.585%201.585%200%200%200-1.19%201.4c-.18%201.79-.3%203.69-1.69%205.01-3.17%203.02-12.14%202.36-11.39-3.96.133-1.093-.35-1.707-1.45-1.84-2.78-.34-.78-3.12-2.75-4.57a1.67%201.67%200%200%201-.41-2.27c.8-1.22.94-2.523.42-3.91-.45-1.18-.19-2.87.78-3.68Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M639.61%20229.09c.453-.073.813.057%201.08.39a.594.594%200%200%201%20.11.516.598.598%200%200%201-.34.404c-.5.227-.913.133-1.24-.28a.663.663%200%200%201-.092-.629.636.636%200%200%201%20.482-.401Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M658.19%20229.41c.52-.433.983-.437%201.39-.01a.413.413%200%200%201%20.119.322.465.465%200%200%201-.159.318c-.493.42-.947.45-1.36.09a.479.479%200%200%201-.163-.362.468.468%200%200%201%20.173-.358Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M531.37%20239.66c29.29%2014.21%2034.11%2051.25%209.7%2072.66-26.57%2022.38-68.51%205.78-71.42-29.33a44.296%2044.296%200%200%201%201.48-15.27c3.067-10.3%208.853-18.303%2017.36-24.01%2013.227-8.88%2027.52-10.23%2042.88-4.05Zm-16.21%201.96a1.771%201.771%200%200%200-3.022-1.252%201.775%201.775%200%200%200%200%202.504%201.775%201.775%200%200%200%202.504%200c.332-.332.518-.783.518-1.252Zm9.038-.1a1.333%201.333%200%200%200-1.278-1.38l-1.499-.057a1.327%201.327%200%200%200-1.38%201.277l-.039%201a1.336%201.336%200%200%200%20.774%201.259c.158.073.33.114.504.121l1.499.057a1.327%201.327%200%200%200%201.38-1.278l.039-.999Zm-17.266.133a1.707%201.707%200%200%200-.617-1.146%201.698%201.698%200%200%200-1.246-.374l-.916.093a1.708%201.708%200%200%200-1.145.617%201.698%201.698%200%200%200-.374%201.246l.034.338a1.713%201.713%200%200%200%20.617%201.146%201.698%201.698%200%200%200%201.246.374l.916-.093a1.708%201.708%200%200%200%201.145-.617%201.698%201.698%200%200%200%20.374-1.246l-.034-.338Zm8.688%2070.007c11.28-1.673%2019.57-6.69%2024.87-15.05%203.707-5.847%205.477-12.17%205.31-18.97-.193-8.24-3.457-15.637-9.79-22.19-.88-.96-2.08-1.917-3.6-2.87-5.073-3.187-10.693-5.12-16.86-5.8-5.44-.6-10.893.393-16.36%202.98-9.29%204.4-17.42%2014.39-18.53%2025.47-.81%208.21.59%2015.04%205.59%2022.06%207.173%2010.073%2016.963%2014.863%2029.37%2014.37Zm.75%205.47a2.34%202.34%200%201%200-4.679-.002%202.34%202.34%200%200%200%204.679.002Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='M513.39%20243.39a1.77%201.77%200%201%200%20.001-3.539%201.77%201.77%200%200%200-.001%203.539ZM522.92%20240.14l-1.499-.057a1.33%201.33%200%200%200-1.38%201.278l-.039.999a1.33%201.33%200%200%200%201.278%201.38l1.499.057a1.33%201.33%200%200%200%201.38-1.278l.039-.999a1.33%201.33%200%200%200-1.278-1.38ZM505.069%20240.133l-.916.093a1.7%201.7%200%200%200-1.519%201.863l.034.338a1.7%201.7%200%200%200%201.863%201.52l.916-.093a1.7%201.7%200%200%200%201.519-1.863l-.034-.338a1.7%201.7%200%200%200-1.863-1.52Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='m455.075%20255.119-.059-.011a.57.57%200%200%200-.669.451l-1.312%206.753a.57.57%200%200%200%20.45.669l.059.011a.57.57%200%200%200%20.669-.451l1.312-6.753a.57.57%200%200%200-.45-.669ZM452.941%20267.157l-.04-.005a.549.549%200%200%200-.621.468l-1.409%2010.021a.552.552%200%200%200%20.468.622l.04.005a.55.55%200%200%200%20.621-.468l1.409-10.021a.552.552%200%200%200-.468-.622ZM807.3%20276.08c-4.93%201.58-6.19%204.61-6.29%209.48-.007.333.157.527.49.58a18.789%2018.789%200%200%201%207.31%202.9c-9.5-4.13-21.47-1.09-25.38%209.2-2.013%205.307-1.723%2010.483.87%2015.53%204.26%208.3%2014.81%2010.74%2023.46%207.77-4.02%2011.85-2.14%2024.65%202.61%2036.02l-6.73%2011.87a.515.515%200%200%201-.44.252.51.51%200%200%201-.44-.252c-6.127-10.787-11.733-21.373-16.82-31.76-3.947-8.053-7.117-16.173-9.51-24.36-.687-2.333-1.113-5.24-1.28-8.72-.38-7.753%202.147-14.45%207.58-20.09%206.513-6.767%2014.703-9.573%2024.57-8.42Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M807.3%20276.08c11.593%201.707%2019.6%207.97%2024.02%2018.79%202.567%206.287%202.837%2012.54.81%2018.76-1.627%205-3.94%2010.427-6.94%2016.28a823.682%20823.682%200%200%201-14.82%2027.65c-4.75-11.37-6.63-24.17-2.61-36.02%2012.9-6.09%2013.43-25.64%201.05-32.5a18.789%2018.789%200%200%200-7.31-2.9c-.333-.053-.497-.247-.49-.58.1-4.87%201.36-7.9%206.29-9.48Z'%20/%3e%3cpath%20fill='%232466F8'%20d='m716.95%20290.22.03%204.42a.831.831%200%200%201-.81.83l-6.97.2a.83.83%200%200%200-.81.81l-.18%207.1a.829.829%200%200%201-.82.81l-4.38.04a.83.83%200%200%201-.84-.81l-.18-7.08a.828.828%200%200%200-.8-.8l-7.54-.24a.828.828%200%200%201-.81-.83l-.02-4.24a.831.831%200%200%201%20.79-.83l7.55-.33a.828.828%200%200%200%20.79-.81l.12-7.07a.828.828%200%200%201%20.83-.82l4.39-.01a.833.833%200%200%201%20.83.8l.23%207.12a.83.83%200%200%200%20.82.8l6.97.12a.832.832%200%200%201%20.81.82Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='m450.858%20282.298-.04-.003a.5.5%200%200%200-.543.452l-1.086%2011.931a.5.5%200%200%200%20.453.543l.04.004a.5.5%200%200%200%20.543-.453l1.086-11.93a.501.501%200%200%200-.453-.544Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='M469.65%20282.99c2.91%2035.11%2044.85%2051.71%2071.42%2029.33-.113%204.02-.413%207.247-.9%209.68-2.28%2011.387-4.353%2022.6-6.22%2033.64l-31.73-.41a.533.533%200%200%200-.335.114.518.518%200%200%200-.185.296l-.06.26a.527.527%200%200%200%20.285.59c.07.033.147.051.225.05l29.88.25c3.233%208.4%205.633%2017.05%207.2%2025.95-8.047-4.32-16.54-6.497-25.48-6.53-15.247-.053-28.047%205.49-38.4%2016.63-6.547%207.047-10.67%2014.853-12.37%2023.42-3.74%2018.86%201.533%2034.813%2015.82%2047.86-1.393%202.793-2.067%206.35-2.02%2010.67.067%206.3.173%2012.71.32%2019.23.06%202.82.623%205.75%201.69%208.79.14.387.41.61.81.67l5.52.83c.4.06.63-.11.69-.51%202.03-14.28%202.61-26.06-5.89-38.65%209.747%208.033%2020.857%2012.087%2033.33%2012.16%205.653.04%2011.317-.227%2016.99-.8.333-.033.52-.213.56-.54l.64-5.45.23%208.82c.007.333.117.63.33.89%206.807%208.293%2014.987%2014.867%2024.54%2019.72.287.147.557.12.81-.08.393-.32.813-.503%201.26-.55.373.873%201.027.823%201.96-.15a1.119%201.119%200%200%201%201.92.61c.213%201.42.7%202.857%201.46%204.31l.52%201.54c.1.313.31.52.63.62%201.353.407%201.893%201.177%201.62%202.31-.48-.713-1.037-1.12-1.67-1.22-.38-.06-.623.093-.73.46-.893%202.96-1.047%205.92-.46%208.88a.967.967%200%200%200%20.22.453.97.97%200%200%200%20.922.307.966.966%200%200%200%20.448-.23c.647-.593%201.87-.737%203.67-.43l-4.39%201.8c-.3.127-.517.04-.65-.26-.667-1.567-1.643-2.76-2.93-3.58a37.563%2037.563%200%200%201-1.22-2.63c-.273-.667-.153-.753.36-.26.087.08.15.187.19.32.16.567.213.557.16-.03a.83.83%200%200%200-.39-.64%202.851%202.851%200%200%201-.56-.5%20148.715%20148.715%200%200%201-3.06-3.66c-.467-.213-.39-.713.23-1.5.213-.273.277-.58.19-.92l-.55-2.11a.776.776%200%200%200-.499-.532.759.759%200%200%200-.711.122%2014.89%2014.89%200%200%201-4.58%202.5%201.43%201.43%200%200%201-1.228-.164%201.416%201.416%200%200%201-.632-1.066c-.09-1.12-.87-1.84-1.77-2.39-4.98-2.993-9.933-6.497-14.86-10.51-1.013-.827-1.787-1.967-2.32-3.42-.08-.233-.21-.263-.39-.09l-3.33%203.16c-1.58.213-3.14.323-4.68.33-10.72.053-19.977.21-27.77.47-.287.007-.42.147-.4.42.027.307.193.46.5.46l31.36-.08c-.687%201.793-1.107%203.423-1.26%204.89-.16%201.493.263%202.927%201.27%204.3.94%201.28%202.01%202.427%203.21%203.44%204.073%2019.213%204.507%2038.453%201.3%2057.72-.053.32-.243.493-.57.52l-5.35.42-88.5-.21%2025.85-.16c.333%200%20.563-.157.69-.47%201.28-3.113%201.957-6.317%202.03-9.61.26-11.94.87-23.92.54-35.99a462.086%20462.086%200%200%201%20.24-32.19%201.426%201.426%200%200%200-.33-.98l-3.41-4.21c-.027-.033-.033-.057-.02-.07l.21-.16a.23.23%200%200%201%20.088-.045.232.232%200%200%201%20.191.027.242.242%200%200%201%20.071.068c.253.367.55.693.89.98.427.36.45.337.07-.07a15.31%2015.31%200%200%200-2.52-2.19c-.387-.273-.35-.46.11-.56a7.666%207.666%200%200%200%202.68-1.16.91.91%200%200%200%20.42-.77c.02-5.787-.043-11.5-.19-17.14-.1-4.24-1.24-8.43-3.47-12.32-1.7-2.973-2.483-6.65-2.35-11.03.32-10.867.543-21.567.67-32.1.02-1.953.177-3.86.47-5.72.273-1.707.96-3.573%202.06-5.6%202.053-3.78%203.22-8.103%203.5-12.97%201.35-23.97.32-47.42%202.83-71.97.83-8.13.12-15.4%203.04-23.7Zm24.622%2049.592a.478.478%200%200%200-.366-.571l-9.263-2.02a.479.479%200%200%200-.571.367l-.004.02a.478.478%200%200%200%20.366.571l9.263%202.02a.479.479%200%200%200%20.571-.367l.004-.02Zm39.927-.694a.52.52%200%200%200-.601-.423l-6.523%201.126a.524.524%200%200%200-.424.601l.01.059a.524.524%200%200%200%20.601.424l6.523-1.126a.524.524%200%200%200%20.424-.601l-.01-.06Zm-37.689.772c-.593.047-.617.183-.07.41%201.173.487%202.467.737%203.88.75.113%200%20.21-.04.29-.12a.449.449%200%200%200%20.13-.27c.027-.34-.127-.54-.46-.6-1.18-.207-2.437-.263-3.77-.17Zm26.38%201.175a.653.653%200%200%200-.655-.646l-17.459.122a.649.649%200%200%200-.646.655v.039a.653.653%200%200%200%20.655.646l17.46-.122a.648.648%200%200%200%20.645-.654v-.04Zm-30.86%2021.998c0-.096-.096-.191-.282-.28-.187-.09-.461-.171-.806-.24a10.974%2010.974%200%200%200-1.206-.162%2017.542%2017.542%200%200%200-1.423-.061c-.987-.003-1.934.07-2.632.205-.698.134-1.09.318-1.091.512%200%20.096.096.191.282.28.187.09.461.171.806.24.345.069.755.124%201.206.162.451.039.935.059%201.424.061.986.003%201.933-.07%202.631-.205.698-.134%201.09-.318%201.091-.512Zm-23.027%20131.286c.033-.039.023-.115-.03-.222a2.318%202.318%200%200%200-.281-.406%206.87%206.87%200%200%200-.488-.528%2011.675%2011.675%200%200%200-1.28-1.094%207.29%207.29%200%200%200-.598-.399%202.324%202.324%200%200%200-.445-.214c-.114-.035-.191-.034-.224.005s-.023.115.03.222c.054.108.149.246.281.406.132.161.298.34.488.528a11.675%2011.675%200%200%200%201.28%201.094c.216.158.419.294.598.399.179.105.33.178.445.214.114.035.191.034.224-.005Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M808.81%20289.04c12.38%206.86%2011.85%2026.41-1.05%2032.5-8.65%202.97-19.2.53-23.46-7.77-2.593-5.047-2.883-10.223-.87-15.53%203.91-10.29%2015.88-13.33%2025.38-9.2Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='m248%20308.57-3.06.97c-.32.1-.583.28-.79.54-2.12%202.61-4.28%206.52.07%208.47l3%201.35a28.726%2028.726%200%200%200-8.51.51c-10.31%202.17-14.51%2012.25-12.1%2021.89%202.44%209.75%2011.99%2014.92%2021.85%2012.56.073%208.58.53%2016.517%201.37%2023.81.447%203.813%201.437%207.76%202.97%2011.84l-5.89%2010.4a.7.7%200%200%201-1.22-.01%20559.035%20559.035%200%200%201-15.9-30.76c-4.247-8.853-7.597-17.183-10.05-24.99-5.8-18.51%208.86-37.78%2028.26-36.58Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M248%20308.57c8.867.44%2016%203.68%2021.4%209.72%209.05%2010.11%208.71%2021.96%203.73%2033.84-3.46%208.22-10.237%2021.013-20.33%2038.38-1.533-4.08-2.523-8.027-2.97-11.84-.84-7.293-1.297-15.23-1.37-23.81%205.92-1.9%209.853-5.567%2011.8-11%203.57-9.96-1.94-22.36-13.04-23.96l-3-1.35c-4.35-1.95-2.19-5.86-.07-8.47.207-.26.47-.44.79-.54l3.06-.97Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='m594.385%20310.987-10.378-.671a.68.68%200%200%200-.723.635l-.004.059a.68.68%200%200%200%20.635.723l10.378.671a.68.68%200%200%200%20.723-.635l.004-.06a.68.68%200%200%200-.635-.722Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='M610.71%20311.07c-.1.5-.077%201.197.07%202.09l-.31-.48a.805.805%200%200%200-.74-.4l-10.68.28c-.093%200-.157-.04-.19-.12-.327-.707-.003-1.173.97-1.4a6.808%206.808%200%200%201%201.56-.16l9.32.19Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M514.03%20319.47a2.34%202.34%200%201%200%200-4.68%202.34%202.34%200%200%200%200%204.68ZM247.22%20319.9c11.1%201.6%2016.61%2014%2013.04%2023.96-1.947%205.433-5.88%209.1-11.8%2011-9.86%202.36-19.41-2.81-21.85-12.56-2.41-9.64%201.79-19.72%2012.1-21.89a28.726%2028.726%200%200%201%208.51-.51Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M444.18%20372.25a.152.152%200%200%201-.064.081.136.136%200%200%201-.096.019l-.31-.05a.54.54%200%200%201-.43-.63c1-5.1%201.597-9.317%201.79-12.65.573-9.893%201.16-19.483%201.76-28.77a.367.367%200%200%201%20.42-.34l.27.05a.657.657%200%200%201%20.548.515.675.675%200%200%201%20.002.265c-.847%204.227-1.14%208.713-.88%2013.46.3%205.38-.88%2010.91-1.07%2016.28-.14%203.72-.787%207.643-1.94%2011.77Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='m493.906%20332.011-9.263-2.02a.48.48%200%200%200-.571.367l-.004.02a.48.48%200%200%200%20.366.571l9.263%202.019a.479.479%200%200%200%20.571-.366l.004-.02a.479.479%200%200%200-.366-.571ZM533.598%20331.465l-6.523%201.126a.52.52%200%200%200-.424.601l.01.059a.52.52%200%200%200%20.601.424l6.523-1.126a.52.52%200%200%200%20.424-.601l-.01-.059a.52.52%200%200%200-.601-.424ZM496.51%20332.66c1.333-.093%202.59-.037%203.77.17.333.06.487.26.46.6a.449.449%200%200%201-.13.27.396.396%200%200%201-.29.12c-1.413-.013-2.707-.263-3.88-.75-.547-.227-.523-.363.07-.41Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='m522.235%20333.189-17.459.122a.65.65%200%200%200-.646.654v.04a.651.651%200%200%200%20.655.646l17.459-.122a.651.651%200%200%200%20.646-.655v-.04a.65.65%200%200%200-.655-.645ZM374.85%20348.59c-.54.007-.813.31-.82.91a88.492%2088.492%200%200%200%20.93%2013.86c.087.607.073%201.36-.04%202.26-.18%201.36.093%202.11.82%202.25-.227.86-.89%201.263-1.99%201.21-2.673-.113-4.437-.13-5.29-.05l-5.45.09c-2.573.38-5.167.82-7.78%201.32-2.48.48-6.03.14-6.16-3.16-.193-4.753-.34-9.343-.44-13.77-.08-3.23%204.43-3.38%206.71-3.49%204.987-.26%209.767-.847%2014.34-1.76a6.132%206.132%200%200%200%202.35-1%20.973.973%200%200%201%20.94-.13c.587.2%201.213.687%201.88%201.46Zm-13.741%2013.226c.468.311%201.208.172%202.057-.388.849-.559%201.737-1.493%202.47-2.595.362-.546.676-1.116.922-1.68a7.513%207.513%200%200%200%20.513-1.602c.093-.495.101-.931.026-1.282-.076-.351-.234-.611-.466-.765-.468-.311-1.208-.172-2.057.387-.849.56-1.737%201.493-2.47%202.596a11.111%2011.111%200%200%200-.922%201.68%207.495%207.495%200%200%200-.513%201.602c-.093.495-.101.931-.026%201.282.076.351.234.611.466.765Z'%20/%3e%3cpath%20fill='%23478FFF'%20d='M375.74%20367.87c-.727-.14-1-.89-.82-2.25.113-.9.127-1.653.04-2.26a88.492%2088.492%200%200%201-.93-13.86c.007-.6.28-.903.82-.91.88%206.3%201.177%2012.727.89%2019.28Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M362.104%20356.487c-1.525%202.295-1.971%204.681-.995%205.329.975.648%203.002-.687%204.527-2.983%201.525-2.295%201.971-4.681.995-5.329-.975-.648-3.002.687-4.527%202.983Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='M592.52%20397.02c-.18%202.44-.327%204.73-.44%206.87a.367.367%200%200%201-.22.327.373.373%200%200%201-.39-.057l-.23-.2a1.285%201.285%200%200%201-.378-.508%201.31%201.31%200%200%201-.092-.632c1.487-15.933.67-31.88-2.45-47.84a1.256%201.256%200%200%201%20.39-1.18l.19-.18c.293-.267.477-.207.55.18a241.99%20241.99%200%200%201%202.48%2015.38c1.127%208.853%201.323%2018.133.59%2027.84Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M488.307%20356.55c2.055.007%203.722-.314%203.723-.717.001-.403-1.663-.736-3.717-.743-2.055-.007-3.722.314-3.723.717-.001.403%201.663.736%203.717.743Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M533.95%20355.64c.427.707-.213%201.09-1.92%201.15l-29.88-.25a.514.514%200%200%201-.508-.405.548.548%200%200%201-.002-.235l.06-.26a.518.518%200%200%201%20.185-.296.533.533%200%200%201%20.335-.114l31.73.41Z'%20/%3e%3cpath%20fill='%23FE6D04'%20d='M368.46%20369.03c-.21%204.73-1.98%206.87-4.14%2010.32-.62.987-.907%203.033-.86%206.14-3.527-.56-5.407-1.817-5.64-3.77%203.19-4.23%205.98-6.56%205.19-12.6l5.45-.09Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M539.23%20382.74c20.71%2011.71%2030.09%2033.65%2024.04%2056.84-1.033%203.967-2.467%207.987-4.3%2012.06-.14.32-.383.483-.73.49l-13.99.35-.95-.21c-.353-.073-.443-.27-.27-.59%202.76-4.953%204.6-8.607%205.52-10.96%205.44-13.88%203.49-26.61-5.85-38.19-1.147-1.413-2.597-2.76-4.35-4.04-5.433-4.28-11.117-6.98-17.05-8.1-15.6-2.95-31.26%203.15-40.25%2016.58-5.89%208.8-7.71%2020.84-4.25%2030.51%205.9%2016.5%2020.75%2026.66%2038.31%2026.58%205.907-.207%2011.8-1.683%2017.68-4.43l-1.35%2010.89-.64%205.45c-.04.327-.227.507-.56.54-5.673.573-11.337.84-16.99.8-12.473-.073-23.583-4.127-33.33-12.16-.207-.313-.58-.657-1.12-1.03-14.287-13.047-19.56-29-15.82-47.86%201.7-8.567%205.823-16.373%2012.37-23.42%2010.353-11.14%2023.153-16.683%2038.4-16.63%208.94.033%2017.433%202.21%2025.48%206.53Zm-23.891-.839a1.353%201.353%200%200%200-.365-.975%201.353%201.353%200%200%200-.947-.431l-1.359-.048a1.355%201.355%200%200%200-.975.365%201.351%201.351%200%200%200-.432.947l-.04%201.139a1.355%201.355%200%200%200%20.365.975%201.351%201.351%200%200%200%20.947.432l1.359.048a1.355%201.355%200%200%200%20.975-.365%201.351%201.351%200%200%200%20.432-.947l.04-1.14Zm-10.329.869c-.153-.66-.427-1.153-.82-1.48a1.21%201.21%200%200%200-.866-.279c-.315.022-.61.165-.824.399-1.033%201.147-1.007%202.287.08%203.42a1.467%201.467%200%200%200%201.06.45c1.293-.007%201.75-.843%201.37-2.51Zm20.16.36c0-.536-.213-1.05-.592-1.428a2.017%202.017%200%200%200-2.856%200%202.017%202.017%200%200%200%200%202.856%202.017%202.017%200%200%200%202.856%200c.379-.378.592-.892.592-1.428Zm-9.34%2088.26a2.154%202.154%200%200%200-.633-1.527%202.154%202.154%200%200%200-3.054%200%202.16%202.16%200%201%200%203.687%201.527Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='m514.027%20380.495-1.359-.048a1.36%201.36%200%200%200-1.407%201.312l-.04%201.14a1.36%201.36%200%200%200%201.312%201.406l1.359.048a1.36%201.36%200%200%200%201.407-1.312l.04-1.139a1.36%201.36%200%200%200-1.312-1.407Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M440.86%20383.86c.23-1.04.39-2.21%201.15-2.96.447-.447.633-.357.56.27-.12%201.007-.563%201.967-1.33%202.88-.393.473-.52.41-.38-.19Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='M505.01%20382.77c.38%201.667-.077%202.503-1.37%202.51a1.467%201.467%200%200%201-1.06-.45c-1.087-1.133-1.113-2.273-.08-3.42.214-.234.509-.377.824-.399a1.21%201.21%200%200%201%20.866.279c.393.327.667.82.82%201.48Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M523.15%20385.15a2.02%202.02%200%201%200%20.001-4.039%202.02%202.02%200%200%200-.001%204.039Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='M357.82%20381.72c.233%201.953%202.113%203.21%205.64%203.77-1.627%206.387-4.18%2012.55-7.66%2018.49-1.57%202.69-3.53%204.75-5.16%207.37a.323.323%200%200%200-.028.297.355.355%200%200%200%20.228.203l.7.19c-8.13%203.85-8.64%2010.61-11.03%2017.89-6.12-2.51-15.63-4.38-18.6%203.53-.153.393-.027.53.38.41%206.8-1.953%2013.617-2.01%2020.45-.17.36-1.12.967-2.22%201.82-3.3-1.973%207.173-1.797%2013.52.53%2019.04%202.113%204.993%203.413%209.113%203.9%2012.36l-32.53%2011.19c-.88.147-1.263-.443-1.15-1.77.04-.467.193-1.09.46-1.87%203.147-9.187%204.637-18.443%204.47-27.77%201.073-1.327%201.25-2.94.53-4.84-.993-2.607-1.493-4.853-1.5-6.74a54.474%2054.474%200%200%201%20.83-9.72c.85-4.74%201.07-7.96%206.01-8.88%201.86-.347%203.787-.87%205.78-1.57l2.43-.1c1.24-.37%202.43-.51%203.4-1.44%201.42-1.36%202.72-2.54%203.75-4.27a404.819%20404.819%200%200%201%209.77-15.8c1.907-2.947%204.1-5.113%206.58-6.5Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M438.14%20421.81a117.817%20117.817%200%200%200%206.04%2017.44.297.297%200%200%201-.17.4l-.29.12c-.3.12-.51.03-.63-.27a317.845%20317.845%200%200%201-4-10.39c-3.38-9.307-4.61-18.513-3.69-27.62.413-4.113%201.617-8.53%203.61-13.25a.457.457%200%200%201%20.6-.24l.24.1c.167.073.213.193.14.36-2.493%205.307-3.753%2010.637-3.78%2015.99-.02%205.52.54%2012.01%201.93%2017.36Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M335.25%20392.24c-.547%204.52-2.64%207.873-6.28%2010.06-1.22.73-2.63%201.02-3.91%201.53a1.782%201.782%200%200%200-.8%202.647c.199.294.481.521.81.653l6.82%202.7c-1.993.7-3.92%201.223-5.78%201.57-4.94.92-5.16%204.14-6.01%208.88a54.474%2054.474%200%200%200-.83%209.72c.007%201.887.507%204.133%201.5%206.74.72%201.9.543%203.513-.53%204.84a135.477%20135.477%200%200%201-6.9-7.67c-2.09-2.52-.34-4.39.53-6.77a1.134%201.134%200%200%200-.12-1.01c-1.673-2.593-2.617-4.977-2.83-7.15a669.752%20669.752%200%200%201-1.55-19.33c-.2-2.97-.56-8.94%204.04-8.28.79.11%201.61.67%202.32.72.34.013.65-.07.93-.25%201.7-1.127%203.227-1.903%204.58-2.33%206.167-1.933%2010.837-1.023%2014.01%202.73Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M538.35%20398.49a1551.767%201551.767%200%200%201-23.24%2065.57c-17.56.08-32.41-10.08-38.31-26.58-3.46-9.67-1.64-21.71%204.25-30.51%208.99-13.43%2024.65-19.53%2040.25-16.58%205.933%201.12%2011.617%203.82%2017.05%208.1Z'%20/%3e%3cpath%20fill='%23FE6D04'%20d='M335.25%20392.24a27.536%2027.536%200%200%201%204.78%2010.47c.207.913.067%201.63-.42%202.15a44.844%2044.844%200%200%201-5.29%204.87l-2.43.1-6.82-2.7a1.776%201.776%200%200%201-1.117-1.647%201.778%201.778%200%200%201%201.107-1.653c1.28-.51%202.69-.8%203.91-1.53%203.64-2.187%205.733-5.54%206.28-10.06ZM373.79%20408.1c-2.16-1.78-2.727-3.797-1.7-6.05%202.92-1.88%207.15-4.15%2010.61-4.17%203.453-.027%203.75.93.89%202.87-3.047%202.067-5.743%204.313-8.09%206.74-.34.36-.91.563-1.71.61Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M538.35%20398.49c1.753%201.28%203.203%202.627%204.35%204.04%209.34%2011.58%2011.29%2024.31%205.85%2038.19-.92%202.353-2.76%206.007-5.52%2010.96-.173.32-.083.517.27.59l.95.21-10.38%201.29a.806.806%200%200%200-.69.56c-.24.707-.293%201.503-.16%202.39.133.54.127%201.063-.02%201.57l-.21%201.34c-5.88%202.747-11.773%204.223-17.68%204.43a1551.767%201551.767%200%200%200%2023.24-65.57Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M372.09%20402.05c-1.027%202.253-.46%204.27%201.7%206.05-.46%204.51-8.33%209.24-11.94%2012.19-2.12%201.74-4.6%202.88-7%204.26-.027.013-1.677%201.093-4.95%203.24-1.76%201.16-3.54%202.03-5.34%202.61-.853%201.08-1.46%202.18-1.82%203.3-.453-1.587-1.197-2.843-2.23-3.77%202.39-7.28%202.9-14.04%2011.03-17.89a92.62%2092.62%200%200%200%206.07-3.68c4.58-3.02%209.407-5.123%2014.48-6.31Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M686.83%20439.95c-1.027-.38-1.783-.917-2.27-1.61-.693-.987-1.613-1.287-2.76-.9l-7.8%202.62c-4.4-2.22-6.537-5.54-6.41-9.96.09-3.31%203.32-4.47%203.32-7.73a1.216%201.216%200%200%200-1.077-1.209%201.232%201.232%200%200%200-.583.069c-.907.347-1.783.52-2.63.52a1.223%201.223%200%200%201-.97-.42l-8.38-9.22c.167-2.333%201.093-3.703%202.78-4.11%2011.78-2.85%2016.56%206.68%2019.55%2015.99.26.83%201.07%202.53%201.6%203.22%203.17%204.09%205.82%207.72%205.63%2012.74Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='m657.27%20412.11%208.38%209.22c.26.287.583.427.97.42.847%200%201.723-.173%202.63-.52a1.234%201.234%200%200%201%201.52.574c.092.175.14.369.14.566%200%203.26-3.23%204.42-3.32%207.73-.127%204.42%202.01%207.74%206.41%209.96-2.9%202.22-6.343%203.33-10.33%203.33-3.94-.007-5.997-1.957-6.17-5.85l1.3-2.87a2.216%202.216%200%200%200-.45-2.49c-.76-.75-1.53-1.76-1.83-2.85-1.607-5.853-1.357-11.593.75-17.22Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M340.51%20429.93c1.033.927%201.777%202.183%202.23%203.77-6.833-1.84-13.65-1.783-20.45.17-.407.12-.533-.017-.38-.41%202.97-7.91%2012.48-6.04%2018.6-3.53Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='M686.83%20439.95c.58%202.127.87%204.477.87%207.05a398.86%20398.86%200%200%201-.38%2017.97c-.073%201.54.52%203.773%201.78%206.7%201.493%203.487%203.52%207.37%206.08%2011.65.673%201.127.627%202.197-.14%203.21-12.087%203.013-24.26%204.397-36.52%204.15a.985.985%200%200%200-.83.39l-.67.85.69-18.9c.047-1.12.603-1.51%201.67-1.17a5.68%205.68%200%200%200%201.71.27c.527-.007.79-.273.79-.8v-3.46c0-.58-.29-.89-.87-.93l-4.24-.29-3.71-.83-3.87-23.03%208.31-5.24c.173%203.893%202.23%205.843%206.17%205.85%203.987%200%207.43-1.11%2010.33-3.33l7.8-2.62c1.147-.387%202.067-.087%202.76.9.487.693%201.243%201.23%202.27%201.61Zm-10.39%2026.12a5.72%205.72%200%200%200-1.37.29c-.48.173-.467.307.04.4%201.413.253%202.743.317%203.99.19.533-.06.847-.353.94-.88.6-3.38.87-6.77.81-10.17a.444.444%200%200%200-.132-.305.444.444%200%200%200-.308-.125h-.28c-.433.007-.687.223-.76.65l-1.35%208.49a1.75%201.75%200%200%201-1.58%201.46Zm9.92%201.33c-2.14%206.81-6.75%207.82-12.79%209.68-.293.087-.433.283-.42.59.007.153.063.29.17.41.18.213.413.327.7.34%207.21.43%2014.67-1.69%2012.81-10.99-.127-.62-.283-.63-.47-.03Z'%20/%3e%3cpath%20fill='%231350CE'%20d='m649.19%20442.78%203.87%2023.03c-.413.407-1.057.573-1.93.5-.347-.027-.513.133-.5.48.02.487.25.87.69%201.15.84.54%201.65%201.043%202.43%201.51l1.51%202.6a.708.708%200%200%201%20.009.715.734.734%200%200%201-.619.375c-8.74.16-17.21.213-25.41.16-4.62-.04-6.01-6.76-6.72-10.32-1.1-5.5-2.25-11.09-3.45-16.77a24.775%2024.775%200%200%201-.5-3.82c-.027-.447.183-.67.63-.67%209.367.033%2018.467.097%2027.3.19.887.007%201.783.297%202.69.87Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M788.42%20457.33c.96%202.1%206.14%203.44%208.22%203.62%203.03.26%204.97-3.95%208.2-2.09%204.27%202.45%208.13%206.7%2010.86%2010.63%202.12%203.04-1.91%206.36-3.82%208.46a1.867%201.867%200%200%200-.45%201.63c.46%202.25%201.52%206.81%204.53%207.09%203.13.29%207.2-.57%207.92%203.58.873%204.993.98%209.97.32%2014.93-.63%204.77-8.75%201.96-10.58%205.27-.853%201.533-1.437%203.09-1.75%204.67-.96%204.82%207.27%206.46%203.92%2011.56-2.28%203.48-5.103%206.69-8.47%209.63-1.97%201.73-4.8%203.3-7.04.97-2.88-2.98-7.33-1.42-10.46.11-3.87%201.88.42%208.79-5.08%209.82-4.26.81-11.61%201.65-15.74-.47-3.84-1.96%200-7.43-4.19-9.68-1.813-.967-3.71-1.483-5.69-1.55-3.41-.11-5.77%204.32-9.31%202.08-4.5-2.847-8.05-6.637-10.65-11.37-3.06-5.6%208.45-7.18%203.02-15.07-.94-1.38-1.98-2.52-3.8-2.54-3.68-.02-7.16-.1-7.42-4.79-.233-4.26-.197-8.03.11-11.31.54-5.9%203.48-5.37%208.2-5.46%203.11-.07%205.99-7.18%203.71-9.31-3-2.8-5.79-5.43-2.41-9.59a70.63%2070.63%200%200%201%207.77-8.11c1.96-1.75%204.4-1.96%206.5-.44%203.44%202.49%206.2%201.59%2010.02-.35%202.32-1.18%202.21-4.55%202.5-6.8.38-2.96%204.05-3.39%206.47-3.5%204.153-.193%207.837-.05%2011.05.43%201.56.24%202.43%201.65%202.51%203.16.093%201.887.437%203.483%201.03%204.79Zm-6.485%2057.204a16.605%2016.605%200%200%200%2010.176-7.853c2.22-3.894%202.818-8.538%201.663-12.91a17.315%2017.315%200%200%200-2.899-5.982%2017.072%2017.072%200%200%200-4.924-4.421%2016.732%2016.732%200%200%200-6.198-2.185%2016.494%2016.494%200%200%200-6.528.383c-4.295%201.134-7.956%203.959-10.176%207.853-2.22%203.894-2.818%208.538-1.663%2012.91a17.324%2017.324%200%200%200%202.899%205.982%2017.072%2017.072%200%200%200%204.924%204.421%2016.732%2016.732%200%200%200%206.198%202.185c2.183.309%204.402.179%206.528-.383Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M449.36%20454.92a150.77%20150.77%200%200%200%206.35%2013.73c.147.28.063.43-.25.45l-.56.03c-.12.007-.207-.04-.26-.14a121.008%20121.008%200%200%201-7.28-16.43c-.267-.747-.33-1.477-.19-2.19.147-.727.367-.753.66-.08.67%201.52.92%203.13%201.53%204.63ZM562.29%20454.52a3.273%203.273%200%200%201-1.53-.75c-.24-.207-.203-.33.11-.37.48-.06.953.313%201.42%201.12Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M562.29%20454.52a126.16%20126.16%200%200%201%2014.88%2012.34.457.457%200%200%201%20.15.32c.02.193-.043.227-.19.1l-14.84-12.76Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M565.08%20492.41c-12.347-7.44-22.95-16.76-31.81-27.96a1.39%201.39%200%200%201-.31-.89l.04-5.27c.147-.507.153-1.03.02-1.57l.63-1.51a.904.904%200%200%201%20.553-.51c.123-.041.253-.055.382-.041a.911.911%200%200%201%20.365.121%2033.503%2033.503%200%200%201%206.06%204.55c6.673%206.3%2013.773%2012.61%2021.3%2018.93%201.53%201.28%203.36%201.87%205.31%201.82%203.287-.093%206.487-.153%209.6-.18%201.2-.007%201.353.393.46%201.2l-12.6%2011.31Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M676.44%20466.07a1.75%201.75%200%200%200%201.58-1.46l1.35-8.49c.073-.427.327-.643.76-.65h.28c.115%200%20.225.045.308.125.082.081.129.19.132.305.06%203.4-.21%206.79-.81%2010.17-.093.527-.407.82-.94.88-1.247.127-2.577.063-3.99-.19-.507-.093-.52-.227-.04-.4a5.72%205.72%200%200%201%201.37-.29Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='m533%20458.29-.04%205.27c0%20.333.103.63.31.89%208.86%2011.2%2019.463%2020.52%2031.81%2027.96l-3.55%204.32-2.92%202.59c-.447.047-.867.23-1.26.55a.699.699%200%200%201-.81.08c-9.553-4.853-17.733-11.427-24.54-19.72a1.415%201.415%200%200%201-.33-.89l-.23-8.82%201.35-10.89.21-1.34Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M348.99%20461.8c-.8%201.467-.737%203.13.19%204.99.447.887%201.02%201.45%201.72%201.69a85.72%2085.72%200%200%200%204.42%2020.51c-.533-.02-.703.563-.51%201.75.633%203.96%201.05%207.94%201.25%2011.94.187%203.66-.09%207.63-.83%2011.91a390.047%20390.047%200%200%201-7.2%2033l-7.54.29c-.827-2.213-1.273-4.923-1.34-8.13-.1-5.333-.147-10.763-.14-16.29.013-6.367-.42-11.07-1.3-14.11-1.52-5.233-3.45-9.743-5.79-13.53-2.73-4.41-6.85-8.4-10.52-12.23-2.507-2.613-4.153-6.147-4.94-10.6l32.53-11.19Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='M478.8%20464.12c.54.373.913.717%201.12%201.03%208.5%2012.59%207.92%2024.37%205.89%2038.65-.06.4-.29.57-.69.51l-5.52-.83c-.4-.06-.67-.283-.81-.67-1.067-3.04-1.63-5.97-1.69-8.79-.147-6.52-.253-12.93-.32-19.23-.047-4.32.627-7.877%202.02-10.67Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='m653.06%20465.81%203.71.83c.893.287%201.977.35%203.25.19.217-.027.438-.002.644.073a1.374%201.374%200%200%201%20.866%201.577l-.54%202.43a.973.973%200%200%201-.569.689.985.985%200%200%201-.891-.059c-1.827-1.1-3.753-1.797-5.78-2.09-.78-.467-1.59-.97-2.43-1.51-.44-.28-.67-.663-.69-1.15-.013-.347.153-.507.5-.48.873.073%201.517-.093%201.93-.5Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M673.57%20477.08c6.04-1.86%2010.65-2.87%2012.79-9.68.187-.6.343-.59.47.03%201.86%209.3-5.6%2011.42-12.81%2010.99a.933.933%200%200%201-.7-.34.645.645%200%200%201-.17-.41c-.013-.307.127-.503.42-.59Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M350.9%20468.48c7.773%201.82%2015.923%204.23%2024.45%207.23%201.53.53%202.22%201.08%202.55%202.78a289.363%20289.363%200%200%201%204.5%2033.39c-3.027.233-5.38.907-7.06%202.02-.64.073-1.02-.14-1.14-.64-2.02-8.55-4.49-16.9-5.69-25.44-.073-.5-.36-.713-.86-.64l-12.33%201.81a85.72%2085.72%200%200%201-4.42-20.51Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M513.67%20473.55a2.16%202.16%200%201%200%200-4.32%202.16%202.16%200%200%200%200%204.32ZM761.386%20502.329c2.405%209.104%2011.605%2014.568%2020.549%2012.205%208.944-2.363%2014.245-11.659%2011.839-20.763-2.405-9.104-11.605-14.568-20.549-12.205-8.944%202.363-14.245%2011.659-11.839%2020.763Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M467.077%20485.987c.924.789%201.786%201.296%201.926%201.132.14-.164-.496-.937-1.42-1.726-.924-.789-1.786-1.296-1.926-1.132-.14.164.496.936%201.42%201.726Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M695.04%20486.53c.79%2013.23-2.99%2027.33-5.57%2039.72-.613%202.973-.44%206.977.52%2012.01.933%204.873%203.34%2013.97%207.22%2027.29.133.467.29%201.533.47%203.2-2.273.413-4.12%201.083-5.54%202.01-.82.407-1.453.153-1.9-.76-3.353-6.84-7.027-15.08-11.02-24.72-3.73-8.99-5.68-18.13-7.91-27.51-.373-1.58-.937-1.65-1.69-.21-3.567%206.86-7.397%2014.14-11.49%2021.84a36.643%2036.643%200%200%200-1.93%204.25c-.213.587-.103%201.107.33%201.56l37.88%2039.19-3.1%202.04c-.747.047-1.853.49-3.32%201.33-1.08.613-2.49.88-4.23.8-4.9-.24-9.76%202.14-13.27%205.42-2.067%201.927-3.7%204.66-4.9%208.2a253.253%20253.253%200%200%200-4.01%2012.93c-3.107%2011.027-7.08%2024.21-11.92%2039.55a.485.485%200%200%201-.41.35.739.739%200%200%201-.27-.01c-.307-.087-.46-.287-.46-.6a916.14%20916.14%200%200%200-.38-18.96c-.33-11.18%202.46-21.31%205.45-31.92.098-.338.305-.636.59-.85%204.3-3.22%209.34-4.61%206.58-11.65-1.727-4.4-4.547-9.06-8.46-13.98-.88-1.1-2.38-1.63-2.86-2.7a1.136%201.136%200%200%201%20.09-1.17l2.9-4.32a1.394%201.394%200%200%200%20.206-1.066%201.409%201.409%200%200%200-.626-.894l-3.25-2.07a1.516%201.516%200%200%201-.64-.8c-2.213-6.167-3.633-12.083-4.26-17.75-.84-7.62-3.21-11.68-10.66-14.13a1.49%201.49%200%200%201-.86-.71c-3.387-6.02-5.47-12.547-6.25-19.58a726.105%20726.105%200%200%201%2015.89%2016.17%2025.981%2025.981%200%200%201%202.9%203.65.492.492%200%200%200%20.716.109.493.493%200%200%200%20.154-.219c4.673-13.313%208.43-26.53%2011.27-39.65l.67-.85a.985.985%200%200%201%20.83-.39c12.26.247%2024.433-1.137%2036.52-4.15Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='m375.34%20513.9%203.67%2017.35c.747-.907%201.167-.547%201.26%201.08a118.948%20118.948%200%200%200-9.87%209.3%201200.971%201200.971%200%200%201-18.2%2018.79c-1.46%201.413-3.06%202.09-4.8%202.03a1.307%201.307%200%200%201-.528-.136%201.306%201.306%200%200%201-.684-.82%201.332%201.332%200%200%201-.038-.544l1.88-13.36a390.047%20390.047%200%200%200%207.2-33c.74-4.28%201.017-8.25.83-11.91-.2-4-.617-7.98-1.25-11.94-.193-1.187-.023-1.77.51-1.75l12.33-1.81c.5-.073.787.14.86.64%201.2%208.54%203.67%2016.89%205.69%2025.44.12.5.5.713%201.14.64Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M556.63%20507.34c-.8%202.273-1.777%203.927-2.93%204.96-1.793.527-4.197.853-7.21.98-7.78.33-12.39-4.29-18.08-8.63a19.893%2019.893%200%200%201-3.21-3.44c-1.007-1.373-1.43-2.807-1.27-4.3.153-1.467.573-3.097%201.26-4.89-.027-.227.303-.76.99-1.6l3.33-3.16c.18-.173.31-.143.39.09.533%201.453%201.307%202.593%202.32%203.42%204.927%204.013%209.88%207.517%2014.86%2010.51.9.55%201.68%201.27%201.77%202.39.018.214.084.421.194.605a1.41%201.41%200%200%200%201.033.684c.213.028.429.008.633-.059a14.89%2014.89%200%200%200%204.58-2.5.759.759%200%200%201%20.711-.122.771.771%200%200%201%20.499.532l.55%202.11c.087.34.023.647-.19.92-.62.787-.697%201.287-.23%201.5Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M526.18%20490.42c-.687.84-1.017%201.373-.99%201.6l-31.36.08c-.307%200-.473-.153-.5-.46-.02-.273.113-.413.4-.42%207.793-.26%2017.05-.417%2027.77-.47%201.54-.007%203.1-.117%204.68-.33ZM563.95%20504.09c-.76-1.453-1.247-2.89-1.46-4.31a1.116%201.116%200%200%200-.769-.906%201.13%201.13%200%200%200-1.151.296c-.933.973-1.587%201.023-1.96.15l2.92-2.59c2.3.213%203.107%202.667%202.42%207.36Z'%20/%3e%3cpath%20fill='%232466F8'%20d='m242.93%20512.83-7.52-.17a.763.763%200%200%201-.518-.222.763.763%200%200%201-.222-.518l-.11-4.09a.757.757%200%200%201%20.71-.78l7.5-.45a.762.762%200%200%200%20.72-.74l.18-7.3a.758.758%200%200%201%20.76-.74l4.7-.02a.761.761%200%200%201%20.76.75l.08%207.23a.761.761%200%200%200%20.75.75l7.23.08a.762.762%200%200%201%20.75.76l-.02%204.72a.758.758%200%200%201-.74.76l-7.3.16a.763.763%200%200%200-.74.72l-.45%207.49a.761.761%200%200%201-.77.71l-4.1-.1a.763.763%200%200%201-.518-.222.763.763%200%200%201-.222-.518l-.16-7.51a.762.762%200%200%200-.75-.75Z'%20/%3e%3cpath%20fill='%231350CE'%20d='m615.88%20501.55%2010.21%2010.31c.78%207.033%202.863%2013.56%206.25%2019.58.193.347.48.583.86.71%207.45%202.45%209.82%206.51%2010.66%2014.13.627%205.667%202.047%2011.583%204.26%2017.75.12.34.333.607.64.8l3.25%202.07a1.409%201.409%200%200%201%20.632%201.449%201.394%201.394%200%200%201-.212.511l-2.9%204.32a1.136%201.136%200%200%200-.09%201.17c.48%201.07%201.98%201.6%202.86%202.7%203.913%204.92%206.733%209.58%208.46%2013.98%202.76%207.04-2.28%208.43-6.58%2011.65a1.633%201.633%200%200%200-.59.85c-2.99%2010.61-5.78%2020.74-5.45%2031.92.193%206.373.32%2012.693.38%2018.96%200%20.313.153.513.46.6.087.02.177.023.27.01a.485.485%200%200%200%20.41-.35c4.84-15.34%208.813-28.523%2011.92-39.55a253.253%20253.253%200%200%201%204.01-12.93c1.2-3.54%202.833-6.273%204.9-8.2%203.51-3.28%208.37-5.66%2013.27-5.42%201.74.08%203.15-.187%204.23-.8%201.467-.84%202.573-1.283%203.32-1.33-2.127%201.36-4.047%202.413-5.76%203.16-1.76.767-1.69%201.293.21%201.58.393.06%201.14.023%202.24-.11%203.867-.447%207.697-1.1%2011.49-1.96%207.02%206.213%2013.34%2012.95%2018.96%2020.21%202%202.587%203.82%205.443%205.46%208.57-.933%202.58-1.797%204.383-2.59%205.41-1.86%202.4-4.14%203.18-6.61%204.31a1.518%201.518%200%200%200-.89%201.43c.15%205.65-.58%2011.38.99%2016.89%201.33%204.72%203.61%209.38%205.73%2013.9%203.57%207.62%203.2%2014.7-3.9%2020.36-2.87%202.29-7.72%203.72-11.47%204.91a3.835%203.835%200%200%200-2.49%202.49c-7.95%2024.94-16.01%2052.66-23.86%2078.72-.54%201.78-.983%203.54-1.33%205.28-.253%201.267.207%203.45%201.38%206.55A498.054%20498.054%200%200%200%20685%20793.5c1.107%202.647%201.7%205.713%201.78%209.2l-2.23-1.68-11.64-8.89c.067-.2-.12-.383-.56-.55a.556.556%200%200%200-.618.162.58.58%200%200%200-.112.198l-46.54%20152.4c-3.033%208.187-5.647%2016.743-7.84%2025.67l-9.51.21%206.99-24.19c.273-.947-.08-1.42-1.06-1.42l-42.41.15c-.333%200-.617.12-.85.36-.52.527-.777%201.257-.77%202.19l-6.89%2022.91-9.19.07-.14-.26a.723.723%200%200%201-.05-.54l2.28-7.57%204.26-15.65%209.33-29.9%2012.87-42.25%205.82-18.91%201.31-4.55%2031.26-100a1.442%201.442%200%200%200-.47-1.56l-33.67-27.21-.16-10.31c3.867.04%207.73.07%2011.59.09%203.22.02%205.627-.23%207.22-.75%204.2-1.36%208.02-4.54%209.61-8.78.973-2.593%201.47-4.57%201.49-5.93.053-2.653.067-5.25.04-7.79-.027-2.413.16-4.92.56-7.52.58-3.8.767-7.75.56-11.85a.831.831%200%200%200-.48-.75c-.367-.187-.837-.163-1.41.07.093-2.193.647-3.353%201.66-3.48%201.8-3.76%201.277-7.49-1.57-11.19-.133-1.453-.193-3.437-.18-5.95.007-3.153.043-6.347.11-9.58.06-2.58.82-4.91%202.1-7.12%204.153-7.167%208.407-13.74%2012.76-19.72%204.33-5.95%207.82-11.4%208.67-18.87.033-.3-.09-.5-.37-.6-.22-.087-.36-.183-.42-.29l.1-.99c2.487%201.107%205.047%201.5%207.68%201.18a2.301%202.301%200%200%200%202.01-2.45c-.293-3.86.123-7.783%201.25-11.77a2.305%202.305%200%200%200-.846-2.475%202.284%202.284%200%200%200-.834-.385l-4.38-1.03a.815.815%200%200%200-.708.164.802.802%200%200%200-.292.666c.127%202.707.29%205.303.49%207.79.2%202.453-.873%203.89-3.22%204.31-1.113.34-2.143-.12-3.09-1.38-4.71-6.28-8.89-12.38-11.73-19.77a115.154%20115.154%200%200%200-4.35-9.93c-1.127-2.267-2.273-3.54-3.44-3.82-5.18-1.233-8.987-4.2-11.42-8.9l-3.69-6.35-.13-2.26%202.36-2.39a.676.676%200%200%200%20.173-.663.684.684%200%200%200-.493-.477c-3.09-.76-2.67-3-2.68-5.49a.75.75%200%200%200-1.26-.54%204.496%204.496%200%200%200-1.23%201.99c-.26.887-.85%201.317-1.77%201.29-2.44-.067-4.403-.467-5.89-1.2-1.77-2.8-1.93-7.04%201.73-8.4%209.79-3.61%2014.82.82%2016.11%2010.55.127.973.677%201.393%201.65%201.26l4.31-.6c.993-.133%201.487-.703%201.48-1.71l-.14-26.24Zm20.05%20177.15c-2.03%203.04-.8%205.72-1.79%208.71-.107.32-.303.567-.59.74-1.453.9-2.917%201.74-4.39%202.52-.7.367-.963%201.037-.79%202.01a.722.722%200%200%200%20.79.59c2.45-.28%205.31.08%207.44-1.42a21.577%2021.577%200%200%201%205.25-2.69%202.271%202.271%200%200%200%201.46-2.69c-.38-1.54-1.1-3.03-2.16-4.47-.06-3.15-1.79-6.4-5.22-3.3Zm40.6%2062.36c.58-1.693.23-1.913-1.05-.66-3.28%203.19-7.08%204.07-11.21%205.63a.785.785%200%200%200-.45%201.03c1.8%204.25%203.19%209.56%205.55%2013.82a.526.526%200%200%200%20.471.266.534.534%200%200%200%20.459-.286c.3-.593.553-1.257.76-1.99%201.807-6.48%203.63-12.417%205.47-17.81Zm-27.54%2029.91c4.373.3%208.64.277%2012.8-.07a1.02%201.02%200%200%200%20.8-1.53c-1-1.76-2.03-3.54-2.71-5.44-2.24-6.253-4.88-12.183-7.92-17.79a11.786%2011.786%200%200%200-2.31-2.98.635.635%200%200%200-.691-.124.643.643%200%200%200-.389.584c-.067%206.473-.023%2013.19.13%2020.15a43.013%2043.013%200%200%201-.35%206.42.679.679%200%200%200%20.151.529.694.694%200%200%200%20.489.251Zm-19.51-14.15a.584.584%200%200%200-.763.037.589.589%200%200%200-.147.233l-4.49%2013.13a.588.588%200%200%200-.022.27.588.588%200%200%200%20.309.426.574.574%200%200%200%20.263.064l21.05-.12a.58.58%200%200%200%20.36-1.04l-16.56-13Zm33.73%2025.46a10.821%2010.821%200%200%201-3.33-1.79c-.87-.68-1.87-.62-2.91-.61-11.42.173-22.993.203-34.72.09a1.16%201.16%200%200%200-1.12.81l-10.02%2031.7a.641.641%200%200%200%20.325.77c.091.046.192.07.295.07h42.02a1.841%201.841%200%200%200%201.76-1.3l8.64-27.93c.28-.907-.033-1.51-.94-1.81Zm-21.86%2073.83a.704.704%200%200%200%20.66-.49l10.06-32.05a.701.701%200%200%200-.67-.91l-42.9-.07a.699.699%200%200%200-.66.49l-10.06%2032.06a.693.693%200%200%200%20.101.621.692.692%200%200%200%20.559.289l42.91.06ZM589.65%20882l-4.3%2013.85a.864.864%200%200%200%20.126.771.871.871%200%200%200%20.694.359l4.9.08%2037.41.01a1.24%201.24%200%200%200%20.73-.239c.211-.155.365-.373.44-.621l9.31-30.25a.783.783%200%200%200-.119-.698.792.792%200%200%200-.631-.322l-42.37-.08a1.15%201.15%200%200%200-1.1.81L589.65%20882Zm19.21%2053.85%207.74-.07c.301%200%20.595-.097.838-.277.243-.18.422-.433.512-.723l8.63-27.93a.778.778%200%200%200-.397-.928.77.77%200%200%200-.353-.082l-29.57.11-12.83-.1c-.847-.007-1.393.393-1.64%201.2l-8.59%2027.77a.74.74%200%200%200%20.11.647.715.715%200%200%200%20.58.293l34.97.09Z'%20/%3e%3cpath%20fill='%232466F8'%20d='m410.17%20531.21-.35-1.79c-.14-.707-.26-.703-.36.01-.08.567-.373.973-.88%201.22a1.283%201.283%200%200%200-.52.45c-4.05%206.33-8.25%2012.55-11.68%2019.28a2746.648%202746.648%200%200%200-9.23%2018.27c-3.46%206.92-7.05%2014.95-9.08%2021.62-.913%203.007-1.37%205.71-1.37%208.11.02%2056.113-.017%20112.227-.11%20168.34%200%20.68.25%201.783.75%203.31-24.34%2019.927-40.91%2033.547-49.71%2040.86-3.6%202.993-7.037%205.39-10.31%207.19l-6.63%201.05c-7.93-.06-14.29-5.56-15.54-13.26-.14-.88-.207-3.797-.2-8.75.12-58.06.103-112.767-.05-164.12-.01-5.61%204.5-12.2%208.01-17.3%204.44-6.44%208.69-12.03%2012.75-16.77a362.858%20362.858%200%200%201%2030.77-31.86%20861.407%20861.407%200%200%201%2011.07-5.8c.193-.1.273-.24.24-.42-.067-.307-.25-.427-.55-.36-1.813.387-3.477.363-4.99-.07a1200.971%201200.971%200%200%200%2018.2-18.79c3.14-3.313%206.43-6.413%209.87-9.3l12.06-10.22c.253-.213.417-.483.49-.81l.56-2.58L410.01%20502l.16%2029.21Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M553.7%20512.3c.08%203.98.623%208.023%201.63%2012.13%201.5%206.09%205.39%209.5%2010.17%2013.47%201.45%201.21%203.86%202.62%205.3%203.04%204.72%201.367%209.46%202.787%2014.22%204.26-6.19-.01-11.42.9-14.17%206.9a364.293%20364.293%200%200%201-5%2010.43.925.925%200%200%201-.82.53l-8%20.3-33.24-.05%205.35-.42c.327-.027.517-.2.57-.52%203.207-19.267%202.773-38.507-1.3-57.72%205.69%204.34%2010.3%208.96%2018.08%208.63%203.013-.127%205.417-.453%207.21-.98Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M566.72%20508.56c1.32%202.733%202.12%205.473%202.4%208.22-1.8-.307-3.023-.163-3.67.43a.962.962%200%200%201-1.59-.53c-.587-2.96-.433-5.92.46-8.88.107-.367.35-.52.73-.46.633.1%201.19.507%201.67%201.22Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M561.15%20514.74c.08%202.06.15%206.17%201.84%207.56a25.709%2025.709%200%200%201%204.19%204.38c1.42%201.9%203.487%203.29%206.2%204.17%204.253%201.38%208.52%202.71%2012.8%203.99a16.04%2016.04%200%200%200%204.9.66c1.687%203.12%204.213%204.06%207.58%202.82%201.19-.44%201.81-1.37%203-1.89l3.69%206.35c-.733%202.427-2.523%203.723-5.37%203.89-2.133.127-5.09-.067-8.87-.58l-6.09-.89c-4.76-1.473-9.5-2.893-14.22-4.26-1.44-.42-3.85-1.83-5.3-3.04-4.78-3.97-8.67-7.38-10.17-13.47-1.007-4.107-1.55-8.15-1.63-12.13%201.153-1.033%202.13-2.687%202.93-4.96a148.715%20148.715%200%200%200%203.06%203.66c.167.193.353.36.56.5a.83.83%200%200%201%20.39.64c.053.587%200%20.597-.16.03a.696.696%200%200%200-.19-.32c-.513-.493-.633-.407-.36.26.333.807.74%201.683%201.22%202.63Z'%20/%3e%3cpath%20fill='%23FE6D04'%20d='m382.4%20511.88-.3%2010.77a1.423%201.423%200%200%200%20.995%201.4c.196.061.402.078.605.05l3.02-.38c1.453.147%201.317.87-.41%202.17-.713.533-1.24.943-1.58%201.23a47.296%2047.296%200%200%201-5.72%204.13l-3.67-17.35c1.68-1.113%204.033-1.787%207.06-2.02Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M692.14%20570.76c-.24%201.2-.043%202.46.59%203.78%201.093%202.26%201.92%203.943%202.48%205.05.48.953.733%201.77.76%202.45.047%201.48-.473%202.267-1.56%202.36l-37.88-39.19c-.433-.453-.543-.973-.33-1.56.5-1.34%201.143-2.757%201.93-4.25%204.093-7.7%207.923-14.98%2011.49-21.84.753-1.44%201.317-1.37%201.69.21%202.23%209.38%204.18%2018.52%207.91%2027.51%203.993%209.64%207.667%2017.88%2011.02%2024.72.447.913%201.08%201.167%201.9.76Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='m393.38%20518.72-.56%202.58a1.442%201.442%200%200%201-.49.81l-12.06%2010.22c-.093-1.627-.513-1.987-1.26-1.08a47.296%2047.296%200%200%200%205.72-4.13c.34-.287.867-.697%201.58-1.23%201.727-1.3%201.863-2.023.41-2.17%202.307-.907%204.527-2.573%206.66-5Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='M601.53%20534.17c-.673-.887-.987-2.083-.94-3.59a1.192%201.192%200%200%200-.706-1.124%201.163%201.163%200%200%200-.454-.096l-9.07-.05c-.127-.553%200-1.427.38-2.62%201.487.733%203.45%201.133%205.89%201.2.92.027%201.51-.403%201.77-1.29a4.496%204.496%200%200%201%201.23-1.99.747.747%200%200%201%20.806-.139.75.75%200%200%201%20.454.679c.01%202.49-.41%204.73%202.68%205.49a.684.684%200%200%201%20.493.477.69.69%200%200%201-.173.663l-2.36%202.39Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='m601.53%20534.17.13%202.26c-1.19.52-1.81%201.45-3%201.89-3.367%201.24-5.893.3-7.58-2.82l-.58-2.82-.14-3.37%209.07.05a1.163%201.163%200%200%201%20.835.363%201.192%201.192%200%200%201%20.325.857c-.047%201.507.267%202.703.94%203.59Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M410.17%20531.21v30.62c0%201.06.53%201.583%201.59%201.57l23.53-.3%2088.5.21%2033.24.05%2041.28.14c.298%200%20.584.119.795.33.212.212.332.5.335.8%200%20.627-.307.96-.92%201a91.202%2091.202%200%200%201-7.02.19c-10.047-.087-20.18-.04-30.4.14l-26.9-.02-53.76.12h-.22l-22.64.01-46.71-.11a.661.661%200%200%200-.67.67l-.08%2097.69a.76.76%200%200%200%20.76.76l59.65-.06%207.01.09%2017.61-.07c.553-.007.827-.283.82-.83a2650.092%202650.092%200%200%201-.09-44.28c.033-5.827%202.413-10.507%207.14-14.04%201.61-1.2%203.8-1.79%205.75-2.52a1.507%201.507%200%200%200%20.97-1.41l-.09-21.05c0-.607.303-.917.91-.93l4.23-.09c.64-.013.96.303.96.95l-.02%2020.84c-.96%202.72-1.43%205.91-1.41%209.57.113%2019.947.077%2052.613-.11%2098-.013%203.64.087%2011.493.3%2023.56.07%203.86-.49%207.53-1.13%2011.22a1.224%201.224%200%200%200%20.21.93c3.01%204.29%203.53%2013.65%202.51%2018.69-.64%203.18-1.25%206.28-1.22%209.56.04%204.267-.05%208.647-.27%2013.14-.02.347-.203.537-.55.57l-2.64.23c-8.3-1.06-15.41-7.42-15.38-16.2.033-12.647.057-25.433.07-38.36a.972.972%200%200%200-.593-.89.962.962%200%200%200-.367-.07c-11.847.087-23.813.107-35.9.06-.307%200-.82.133-1.54.4l-17.75-.25a1.048%201.048%200%200%201-1.03-1.06l.13-9.33a.451.451%200%200%200-.74-.36l-60.98%2048.94c-.5-1.527-.75-2.63-.75-3.31.093-56.113.13-112.227.11-168.34%200-2.4.457-5.103%201.37-8.11%202.03-6.67%205.62-14.7%209.08-21.62a2746.648%202746.648%200%200%201%209.23-18.27c3.43-6.73%207.63-12.95%2011.68-19.28.131-.196.311-.352.52-.45.507-.247.8-.653.88-1.22.1-.713.22-.717.36-.01l.35%201.79Zm84.96%20136.86h-84.55a.541.541%200%200%200-.54.56c.22%207.447.247%2014.477.08%2021.09-.23%209.6%201.49%2016.96%2010.43%2021.04%201.16.527%202.37.8%203.63.82%2023.767.34%2047.513.363%2071.24.07a.592.592%200%200%200%20.424-.179.612.612%200%200%200%20.176-.431l-.08-42.16a.81.81%200%200%200-.81-.81Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='m585.02%20545.2%206.09.89a77.383%2077.383%200%200%200%204.47%206.32c2.25%202.87%203.26%205.7%203.88%209.18a235.344%20235.344%200%200%200%206.53%2027.09%201.767%201.767%200%200%200%201.32%201.22l9.5%202.03-5.68-.42-4-1.18c-8.607%204.273-16.143%209.337-22.61%2015.19-2.62%202.36-4.41%205.47-2.12%208.07%205.26%205.98%2010.473%2011.973%2015.64%2017.98%201%201.5%202.33%202.65%202.74%204.43.54%202.37.23%204.89.58%207.37a176.313%20176.313%200%200%200%204.08%2020.6.646.646%200%200%201-.332.736.61.61%200%200%201-.278.064l-40.04.25%2010.95-.91c.093-.007.153-.057.18-.15a.69.69%200%200%200-.01-.35.635.635%200%200%200-.35-.4c-5.46-2.44-5.43-8.36-5.5-13.63-.12-8.547-.293-17.11-.52-25.69-.047-1.573-.63-4.343-1.75-8.31-1.38-4.89-.34-10.24-.5-15.3-.267-8.793-.337-18.62-.21-29.48.033-2.92-1.96-4.533-5.98-4.84%2010.22-.18%2020.353-.227%2030.4-.14a91.202%2091.202%200%200%200%207.02-.19c.613-.04.92-.373.92-1a1.15%201.15%200%200%200-.334-.8%201.129%201.129%200%200%200-.796-.33l-41.28-.14%208-.3a.925.925%200%200%200%20.82-.53%20364.293%20364.293%200%200%200%205-10.43c2.75-6%207.98-6.91%2014.17-6.9Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='M605.35%20542.78c2.433%204.7%206.24%207.667%2011.42%208.9%201.167.28%202.313%201.553%203.44%203.82a115.154%20115.154%200%200%201%204.35%209.93c2.84%207.39%207.02%2013.49%2011.73%2019.77.947%201.26%201.977%201.72%203.09%201.38-.927%201.487-1.31%202.82-1.15%204l-.1.99c-.76.873-1.783%201.373-3.07%201.5-6.213.227-12.297-.153-18.25-1.14l-9.5-2.03a1.764%201.764%200%200%201-1.32-1.22%20235.344%20235.344%200%200%201-6.53-27.09c-.62-3.48-1.63-6.31-3.88-9.18a77.383%2077.383%200%200%201-4.47-6.32c3.78.513%206.737.707%208.87.58%202.847-.167%204.637-1.463%205.37-3.89Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='m348.03%20547.59-1.88%2013.36c-.025.182-.012.367.038.544a1.333%201.333%200%200%200%20.684.82c.164.082.344.128.528.136%201.74.06%203.34-.617%204.8-2.03%201.513.433%203.177.457%204.99.07.3-.067.483.053.55.36.033.18-.047.32-.24.42a861.407%20861.407%200%200%200-11.07%205.8l-3.82.64a1.665%201.665%200%200%201-1.364-.389%201.652%201.652%200%200%201-.566-1.301c.05-1.81.93-2.89.95-4.74a69.623%2069.623%200%200%200-1.14-13.4l7.54-.29Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='M457.58%20566.07c.22%201.913.277%203.94.17%206.08-.113%202.073-.18%204.09-.2%206.05-.093%207.967-.09%2016.127.01%2024.48.07%205.72%201.84%2010.99%208.6%2010.94%209.15-.07%208.99-8.7%209.12-15.86.18-10.113.047-20.27-.4-30.47-.013-.32.137-.5.45-.54l4.89-.69h.22l6.95.33c.333.013.563.177.69.49%206.62%2016.99%207.97%2033.48%207.46%2051.47-.42%2014.93.04%2030.1-.13%2044.95a1.323%201.323%200%200%201-.373.903%201.305%201.305%200%200%201-.887.397c-6.093.273-12.197.21-18.31-.19a.817.817%200%200%201-.54-.251.794.794%200%200%201-.22-.549l-.18-28.92c.14-4.88.187-10%20.14-15.36-.007-.827-.49-1.387-1.45-1.68a.931.931%200%200%200-.57.02c-.707.233-1.063.72-1.07%201.46-.087%2012.28-.113%2024.313-.08%2036.1a35.92%2035.92%200%200%201-1.34%209.79l-59.65.06a.756.756%200%200%201-.537-.223.756.756%200%200%201-.223-.537l.08-97.69a.676.676%200%200%201%20.414-.622.661.661%200%200%201%20.256-.048l46.71.11Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='m480.22%20566.06-4.89.69c-.313.04-.463.22-.45.54.447%2010.2.58%2020.357.4%2030.47-.13%207.16.03%2015.79-9.12%2015.86-6.76.05-8.53-5.22-8.6-10.94-.1-8.353-.103-16.513-.01-24.48.02-1.96.087-3.977.2-6.05.107-2.14.05-4.167-.17-6.08l22.64-.01ZM534.2%20565.94c3.613%208.547%205.31%2017.833%205.09%2027.86-.12%205.327-.123%2017.37-.01%2036.13.06%209.85-2.08%2022.49-2.84%2034.97l-5.57-.01a.41.41%200%200%201-.41-.41c-.1-13.247-.037-26.827.19-40.74.067-4.42-.29-7.733-1.07-9.94-1.8-5.1-6.84-9.69-12.5-10.41-.527-.067-.877-.22-1.05-.46-.213-.307-.313-.723-.3-1.25l.02-20.84c0-.647-.32-.963-.96-.95l-4.23.09c-.607.013-.91.323-.91.93l.09%2021.05a1.512%201.512%200%200%201-.97%201.41c-1.95.73-4.14%201.32-5.75%202.52-4.727%203.533-7.107%208.213-7.14%2014.04-.093%2014.913-.063%2029.673.09%2044.28.007.547-.267.823-.82.83l-17.61.07c-.947.093-1.773-.03-2.48-.37-.307-.147-.457-.387-.45-.72l.29-29.33.18%2028.92c0%20.204.078.4.219.549a.822.822%200%200%200%20.541.251c6.113.4%2012.217.463%2018.31.19.335-.013.653-.155.887-.397.235-.242.368-.565.373-.903.17-14.85-.29-30.02.13-44.95.51-17.99-.84-34.48-7.46-51.47-.127-.313-.357-.477-.69-.49l-6.95-.33%2053.76-.12Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M561.1%20565.96c4.02.307%206.013%201.92%205.98%204.84-.127%2010.86-.057%2020.687.21%2029.48.16%205.06-.88%2010.41.5%2015.3%201.12%203.967%201.703%206.737%201.75%208.31.227%208.58.4%2017.143.52%2025.69.07%205.27.04%2011.19%205.5%2013.63.173.08.29.213.35.4a.69.69%200%200%201%20.01.35c-.027.093-.087.143-.18.15l-10.95.91-28.35-.12c.76-12.48%202.9-25.12%202.84-34.97-.113-18.76-.11-30.803.01-36.13.22-10.027-1.477-19.313-5.09-27.86l26.9.02Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M697.68%20568.75c.847%205.913%202.863%2011.54%206.05%2016.88a1.277%201.277%200%200%201%20.075%201.173%201.26%201.26%200%200%201-.915.727c-1.487.28-2.62.807-3.4%201.58-3.793.86-7.623%201.513-11.49%201.96-1.1.133-1.847.17-2.24.11-1.9-.287-1.97-.813-.21-1.58%201.713-.747%203.633-1.8%205.76-3.16l3.1-2.04c1.087-.093%201.607-.88%201.56-2.36-.027-.68-.28-1.497-.76-2.45-.56-1.107-1.387-2.79-2.48-5.05-.633-1.32-.83-2.58-.59-3.78%201.42-.927%203.267-1.597%205.54-2.01Z'%20/%3e%3cpath%20fill='%23FE6D04'%20d='M638.23%20590.58c-.16-1.18.223-2.513%201.15-4%202.347-.42%203.42-1.857%203.22-4.31a234.24%20234.24%200%200%201-.49-7.79.803.803%200%200%201%20.292-.666.797.797%200%200%201%20.708-.164l4.38%201.03a2.296%202.296%200%200%201%201.68%202.86c-1.127%203.987-1.543%207.91-1.25%2011.77a2.298%202.298%200%200%201-2.01%202.45c-2.633.32-5.193-.073-7.68-1.18Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M607.13%20590.33a421.81%20421.81%200%200%201-2.04%2016.86c-.38%202.667-1.85%204.013-4.41%204.04-1.033.007-1.763.423-2.19%201.25-.213.42-.16.803.16%201.15l3.14%203.32.61.81-1.2%2015.45c-.027.327-.197.433-.51.32-.947-.36-1.83-1.013-2.65-1.96-5.167-6.007-10.38-12-15.64-17.98-2.29-2.6-.5-5.71%202.12-8.07%206.467-5.853%2014.003-10.917%2022.61-15.19Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M611.13%20591.51c2.22%201.147%204.743%201.74%207.57%201.78%203.273.04%206.54.22%209.8.54%202.267.22%204.453-.033%206.56-.76%201.287-.127%202.31-.627%203.07-1.5.06.107.2.203.42.29.28.1.403.3.37.6-.85%207.47-4.34%2012.92-8.67%2018.87-4.353%205.98-8.607%2012.553-12.76%2019.72-1.28%202.21-2.04%204.54-2.1%207.12a517.889%20517.889%200%200%200-.11%209.58c-.013%202.513.047%204.497.18%205.95-.493%203.733-.553%207.25-.18%2010.55.053.44.637.653%201.75.64-1.013.127-1.567%201.287-1.66%203.48-.007%204.133.047%208.34.16%2012.62.033%201.273-.29%201.99-.97%202.15l-4.05.39c-.48-.007-.76-.177-.84-.51a730.473%20730.473%200%200%200-3.28-13.99.888.888%200%200%200-.85-.68l-45.38-.31-29.05.25a.415.415%200%200%200-.297.126.435.435%200%200%200-.123.304l-.03%2042.3c0%20.313.133.547.4.7.193.113.41.147.65.1-.747.02-1.107.423-1.08%201.21a382.6%20382.6%200%200%201%20.12%2017.97c-.007.333.157.5.49.5l32.3.12-31.7.13a1.222%201.222%200%200%200-.873.364%201.216%201.216%200%200%200-.357.876l.07%2031.34.07%203.61c.227%203.393-.003%205.93-.69%207.61-3.34%208.127-9.553%2011.993-18.64%2011.6l2.64-.23c.347-.033.53-.223.55-.57.22-4.493.31-8.873.27-13.14-.03-3.28.58-6.38%201.22-9.56%201.02-5.04.5-14.4-2.51-18.69a1.228%201.228%200%200%201-.21-.93c.64-3.69%201.2-7.36%201.13-11.22-.213-12.067-.313-19.92-.3-23.56.187-45.387.223-78.053.11-98-.02-3.66.45-6.85%201.41-9.57-.013.527.087.943.3%201.25.173.24.523.393%201.05.46%205.66.72%2010.7%205.31%2012.5%2010.41.78%202.207%201.137%205.52%201.07%209.94-.227%2013.913-.29%2027.493-.19%2040.74a.41.41%200%200%200%20.41.41l5.57.01%2028.35.12%2040.04-.25a.61.61%200%200%200%20.499-.247.636.636%200%200%200%20.111-.553%20176.313%20176.313%200%200%201-4.08-20.6c-.35-2.48-.04-5-.58-7.37-.41-1.78-1.74-2.93-2.74-4.43.82.947%201.703%201.6%202.65%201.96.313.113.483.007.51-.32l1.2-15.45c1.027-1.393%201.473-3.387%201.34-5.98a.658.658%200%200%200-.6-.62c-1.547-.14-2.897.18-4.05.96a.826.826%200%200%200-.336.906.845.845%200%200%200%20.156.304l2.88%203.62-3.14-3.32c-.32-.347-.373-.73-.16-1.15.427-.827%201.157-1.243%202.19-1.25%202.56-.027%204.03-1.373%204.41-4.04a421.81%20421.81%200%200%200%202.04-16.86l4%201.18Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M616.81%20591.93c5.953.987%2012.037%201.367%2018.25%201.14-2.107.727-4.293.98-6.56.76-3.26-.32-6.527-.5-9.8-.54-2.827-.04-5.35-.633-7.57-1.78l5.68.42ZM602.4%20617.76l-.61-.81-2.88-3.62a.835.835%200%200%201%20.18-1.21c1.153-.78%202.503-1.1%204.05-.96a.656.656%200%200%201%20.6.62c.133%202.593-.313%204.587-1.34%205.98Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='M745.744%20617.546c1.002%201.875%203.236%202.637%204.989%201.7%201.754-.936%202.364-3.216%201.363-5.092-1.002-1.875-3.236-2.637-4.989-1.7-1.754.936-2.364%203.216-1.363%205.092Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='m474.9%20634.69-.29%2029.33c-.007.333.143.573.45.72.707.34%201.533.463%202.48.37l-7.01-.09a35.92%2035.92%200%200%200%201.34-9.79c-.033-11.787-.007-23.82.08-36.1.007-.74.363-1.227%201.07-1.46.2-.067.39-.073.57-.02.96.293%201.443.853%201.45%201.68.047%205.36%200%2010.48-.14%2015.36Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M686.78%20802.7c-.08-3.487-.673-6.553-1.78-9.2a498.054%20498.054%200%200%201-6.13-15.36c-1.173-3.1-1.633-5.283-1.38-6.55.347-1.74.79-3.5%201.33-5.28%207.85-26.06%2015.91-53.78%2023.86-78.72a3.835%203.835%200%200%201%202.49-2.49c3.75-1.19%208.6-2.62%2011.47-4.91%207.1-5.66%207.47-12.74%203.9-20.36-2.12-4.52-4.4-9.18-5.73-13.9-1.57-5.51-.84-11.24-.99-16.89-.009-.299.07-.595.229-.849.158-.255.388-.457.661-.581%202.47-1.13%204.75-1.91%206.61-4.31.793-1.027%201.657-2.83%202.59-5.41%202.367%203.587%204.173%206.77%205.42%209.55.813%201.82%201.223%204.007%201.23%206.56.02%209.733-.017%2018.823-.11%2027.27-.08%207.79.05%2015.6.04%2023.32-.027%2037.233-.017%2074.467.03%20111.7.007%206.54-.423%2010.74-1.29%2012.6-4.01%208.58-13.57%2012.72-22.3%208.81-1.94-.86-4.543-2.617-7.81-5.27a604.809%20604.809%200%200%200-12.34-9.73Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M615.46%20653.7c2.847%203.7%203.37%207.43%201.57%2011.19-1.113.013-1.697-.2-1.75-.64-.373-3.3-.313-6.817.18-10.55Z'%20/%3e%3cpath%20fill='%23478FFF'%20d='M738.04%20673.51a4.4%204.4%200%201%200%200-8.8%204.4%204.4%200%200%200%200%208.8Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='M410.58%20668.07h84.55a.81.81%200%200%201%20.81.81l.08%2042.16a.612.612%200%200%201-.176.431.592.592%200%200%201-.424.179c-23.727.293-47.473.27-71.24-.07a9.033%209.033%200%200%201-3.63-.82c-8.94-4.08-10.66-11.44-10.43-21.04.167-6.613.14-13.643-.08-21.09a.533.533%200%200%201%20.329-.517.545.545%200%200%201%20.211-.043ZM560.16%20668.04c4.033%205.167%206.22%2010.877%206.56%2017.13.46%208.48-.56%2017.07-.19%2026.6l-34.82.05a.903.903%200%200%201-.65-.1.755.755%200%200%201-.4-.7l.03-42.3c0-.114.044-.223.123-.304a.415.415%200%200%201%20.297-.126l29.05-.25Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M610.51%20683.53c-.54%201.22-1.11%202.43-1.24%203.76-.373%203.64-1.86%206.543-4.46%208.71a2.172%202.172%200%200%200-.7%201.12c-.313%201.26-.04%201.85.82%201.77%202.09-.19%203.53.08%204.88-1.73.241-.326.58-.57.97-.7%201.16-.387%202.1-.963%202.82-1.73.653-.7%201.033-1.753%201.14-3.16.213-2.913.153-5.723-.18-8.43.68-.16%201.003-.877.97-2.15-.113-4.28-.167-8.487-.16-12.62.573-.233%201.043-.257%201.41-.07.307.16.467.41.48.75.207%204.1.02%208.05-.56%2011.85-.4%202.6-.587%205.107-.56%207.52.027%202.54.013%205.137-.04%207.79-.02%201.36-.517%203.337-1.49%205.93-1.59%204.24-5.41%207.42-9.61%208.78-1.593.52-4%20.77-7.22.75-3.86-.02-7.723-.05-11.59-.09l-18.21.22-1.45-.03c-.37-9.53.65-18.12.19-26.6-.34-6.253-2.527-11.963-6.56-17.13l45.38.31a.889.889%200%200%201%20.85.68c1.127%204.6%202.22%209.263%203.28%2013.99.08.333.36.503.84.51Z'%20/%3e%3cpath%20fill='%232466F8'%20d='m867.89%20678.5-.03%204.67a.706.706%200%200%201-.7.71l-7.48.1a.712.712%200%200%200-.7.69l-.21%207.5a.707.707%200%200%201-.71.69l-4.53-.04a.713.713%200%200%201-.7-.69l-.17-7.48a.713.713%200%200%200-.7-.69l-7.48-.04a.71.71%200%200%201-.71-.7l-.04-4.68a.73.73%200%200%201%20.05-.273.726.726%200%200%201%20.379-.389.705.705%200%200%201%20.271-.058l7.52-.07a.713.713%200%200%200%20.7-.69l.21-7.45a.707.707%200%200%201%20.71-.69l4.54-.04a.73.73%200%200%201%20.273.05.726.726%200%200%201%20.389.379.705.705%200%200%201%20.058.271l.17%207.46a.707.707%200%200%200%20.71.69l7.47.06a.71.71%200%200%201%20.71.71Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M641.15%20682c-1.227-1.807-2.967-2.907-5.22-3.3%203.43-3.1%205.16.15%205.22%203.3Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M825.97%20694.34a616.914%20616.914%200%200%200-9.69-7.56c-2.2-1.68-3.973-1.46-5.32.66-2.467%203.88-3.977%208.243-4.53%2013.09-.367.08-.717.007-1.05-.22a1.046%201.046%200%200%201-.46-.88c.02-1.347.34-2.653.96-3.92a1.152%201.152%200%200%200-.05-1.11%201.84%201.84%200%200%200-.72-.69c-.807-.427-1.233-1.097-1.28-2.01-.227-4.267%201.44-7.59%205-9.97%206.29-4.2%2018.97-6.31%2021.19%204.06.82%203.807-.53%206.657-4.05%208.55Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M278.97%20688.61a4.99%204.99%200%201%200%200-9.98%204.99%204.99%200%200%200%200%209.98Z'%20/%3e%3cpath%20fill='%23FE6D04'%20d='M635.93%20678.7c2.253.393%203.993%201.493%205.22%203.3%201.06%201.44%201.78%202.93%202.16%204.47a2.27%202.27%200%200%201-1.46%202.69%2021.577%2021.577%200%200%200-5.25%202.69c-2.13%201.5-4.99%201.14-7.44%201.42a.717.717%200%200%201-.79-.59c-.173-.973.09-1.643.79-2.01a74.919%2074.919%200%200%200%204.39-2.52c.287-.173.483-.42.59-.74.99-2.99-.24-5.67%201.79-8.71Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M614.56%20683.14c.333%202.707.393%205.517.18%208.43-.107%201.407-.487%202.46-1.14%203.16-.72.767-1.66%201.343-2.82%201.73-.39.13-.729.374-.97.7-1.35%201.81-2.79%201.54-4.88%201.73-.86.08-1.133-.51-.82-1.77.111-.436.355-.827.7-1.12%202.6-2.167%204.087-5.07%204.46-8.71.13-1.33.7-2.54%201.24-3.76l4.05-.39ZM825.97%20694.34c-.8%202.567-1.99%204.837-3.57%206.81-.767.96-2.423%202.787-4.97%205.48-3.367%202.147-6.46%201.163-9.28-2.95l-1.72-3.15c.553-4.847%202.063-9.21%204.53-13.09%201.347-2.12%203.12-2.34%205.32-.66a616.914%20616.914%200%200%201%209.69%207.56Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M256.684%20699.16c-.233.656.048%201.353.625%201.558.578.204%201.235-.161%201.467-.817.233-.656-.048-1.354-.625-1.559-.578-.204-1.235.162-1.467.818Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='M817.43%20706.63c.34.5%201.01.79%202.01.87.927.073%201.61.21%202.05.41%204.81%202.15%206.38%206.65%207.7%2011.41l-14.79.57a3.595%203.595%200%200%200-3.19%202.23l-7.69%2018.6c-.673.3-1.01.69-1.01%201.17-2.44.67-3.86%201.94-2.99%204.63-.693%201.013-.797%202.053-.31%203.12.147.327.4.49.76.49l36.5.11-4.72.74a.479.479%200%200%200-.24.84c3.733%203.3%205.457%206.873%205.17%2010.72-3.007.547-5.9.93-8.68%201.15a3386.26%203386.26%200%200%201-34.76%202.59l-.22%202.06c-.033.313-.093.32-.18.02-.64-2.25-1.14-4.34-.44-6.67a74.246%2074.246%200%200%200%202.18-9.33%202.254%202.254%200%200%200-.245-1.438%202.276%202.276%200%200%200-1.075-.992c-4.44-1.96-12.07-4.99-11.41-11.18.22-2.067.723-4.163%201.51-6.29%201.98-5.353%204.403-10.79%207.27-16.31%201.5-2.893%203.36-5.457%205.58-7.69%202.527-2.547%206.507-4.14%2011.94-4.78%202.82%204.113%205.913%205.097%209.28%202.95Z'%20/%3e%3cpath%20fill='%232466F8'%20d='m586.19%20711.58.16%2010.31c-.713%202.98-.877%205.937-.49%208.87a1.01%201.01%200%200%201-.233.782.999.999%200%200%201-.737.348l-15.84.3-1.52-.46a3.787%203.787%200%200%200%201.2-.7c.253-.227.38-.51.38-.85.07-6.9%201.33-13.06-1.13-18.38l18.21-.22Z'%20/%3e%3cpath%20fill='%231350CE'%20d='m566.53%20711.77%201.45.03c2.46%205.32%201.2%2011.48%201.13%2018.38%200%20.34-.127.623-.38.85a3.787%203.787%200%200%201-1.2.7l-3.99-.11-32.3-.12c-.333%200-.497-.167-.49-.5a382.6%20382.6%200%200%200-.12-17.97c-.027-.787.333-1.19%201.08-1.21l34.82-.05Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M255.798%20713.801c.412-.315.524-.862.249-1.222s-.833-.396-1.245-.08c-.412.315-.524.862-.249%201.222s.833.396%201.245.08Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M280.81%20718.19a.92.92%200%200%201%20.457-.131.91.91%200%200%201%20.923.911c0%20.767-.323%201.2-.97%201.3a.817.817%200%200%201-.91-.58c-.187-.687-.02-1.187.5-1.5Z'%20/%3e%3cpath%20fill='%232466F8'%20d='m836.47%20750.24-36.5-.11c-.36%200-.613-.163-.76-.49-.487-1.067-.383-2.107.31-3.12%203.38.78%205.9-2.07%208.45-3.7a.492.492%200%200%200%20.091-.744.467.467%200%200%200-.241-.136c-1.2-.28-2.497-.323-3.89-.13-.5-.333-.637-.697-.41-1.09l7.69-18.6a3.596%203.596%200%200%201%203.19-2.23l14.79-.57c20.193-.2%2034.38-.44%2042.56-.72%202.267-.08%203.31.943%203.13%203.07-.6%206.88-1.723%2013.877-3.37%2020.99-.74%203.22-2.12%205.4-4.14%206.54-1.273.713-3.543%201.047-6.81%201-8.053-.113-16.083-.1-24.09.04Zm8.449-15.884c-.011-.663-.651-1.288-1.779-1.737-1.128-.449-2.651-.686-4.234-.659-.784.014-1.559.092-2.281.231a9.08%209.08%200%200%200-1.927.575c-.55.242-.985.525-1.279.834-.295.308-.444.636-.438.964.011.663.651%201.288%201.779%201.737%201.128.449%202.65.686%204.234.659a13.55%2013.55%200%200%200%202.281-.23%209.137%209.137%200%200%200%201.927-.576c.55-.242.985-.525%201.279-.834.295-.308.444-.636.438-.964Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='m586.35%20721.89%2033.67%2027.21a1.44%201.44%200%200%201%20.47%201.56l-31.26%20100c-.393-2.807-1.12-5.06-2.18-6.76-2.427-3.9-5.547-5.737-9.36-5.51-3.633.213-6.473%201.63-8.52%204.25-3.59%204.6-2.55%2011.99%202.55%2015.36%201.9%201.253%204.22%201.78%206.96%201.58%203-.22%206.08-1.677%209.24-4.37l-5.82%2018.91c-1.58-.68-3.17-1.41-4.77-2.19-5.04-2.467-10.177-2.983-15.41-1.55-10.81%202.96-18.22%2013.64-16.94%2024.97%201.16%2010.36%208.2%2018.52%2018.74%2020.22%201.78.287%203.617.553%205.51.8l-9.33%2029.9c-4.84-.94-7.44.55-11.44%203.5a1.13%201.13%200%200%201-.517.207%201.129%201.129%200%200%201-1.004-.394%201.118%201.118%200%200%201-.239-.503%203.997%203.997%200%200%201%20.13-1.91%202.587%202.587%200%200%201%201.08-1.42c6.66-4.23%2010.81-8.72%2010.51-16.94-.127-3.413-.92-6.2-2.38-8.36-1.76-2.607-3.913-4.6-6.46-5.98-2.41-1.31-5.31-1.48-7.97-2a.595.595%200%200%201-.366-.224.618.618%200%200%201-.124-.416c.32-4.507.28-9.047-.12-13.62-.66-7.38.13-15.19-.16-22.67a1.142%201.142%200%200%201%20.35-.863%201.135%201.135%200%200%201%20.88-.307c7.97.71%2010.21-4.71%2010.04-11.66-.1-4.013-.08-7.887.06-11.62.27-7.41-3.21-13.65-11.19-13.44-.413.013-.617-.187-.61-.6l.17-27.1c.007-.427.203-.72.59-.88%203.41-1.45%205.37-4.19%205.35-7.96a5584.64%205584.64%200%200%201-.1-32.76.66.66%200%200%200-.67-.66l-14.96.25-.07-3.61c.387-.66.7-.893.94-.7.37.305.831.477%201.31.49%204.24.12%208.413.097%2012.52-.07.347-.013.675-.156.92-.4.933-.953%202.027-1.473%203.28-1.56%204.307-.3%208.827-.467%2013.56-.5%204.82-.02%205.73-3.48%205.71-7.61-.04-7.253.003-14.517.13-21.79l15.84-.3a.999.999%200%200%200%20.97-1.13c-.387-2.933-.223-5.89.49-8.87Zm-24.99%2084.19c-6.53-1.92-15.2%201.44-15.81%209.18-.333%204.187-.47%208.287-.41%2012.3.027%202.02.563%203.667%201.61%204.94%204.127%205.033%209.267%206.473%2015.42%204.32%2013.71-4.79%2013.24-26.59-.81-30.74Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M511.42%20787.15c9.087.393%2015.3-3.473%2018.64-11.6.687-1.68.917-4.217.69-7.61l14.96-.25a.656.656%200%200%201%20.619.405.656.656%200%200%201%20.051.255c0%2010.433.033%2021.353.1%2032.76.02%203.77-1.94%206.51-5.35%207.96-.387.16-.583.453-.59.88l-.17%2027.1c-.007.413.197.613.61.6%207.98-.21%2011.46%206.03%2011.19%2013.44-.14%203.733-.16%207.607-.06%2011.62.17%206.95-2.07%2012.37-10.04%2011.66a1.135%201.135%200%200%200-.88.307%201.127%201.127%200%200%200-.35.863c.29%207.48-.5%2015.29.16%2022.67.4%204.573.44%209.113.12%2013.62a.601.601%200%200%200%20.49.64c2.66.52%205.56.69%207.97%202%202.547%201.38%204.7%203.373%206.46%205.98%201.46%202.16%202.253%204.947%202.38%208.36.3%208.22-3.85%2012.71-10.51%2016.94a2.584%202.584%200%200%200-1.08%201.42c-.2.653-.243%201.29-.13%201.91a1.118%201.118%200%200%200%201.76.69c4-2.95%206.6-4.44%2011.44-3.5l-4.26%2015.65c-.587-.827-2.073-1.123-4.46-.89-.333.033-.63-.06-.89-.28a15.595%2015.595%200%200%201-2.66-2.96c-5.22-7.53-18.14-8.95-26.54-8.09-5.527.567-10.297%202.9-14.31%207a1.584%201.584%200%200%201-1.001.47%201.562%201.562%200%200%201-1.059-.3c-5.38-3.947-11.313-5.19-17.8-3.73-3.13.7-6.22%202.66-8.25%205.2a.736.736%200%200%201-.65.267.743.743%200%200%201-.58-.397%2024.608%2024.608%200%200%200-4.43-6.1.827.827%200%200%201-.21-.87l.23-.79c.693-.287.987-.863.88-1.73-.14-1.12-.753-1.963-1.84-2.53-13.21-6.88-16.59-24.84-9.36-37.17%204.973-8.493%2012.537-13.487%2022.69-14.98a1.428%201.428%200%200%200%201.22-1.52c-.227-2.947-.257-5.667-.09-8.16.31-4.81%203.03-8.63%203.36-13.44.293-4.233.637-7.31%201.03-9.23%201.553-7.54%205.65-13.04%2012.29-16.5a1.017%201.017%200%200%200%20.54-.91c-.16-16.64-.087-34.023.22-52.15.02-.967-.443-1.35-1.39-1.15-.56.12-1.04.473-1.44%201.06a1.904%201.904%200%200%200-.33%201.1c.093%2014.06.183%2028.687.27%2043.88.03%205.06-2.12%207.23-6.1%209.89-3.73%202.49-8.01%202.74-11.82.55-2.83-1.62-2.29-5.05-2.3-7.73%201.4-15.13%201.7-30.43.15-45.52-.387-3.72-.763-7.437-1.13-11.15l.45-15.32%2014.57-.03c.427%200%20.697-.207.81-.62.273-1.02.137-1.84-.41-2.46a1.177%201.177%200%200%200-.92-.42l-10.48-.07c-1.86.02-3.39.21-5.17-.62-4.6-2.14-9.38-1.73-14.25-1.57-5.98.2-7.36-4.09-7.21-9%20.207-6.947.353-13.9.44-20.86.72-.267%201.233-.4%201.54-.4%2012.087.047%2024.053.027%2035.9-.06a.943.943%200%200%201%20.887.59.976.976%200%200%201%20.073.37c-.013%2012.927-.037%2025.713-.07%2038.36-.03%208.78%207.08%2015.14%2015.38%2016.2Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='m563.54%20731.62%203.99.11%201.52.46a948.472%20948.472%200%200%200-.13%2021.79c.02%204.13-.89%207.59-5.71%207.61-4.733.033-9.253.2-13.56.5-1.253.087-2.347.607-3.28%201.56a1.376%201.376%200%200%201-.92.4c-4.107.167-8.28.19-12.52.07a2.15%202.15%200%200%201-1.31-.49c-.24-.193-.553.04-.94.7l-.07-31.34a1.245%201.245%200%200%201%20.357-.876%201.22%201.22%200%200%201%20.873-.364l31.7-.13Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M838.994%20736.96c3.296-.058%205.949-1.224%205.925-2.604-.024-1.381-2.716-2.453-6.013-2.396-3.296.058-5.949%201.224-5.925%202.604.024%201.381%202.716%202.453%206.013%202.396Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M676.53%20741.06c-1.84%205.393-3.663%2011.33-5.47%2017.81-.207.733-.46%201.397-.76%201.99a.534.534%200%200%201-.731.217.523.523%200%200%201-.199-.197c-2.36-4.26-3.75-9.57-5.55-13.82a.783.783%200%200%201%20.45-1.03c4.13-1.56%207.93-2.44%2011.21-5.63%201.28-1.253%201.63-1.033%201.05.66Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M803.52%20740.72c-.227.393-.09.757.41%201.09l-1.42.08c0-.48.337-.87%201.01-1.17Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M799.52%20746.52c-.87-2.69.55-3.96%202.99-4.63l1.42-.08c1.393-.193%202.69-.15%203.89.13a.473.473%200%200%201%20.365.384.495.495%200%200%201-.215.496c-2.55%201.63-5.07%204.48-8.45%203.7Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M648.99%20770.97a.694.694%200%200%201-.49-.251.69.69%200%200%201-.15-.529c.28-2.193.397-4.333.35-6.42a623.972%20623.972%200%200%201-.13-20.15.64.64%200%200%201%201.08-.46%2011.786%2011.786%200%200%201%202.31%202.98c3.04%205.607%205.68%2011.537%207.92%2017.79.68%201.9%201.71%203.68%202.71%205.44a1.02%201.02%200%200%201-.8%201.53c-4.16.347-8.427.37-12.8.07Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M192%20774.89c-1.08%203.28-2.88%204.247-5.4%202.9a2688.613%202688.613%200%200%201-6.63-16.74c-1.56-3.97-3.69-7.59-4.22-11.76-.24-1.887.64-2.81%202.64-2.77.7.013%201.243.313%201.63.9%201.267%201.933%202.37%204.17%203.31%206.71.607%201.653%202.16%205.217%204.66%2010.69.47%201.02.54%202.31.98%203.21a108.21%20108.21%200%200%201%203.03%206.86Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M836.41%20752.64a.542.542%200%200%201%20.18-.29%201.77%201.77%200%200%201%20.23-.176.36.36%200%200%201%20.16-.064l19.3.18c.56%200%20.81.28.75.84l-.04.35a.518.518%200%200%201-.53.47l-20.53-.26c-.327-.007-.457-.167-.39-.48a.86.86%200%200%201%20.27-.46c.127-.107.26-.117.4-.03.107.073.173.047.2-.08Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='m629.48%20756.82%2016.56%2013a.578.578%200%200%201-.02.934.58.58%200%200%201-.34.106l-21.05.12a.574.574%200%200%201-.468-.24.588.588%200%200%201-.104-.25.588.588%200%200%201%20.022-.27l4.49-13.13a.583.583%200%200%201%20.91-.27Z'%20/%3e%3cpath%20fill='%231350CE'%20d='m211.06%20771.05-2.55%209.07-.95-1.2c-.48-1.347-.067-2.393%201.24-3.14.287-.167.367-.403.24-.71a44.173%2044.173%200%200%200-1.41-3.15c-2.42-4.85%201.92-9.94%206.3-12.01%207.02-3.31%2017.53-2.41%2016.58%208.19-.14%201.546-.793%202.76-1.96%203.64-2.12%201.61-4.31%200-5.77-1.55a37.27%2037.27%200%200%200-4.58-4.09c-3.66-2.77-5.81%201.59-7.14%204.95Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M836.68%20762.54c1.66%208.133%202.71%2015.203%203.15%2021.21%201.527%2020.78%201.807%2042.69.84%2065.73l-8.46.26-.47.07c-.32-.38-.497-.733-.53-1.06-2.32-24.01-5.19-45.63-13.61-67.87a6.345%206.345%200%200%200-1.02-1.76.548.548%200%200%200-.558-.194.55.55%200%200%200-.412.424%2072.203%2072.203%200%200%200-1.01%205.71%20590.439%20590.439%200%200%200-5.06%2058.19c-.06%201.607-.337%203.597-.83%205.97l-10.02-.13a2513.09%202513.09%200%200%201-1.2-31.09c-.2-6.36-.71-12.86-1.53-19.5l-1.9-20.57-.82-11.65a3386.26%203386.26%200%200%200%2034.76-2.59c2.78-.22%205.673-.603%208.68-1.15Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='M480.33%20767.74c1.86-.267%203.09-.763%203.69-1.49.44-.533.4-1.237-.12-2.11l10.48.07c.367%200%20.673.14.92.42.547.62.683%201.44.41%202.46-.113.413-.383.62-.81.62l-14.57.03Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M217.32%20783.96c-3.553-.4-6.49-1.68-8.81-3.84l2.55-9.07c.54-.207%201.393-1.023%202.56-2.45%202.69-3.3%205.81.55%207.69%202.46%201.04%201.06%201.94%201%203.01%201.69%201.5.96%201.697%202.093.59%203.4-2.03%202.39-4.68%206.75-7.59%207.81Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='m207.56%20778.92.95%201.2c2.32%202.16%205.257%203.44%208.81%203.84a11.804%2011.804%200%200%200-.52%203.8c-1.187.14-1.923.607-2.21%201.4a300.326%20300.326%200%200%201-9.52%2023.14%201.842%201.842%200%200%200-.18.98c.027.293.103.57.23.83.5.98.2%201.493-.9%201.54-1.333.067-2.22.6-2.66%201.6a1.181%201.181%200%200%200%201.01%201.64c5.693.333%2011.523.247%2017.49-.26a.93.93%200%200%200%20.76-.47%205.046%205.046%200%200%200%20.69-1.98l2.68%201.43c.293.153.48.39.56.71l2.42%209.57-3.55%202.31c-4.427%201.033-9.757%201.673-15.99%201.92-8.12.327-15.183.14-21.19-.56-1.64-2.153-2.05-4.12-1.23-5.9a272.051%20272.051%200%200%201%205.22-10.69%202.269%202.269%200%200%200-.56-2.77c-3.74-3.16-7.403-7.757-10.99-13.79-2.34-3.93-1.18-8.06%203.06-10.15%201.933-.953%203.91-1.873%205.93-2.76%201.34-.587%201.693-1.54%201.06-2.86l-2.33-4.85c2.52%201.347%204.32.38%205.4-2.9l2.21%205.75a2.434%202.434%200%200%200%201.172%201.296%202.434%202.434%200%200%200%201.738.174c3.3-.9%206.593-1.547%209.88-1.94.42-.053.607-.47.56-1.25Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M766.95%20782.15a2.83%202.83%200%201%200%200-5.66%202.83%202.83%200%200%200%200%205.66ZM795.96%20798.5l-30.98%2076.42c-.127.307-.023.477.31.51.253.027.577-.033.97-.18a57.95%2057.95%200%200%200-10.51%2016.48c-1.1%202.6-2.217%205.2-3.35%207.8-.653%201.487-1.49%202.31-2.51%202.47-1.367.207-2.763.48-4.19.82%201.973-.893%203.233-2.023%203.78-3.39%202.92-7.333%206.083-15.617%209.49-24.85%202.06-5.593%204.52-11.763%207.38-18.51a838.7%20838.7%200%200%200%2010.3-25.47c1.96-5.08%204.44-9.73%206.41-14.75%202.327-5.92%204.68-11.997%207.06-18.23.22-.587.97-2.323%202.25-5.21%201.04-2.347%201.547-4.19%201.52-5.53-.053-2.967.003-5.95.17-8.95l1.9%2020.57Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='m831.74%20849.81.15%201.12.67%209.46c-.42.493-.647%201.103-.68%201.83.187-1.16-.147-1.943-1-2.35-5.667-2.727-11.573-4.04-17.72-3.94l-4.4-.18c-.34-.013-.497-.19-.47-.53l.42-6c.493-2.373.77-4.363.83-5.97a590.439%20590.439%200%200%201%205.06-58.19%2072.203%2072.203%200%200%201%201.01-5.71.546.546%200%200%201%20.412-.424.544.544%200%200%201%20.558.194c.447.553.787%201.14%201.02%201.76%208.42%2022.24%2011.29%2043.86%2013.61%2067.87.033.327.21.68.53%201.06ZM663.21%20782.28c.907.3%201.22.903.94%201.81l-8.64%2027.93a1.84%201.84%200%200%201-1.76%201.3h-42.02a.654.654%200%200%201-.643-.542.615.615%200%200%201%20.023-.298l10.02-31.7a1.165%201.165%200%200%201%201.12-.81c11.727.113%2023.3.083%2034.72-.09%201.04-.01%202.04-.07%202.91.61a10.821%2010.821%200%200%200%203.33%201.79Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M479.88%20783.06c.367%203.713.743%207.43%201.13%2011.15%201.55%2015.09%201.25%2030.39-.15%2045.52l-.03-5.05a.858.858%200%200%200-.88-.85c-3.13.05-6.47.38-9.42-.51-4.72-1.42-9.13-5.79-9.67-11.01-1.1-10.83%206.99-18.05%2017.61-16.94a1.18%201.18%200%200%200%20.932-.297%201.223%201.223%200%200%200%20.408-.903l.07-21.11Z'%20/%3e%3cpath%20fill='%23FE6D04'%20d='M425.78%20807.1c-2.353-.74-4.367-.713-6.04.08-4.04%204.05-8.57%208.33-10.04%2013.79-.67%202.49-.49%206.95-3.17%208.21-2.83%201.32-6.85%202.28-9.96%201.19-8.71-3.07-8.6-14.06-2.71-19.71%203.45-3.3%207.73-5.32%209.06-10.52.607-2.387%201.213-4.77%201.82-7.15%201.5-5.9%205.51-7.23%2011.36-6.9%202.5.14%204.967.33%207.4.57a1.476%201.476%200%200%201%201.271%201.075c.052.191.065.39.039.585-.44%203.32%201.2%205.77%201.35%209.01.147%203.073.02%206.33-.38%209.77Z'%20/%3e%3cpath%20fill='%231350CE'%20d='m216.8%20787.76%2042.71.13c.353%200%20.6.16.74.48a5.809%205.809%200%200%201%20.43%203.35c-.773%204.967-1.833%2010.143-3.18%2015.53-.83%203.31-2.15%207.76-6.3%207.89-10.073.3-18.64.387-25.7.26-1.573-.033-2.903.227-3.99.78a5.046%205.046%200%200%201-.69%201.98.93.93%200%200%201-.76.47c-5.967.507-11.797.593-17.49.26a1.185%201.185%200%200%201-.929-.559%201.173%201.173%200%200%201-.081-1.081c.44-1%201.327-1.533%202.66-1.6%201.1-.047%201.4-.56.9-1.54a2.37%202.37%200%200%201-.23-.83%201.842%201.842%200%200%201%20.18-.98%20300.326%20300.326%200%200%200%209.52-23.14c.287-.793%201.023-1.26%202.21-1.4Zm21.026%2013.991c-.017-.331-.334-.633-.88-.839-.546-.206-1.277-.3-2.031-.26a6.088%206.088%200%200%200-1.085.152%204.181%204.181%200%200%200-.909.319c-.258.13-.46.278-.596.437-.135.159-.2.325-.191.489.017.331.334.633.88.839.546.206%201.277.3%202.031.26a6.088%206.088%200%200%200%201.085-.152c.342-.081.651-.189.909-.319s.46-.278.596-.437c.135-.159.2-.325.191-.489Z'%20/%3e%3cpath%20fill='%23FE6D04'%20d='M459.27%20795.66c-.6-.773-1.427-1.437-2.48-1.99%202.013-3.1%205.033-4.907%209.06-5.42a.888.888%200%200%201%20.97.65c.273%201.053-.033%201.973-.92%202.76-2.213%201.973-4.423%203.307-6.63%204Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M684.55%20801.02c-.927.313-1.16.887-.7%201.72%201.193%202.14%202.193%204.16%203%206.06a6674.4%206674.4%200%200%201%2036.22%2086.44%20218.736%20218.736%200%200%200%203.77%208.65c1.293%202.793%202.597%205.633%203.91%208.52l-5.9%206.28a206.193%20206.193%200%200%200-6.12-15.92%207050.363%207050.363%200%200%200-5.73-13.19%2010589.56%2010589.56%200%200%200-32.9-78.91%20352.595%20352.595%200%200%201-7.19-18.54l11.64%208.89Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='M456.79%20793.67c1.053.553%201.88%201.217%202.48%201.99.94.427%201.037%201.283.29%202.57-.74%201.28-1.58%202.39-2.52%203.33-6.933%206.92-15.217%2012.423-24.85%2016.51-2.973%201.26-4.89%203.673-5.75%207.24-.96%203.96-1.247%207.69-.86%2011.19.667%206.1%201.36%2012.187%202.08%2018.26-.193-.693-.58-.983-1.16-.87a91.216%2091.216%200%200%201-26%201.43c-3.94-.347-8.433-1.933-13.48-4.76.9-1.54%201.783-2.93%202.65-4.17%202.66-3.773%205.33-7.607%208.01-11.5.64-.94%202.13-2.07%203.27-2.21%202.84-.34%205.423-1.33%207.75-2.97.36-.251.613-.629.71-1.06.64-2.89%201.02-5.4%202.46-8.17%201.107-2.14%202.24-4.26%203.4-6.36%201.2-2.18%203.15-4.43%204.47-6.94%201.673-.793%203.687-.82%206.04-.08a41.503%2041.503%200%200%200%2013.04-5.04c5.78-3.433%2010.773-6.187%2014.98-8.26%201.247-.613%202.243-.657%202.99-.13Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M795.96%20798.5c.82%206.64%201.33%2013.14%201.53%2019.5.34%2010.473.74%2020.837%201.2%2031.09l1.06%207.51-12.78%203.86c-8.02%203.407-14.923%208.337-20.71%2014.79-.393.147-.717.207-.97.18-.333-.033-.437-.203-.31-.51l30.98-76.42Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M235.045%20803.148c1.572-.082%202.817-.708%202.781-1.397-.036-.69-1.34-1.182-2.911-1.099-1.572.082-2.817.708-2.781%201.397.036.689%201.34%201.182%202.911%201.099ZM561.36%20806.08c14.05%204.15%2014.52%2025.95.81%2030.74-6.153%202.153-11.293.713-15.42-4.32-1.047-1.273-1.583-2.92-1.61-4.94-.06-4.013.077-8.113.41-12.3.61-7.74%209.28-11.1%2015.81-9.18Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='M229.07%20817.12c1.9-.113%203.417-.07%204.55.13%201.88.333%201.867.547-.04.64-1.293.06-2.88-.017-4.76-.23-.013%200-.02-.007-.02-.02l.01-.25c.007-.167.093-.257.26-.27ZM317.32%20818.08c-1.633%201.367-2.703%202.547-3.21%203.54-2.45%204.77-4.98%209.45-7.05%2014.42a1853.475%201853.475%200%200%201-8.56%2020.25c-.447%201.047-1.05%203.063-1.81%206.05l-2.61-2.27a1.544%201.544%200%200%200-.88-.38l-2.17-.23c1.547-1.727%202.803-3.7%203.77-5.92%202.62-6.03%204.84-11.5%207.9-17.9%202.56-5.36%204.42-11.75%207.99-16.51l6.63-1.05Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='m641.35%20856.11-42.91-.06a.701.701%200%200%201-.66-.91l10.06-32.06a.696.696%200%200%201%20.66-.49l42.9.07a.698.698%200%200%201%20.693.585c.018.109.01.22-.023.325l-10.06%2032.05a.7.7%200%200%201-.66.49Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M227.17%20827.89c4.28%209.11%208.13%2018.32%2012.52%2027.64%201.373%202.913%202.467%205.567%203.28%207.96%202.03%205.95%204.79%2011.21%206.87%2017.02a104.727%20104.727%200%200%200%207.06%2015.59c.827%201.493%201.43%203.83%201.81%207.01a7.151%207.151%200%200%200-3.85.61c-2.373-4.347-3.84-7.25-4.4-8.71-2.73-7.16-6.16-14.05-8.76-21.1-1.59-4.32-3.8-8.31-5.48-12.68-1.433-3.76-2.827-7.447-4.18-11.06-1.87-4.97-4.29-9.73-6.35-14.67a.677.677%200%200%200-.391-.38.673.673%200%200%200-.539.03c-.093.047-.11.263-.05.65l-1.09-5.6%203.55-2.31Z'%20/%3e%3cpath%20fill='%231350CE'%20d='m223.62%20830.2%201.09%205.6a787.185%20787.185%200%200%200%2010.15%2067.01c-3.367-.04-6.26.47-8.68%201.53-.74-1.027-1.513-2.663-2.32-4.91-6.333-17.6-12.047-34.97-17.14-52.11-.393-1.327-.797-1.33-1.21-.01-3.59%2011.56-5.24%2023.81-6.34%2035.69-.427%204.68-.793%2011.973-1.1%2021.88-3.007-.5-5.837-.37-8.49.39-.247-.54-.41-1.217-.49-2.03-1.78-17.807-2.973-34.303-3.58-49.49-.28-6.993.03-14.39.93-22.19%206.007.7%2013.07.887%2021.19.56%206.233-.247%2011.563-.887%2015.99-1.92Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M257.5%20838.83a1.25%201.25%200%201%200%200-2.5%201.25%201.25%200%200%200%200%202.5ZM589.23%20850.66l-1.31%204.55c-3.16%202.693-6.24%204.15-9.24%204.37-2.74.2-5.06-.327-6.96-1.58-5.1-3.37-6.14-10.76-2.55-15.36%202.047-2.62%204.887-4.037%208.52-4.25%203.813-.227%206.933%201.61%209.36%205.51%201.06%201.7%201.787%203.953%202.18%206.76ZM438.494%20861.367c-3.454%2013.648%204.598%2027.457%2017.983%2030.844%2013.385%203.387%2027.036-4.931%2030.489-18.578%203.453-13.648-4.598-27.457-17.983-30.844-13.385-3.387-27.036%204.931-30.489%2018.578Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M739.713%20845.472c.592-.285.919-.835.729-1.228-.189-.393-.822-.481-1.415-.196-.592.285-.918.835-.729%201.228.189.393.822.481%201.415.196Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M226.18%20904.34c.08.753-.073%201.353-.46%201.8-7.453-1.547-14.11-1.263-19.97.85-4.027%201.453-6.72%202.333-8.08%202.64l.4-4.75c.307-9.907.673-17.2%201.1-21.88%201.1-11.88%202.75-24.13%206.34-35.69.413-1.32.817-1.317%201.21.01%205.093%2017.14%2010.807%2034.51%2017.14%2052.11.807%202.247%201.58%203.883%202.32%204.91Z'%20/%3e%3cpath%20fill='%23FE6D04'%20d='m808.71%20849.22-.42%206c-.027.34.13.517.47.53l4.4.18-13.41.67-1.06-7.51%2010.02.13ZM840.67%20849.48c-.533%203.5-1.097%206.923-1.69%2010.27-.367%202.12.343%203.307%202.13%203.56%201.78.253%203.503.747%205.17%201.48l-12.88.13c-.353%200-.59-.163-.71-.49-.427-1.14-.47-2.487-.13-4.04l-.67-9.46c.333-.527.44-.923.32-1.19l8.46-.26Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M832.21%20849.74c.12.267.013.663-.32%201.19l-.15-1.12.47-.07Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M427.66%20854.76c-.793.953-1.197%201.753-1.21%202.4-1.193-.48-2.69-.597-4.49-.35-2.86.393-4.333.593-4.42.6a81.03%2081.03%200%200%201-26.92-2.95.997.997%200%200%200-.89.18l-.72.57c.407-.793-.257-2.343-1.99-4.65%205.047%202.827%209.54%204.413%2013.48%204.76%208.733.767%2017.4.29%2026-1.43.58-.113.967.177%201.16.87Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M862.57%20866.8a6.49%206.49%200%201%200%200-12.98%206.49%206.49%200%200%200%200%2012.98Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='M324.2%20865.06a5.58%205.58%200%201%200%200-11.16%205.58%205.58%200%200%200%200%2011.16Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M426.45%20857.16c.727%209.733.737%2019.103.03%2028.11a237.877%20237.877%200%200%200%20.67%2043.85c.727%206.707%201.477%2013.413%202.25%2020.12.093.773.02%201.777-.22%203.01a6.734%206.734%200%200%200-3.86.07c-1.027.373-1.687-.023-1.98-1.19a1512.09%201512.09%200%200%200-7.13-26.98c-3.23-11.75-4.46-19.97-6.1-33.08-.48-3.207-1.09-6.11-1.83-8.71-.873-3.073-1.86-3.11-2.96-.11-1.053%202.86-1.867%206.523-2.44%2010.99l-3.53%2020.49-4.54%2024.04-2.04%2013.95c-.607.213-1.1.217-1.48.01a13.914%2013.914%200%200%200-3.58-1.37c-.62-.1-.887-.803-.8-2.11.293-4.313.363-8.267.21-11.86.353-22.24.453-44.12.3-65.64-.027-4.533.503-9.713%201.59-15.54l.72-.57a.982.982%200%200%201%20.89-.18%2081.03%2081.03%200%200%200%2026.92%202.95c.087-.007%201.56-.207%204.42-.6%201.8-.247%203.297-.13%204.49.35Z'%20/%3e%3cpath%20fill='%23478FFF'%20d='M813.16%20855.93c6.147-.1%2012.053%201.213%2017.72%203.94.853.407%201.187%201.19%201%202.35-.407%202.447.63%203.733%203.11%203.86%205.107.253%209.197.257%2012.27.01l-3.29.65c-.313.06-.45.247-.41.56%202.44%2021.1%202.79%2041.11%202.9%2064.46.073%2016.173-.15%2028.427-.67%2036.76-.027.367-.223.55-.59.55-7.08.007-14.087.237-21.02.69-.387.027-.393.093-.02.2.093.02.207.03.34.03%205.693-.18%2011.38-.077%2017.06.31l-54.77.05-32.73-.52c-1.18-.013-1.247-.29-.2-.83%207.45-3.82%207.81-10.47%207.63-17.9-.46-18.93-.64-38.41%201.03-57.4%201.5-17.04%2011.43-24.4%2024.45-33.24l12.78-3.86%2013.41-.67Z'%20/%3e%3cpath%20fill='%23C3E1FB'%20d='m291.03%20859.46%202.17.23c.333.033.627.16.88.38l2.61%202.27c2.34%204.973.697%208.417-4.93%2010.33l-5.28-2.34c-2.4-5.327-.883-8.95%204.55-10.87Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M786.97%20860.46c-13.02%208.84-22.95%2016.2-24.45%2033.24-1.67%2018.99-1.49%2038.47-1.03%2057.4.18%207.43-.18%2014.08-7.63%2017.9-1.047.54-.98.817.2.83l32.73.52-106.82-.05a.805.805%200%200%201-.748-.5.805.805%200%200%201-.062-.31c-.113-13.687%205.267-24.113%2016.14-31.28%207.25-4.77%2013.93-5.28%2022.25-5.87.393-.027.653-.227.78-.6%201.553-4.8%203.727-9.15%206.52-13.05l5.9-6.28c4.6-4.187%209.583-7.383%2014.95-9.59a51.071%2051.071%200%200%201%204.19-.82c1.02-.16%201.857-.983%202.51-2.47%201.133-2.6%202.25-5.2%203.35-7.8a57.95%2057.95%200%200%201%2010.51-16.48c5.787-6.453%2012.69-11.383%2020.71-14.79Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M832.56%20860.39c-.34%201.553-.297%202.9.13%204.04.12.327.357.49.71.49l12.88-.13c.913.147%201.397.703%201.45%201.67-.42-.1-.577-.223-.47-.37-3.073.247-7.163.243-12.27-.01-2.48-.127-3.517-1.413-3.11-3.86.033-.727.26-1.337.68-1.83Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M591.07%20897.06c.527-4.56.567-7.523.12-8.89a44.157%2044.157%200%200%201-1.54-6.17l5.09-16.33a1.152%201.152%200%200%201%201.1-.81l42.37.08a.786.786%200%200%201%20.773.657.783.783%200%200%201-.023.363l-9.31%2030.25a1.203%201.203%200%200%201-.44.621%201.247%201.247%200%200%201-.73.239l-37.41-.01Z'%20/%3e%3cpath%20fill='%23377DFE'%20d='M847.26%20866.09c-.107.147.05.27.47.37%202.09%202.92%205.41%205.08%208.06%207.5%206.007%205.5%2010.723%2011.88%2014.15%2019.14a.654.654%200%200%200%20.495.372.659.659%200%200%200%20.585-.202c6.127-6.533%2013.72-9.52%2022.78-8.96l-.74.17c-.533.12-.537.263-.01.43%202.68.84%205.5.89%208.11%202.09%201.54.693%203.007%201.39%204.4%202.09%201.28.64%202.03%201.86%203.36%202.65%204.21%202.49%206.46%207.63%208.67%2011.9.034.065.086.12.148.159a.416.416%200%200%200%20.419.005.404.404%200%200%200%20.153-.154c.08-.147.097-.37.05-.67%203.77%209.19%201.31%2020.16-4.69%2027.7a.694.694%200%200%200-.126.629.689.689%200%200%200%20.446.461l2.33.8c1.533%201.5%203.403%202.697%205.61%203.59%202.62%208.53%203.8%2016.35-.3%2024.69a77.057%2077.057%200%200%201-4.37%207.73.858.858%200%200%201-.77.43c-8.44.06-16.887.117-25.34.17-2.653.013-6.107.393-10.36%201.14l-39.23-.02c-5.68-.387-11.367-.49-17.06-.31a1.65%201.65%200%200%201-.34-.03c-.373-.107-.367-.173.02-.2%206.933-.453%2013.94-.683%2021.02-.69.367%200%20.563-.183.59-.55.52-8.333.743-20.587.67-36.76-.11-23.35-.46-43.36-2.9-64.46-.04-.313.097-.5.41-.56l3.29-.65Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='m582.1%20874.12-12.87%2042.25c-1.893-.247-3.73-.513-5.51-.8-10.54-1.7-17.58-9.86-18.74-20.22-1.28-11.33%206.13-22.01%2016.94-24.97%205.233-1.433%2010.37-.917%2015.41%201.55%201.6.78%203.19%201.51%204.77%202.19Z'%20/%3e%3cpath%20fill='%23E3F1FB'%20d='M291.76%20872.67c-2.14%203.973-4.35%208.713-6.63%2014.22-5.507%2013.34-9.293%2022.637-11.36%2027.89-1.267%203.227-1.71%206.06-1.33%208.5-3.7-2.047-7.85-2.8-12.45-2.26%201.167-.353%202.417-.47%203.75-.35a1.007%201.007%200%200%200%20.84-.32c1.147-1.22%201.917-2.333%202.31-3.34%205.1-12.947%208.883-22.12%2011.35-27.52%203.833-8.387%206.58-14.773%208.24-19.16l5.28%202.34ZM410.11%20891.07c-2.433%202.22-4.843%202.943-7.23%202.17.573-4.467%201.387-8.13%202.44-10.99%201.1-3%202.087-2.963%202.96.11.74%202.6%201.35%205.503%201.83%208.71Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M589.65%20882a44.157%2044.157%200%200%200%201.54%206.17c.447%201.367.407%204.33-.12%208.89l-4.9-.08a.882.882%200%200%201-.39-.097.869.869%200%200%201-.43-1.033l4.3-13.85Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M893.8%20884.31c11.96%201.32%2020.147%207.543%2024.56%2018.67.047.3.03.523-.05.67a.407.407%200%200%201-.72-.01c-2.21-4.27-4.46-9.41-8.67-11.9-1.33-.79-2.08-2.01-3.36-2.65-1.393-.7-2.86-1.397-4.4-2.09-2.61-1.2-5.43-1.25-8.11-2.09-.527-.167-.523-.31.01-.43l.74-.17Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='M426.48%20885.27c-.033%201.093.177%201.903.63%202.43.213.26.49.393.83.4%205.567.127%2010.553%202.48%2014.96%207.06%204.22%204.38%206.297%209.813%206.23%2016.3-.093%209.74-.12%2019.653-.08%2029.74.013%203.773-1.36%206.877-4.12%209.31a1.35%201.35%200%200%201-.87.35c-1.22.067-2.217.27-2.99.61-1.233.547-1.177.857.17.93.387.02.96.017%201.72-.01.333-.013.637-.12.91-.32l4.88-3.6c9.54.433%2015.6.523%2018.18.27%201.933-.187%202.647-.667%202.14-1.44.74.787%201.517%201.64%202.33%202.56.42.467.963.663%201.63.59l-.23.79c-.1.333-.03.623.21.87a24.608%2024.608%200%200%201%204.43%206.1.748.748%200%200%200%20.58.397.736.736%200%200%200%20.65-.267c2.03-2.54%205.12-4.5%208.25-5.2%206.487-1.46%2012.42-.217%2017.8%203.73.305.225.681.332%201.059.3a1.584%201.584%200%200%200%201.001-.47c4.013-4.1%208.783-6.433%2014.31-7%208.4-.86%2021.32.56%2026.54%208.09.76%201.1%201.647%202.087%202.66%202.96.26.22.557.313.89.28%202.387-.233%203.873.063%204.46.89l-2.28%207.57a.723.723%200%200%200%20.05.54l.14.26c-26.94-.253-53.873-.283-80.8-.09-14%20.09-29.34-.51-43-.4-11.527.093-21.443.117-29.75.07-14.04-.08-28.5.36-42.44.27-1.86-.013-2.71-.98-2.55-2.9.96-11.3%206.12-19.97%2015.48-26.01%205.013-3.233%2010.557-4.847%2016.63-4.84.153%203.593.083%207.547-.21%2011.86-.087%201.307.18%202.01.8%202.11l-.47.18c-.333.133-.49.38-.47.74.113%202.773-.317%205.513-1.29%208.22a1.458%201.458%200%200%200%20.089%201.188%201.47%201.47%200%200%200%20.941.732l2.02.5c.36.087.697.23%201.01.43%202.567%201.633%205.173%202.157%207.82%201.57%202.287-.513%202.323-1.16.11-1.94a21.69%2021.69%200%200%200-3.09-.83c-3.14-.59-4.01-4.18-3.37-6.92.32-1.367.907-2.203%201.76-2.51l2.04-13.95%204.28.4a.912.912%200%200%200%20.926-.546.908.908%200%200%200%20.074-.374c-.147-6.74.017-13.64.49-20.7a9.707%209.707%200%200%200-.01-1.59c-.153-1.787-.56-2.197-1.22-1.23l3.53-20.49c2.387.773%204.797.05%207.23-2.17%201.64%2013.11%202.87%2021.33%206.1%2033.08a1512.09%201512.09%200%200%201%207.13%2026.98c.293%201.167.953%201.563%201.98%201.19l-.61%209.74c-.02.367.137.627.47.78%203.893%201.753%207.423%202.217%2010.59%201.39a1.322%201.322%200%200%200%20.83-.66c.067-.12.117-.247.15-.38.18-.753-.117-1.137-.89-1.15-5.807-.08-8.033-3.343-6.68-9.79.24-1.233.313-2.237.22-3.01a2988.645%202988.645%200%200%201-2.25-20.12%20237.877%20237.877%200%200%201-.67-43.85Z'%20/%3e%3cpath%20fill='%23FE6D04'%20d='m234.86%20902.81.66%206.55c-3.62-.347-6.887-1.42-9.8-3.22.387-.447.54-1.047.46-1.8%202.42-1.06%205.313-1.57%208.68-1.53ZM258.71%20903.11c8.16%202.43%204.59%2014.2-2.59%2012.05-5.36-1.59-5.53-8.44-1.26-11.44a7.151%207.151%200%200%201%203.85-.61ZM198.07%20904.88l-.4%204.75c-.373.707-.93%201.293-1.67%201.76-1.5.487-2.927%201.15-4.28%201.99-.267.167-.557.193-.87.08l-1.27-8.19c2.653-.76%205.483-.89%208.49-.39Z'%20/%3e%3cpath%20fill='%23478FFF'%20d='M225.72%20906.14c2.913%201.8%206.18%202.873%209.8%203.22a144.11%20144.11%200%200%200%204.85%203.02c2.827%201.687%205.927%204.953%209.3%209.8-.8%2015.613-.75%2031.153.15%2046.62l-57.03%201.02-6.54.34c-1.267.067-1.86-.53-1.78-1.79l3.19-49.9c1.46-.953%202.603-2.13%203.43-3.53%201.59-1.54%203.34-1.43%204.91-3.55.74-.467%201.297-1.053%201.67-1.76%201.36-.307%204.053-1.187%208.08-2.64%205.86-2.113%2012.517-2.397%2019.97-.85Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M596.26%20905.95c5.627%202.84%209.633%206.68%2012.02%2011.52%202.853%205.813%203.047%2011.94.58%2018.38l-34.97-.09a.719.719%200%200%201-.711-.603.74.74%200%200%201%20.021-.337l8.59-27.77c.247-.807.793-1.207%201.64-1.2l12.83.1Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='M608.86%20935.85c2.467-6.44%202.273-12.567-.58-18.38-2.387-4.84-6.393-8.68-12.02-11.52l29.57-.11a.772.772%200%200%201%20.631.315.778.778%200%200%201%20.119.695l-8.63%2027.93c-.09.29-.269.543-.512.723-.243.18-.537.277-.838.277l-7.74.07Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M959.01%20919.75a6.77%206.77%200%201%200%200-13.54%206.77%206.77%200%200%200%200%2013.54Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M196%20911.39c-1.57%202.12-3.32%202.01-4.91%203.55.067-.433-.013-.927-.24-1.48.313.113.603.087.87-.08a19.508%2019.508%200%200%201%204.28-1.99Z'%20/%3e%3cpath%20fill='%23FAF9F9'%20d='m394.81%20937.77%204.54-24.04c.66-.967%201.067-.557%201.22%201.23.047.533.05%201.063.01%201.59-.473%207.06-.637%2013.96-.49%2020.7a.908.908%200%200%201-1%20.92l-4.28-.4Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='m187.66%20918.47-3.19%2049.9c-.08%201.26.513%201.857%201.78%201.79l6.54-.34-.08.49-55.25-.22a.753.753%200%200%201-.75-.76c.1-9.967%205.023-16.75%2014.77-20.35%202.713-1.007%205.623-1.507%208.73-1.5a1.715%201.715%200%200%200%201.6-1.09c2.387-5.973%206.473-10.5%2012.26-13.58%201.78-.95%207.06-1.7%207.98-4.56a26.652%2026.652%200%200%201%205.61-9.78Z'%20/%3e%3cpath%20fill='%23377DFE'%20d='m249.67%20922.18%201.75%202.43a.76.76%200%200%200%20.557.315.764.764%200%200%200%20.603-.215c2.04-1.966%204.51-3.196%207.41-3.69%204.6-.54%208.75.214%2012.45%202.26%206.78%205.54%209.94%2014.57%204.94%2022.39-.24.38-.35.703-.33.97.027.347.163.684.41%201.01.153.867.823%201.69%202.01%202.47.273.18.433.433.48.76l2.49%2018.01c.047.327.233.5.56.52l13.8.89-27.11.11c-.047-1-1.283-1.537-3.71-1.61a272.08%20272.08%200%200%200-16.16%200c-.9-15.467-.95-31.007-.15-46.62Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M330.48%20941.25a6.55%206.55%200%201%200-.001-13.101%206.55%206.55%200%200%200%20.001%2013.101Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M654.7%20948.96a8.59%208.59%200%201%200%200-17.18%208.59%208.59%200%200%200%200%2017.18Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M916.32%20932.57c10.96%203.987%2019.39%2011.24%2025.29%2021.76a12.525%2012.525%200%200%201-3.8-3.44c-1.773-2.433-2.777-3.773-3.01-4.02-2.56-2.73-4.86-5.37-8.01-7.48a471.761%20471.761%200%200%200-4.86-3.23c-2.207-.893-4.077-2.09-5.61-3.59Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M941.61%20954.33c.74.947%201.363%202.197%201.87%203.75a1.087%201.087%200%200%200%201.113.747c.16-.011.317-.058.457-.137%201.85-1.05%203.46-2.52%205.4-3.36%207.373-3.187%2014.477-2.983%2021.31.61%205.26%202.76%209%207.85%209.47%2013.85a.622.622%200%200%201-.62.67l-99.82-.14c4.253-.747%207.707-1.127%2010.36-1.14%208.453-.053%2016.9-.11%2025.34-.17.333%200%20.59-.143.77-.43a77.057%2077.057%200%200%200%204.37-7.73c4.1-8.34%202.92-16.16.3-24.69a471.761%20471.761%200%200%201%204.86%203.23c3.15%202.11%205.45%204.75%208.01%207.48.233.247%201.237%201.587%203.01%204.02a12.525%2012.525%200%200%200%203.8%203.44Z'%20/%3e%3cpath%20fill='%2362A1FF'%20d='M625.08%20944.34c7.26%205.91%208.82%2015.17%208.24%2023.76a2.153%202.153%200%200%201-.685%201.431%202.134%202.134%200%200%201-1.475.569l-13.92-.09c2.193-8.927%204.807-17.483%207.84-25.67Z'%20/%3e%3cpath%20fill='%239DCBFE'%20d='M469.07%20947.3c.507.773-.207%201.253-2.14%201.44-2.58.253-8.64.163-18.18-.27%205.56-4.63%2014.19-5.61%2020.32-1.17ZM607.73%20970.22l-16.72-.05-1.03-.65a.903.903%200%200%201-.43-.74c-.39-7.25-3.68-15.06-10.72-18.11-1.393-.607-4.46-1.727-9.2-3.36-.007-.933.25-1.663.77-2.19.233-.24.517-.36.85-.36l42.41-.15c.98%200%201.333.473%201.06%201.42l-6.99%2024.19Z'%20/%3e%3cpath%20fill='%231350CE'%20d='M127.69%20960.23a6.54%206.54%200%201%200%200-13.08%206.54%206.54%200%200%200%200%2013.08Z'%20/%3e%3cpath%20fill='%23B4D9FD'%20d='m591.01%20970.17-28.27.05%206.89-22.91c4.74%201.633%207.807%202.753%209.2%203.36%207.04%203.05%2010.33%2010.86%2010.72%2018.11.02.32.163.567.43.74l1.03.65Z'%20/%3e%3cpath%20fill='%232466F8'%20d='M277.46%20947.65c2.48.82%204.013%201.41%204.6%201.77%204.853%203%208.737%206.863%2011.65%2011.59.507.82%201.153.957%201.94.41%207.52-5.2%2019.43-2.34%2020.75%207.93.1.793-.247%201.183-1.04%201.17l-18.56-.22-13.8-.89c-.327-.02-.513-.193-.56-.52l-2.49-18.01a1.05%201.05%200%200%200-.48-.76c-1.187-.78-1.857-1.603-2.01-2.47Z'%20/%3e%3cpath%20fill='%23FDCB7D'%20d='M387.71%20950.36c1.227.28%202.42.737%203.58%201.37.38.207.873.203%201.48-.01-.853.307-1.44%201.143-1.76%202.51-.64%202.74.23%206.33%203.37%206.92a21.69%2021.69%200%200%201%203.09.83c2.213.78%202.177%201.427-.11%201.94-2.647.587-5.253.063-7.82-1.57-.313-.2-.65-.343-1.01-.43l-2.02-.5a1.48%201.48%200%200%201-.941-.732%201.464%201.464%200%200%201-.089-1.188c.973-2.707%201.403-5.447%201.29-8.22-.02-.36.137-.607.47-.74l.47-.18ZM429.18%20952.25c-1.353%206.447.873%209.71%206.68%209.79.773.013%201.07.397.89%201.15-.033.133-.083.26-.15.38a1.32%201.32%200%200%201-.83.66c-3.167.827-6.697.363-10.59-1.39-.333-.153-.49-.413-.47-.78l.61-9.74a6.734%206.734%200%200%201%203.86-.07Z'%20/%3e%3cpath%20fill='%231350CE'%20d='m269.69%20970.41-76.98-.1.08-.49%2057.03-1.02c5.333-.16%2010.72-.16%2016.16%200%202.427.073%203.663.61%203.71%201.61Z'%20/%3e%3cg%20clip-path='url(%23a)'%3e%3cpath%20fill='url(%23b)'%20d='m515.287%20249.813%2011.74%2011.546a2.742%202.742%200%200%201%200%203.924%202.854%202.854%200%200%201-3.99%200l-7.75-7.621a2.854%202.854%200%200%200-3.99%200l-19.489%2019.168a2.743%202.743%200%200%200%200%203.925l19.489%2019.168a2.854%202.854%200%200%200%203.99%200l7.75-7.622a2.854%202.854%200%200%201%203.99%200%202.742%202.742%200%200%201%200%203.924l-11.74%2011.547a2.854%202.854%200%200%201-3.99%200l-27.47-27.017a2.741%202.741%200%200%201%200-3.925l27.469-27.017a2.855%202.855%200%200%201%203.991%200Z'%20/%3e%3cpath%20fill='url(%23c)'%20d='M531.018%20269.208a2.854%202.854%200%200%201%203.99%200l7.749%207.622a2.741%202.741%200%200%201%200%203.925l-7.749%207.621a2.852%202.852%200%200%201-3.99%200%202.742%202.742%200%200%201%200-3.924l3.758-3.697a2.74%202.74%200%200%200%200-3.924l-3.758-3.697a2.744%202.744%200%200%201%200-3.926Z'%20/%3e%3cpath%20fill='%2361DAFB'%20d='M512.686%20279.714c0%20.397.161.777.449%201.057.287.281.676.438%201.083.438a1.55%201.55%200%200%200%201.083-.438c.287-.28.448-.66.448-1.057%200-.396-.161-.777-.448-1.057a1.554%201.554%200%200%200-2.166%200c-.288.28-.449.661-.449%201.057Z'%20/%3e%3cpath%20fill='%2361DAFB'%20d='M526.059%20279.351c0-1.739-1.949-3.246-4.977-4.157.763-3.207.494-5.73-.942-6.6-1.439-.869-3.657.147-5.922%202.443-2.266-2.296-4.483-3.312-5.922-2.443-1.437.87-1.706%203.396-.943%206.6-3.028.911-4.977%202.418-4.977%204.157%200%201.739%201.949%203.246%204.977%204.157-.763%203.204-.494%205.73.943%206.599a2.25%202.25%200%200%200%201.193.322c1.048%200%202.318-.604%203.696-1.778.344-.294.689-.626%201.033-.975.343.349.689.681%201.032.975%201.378%201.174%202.645%201.778%203.696%201.778.438%200%20.84-.106%201.194-.322%201.436-.869%201.705-3.392.942-6.599%203.028-.911%204.977-2.418%204.977-4.157Zm-6.434-9.821c.932.565%201.127%202.612.464%205.395a23.031%2023.031%200%200%200-3.149-.515%2025.282%2025.282%200%200%200-2.002-2.603c1.563-1.587%203.015-2.448%204.013-2.448a1.26%201.26%200%200%201%20.674.171Zm-2.107%2011.82c-.364.665-.75%201.302-1.143%201.911-.689.056-1.408.086-2.157.086-.748%200-1.466-.03-2.155-.086a30.24%2030.24%200%200%201-2.149-3.91c.301-.654.634-1.321%201.006-2a31.1%2031.1%200%200%201%201.146-1.913%2026.585%2026.585%200%200%201%202.154-.086c.747%200%201.466.03%202.155.086.388.598.773%201.235%201.145%201.91a31.47%2031.47%200%200%201%201.006%202%2032.37%2032.37%200%200%201-1.008%202.002Zm1.552-.731c.296.737.539%201.443.74%202.119-.658.155-1.365.288-2.121.388.246-.402.486-.812.721-1.236.233-.426.452-.85.66-1.271Zm-4.852%205.509a23.659%2023.659%200%200%201-1.379-1.734c.452.022.911.036%201.379.036.467%200%20.926-.014%201.378-.036a23.923%2023.923%200%200%201-1.378%201.734Zm-3.472-3.002a21.74%2021.74%200%200%201-2.12-.388c.2-.676.443-1.382.739-2.119.209.421.425.845.66%201.271.235.421.475.831.721%201.236Zm-1.381-5.044a23.769%2023.769%200%200%201-.739-2.118%2021.51%2021.51%200%200%201%202.117-.388%2029.475%2029.475%200%200%200-1.378%202.506Zm4.853-5.508c.456.518.918%201.102%201.375%201.736a28.142%2028.142%200%200%200-1.375-.036c-.468%200-.924.014-1.376.036.457-.634.919-1.218%201.376-1.736Zm4.19%204.237a37.856%2037.856%200%200%200-.719-1.235c.756.1%201.46.233%202.118.388a24.422%2024.422%200%200%201-.739%202.118%2029.763%2029.763%200%200%200-.66-1.271Zm-9.597-7.281c.19-.116.417-.171.675-.171.998%200%202.448.861%204.011%202.448a25.497%2025.497%200%200%200-2.001%202.603%2023.097%2023.097%200%200%200-3.15.515c-.663-2.786-.465-4.832.465-5.395Zm-5.405%209.821c0-1.13%201.592-2.332%204.224-3.119.293.997.676%202.044%201.149%203.119a26.395%2026.395%200%200%200-1.149%203.118c-2.632-.786-4.224-1.991-4.224-3.118Zm9.13%208.46c-1.576%201.344-2.933%201.839-3.725%201.363-.932-.565-1.128-2.612-.465-5.395.969.233%202.025.407%203.15.515a25.736%2025.736%200%200%200%202.001%202.609c-.32.324-.639.634-.961.908Zm7.089%201.363c-.79.479-2.149-.017-3.726-1.363a17.013%2017.013%200%200%201-.963-.908%2025.449%2025.449%200%200%200%202.001-2.609%2022.484%2022.484%200%200%200%203.15-.518c.665%202.786.467%204.833-.462%205.398Zm1.183-6.705a26.045%2026.045%200%200%200-1.149-3.118c.47-1.075.855-2.122%201.149-3.119%202.632.79%204.224%201.992%204.224%203.119-.003%201.127-1.595%202.332-4.224%203.118Z'%20/%3e%3c/g%3e%3cdefs%3e%3clinearGradient%20id='b'%20x1='537.663'%20x2='479.351'%20y1='278.792'%20y2='278.792'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20stop-color='%2347B4E0'%20/%3e%3cstop%20offset='.172'%20stop-color='%231588E0'%20/%3e%3cstop%20offset='1'%20stop-color='%236EB4E0'%20/%3e%3c/linearGradient%3e%3clinearGradient%20id='c'%20x1='536.887'%20x2='536.887'%20y1='289.189'%20y2='268.396'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20offset='.032'%20stop-color='%23F0776F'%20/%3e%3cstop%20offset='.503'%20stop-color='%23F0656F'%20/%3e%3cstop%20offset='1'%20stop-color='%23F0606F'%20/%3e%3c/linearGradient%3e%3cclipPath%20id='a'%3e%3cpath%20fill='%23fff'%20d='M483%20249h61v60h-61z'%20/%3e%3c/clipPath%3e%3c/defs%3e%3c/svg%3e";
+}));
+//#endregion
+//#region src/hooks/use-layout-menu/index.tsx
+function menuItems(t) {
+	return [
+		{
+			icon: /* @__PURE__ */ jsx(LayoutLeftIcon, {}),
+			label: t("authority.layout.alignLeft"),
+			key: "layout-left"
+		},
+		{
+			icon: /* @__PURE__ */ jsx(LayoutCenterIcon, {}),
+			label: t("authority.layout.alignCenter"),
+			key: "layout-center"
+		},
+		{
+			icon: /* @__PURE__ */ jsx(LayoutRightIcon, {}),
+			label: t("authority.layout.alignRight"),
+			key: "layout-right"
+		}
+	];
+}
+function useLayoutMenu() {
+	const { t } = useTranslation();
+	const pageLayout = usePreferencesStore((state) => state.pageLayout);
+	const setPreferences = usePreferencesStore((state) => state.setPreferences);
+	function setPageLayout(value) {
+		setPreferences({ pageLayout: value });
+	}
+	const onClick = ({ key }) => {
+		setPageLayout(key);
+	};
+	const dropdownItems = menuItems(t);
+	return {
+		pageLayout,
+		setPageLayout,
+		layoutButtonTrigger: /* @__PURE__ */ jsx(Dropdown, {
+			menu: {
+				items: dropdownItems,
+				selectable: true,
+				onClick,
+				selectedKeys: [pageLayout]
+			},
+			trigger: ["click"],
+			arrow: false,
+			placement: "bottom",
+			children: /* @__PURE__ */ jsx(Button, {
+				size: "large",
+				type: "text",
+				icon: dropdownItems.find((item) => item.key === pageLayout)?.icon
+			})
+		})
+	};
+}
+var init_use_layout_menu = __esmMin((() => {
+	init_icons();
+	init_preferences$3();
+}));
+//#endregion
+//#region src/constants/regular-expressions.ts
+var USERNAME_REGEXP, MOBILE_PHONE_REGEXP;
+var init_regular_expressions = __esmMin((() => {
+	USERNAME_REGEXP = /^[\w-]{4,16}$/;
+	MOBILE_PHONE_REGEXP = /^(?:(?:\+|00)86)?1\d{10}$/;
+}));
+//#endregion
+//#region src/constants/rules.ts
+/**
+* 用户名规则验证函数
+*/
+function USERNAME_RULES(t) {
+	return [{
+		required: true,
+		message: t("form.username.required")
+	}, {
+		pattern: USERNAME_REGEXP,
+		message: t("form.username.invalid")
+	}];
+}
+/**
+* 密码规则验证函数
+*
+*/
+function PASSWORD_RULES(t) {
+	return [{
+		required: true,
+		message: t("form.password.required")
+	}, {
+		pattern: /^(?=.*\d)(?=.*[a-z])[\w~!@#$%^&*+.\-]{8,16}$/i,
+		message: t("form.password.invalid")
+	}];
+}
+/**
+* 返回手机验证规则对象
+*
+*/
+function MOBILE_PHONE_RULES(t) {
+	return [{
+		required: true,
+		message: t("form.mobile.required")
+	}, {
+		pattern: MOBILE_PHONE_REGEXP,
+		message: t("form.mobile.invalid")
+	}];
+}
+var init_rules = __esmMin((() => {
+	init_regular_expressions();
+}));
+//#endregion
+//#region src/pages/login/form-mode-context.ts
+var FormModeContext;
+var init_form_mode_context = __esmMin((() => {
+	FormModeContext = createContext({
+		formMode: "login",
+		setFormMode: () => {}
+	});
+}));
+//#endregion
+//#region src/pages/login/components/code-login.tsx
+function CodeLogin() {
+	const [loading, setLoading] = useState(false);
+	const [codeLoginForm] = Form.useForm();
+	const { t } = useTranslation();
+	const { setFormMode } = use(FormModeContext);
+	const handleFinish = async () => {
+		setLoading(true);
+		setTimeout(() => {
+			setLoading(false);
+			window.$message?.success(t("common.success"));
+		}, 1e3);
+	};
+	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(Space, {
+		orientation: "vertical",
+		children: /* @__PURE__ */ jsx(Title$2, {
+			level: 3,
+			children: t("authority.codeLogin")
+		})
+	}), /* @__PURE__ */ jsxs(Form, {
+		name: "codeLoginForm",
+		form: codeLoginForm,
+		layout: "vertical",
+		initialValues: FORM_INITIAL_VALUES$3,
+		onFinish: handleFinish,
+		children: [
+			/* @__PURE__ */ jsx(Form.Item, {
+				label: t("authority.mobile"),
+				name: "phoneNumber",
+				rules: MOBILE_PHONE_RULES(t),
+				children: /* @__PURE__ */ jsx(InputNumber, {
+					controls: false,
+					className: "w-full",
+					placeholder: t("form.mobile.required")
+				})
+			}),
+			/* @__PURE__ */ jsx(ProFormCaptcha, {
+				label: t("authority.code"),
+				placeholder: t("form.code.required"),
+				captchaTextRender: (timing, count) => {
+					return timing ? t("authority.sendText", { second: count }) : t("authority.sendCode");
+				},
+				onGetCaptcha: () => {
+					window.$message?.success(t("common.success"));
+					return Promise.resolve();
+				},
+				rules: [{ required: true }],
+				phoneName: "phoneNumber",
+				name: "captcha"
+			}),
+			/* @__PURE__ */ jsx(Form.Item, { children: /* @__PURE__ */ jsx(Button, {
+				block: true,
+				type: "primary",
+				htmlType: "submit",
+				loading,
+				children: t("authority.login")
+			}) }),
+			/* @__PURE__ */ jsx("div", {
+				className: "text-sm text-center",
+				children: /* @__PURE__ */ jsx(BasicButton, {
+					type: "link",
+					icon: /* @__PURE__ */ jsx(LeftOutlined, {}),
+					className: "px-1",
+					onPointerDown: () => {
+						setFormMode("login");
+					},
+					children: t("common.back")
+				})
+			})
+		]
+	})] });
+}
+var Title$2, FORM_INITIAL_VALUES$3;
+var init_code_login = __esmMin((() => {
+	init_basic_button();
+	init_rules();
+	init_form_mode_context();
+	({Title: Title$2} = Typography);
+	FORM_INITIAL_VALUES$3 = {
+		phoneNumber: "",
+		captcha: ""
+	};
+}));
+//#endregion
+//#region src/pages/login/components/forgot-password.tsx
+function ForgotPassword() {
+	const [targetDate, setTargetDate] = useState(0);
+	const [countdown] = useCountDown({
+		targetDate,
+		onEnd: () => {
+			setTargetDate(0);
+		}
+	});
+	const [loading, setLoading] = useState(false);
+	const [forgotForm] = Form.useForm();
+	const { t } = useTranslation();
+	const { setFormMode } = use(FormModeContext);
+	const handleFinish = async () => {
+		setLoading(true);
+		setTargetDate(Date.now() + 3e4);
+		setTimeout(() => {
+			setLoading(false);
+		}, 1e3);
+	};
+	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsxs(Space, {
+		orientation: "vertical",
+		children: [/* @__PURE__ */ jsx(Title$1, {
+			level: 3,
+			children: t("authority.forgotPassword")
+		}), /* @__PURE__ */ jsx("p", {
+			className: "text-xs opacity-80",
+			children: t("authority.forgotPasswordSubtitle")
+		})]
+	}), /* @__PURE__ */ jsxs(Form, {
+		name: "forgotForm",
+		form: forgotForm,
+		layout: "vertical",
+		initialValues: FORM_INITIAL_VALUES$2,
+		onFinish: handleFinish,
+		children: [
+			/* @__PURE__ */ jsx(Form.Item, {
+				label: t("authority.email"),
+				name: "email",
+				rules: [{ required: true }, {
+					type: "email",
+					message: t("form.email.invalid")
+				}],
+				children: /* @__PURE__ */ jsx(Input, { placeholder: t("form.email.required") })
+			}),
+			/* @__PURE__ */ jsx(Form.Item, { children: /* @__PURE__ */ jsx(Button, {
+				block: true,
+				type: "primary",
+				htmlType: "submit",
+				loading,
+				disabled: countdown > 0,
+				children: countdown > 0 ? t("authority.retryAfterText", { count: Math.floor(countdown / 1e3) }) : t("authority.sendResetLink")
+			}) }),
+			/* @__PURE__ */ jsx("div", {
+				className: "text-sm text-center",
+				children: /* @__PURE__ */ jsx(BasicButton, {
+					type: "link",
+					icon: /* @__PURE__ */ jsx(LeftOutlined, {}),
+					className: "px-1",
+					onPointerDown: () => {
+						setFormMode("login");
+					},
+					children: t("common.back")
+				})
+			})
+		]
+	})] });
+}
+var Title$1, FORM_INITIAL_VALUES$2;
+var init_forgot_password = __esmMin((() => {
+	init_basic_button();
+	init_form_mode_context();
+	({Title: Title$1} = Typography);
+	FORM_INITIAL_VALUES$2 = { email: "" };
+}));
+//#endregion
+//#region src/pages/login/components/password-login.tsx
+function PasswordLogin() {
+	const [loading, setLoading] = useState(false);
+	const [passwordLoginForm] = Form.useForm();
+	const { t } = useTranslation();
+	const [messageLoadingApi, contextLoadingHolder] = message.useMessage();
+	const [searchParams] = useSearchParams();
+	const navigate = useNavigate();
+	const login = useAuthStore((state) => state.login);
+	const { setFormMode } = use(FormModeContext);
+	const handleFinish = async (values) => {
+		setLoading(true);
+		messageLoadingApi?.loading(t("authority.loginInProgress"), 0);
+		login(values).then(() => {
+			messageLoadingApi?.destroy();
+			window.$message?.success(t("authority.loginSuccess"));
+			const redirect = searchParams.get("redirect");
+			if (redirect) navigate(`/${redirect.slice(1)}`);
+			else navigate(void 0);
+		}).finally(() => {
+			messageLoadingApi?.destroy();
+			setTimeout(() => {
+				window.$message?.destroy();
+				setLoading(false);
+			}, 1e3);
+		});
+	};
+	return /* @__PURE__ */ jsxs(Fragment, { children: [
+		contextLoadingHolder,
+		/* @__PURE__ */ jsxs(Space, {
+			orientation: "vertical",
+			children: [/* @__PURE__ */ jsxs("h2", {
+				className: "text-colorText mb-3 text-3xl font-bold leading-9 tracking-tight lg:text-4xl",
+				children: [t("authority.welcomeBack"), "\xA0 👏"]
+			}), /* @__PURE__ */ jsx("p", {
+				className: "lg:text-base text-sm text-colorTextSecondary",
+				children: t("authority.loginDescription")
+			})]
+		}),
+		/* @__PURE__ */ jsxs(Form, {
+			name: "passwordLoginForm",
+			form: passwordLoginForm,
+			layout: "vertical",
+			initialValues: FORM_INITIAL_VALUES$1,
+			onFinish: handleFinish,
+			children: [
+				/* @__PURE__ */ jsx(Form.Item, {
+					label: t("authority.username"),
+					name: "username",
+					rules: USERNAME_RULES(t),
+					children: /* @__PURE__ */ jsx(Input, { placeholder: t("form.username.required") })
+				}),
+				/* @__PURE__ */ jsx(Form.Item, {
+					label: t("authority.password"),
+					name: "password",
+					rules: PASSWORD_RULES(t),
+					children: /* @__PURE__ */ jsx(Input.Password, { placeholder: t("form.password.required") })
+				}),
+				/* @__PURE__ */ jsxs(Form.Item, { children: [/* @__PURE__ */ jsxs("div", {
+					className: "flex justify-between mb-5 -mt-1 text-sm",
+					children: [/* @__PURE__ */ jsx(BasicButton, {
+						type: "link",
+						className: "p-0",
+						onPointerDown: () => {
+							setFormMode("codeLogin");
+						},
+						children: t("authority.codeLogin")
+					}), /* @__PURE__ */ jsx(BasicButton, {
+						type: "link",
+						className: "p-0",
+						onPointerDown: () => {
+							setFormMode("forgotPassword");
+						},
+						children: t("authority.forgotPassword")
+					})]
+				}), /* @__PURE__ */ jsx(Button, {
+					block: true,
+					type: "primary",
+					htmlType: "submit",
+					loading,
+					children: t("authority.login")
+				})] }),
+				/* @__PURE__ */ jsxs("div", {
+					className: "text-sm text-center",
+					children: [t("authority.noAccountYet"), /* @__PURE__ */ jsx(BasicButton, {
+						type: "link",
+						className: "px-1",
+						onPointerDown: () => {
+							setFormMode("register");
+						},
+						children: t("authority.goToRegister")
+					})]
+				})
+			]
+		})
+	] });
+}
+var FORM_INITIAL_VALUES$1;
+var init_password_login = __esmMin((() => {
+	init_basic_button();
+	init_rules();
+	init_auth();
+	init_form_mode_context();
+	FORM_INITIAL_VALUES$1 = {
+		username: "admin",
+		password: "123456789admin"
+	};
+}));
+//#endregion
+//#region src/pages/login/components/register-password.tsx
+function RegisterPassword() {
+	const [loading] = useState(false);
+	const [registerForm] = Form.useForm();
+	const { t } = useTranslation();
+	const { setFormMode } = use(FormModeContext);
+	const handleFinish = async () => {
+		window.$message?.success("注册成功");
+	};
+	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsxs(Space, {
+		orientation: "vertical",
+		children: [/* @__PURE__ */ jsx(Title, {
+			level: 3,
+			children: "Hello, Welcome to"
+		}), /* @__PURE__ */ jsx(Title, {
+			className: "mt-0",
+			level: 5,
+			children: void 0
+		})]
+	}), /* @__PURE__ */ jsxs(Form, {
+		name: "registerForm",
+		form: registerForm,
+		layout: "vertical",
+		initialValues: FORM_INITIAL_VALUES,
+		onFinish: handleFinish,
+		children: [
+			/* @__PURE__ */ jsx(Form.Item, {
+				label: t("authority.username"),
+				name: "username",
+				rules: USERNAME_RULES(t),
+				children: /* @__PURE__ */ jsx(Input, { placeholder: t("form.username.required") })
+			}),
+			/* @__PURE__ */ jsx(Form.Item, {
+				label: t("authority.password"),
+				name: "password",
+				rules: PASSWORD_RULES(t),
+				children: /* @__PURE__ */ jsx(Input.Password, { placeholder: t("form.password.required") })
+			}),
+			/* @__PURE__ */ jsx(Form.Item, {
+				name: "confirm",
+				label: t("authority.confirmPassword"),
+				dependencies: ["password"],
+				hasFeedback: true,
+				rules: [{
+					required: true,
+					message: t("form.confirmPassword.required")
+				}, ({ getFieldValue }) => ({ validator(_, value) {
+					if (!value || getFieldValue("password") === value) return Promise.resolve();
+					return Promise.reject(new Error(t("form.confirmPassword.invalid")));
+				} })],
+				children: /* @__PURE__ */ jsx(Input.Password, { placeholder: t("form.confirmPassword.required") })
+			}),
+			/* @__PURE__ */ jsx(Form.Item, {
+				rules: [() => ({ validator(_, value) {
+					return value !== true ? Promise.reject(new Error(t("form.agree.required"))) : Promise.resolve();
+				} })],
+				name: "termsAgreement",
+				valuePropName: "checked",
+				children: /* @__PURE__ */ jsx(Checkbox, { children: /* @__PURE__ */ jsx("div", {
+					className: "flex flex-wrap text-xs",
+					children: /* @__PURE__ */ jsx(Trans, {
+						i18nKey: "authority.agree",
+						components: [/* @__PURE__ */ jsx(Link, {
+							to: "/terms-of-service",
+							target: "_blank"
+						}, 0), /* @__PURE__ */ jsx(Link, {
+							to: "/privacy-policy",
+							target: "_blank"
+						}, 1)]
+					})
+				}) })
+			}),
+			/* @__PURE__ */ jsx(Form.Item, { children: /* @__PURE__ */ jsx(Button, {
+				block: true,
+				type: "primary",
+				htmlType: "submit",
+				loading,
+				children: t("authority.register")
+			}) }),
+			/* @__PURE__ */ jsxs("div", {
+				className: "text-sm text-center",
+				children: [t("authority.alreadyHaveAnAccount"), /* @__PURE__ */ jsx(BasicButton, {
+					type: "link",
+					className: "px-1",
+					onPointerDown: () => {
+						setFormMode("login");
+					},
+					children: t("authority.goToLogin")
+				})]
+			})
+		]
+	})] });
+}
+var Title, FORM_INITIAL_VALUES;
+var init_register_password = __esmMin((() => {
+	init_basic_button();
+	init_rules();
+	init_form_mode_context();
+	({Title} = Typography);
+	FORM_INITIAL_VALUES = {
+		username: "",
+		password: "",
+		confirmPassword: ""
+	};
+}));
+//#endregion
+//#region src/pages/login/constants.ts
+var FORM_COMPONENT_MAP;
+var init_constants$2 = __esmMin((() => {
+	init_code_login();
+	init_forgot_password();
+	init_password_login();
+	init_register_password();
+	FORM_COMPONENT_MAP = {
+		login: createElement(PasswordLogin),
+		register: createElement(RegisterPassword),
+		forgotPassword: createElement(ForgotPassword),
+		codeLogin: createElement(CodeLogin)
+	};
+}));
+//#endregion
+//#region src/pages/login/index.tsx
+var login_exports = /* @__PURE__ */ __exportAll({ default: () => Login$1 });
+function Login$1() {
+	const { isDark } = usePreferences();
+	const { token } = theme.useToken();
+	const { t } = useTranslation();
+	const screens = Grid.useBreakpoint();
+	const [formMode, setFormMode] = useState("login");
+	const { pageLayout, layoutButtonTrigger } = useLayoutMenu();
+	const isALignLeft = useMemo(() => pageLayout === "layout-left", [pageLayout]);
+	const isAlignCenter = useMemo(() => pageLayout === "layout-center", [pageLayout]);
+	const providedValue = useMemo(() => ({
+		formMode,
+		setFormMode
+	}), [formMode, setFormMode]);
+	return /* @__PURE__ */ jsxs("div", {
+		style: { backgroundColor: token.colorBgContainer },
+		children: [/* @__PURE__ */ jsxs("header", {
+			className: "z-10 absolute flex items-center right-3 top-3 left-3",
+			children: [/* @__PURE__ */ jsxs("div", {
+				className: "text-colorText flex flex-1 items-center",
+				children: [/* @__PURE__ */ jsx("img", {
+					alt: "App Logo",
+					src: logo_default,
+					className: "mr-2 w-11"
+				}), /* @__PURE__ */ jsx("h1", {
+					className: "m-0 text-xl font-medium",
+					children: void 0
+				})]
+			}), /* @__PURE__ */ jsxs("div", {
+				className: "flex items-center",
+				children: [
+					layoutButtonTrigger,
+					/* @__PURE__ */ jsx(ThemeButton, { size: "large" }),
+					/* @__PURE__ */ jsx(LanguageButton, {
+						size: "large",
+						className: "px-2.75"
+					})
+				]
+			})]
+		}), /* @__PURE__ */ jsx("div", {
+			className: "flex items-center overflow-hidden h-full",
+			children: /* @__PURE__ */ jsxs(Row, {
+				className: clsx("h-screen w-full", { "flex-row-reverse": isALignLeft }),
+				children: [/* @__PURE__ */ jsx(Col, {
+					xs: 0,
+					sm: 0,
+					lg: 15,
+					style: { backgroundImage: `radial-gradient(${token.colorBgContainer}, ${isDark ? token.colorBgBlur : token.colorPrimaryBg})` },
+					className: clsx({ hidden: isAlignCenter }),
+					children: /* @__PURE__ */ jsxs("div", {
+						className: "flex flex-col items-center justify-center h-full gap-3",
+						children: [
+							/* @__PURE__ */ jsx(banner_default, { className: "h-64 motion-safe:animate-bounce-in-down-out-up" }),
+							/* @__PURE__ */ jsx("div", {
+								className: "text-xl text-colorTextSecondary mt-6 font-sans lg:text-2xl",
+								children: t("authority.pageTitle")
+							}),
+							/* @__PURE__ */ jsx("div", {
+								className: "text-colorTextTertiary mt-2",
+								children: t("authority.pageDescription")
+							})
+						]
+					})
+				}), /* @__PURE__ */ jsxs(Col, {
+					xs: 24,
+					sm: 24,
+					lg: isAlignCenter ? 24 : 9,
+					className: "relative flex flex-col justify-center px-6 py-10 xl:px-8",
+					style: isAlignCenter || !screens.xl && !screens.xxl && !screens.lg ? { backgroundImage: `radial-gradient(${token.colorBgContainer}, ${token.colorPrimaryBg})` } : {},
+					children: [/* @__PURE__ */ jsx(LayoutFooter, { className: "w-full absolute bottom-3 left-1/2 -translate-x-1/2" }), /* @__PURE__ */ jsx("div", {
+						className: "w-full sm:mx-auto md:max-w-md",
+						children: /* @__PURE__ */ jsx(FormModeContext, {
+							value: providedValue,
+							children: /* @__PURE__ */ jsx(AnimatePresence, {
+								mode: "wait",
+								initial: false,
+								children: /* @__PURE__ */ jsx(motion.div, {
+									initial: {
+										x: 30,
+										opacity: 0
+									},
+									animate: {
+										x: 0,
+										opacity: 1
+									},
+									exit: {
+										x: 0,
+										opacity: 0
+									},
+									transition: { duration: .3 },
+									children: FORM_COMPONENT_MAP[formMode]
+								}, formMode)
+							})
+						})
+					})]
+				})]
+			})
+		})]
+	});
+}
+var init_login = __esmMin((() => {
+	init_banner();
+	init_logo$1();
+	init_use_layout_menu();
+	init_use_preferences();
+	init_layout_footer();
+	init_language_button();
+	init_theme_button();
+	init_constants$2();
+	init_form_mode_context();
+}));
+//#endregion
+//#region src/router/routes/core/auth.ts
+var Login, routes$1;
+var init_auth$1 = __esmMin((() => {
+	init_locales();
+	init_extra_info();
+	Login = lazy(() => Promise.resolve().then(() => (init_login(), login_exports)));
+	routes$1 = [{
+		path: loginPath,
+		Component: Login,
+		handle: {
+			hideInMenu: true,
+			title: $t("authority.login")
+		}
+	}];
+}));
+//#endregion
+//#region src/components/not-found/index.tsx
+var not_found_exports = /* @__PURE__ */ __exportAll({
+	NotFound: () => NotFound,
+	default: () => NotFound
+});
+/**
+* @zh 框架内置 404 兜底页。模块可通过自定义 `*` 路由覆盖。
+* @en Framework built-in 404 fallback. Modules may override it with their own `*` route.
+*/
+function NotFound() {
+	const { t } = useTranslation();
+	const navigate = useNavigate();
+	return /* @__PURE__ */ jsx(Result, {
+		status: "404",
+		title: t("exception.notFoundTitle"),
+		subTitle: t("exception.notFoundSubTitle"),
+		extra: /* @__PURE__ */ jsx(Button, {
+			icon: /* @__PURE__ */ jsx(ArrowLeftOutlined, {}),
+			type: "primary",
+			onClick: () => {
+				navigate(VITE_BASE_HOME_PATH$1);
+			},
+			children: t("common.backHome")
+		})
+	});
+}
+var VITE_BASE_HOME_PATH$1;
+var init_not_found = __esmMin((() => {
+	({VITE_BASE_HOME_PATH: VITE_BASE_HOME_PATH$1} = {});
+}));
+//#endregion
+//#region src/router/routes/core/fallback.ts
+var routes;
+var init_fallback = __esmMin((() => {
+	routes = [{
+		path: "*",
+		id: "404",
+		Component: lazy(() => Promise.resolve().then(() => (init_not_found(), not_found_exports))),
+		handle: {
+			title: "404",
+			hideInMenu: true
+		}
+	}];
+}));
+//#endregion
+//#region src/router/routes/core/index.ts
+var coreRoutes;
+var init_core = __esmMin((() => {
+	init_add_route_id_by_path();
+	init_auth$1();
+	init_fallback();
+	coreRoutes = [...addRouteIdByPath([...routes$1]), ...routes];
+}));
+//#endregion
+//#region src/router/routes/index.ts
+var externalRouteFiles, staticRouteFiles, externalRoutes, staticRoutes, baseRoutes, accessRoutes, whiteRouteNames;
+var init_routes = __esmMin((() => {
+	init_privacy_policy();
+	init_terms_of_service();
+	init_extra_info();
+	init_ascending();
+	init_merge_route_modules();
+	init_tree();
+	init_core();
+	externalRouteFiles = /* #__PURE__ */ Object.assign({
+		"./external/privacy-policy.ts": privacy_policy_exports,
+		"./external/terms-of-service.ts": terms_of_service_exports
+	});
+	staticRouteFiles = /* #__PURE__ */ Object.assign({});
+	externalRoutes = mergeRouteModules(externalRouteFiles);
+	staticRoutes = mergeRouteModules(staticRouteFiles);
+	baseRoutes = ascending([...coreRoutes, ...externalRoutes]);
+	accessRoutes = [...staticRoutes];
+	whiteRouteNames = [loginPath, ...traverseTreeValues(externalRoutes, (route) => route.path)];
+}));
+//#endregion
+//#region src/router/routes/config.ts
+var init_config = __esmMin((() => {}));
+//#endregion
+//#region src/components/unknown-component/index.tsx
+var unknown_component_exports = /* @__PURE__ */ __exportAll({
+	UnknownComponent: () => UnknownComponent$1,
+	default: () => UnknownComponent$1
+});
+/**
+* @zh 框架内置「路由无对应组件」兜底页，用于后端下发路由找不到前端组件时。
+* @en Framework built-in fallback for backend routes whose frontend component is missing.
+*/
+function UnknownComponent$1() {
+	const { t } = useTranslation();
+	const navigate = useNavigate();
+	return /* @__PURE__ */ jsx(Result, {
+		status: "warning",
+		icon: /* @__PURE__ */ jsx(AppstoreOutlined, {}),
+		title: t("exception.unknownComponentTitle"),
+		subTitle: t("exception.unknownComponentSubTitle"),
+		extra: /* @__PURE__ */ jsxs("div", { children: [/* @__PURE__ */ jsx(Paragraph, {
+			code: true,
+			copyable: { text: location.href },
+			children: location.href
+		}), /* @__PURE__ */ jsx(Button, {
+			icon: /* @__PURE__ */ jsx(ArrowLeftOutlined, {}),
+			type: "primary",
+			onClick: () => {
+				navigate(VITE_BASE_HOME_PATH);
+			},
+			children: t("common.backHome")
+		})] })
+	});
+}
+var Paragraph, VITE_BASE_HOME_PATH;
+var init_unknown_component = __esmMin((() => {
+	({Paragraph} = Typography);
+	({VITE_BASE_HOME_PATH} = {});
+}));
+//#endregion
+//#region src/router/utils/generate-routes-from-backend.ts
+/**
+* @zh 根据路由获取框架页面组件路径（仅 src/pages；模块页面不在此解析）
+* @en Get framework page component path by route (src/pages only; module pages are resolved elsewhere)
+*/
+function getComponentPathByRoute(route) {
+	const pageModulePaths = Object.keys(pageModules);
+	const routePath = route.path ?? "/";
+	if (route.component) {
+		const srcPath = `/packages/runtime/src/pages${route.component}`;
+		if (pageModulePaths.includes(srcPath)) return srcPath;
+		return srcPath;
+	} else {
+		const srcPath = `/packages/runtime/src/pages${routePath}/index.tsx`;
+		if (pageModulePaths.includes(srcPath)) return srcPath;
+		return srcPath;
+	}
+}
+/**
+* @zh 根据后端路由配置生成前端路由
+* @en Generate frontend routes based on backend route configurations
+*/
+async function generateRoutesFromBackend(backendRoutes) {
+	const pageModulePaths = Object.keys(pageModules);
+	if (!backendRoutes?.length) return [];
+	/**
+	* @zh 动态加载并设置路由组件
+	* @en Dynamically load and set route components
+	* @param route 路由配置对象
+	* @param componentPath 组件文件路径
+	*/
+	const loadRouteComponent = async (route, componentPath) => {
+		const modulePath = componentPath;
+		const moduleIndex = pageModulePaths.findIndex((path) => path === modulePath);
+		if (moduleIndex !== -1) {
+			const lazyComponent = pageModules[pageModulePaths[moduleIndex]];
+			route.Component = lazy(lazyComponent);
+		} else {
+			console.warn(`[Frontend component not found]: ${componentPath}`);
+			route.Component = UnknownComponent;
+		}
+	};
+	/**
+	* 转换路由配置
+	* @param route 原始路由配置
+	* @param parentPath 父级路径（用于嵌套路由）
+	* @returns 转换后的路由配置
+	*/
+	const transformRoute = async (route, parentComponentPath) => {
+		const transformedRoute = {
+			...route,
+			handle: {
+				...route.handle,
+				backstage: true
+			}
+		};
+		if (transformedRoute.index === true && parentComponentPath) await loadRouteComponent(transformedRoute, parentComponentPath);
+		else if (transformedRoute.handle?.iframeLink) transformedRoute.Component = Iframe;
+		else if (transformedRoute.handle?.externalLink) {} else if (transformedRoute.children?.length) transformedRoute.Component = parentComponentPath ? Outlet : resolveLayoutComponent(transformedRoute.handle);
+		else await loadRouteComponent(transformedRoute, getComponentPathByRoute(transformedRoute));
+		if (transformedRoute.children?.length) transformedRoute.children = await Promise.all(transformedRoute.children.map((child) => transformRoute(child, getComponentPathByRoute(transformedRoute))));
+		return transformedRoute;
+	};
+	/**
+	* 标准化路由配置，确保每个路由都有子路由
+	*/
+	const normalizeRouteStructure = (route) => {
+		if (!route.children?.length) return {
+			...route,
+			children: [{
+				index: true,
+				handle: { ...route.handle }
+			}]
+		};
+		return route;
+	};
+	const normalizedRoutes = backendRoutes.map(normalizeRouteStructure);
+	return addRouteIdByPath(await Promise.all(normalizedRoutes.map((route) => transformRoute(route))));
+}
+var UnknownComponent, pageModules;
+var init_generate_routes_from_backend = __esmMin((() => {
+	init_iframe();
+	init_add_route_id_by_path();
+	init_resolve_layout();
+	UnknownComponent = lazy(() => Promise.resolve().then(() => (init_unknown_component(), unknown_component_exports)));
+	pageModules = /* #__PURE__ */ Object.assign({});
+}));
+//#endregion
+//#region src/router/utils/generate-routes-from-frontend.ts
+/**
+* 动态生成路由 - 前端方式
+*/
+function generateRoutesByFrontend(routes, roles) {
+	return filterTree(routes, (route) => {
+		return hasAuthority(route, roles);
+	});
+}
+/**
+* 判断路由是否有权限访问
+* @param route
+* @param accesses
+*/
+function hasAuthority(route, accesses) {
+	const authority = route.handle?.roles;
+	if (!authority) return true;
+	return accesses.some((value) => authority.includes(value));
+}
+var init_generate_routes_from_frontend = __esmMin((() => {
+	init_tree();
+}));
+//#endregion
+//#region src/router/guard/utils.ts
+function removeDuplicateRoutes(routes) {
+	const pathSet = /* @__PURE__ */ new Set();
+	return routes.filter((route) => {
+		if (pathSet.has(route.path)) return false;
+		pathSet.add(route.path);
+		return true;
+	});
+}
+var init_utils = __esmMin((() => {}));
+//#endregion
+//#region src/router/guard/auth-guard.tsx
+/**
+* @zh AuthGuard 组件，用于权限验证，代码的顺序很重要，不要随意调整
+* @en AuthGuard component, used for permission verification. The order of the code is important and should not be arbitrarily adjusted
+*/
+function AuthGuard({ children }) {
+	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
+	const currentRoute = useCurrentRoute();
+	const { pathname, search } = useLocation();
+	const isLogin = useAuthStore((state) => Boolean(state.token));
+	const isAuthorized = useUserStore((state) => Boolean(state.id));
+	const getUserInfo = useUserStore((state) => state.getUserInfo);
+	const userRoles = useUserStore((state) => state.roles);
+	const { setAccessStore, isAccessChecked, routeList } = useAccessStore();
+	const { enableBackendAccess, enableFrontendAceess } = usePreferencesStore((state) => state);
+	const isPathInNoLoginWhiteList = noLoginWhiteList.includes(pathname);
+	/**
+	* @zh 异步获取用户信息和路由配置
+	* @en Fetch user information and route configuration asynchronously
+	*/
+	useEffect(() => {
+		async function fetchUserInfoAndRoutes() {
+			/**
+			* @zh 登录跳转，防止闪烁
+			* @en Login redirect, prevent flicker
+			*/
+			setupLoading();
+			/**
+			* @zh 初始化一个空数组来存放 Promise 对象
+			* @en Initialize an empty array to hold Promise objects
+			*/
+			const promises = [];
+			/**
+			* @zh 获取用户信息
+			* @en Fetch user information
+			*/
+			promises.push(getUserInfo());
+			/**
+			* @zh 启用了后端路由，且路由从单独接口中获取，则发起请求
+			* @en If backend routing is enabled and the route is obtained from a separate interface, then initiate a request
+			*/
+			if (enableBackendAccess && true) promises.push(fetchAsyncRoutes());
+			const results = await Promise.allSettled(promises);
+			const [userInfoResult, routeResult] = results;
+			const routes = [];
+			const latestRoles = [];
+			/**
+			* @zh 从用户接口中获取角色信息
+			* @en Fetch role information from the user interface
+			*/
+			if (userInfoResult.status === "fulfilled" && "roles" in userInfoResult.value) latestRoles.push(...userInfoResult.value?.roles ?? []);
+			/**
+			* @zh 加载 manifest.json 中声明的模块，合并模块路由（优先于后端/前端路由）
+			* @en Load modules declared in manifest.json (takes priority over backend/frontend routes)
+			*/
+			try {
+				await loadAll((await import("#manifest.json")).default);
+				const moduleRoutes = addRouteIdByPath(getRoutes());
+				if (moduleRoutes.length > 0) routes.push(...moduleRoutes);
+			} catch (error) {}
+			/**
+			* @zh 收集模块已覆盖的顶级路径，用于过滤后端路由中的重复项
+			* @en Collect top-level paths already covered by modules to filter duplicates from backend routes
+			*/
+			const modulePaths = new Set(routes.map((r) => r.path).filter(Boolean));
+			const filterBackendRoutes = (backendRoutes) => backendRoutes.filter((r) => !modulePaths.has(r.path));
+			/**
+			* @zh 启用了后端路由且路由从单独接口中获取
+			* @en If backend routing is enabled and the route is obtained from a separate interface
+			*/
+			if (enableBackendAccess && routeResult.status === "fulfilled" && "result" in routeResult.value) routes.push(...await generateRoutesFromBackend(filterBackendRoutes(routeResult.value?.result ?? [])));
+			/**
+			* @zh 启用了前端路由
+			* @en If frontend routing is enabled
+			*/
+			if (enableFrontendAceess) routes.push(...generateRoutesByFrontend(accessRoutes, latestRoles));
+			const uniqueRoutes = removeDuplicateRoutes(routes);
+			setAccessStore(uniqueRoutes);
+			/**
+			* @zh 网络请求失败，跳转到 500 页面
+			* @en Network request failed, redirect to 500 page
+			*/
+			if (results.some((result) => result.status === "rejected")) {
+				if (!results.some((result) => result.reason.response.status === 401)) return navigate(exception500Path);
+			}
+			/**
+			*
+			* @zh 开启动态路由条件下需要替换当前路由？
+			* 1. 浏览器导航进入动态路由地址，例如 /system/user
+			* 2. 动态路由未添加到路由，所以地址栏中依然是 /system/user 但匹配到的路由是 fallback (path = "*") 路由
+			* 3. 添加完动态路由后，使用 replace 替换当前路由，触发程序重新匹配到 /system/user 路由
+			*
+			* Refer：https://router.vuejs.org/guide/advanced/dynamic-routing#Adding-routes
+			*
+			* @en Under the condition of dynamic routing, do you need to replace the current route?
+			* 1. Browser navigation into a dynamic routing address, such as /system/user
+			* 2. The dynamic route is not added to the route, so the address bar is still /system/user but the matched route is the fallback (path = "*") route
+			* 3. After adding the dynamic route, use replace to replace the current route and trigger the program to match /system/user again
+			*/
+			navigate(`${pathname}${search}`, {
+				replace: true,
+				/**
+				* @zh 保证替换路由前不会显示 404 页面（登录页面，网速切换为 3G 会闪烁显示 404 页面）
+				* @en Ensure that the 404 page will not be displayed before replacing the route
+				*/
+				flushSync: true
+			});
+		}
+		/**
+		* @zh 只有在以下条件下才执行获取用户信息和路由的逻辑
+		* 1. 非路由白名单
+		* 2. 已登录
+		* 3. 未获取到用户信息和路由信息
+		*
+		* @en The logic of obtaining user information and routes is only executed under the following conditions
+		* 1. Not in the route whitelist
+		* 2. Logged in
+		* 3. Unable to obtain user information and route information
+		*
+		*/
+		if (!whiteRouteNames.includes(pathname) && isLogin && !isAuthorized) fetchUserInfoAndRoutes();
+	}, [
+		pathname,
+		isLogin,
+		isAuthorized
+	]);
+	/**
+	* @zh 路由白名单
+	* @en Route whitelist
+	* @see {noLoginWhiteList}
+	*/
+	if (isPathInNoLoginWhiteList) {
+		hideLoading();
+		return children;
+	}
+	/**
+	* @zh 未登录条件下的处理逻辑
+	* @en Processing logic under unlogged conditions
+	*/
+	if (!isLogin) {
+		hideLoading();
+		if (pathname !== "/login") {
+			const redirectPath = pathname.length > 1 ? `${loginPath}?redirect=${pathname}${search}` : loginPath;
+			return /* @__PURE__ */ jsx(Navigate, {
+				to: redirectPath,
+				replace: true
+			});
+		} else return children;
+	}
+	/**
+	* @zh 登录条件下的处理逻辑
+	* @en Processing logic under logged conditions
+	*/
+	/**
+	* @zh 已登录条件下，匹配 login 路由，跳转到首页
+	* 放到用户信息前，因为 login 路由不会请求用户信息，所以放在前面判断
+	*
+	* @en Under logged conditions, match the login route and jump to the home page
+	* Put it before user information, because the login route will not request user information, so put it in front to judge
+	*/
+	if (pathname === "/login") {
+		/**
+		* @example login?redirect=/system/user
+		*/
+		const redirectPath = searchParams.get("redirect");
+		if (redirectPath?.length && redirectPath !== pathname) return /* @__PURE__ */ jsx(Navigate, {
+			to: redirectPath,
+			replace: true
+		});
+		return /* @__PURE__ */ jsx(Navigate, {
+			to: void 0,
+			replace: true
+		});
+	}
+	/**
+	* @zh 等待获取用户信息
+	* @en  Waiting for user information to be obtained
+	*/
+	if (!isAuthorized) return null;
+	/**
+	* @zh 等待获取路由信息
+	* @en Waiting for route information to be obtained
+	*/
+	if (!isAccessChecked) return null;
+	/**
+	* @zh 隐藏加载动画
+	* @en Hide loading animation
+	*/
+	hideLoading();
+	/**
+	* @zh 如果是根路由则跳转到首页（获取完用户信息之后跳转到默认首页，防止请求两次用户信息接口）
+	* @en If it is the root route, jump to the home page (jump to the default home page after obtaining user information to prevent requesting twice for user information interface)
+	* @zh pathname 返回的是相对 import.meta.env.BASE_URL 的路径，所以这里是相对于 BASE_URL 的根路由 "/"
+	* @en pathname returns the path relative to import.meta.env.BASE_URL, so here is the root route "/" relative to BASE_URL
+	*/
+	if (pathname === "/") return /* @__PURE__ */ jsx(Navigate, {
+		to: void 0,
+		replace: true
+	});
+	/**
+	* @zh 路由权限校验逻辑
+	* @en Route permission verification logic
+	*/
+	const routeRoles = currentRoute?.handle?.roles;
+	/**
+	* @zh 忽略权限校验
+	* @en Ignore permission verification
+	*/
+	if (currentRoute?.handle?.ignoreAccess === true) return children;
+	const matches = matchRoutes(
+		routeList,
+		pathname
+		/**
+		* @zh pathname 返回的是相对 import.meta.env.BASE_URL 的路径，所以不需要指定第三个参数 basename 了
+		* @en pathname returns the path relative to import.meta.env.BASE_URL, so there is no need to specify the third parameter basename
+		*/
+	) ?? [];
+	const hasChildren = matches[matches.length - 1]?.route?.children?.filter((item) => !item.index)?.length;
+	/**
+	* @zh 如果当前路由有子路由，则跳转到 404 页面
+	* @en If the current route has sub-routes, jump to the 404 page
+	*/
+	if (hasChildren && hasChildren > 0) return /* @__PURE__ */ jsx(Navigate, {
+		to: exception404Path,
+		replace: true
+	});
+	/**
+	* @zh 角色权限校验
+	* @en Role permission verification
+	*/
+	const hasRoutePermission = userRoles.some((role) => routeRoles?.includes(role));
+	/**
+	* @zh 权限校验逻辑：
+	* 1. 如果路由上没有携带 roles，视为无权限路由，等同于 ignoreAccess 为 true
+	* 2. 未通过权限校验的路由，取消当前路由导航，并转到 403 页面
+	*
+	* @en Role permission verification logic:
+	* 1. If there is no role on the route, it is considered as a permissionless route, equivalent to ignoreAccess being true
+	* 2. For routes that do not pass permission verification, cancel the current route navigation and jump to the 403 page
+	*/
+	if (routeRoles && routeRoles.length && !hasRoutePermission) return /* @__PURE__ */ jsx(Navigate, {
+		to: exception403Path,
+		replace: true
+	});
+	return children;
+}
+var noLoginWhiteList;
+var init_auth_guard = __esmMin((() => {
+	init_user$1();
+	init_use_current_route();
+	init_module_loader();
+	init_hide_loading();
+	init_loading();
+	init_extra_info();
+	init_routes();
+	init_config();
+	init_add_route_id_by_path();
+	init_generate_routes_from_backend();
+	init_generate_routes_from_frontend();
+	init_access();
+	init_auth();
+	init_preferences$3();
+	init_user();
+	init_utils();
+	noLoginWhiteList = Array.from(whiteRouteNames).filter((item) => item !== loginPath);
+}));
+/**
+* 验证路由跳转是否正确的步骤：
+* 1. 未登录情况下，输入 login 路由
+* 2. 未登录情况下，输入非 login 路由
+* 3. 已登录情况下，使用系统的退出登录，然后再次登录
+* 4. 任选一个非 home 页面，使用开发者工具清除 localStorage，刷新页面之后进行登录
+* 5. 已登录情况下，输入 login 路由
+* 6. 已登录情况下，输入非 login 路由
+* 7. 已登录情况下，输入 http://localhost:3333 跳转到 /home 路由，用户接口发送一次
+* 8. 已登录情况下，输入 http://localhost:3333/ 跳转到 /home 路由，用户接口发送一次
+* 9. 已登录情况下，输入 http://localhost:3333/home 跳转到 /home 路由，用户接口发送一次
+*/
+//#endregion
+//#region src/router/guard/index.ts
+var init_guard = __esmMin((() => {
+	init_auth_guard();
+}));
+//#endregion
+//#region src/utils/progress/index.tsx
+var init_progress = __esmMin((() => {
+	NProgress.configure({
+		easing: "ease",
+		speed: 500,
+		showSpinner: false,
+		trickleSpeed: 200,
+		minimum: .3
+	});
+}));
+//#endregion
+//#region src/utils/toggle-html-class/index.ts
+/**
+* Toggle html class
+*
+* @param className
+*/
+function toggleHtmlClass(className) {
+	function add() {
+		document.documentElement.classList.add(className);
+	}
+	function remove() {
+		document.documentElement.classList.remove(className);
+	}
+	return {
+		add,
+		remove
+	};
+}
+var init_toggle_html_class = __esmMin((() => {}));
+//#endregion
+//#region src/layout/layout-root/index.tsx
+/**
+* @zh 根布局组件
+* @en Root layout component
+*/
+function LayoutRoot() {
+	const matches = useMatches();
+	const { t } = useTranslation();
+	const location = useLocation();
+	const { language, isDark, enableDynamicTitle } = usePreferences();
+	const isLogin = useAuthStore((state) => Boolean(state.token));
+	const isAuthorized = useUserStore((state) => Boolean(state.id));
+	useEffect(() => {
+		if (!enableDynamicTitle) return;
+		if (!(!whiteRouteNames.includes(location.pathname) && isLogin && !isAuthorized)) {
+			const documentTitle = matches[matches.length - 1].handle?.title;
+			const newTitle = isString(documentTitle) ? documentTitle : documentTitle?.props?.children;
+			document.title = t(newTitle) || document.title;
+		}
+	}, [
+		enableDynamicTitle,
+		language,
+		location
+	]);
+	useEffect(() => {
+		if (isDark) toggleHtmlClass("dark").add();
+		else toggleHtmlClass("dark").remove();
+	}, [isDark]);
+	/**
+	* @zh 关闭页面加载进度条，配合 ROOT_ROUTE_ID 路由的 loader 和 shouldRevalidate 使用
+	* @en Close the page loading progress bar, used with the loader and shouldRevalidate of the ROOT_ROUTE_ID route
+	*/
+	useEffect(() => {
+		NProgress.done();
+	}, [location.pathname]);
+	return /* @__PURE__ */ jsx(ErrorBoundary, {
+		FallbackComponent: PageError,
+		children: /* @__PURE__ */ jsx(AuthGuard, { children: /* @__PURE__ */ jsx(Outlet, {}) })
+	});
+}
+var init_layout_root = __esmMin((() => {
+	init_page_error();
+	init_use_preferences();
+	init_guard();
+	init_routes();
+	init_auth();
+	init_user();
+	init_is();
+	init_progress();
+	init_toggle_html_class();
+}));
+//#endregion
+//#region src/router/constants.ts
+var ROOT_ROUTE_ID;
+var init_constants$1 = __esmMin((() => {
+	ROOT_ROUTE_ID = "root-route";
+}));
+//#endregion
+//#region src/router/index.ts
+function createRouter() {
+	return createBrowserRouter(rootRoute, { basename: "/" });
+}
+var loadedPaths, rootRoute, router;
+var init_router = __esmMin((() => {
+	init_layout_root();
+	init_preferences$3();
+	init_progress();
+	init_constants$1();
+	init_routes();
+	loadedPaths = /* @__PURE__ */ new Set();
+	rootRoute = [{
+		path: "/",
+		id: ROOT_ROUTE_ID,
+		Component: LayoutRoot,
+		children: baseRoutes,
+		loader: ({ request }) => {
+			/**
+			* @zh 初次加载路由时，开始进度条动画
+			* @en Start the progress bar animation when loading routes for the first time
+			*/
+			const { transitionProgress } = usePreferencesStore.getState();
+			if (transitionProgress) {
+				NProgress.start();
+				const relativePath = new URL(request.url).pathname;
+				loadedPaths.add(relativePath);
+			}
+			return null;
+		},
+		shouldRevalidate: ({ nextUrl, currentUrl }) => {
+			if (nextUrl.pathname === currentUrl.pathname) return false;
+			/**
+			* @zh 路由更新时，开始进度条动画
+			* @en Start the progress bar animation when the route is updated
+			*/
+			const { transitionProgress } = usePreferencesStore.getState();
+			const isLoaded = loadedPaths.has(nextUrl.pathname);
+			if (transitionProgress && !isLoaded) {
+				NProgress.start();
+				loadedPaths.add(nextUrl.pathname);
+			}
+			return false;
+		}
+	}];
+	router = createRouter();
+}));
+//#endregion
+//#region src/router/utils/generate-menu-items-from-routes.ts
+/**
+* 根据路由列表生成菜单项数组
+*
+* @param routeList 路由列表，类型为 AppRouteRecordRaw 数组
+* @returns 返回菜单项数组，数组元素类型为 MenuItemType
+*/
+function generateMenuItemsFromRoutes(routeList) {
+	return routeList.reduce((acc, item) => {
+		const label = item.handle?.title;
+		const externalLink = item?.handle?.externalLink;
+		const iconName = item?.handle?.icon;
+		const menuItem = {
+			key: item.path,
+			label: externalLink ? createElement(Link, {
+				onClick: (e) => {
+					e.stopPropagation();
+				},
+				to: externalLink,
+				target: "_blank",
+				rel: "noopener noreferrer"
+			}, label) : label
+		};
+		if (iconName) {
+			menuItem.icon = iconName;
+			if (isString(iconName)) {
+				if (menuIcons[iconName]) menuItem.icon = createElement(menuIcons[iconName]);
+				else console.warn(`menu-icon: icon "${iconName}" not found in src/icons/menu-icons.ts file`);
+			}
+		}
+		if (Array.isArray(item.children) && item.children.length > 0) {
+			const noIndexRoute = item.children.filter((route) => !route.index && !route?.handle?.hideInMenu);
+			if (noIndexRoute.length > 0) menuItem.children = generateMenuItemsFromRoutes(noIndexRoute);
+		}
+		if (item?.handle?.hideInMenu) return acc;
+		return [...acc, menuItem];
+	}, []);
+}
+var init_generate_menu_items_from_routes = __esmMin((() => {
+	init_menu_icons();
+	init_is();
+}));
+//#endregion
+//#region src/store/access.ts
+var initialState$2, useAccessStore;
+var init_access = __esmMin((() => {
+	init_router();
+	init_constants$1();
+	init_routes();
+	init_ascending();
+	init_flatten_routes();
+	init_generate_menu_items_from_routes();
+	initialState$2 = {
+		wholeMenus: generateMenuItemsFromRoutes(baseRoutes),
+		routeList: baseRoutes,
+		flatRouteList: flattenRoutes(baseRoutes),
+		isAccessChecked: false
+	};
+	useAccessStore = create((set) => ({
+		...initialState$2,
+		setAccessStore: (routes) => {
+			const newRoutes = ascending([...baseRoutes, ...routes]);
+			router.patchRoutes(ROOT_ROUTE_ID, routes);
+			const flatRouteList = flattenRoutes(newRoutes);
+			const newState = {
+				wholeMenus: generateMenuItemsFromRoutes(newRoutes),
+				routeList: newRoutes,
+				flatRouteList,
+				isAccessChecked: true
+			};
+			set(() => newState);
+			return newState;
+		},
+		reset: () => {
+			router._internalSetRoutes(rootRoute);
+			set(initialState$2);
+		}
+	}));
+}));
+//#endregion
+//#region src/store/auth.ts
+var initialState$1, useAuthStore;
+var init_auth = __esmMin((() => {
+	init_user$1();
+	init_access();
+	init_tabs();
+	init_user();
+	init_get_app_namespace();
+	initialState$1 = {
+		token: "",
+		refreshToken: ""
+	};
+	useAuthStore = create()(persist((set, get) => ({
+		...initialState$1,
+		login: async (loginPayload) => {
+			set({ ...(await fetchLogin(loginPayload)).result });
+		},
+		logout: async () => {
+			/**
+			* 1. 退出登录
+			*/
+			await fetchLogout();
+			/**
+			* 2. 清空 token 等其他信息
+			*/
+			get().reset();
+		},
+		reset: () => {
+			/**
+			* 清空 token
+			*/
+			set({ ...initialState$1 });
+			/**
+			* 清空用户信息
+			* @see {@link https://github.com/pmndrs/zustand?tab=readme-ov-file#read-from-state-in-actions | Read from state in actions}
+			*/
+			useUserStore.getState().reset();
+			/**
+			* 清空权限信息
+			* @see https://github.com/pmndrs/zustand?tab=readme-ov-file#readingwriting-state-and-reacting-to-changes-outside-of-components
+			*/
+			useAccessStore.getState().reset();
+			/**
+			* 清空标签页
+			*/
+			useTabsStore.getState().resetTabs();
+			/**
+			* 清空 keepAlive 缓存
+			* 在 container-layout 组件中，根据 openTabs 自动刷新 keepAlive 缓存
+			*/
+		}
+	}), { name: getAppNamespace("access-token") }));
+}));
+//#endregion
+//#region src/utils/request/constants.ts
+var AUTH_HEADER, LANG_HEADER, REFRESH_TOKEN_PATH;
+var init_constants = __esmMin((() => {
+	AUTH_HEADER = "Authorization";
+	LANG_HEADER = "X-Lang";
+	REFRESH_TOKEN_PATH = "refresh-token";
+}));
+//#endregion
+//#region src/utils/static-antd/index.ts
+var message$1, resetFns;
+var init_static_antd = __esmMin((() => {
+	message$1 = message;
+	({...resetFns} = Modal);
+}));
+//#endregion
+//#region src/utils/request/error-response.ts
+/**
+* 处理错误响应
+*
+* @param response 响应对象
+* @returns 响应对象
+*/
+async function handleErrorResponse(response) {
+	try {
+		const data = await response.json();
+		if (isObject(data)) {
+			const json = data;
+			message$1.error(json.errorMsg || json.message || response.statusText);
+		} else message$1.error(response.statusText);
+	} catch (e) {
+		console.error("Error parsing JSON:", e);
+		message$1.error(response.statusText);
+	}
+	return response;
+}
+var init_error_response = __esmMin((() => {
+	init_is();
+	init_static_antd();
+}));
+//#endregion
+//#region src/utils/request/global-progress.ts
+var requestCount, globalProgress;
+var init_global_progress = __esmMin((() => {
+	init_global();
+	requestCount = 0;
+	globalProgress = {
+		/**
+		* 启动请求
+		*
+		* 如果请求计数为 0，则显示全局加载动画，并将请求计数加 1。
+		*/
+		start() {
+			if (requestCount === 0) useGlobalStore.getState().openGlobalSpin();
+			requestCount++;
+		},
+		/**
+		* 请求完成后的回调函数
+		*
+		* @description 将请求计数减 1，并保证请求计数不会小于 0；
+		*              如果请求计数为 0，则隐藏全局加载动画
+		*/
+		done() {
+			requestCount = Math.max(requestCount - 1, 0);
+			if (requestCount === 0) useGlobalStore.getState().closeGlobalSpin();
+		},
+		/**
+		* 强制完成请求
+		*
+		* 将请求计数直接设置为0，并隐藏全局加载动画
+		*/
+		forceFinish() {
+			requestCount = 0;
+			useGlobalStore.getState().closeGlobalSpin();
+		}
+	};
+}));
+//#endregion
+//#region src/utils/remember-route/index.ts
+function rememberRoute() {
+	const { pathname, search } = window.location;
+	if (pathname.length > 1 && pathname !== "/login") return `?redirect=${pathname}${search}`;
+	return "";
+}
+var init_remember_route = __esmMin((() => {
+	init_extra_info();
+}));
+//#endregion
+//#region src/utils/request/go-login.ts
+/**
+* 跳转到登录页面
+*
+* @returns 无返回值
+*/
+function goLogin() {
+	useAuthStore.getState().reset();
+	window.location.href = `/login${rememberRoute()}`;
+}
+var init_go_login = __esmMin((() => {
+	init_auth();
+	init_remember_route();
+}));
+//#endregion
+//#region src/utils/request/refresh.ts
+/**
+* 刷新token并重新发起请求
+*
+* @param request 请求对象
+* @param options 请求选项
+* @param refreshToken 刷新token
+* @returns 响应对象
+* @throws 刷新 token 失败时抛出异常
+*/
+async function refreshTokenAndRetry(request, options, refreshToken) {
+	if (!isRefreshing) {
+		isRefreshing = true;
+		try {
+			const freshResponse = await fetchRefreshToken({ refreshToken });
+			const newToken = freshResponse.result.token;
+			const newRefreshToken = freshResponse.result.refreshToken;
+			useAuthStore.setState({
+				token: newToken,
+				refreshToken: newRefreshToken
+			});
+			onRefreshed(newToken);
+			request.headers.set(AUTH_HEADER, `Bearer ${newToken}`);
+			return ky(request, options);
+		} catch (error) {
+			onRefreshFailed(error);
+			goLogin();
+			throw error;
+		} finally {
+			isRefreshing = false;
+		}
+	} else return new Promise((resolve, reject) => {
+		addRefreshSubscriber({
+			resolve: async (newToken) => {
+				request.headers.set(AUTH_HEADER, `Bearer ${newToken}`);
+				resolve(ky(request, options));
+			},
+			reject
+		});
+	});
+}
+/**
+* 当 token 刷新成功时，通知所有等待的订阅者。
+* 遍历所有订阅者，调用其 resolve 方法，并传入新的 token。
+* 然后清空订阅者列表，准备下一次 token 刷新。
+*
+* @param token 刷新后的令牌字符串
+*/
+function onRefreshed(token) {
+	refreshSubscribers.forEach((subscriber) => subscriber.resolve(token));
+	refreshSubscribers = [];
+}
+/**
+* 当 token 刷新失败时，通知所有等待的订阅者。
+* 遍历所有订阅者，调用其 reject 方法，并传入错误信息。
+* 然后清空订阅者列表。
+*
+* @param error 刷新失败时产生的错误信息
+*/
+function onRefreshFailed(error) {
+	refreshSubscribers.forEach((subscriber) => subscriber.reject(error));
+	refreshSubscribers = [];
+}
+/**
+* 添加一个新的订阅者到列表中。
+* 订阅者对象应包含 resolve 和 reject 方法。
+*
+* @param subscriber 订阅者对象，包含 resolve 和 reject 方法
+*/
+function addRefreshSubscriber(subscriber) {
+	refreshSubscribers.push(subscriber);
+}
+var isRefreshing, refreshSubscribers;
+var init_refresh = __esmMin((() => {
+	init_user$1();
+	init_auth();
+	init_constants();
+	init_go_login();
+	isRefreshing = false;
+	refreshSubscribers = [];
+}));
+//#endregion
+//#region src/utils/request/index.ts
+var requestWhiteList, defaultConfig, request;
+var init_request = __esmMin((() => {
+	init_extra_info();
+	init_auth();
+	init_preferences$3();
+	init_constants();
+	init_error_response();
+	init_global_progress();
+	init_go_login();
+	init_refresh();
+	requestWhiteList = [loginPath];
+	defaultConfig = {
+		prefix: void 0,
+		timeout: 1e4,
+		retry: { limit: 3 },
+		hooks: {
+			beforeRequest: [({ request, options }) => {
+				if (!options.ignoreLoading) globalProgress.start();
+				if (!requestWhiteList.some((url) => request.url.endsWith(url))) {
+					const { token } = useAuthStore.getState();
+					request.headers.set(AUTH_HEADER, `Bearer ${token}`);
+				}
+				request.headers.set(LANG_HEADER, usePreferencesStore.getState().language);
+			}],
+			afterResponse: [async ({ request, options, response }) => {
+				if (!options.ignoreLoading) globalProgress.done();
+				if (!response.ok) {
+					if (response.status === 401) {
+						if ([`/refresh-token`].some((url) => request.url.endsWith(url))) {
+							goLogin();
+							return response;
+						}
+						const { refreshToken } = useAuthStore.getState();
+						if (!refreshToken) {
+							if (location.pathname === "/login") return response;
+							else {
+								goLogin();
+								return response;
+							}
+						}
+						return refreshTokenAndRetry(request, options, refreshToken);
+					} else return handleErrorResponse(response);
+				}
+				return response;
+			}]
+		}
+	};
+	request = ky.create(defaultConfig);
+}));
+//#endregion
+//#region src/api/user/types.ts
+var init_types = __esmMin((() => {}));
+//#endregion
+//#region src/api/user/index.ts
+function fetchLogin(data) {
+	return request.post("login", { json: data }).json();
+}
+function fetchLogout() {
+	return request.post("logout").json();
+}
+function fetchAsyncRoutes() {
+	return request.get("get-async-routes").json();
+}
+function fetchUserInfo() {
+	return request.get("user-info").json();
+}
+function fetchRefreshToken(data) {
+	return request.post(REFRESH_TOKEN_PATH, { json: data }).json();
+}
+var init_user$1 = __esmMin((() => {
+	init_request();
+	init_constants();
+	init_types();
+}));
+//#endregion
+//#region src/store/user.ts
+var initialState, useUserStore;
+var init_user = __esmMin((() => {
+	init_user$1();
+	initialState = {
+		id: "",
+		avatar: "",
+		username: "",
+		email: "",
+		phoneNumber: "",
+		description: "",
+		roles: []
+	};
+	useUserStore = create()((set) => ({
+		...initialState,
+		getUserInfo: async () => {
+			const response = await fetchUserInfo();
+			set({ ...response.result });
+			return response.result;
+		},
+		reset: () => {
+			return set({ ...initialState });
+		}
+	}));
+}));
+//#endregion
+//#region src/hooks/use-access/constants.ts
+/**
+* 统一管理权限常量，避免在项目中到处写死字符串，便于维护。
+*/
+/**
+* 按钮权限前缀
+*/
+var permissionPrefix = "permission:button";
+/**
+* 常见按钮权限：
+* - get: 获取
+* - update: 更新
+* - delete: 删除
+* - add: 新增
+*/
+var accessControlCodes = {
+	get: `${permissionPrefix}:get`,
+	update: `${permissionPrefix}:update`,
+	delete: `${permissionPrefix}:delete`,
+	add: `${permissionPrefix}:add`
+};
+var AccessControlRoles = {
+	admin: "admin",
+	common: "common"
+};
+//#endregion
+//#region src/hooks/use-access/index.ts
+init_user();
+init_is();
+/**
+* @zh 权限判断
+* @en Access judgment
+*/
+function useAccess() {
+	const matches = useMatches();
+	const { roles: userRoles } = useUserStore();
+	const currentRoute = matches[matches.length - 1];
+	/**
+	* @zh 根据权限代码判断当前路由是否具有指定权限
+	* @en Determine whether the current route has a specified permission based on permission codes
+	* @param permission 全部小写的权限名称或权限名称数组，比如 `["add", "delete"]`。
+	* @returns boolean 是否具有指定权限
+	*/
+	const hasAccessByCodes = (permission) => {
+		if (!permission) return false;
+		/** 从当前路由的 `handle` 字段里获取按钮级别的所有自定义 `code` 值 */
+		const metaAuth = currentRoute?.handle?.permissions;
+		if (!metaAuth) return false;
+		permission = isString(permission) ? [permission] : permission;
+		permission = permission.map((item) => item.toLowerCase());
+		return metaAuth.some((item) => permission.includes(item.toLowerCase()));
+	};
+	/**
+	* @zh 根据角色判断当前用户是否具有指定权限，当前系统设计为输入角色 id 来判断的
+	* @en Determine whether the current user has a specified permission based on roles
+	* @param roles 全部小写的权限名称或权限名称数组，比如 `["admin", "super", "user"]`。
+	* @returns boolean 是否具有指定权限
+	*/
+	const hasAccessByRoles = (roles) => {
+		if (!roles || !userRoles) return false;
+		roles = isString(roles) ? [roles] : roles;
+		roles = roles.map((item) => item.toLowerCase());
+		return userRoles.some((item) => roles.includes(item.toLowerCase()));
+	};
+	return {
+		hasAccessByCodes,
+		hasAccessByRoles
+	};
+}
+//#endregion
+//#region src/components/access-control/index.ts
+/**
+* 权限验证组件
+*
+* @param AccessControlProps 权限验证组件的属性
+* @returns 若子组件存在，并且传入的权限值有效，则返回子组件；否则返回 null
+*/
+function AccessControl({ type = "code", codes, children, fallback }) {
+	const { hasAccessByCodes, hasAccessByRoles } = useAccess();
+	if (!children) return null;
+	if (!type || type === "code") return hasAccessByCodes(codes) ? children : fallback;
+	if (type === "role") return hasAccessByRoles(codes) ? children : fallback;
+	return fallback;
+}
+//#endregion
+//#region src/components/basic-form/form-items/form-avatar-item.tsx
+function FormAvatarItem({ value, onChange }) {
+	return /* @__PURE__ */ jsx(Fragment, { children: /* @__PURE__ */ jsxs("div", {
+		className: "flex items-center gap-5",
+		children: [/* @__PURE__ */ jsx(Avatar, {
+			size: 100,
+			src: value
+		}), /* @__PURE__ */ jsx(ImgCrop, {
+			rotationSlider: true,
+			aspectSlider: true,
+			showReset: true,
+			showGrid: true,
+			cropShape: "rect",
+			children: /* @__PURE__ */ jsx(Upload, {
+				accept: "image/*",
+				showUploadList: false,
+				name: "file",
+				action: `undefined/upload`,
+				headers: { authorization: "authorization-text" },
+				onChange: (info) => {
+					if (info.file.status === "done") {
+						window.$message?.success(`${info.file.name} file uploaded successfully`);
+						onChange?.(info.file.response?.result);
+					} else if (info.file.status === "error") window.$message?.error(`${info.file.name} file upload failed.`);
+				},
+				children: /* @__PURE__ */ jsx(Button, {
+					icon: /* @__PURE__ */ jsx(UploadOutlined, {}),
+					children: "更换头像"
+				})
+			})
+		})]
+	}) });
+}
+//#endregion
+//#region src/components/basic-form/form-items/form-tree-item.tsx
+var { Search } = Input;
+function getParentKey(key, tree) {
+	let parentKey;
+	for (let i = 0; i < tree.length; i++) {
+		const node = tree[i];
+		if (node.children) {
+			if (node.children.some((item) => item.id === key)) parentKey = node.id;
+			else if (getParentKey(key, node.children)) parentKey = getParentKey(key, node.children);
+		}
+	}
+	return parentKey;
+}
+function FormTreeItem({ treeData, value, onChange }) {
+	const [expandedKeys, setExpandedKeys] = useState([]);
+	const [searchValue, setSearchValue] = useState("");
+	const [checkedOptions, setCheckedOptions] = useState([]);
+	const [autoExpandParent, setAutoExpandParent] = useState(true);
+	const { t } = useTranslation();
+	const onCheck = (checkedKeys) => {
+		onChange?.(checkedKeys);
+	};
+	const onExpand = (newExpandedKeys) => {
+		setExpandedKeys(newExpandedKeys);
+		setAutoExpandParent(false);
+	};
+	const flattenTreeData = useMemo(() => {
+		const dataList = [];
+		const generateList = (data) => {
+			for (let i = 0; i < data.length; i++) {
+				const node = data[i];
+				dataList.push({
+					id: node.id,
+					title: node.title
+				});
+				if (node.children) generateList(node.children);
+			}
+		};
+		generateList(treeData);
+		return dataList;
+	}, [treeData]);
+	const handleSearchChange = (e) => {
+		const { value } = e.target;
+		const newExpandedKeys = flattenTreeData.map((item) => {
+			if (t(item.title).includes(value)) return getParentKey(item.id, treeData);
+			return null;
+		}).filter((item, i, self) => !!(item && self.indexOf(item) === i));
+		setExpandedKeys(newExpandedKeys);
+		setSearchValue(value);
+		setAutoExpandParent(true);
+	};
+	const onCheckboxChange = (checkedValues) => {
+		setCheckedOptions(checkedValues);
+	};
+	useEffect(() => {
+		if (checkedOptions.includes("expandAll")) setExpandedKeys(flattenTreeData.map((item) => item.id));
+		else setExpandedKeys([]);
+		if (checkedOptions.includes("checkAll")) onChange?.(flattenTreeData.map((item) => item.id));
+		else onChange?.([]);
+	}, [checkedOptions, flattenTreeData]);
+	return /* @__PURE__ */ jsxs(Fragment, { children: [
+		/* @__PURE__ */ jsx(Search, {
+			className: "mb-3",
+			placeholder: t("common.keywordSearch"),
+			allowClear: true,
+			value: searchValue,
+			onChange: handleSearchChange
+		}),
+		/* @__PURE__ */ jsx(Checkbox.Group, {
+			options: [{
+				label: checkedOptions.includes("expandAll") ? t("common.collapseAll") : t("common.expandAll"),
+				value: "expandAll"
+			}, {
+				label: checkedOptions.includes("checkAll") ? t("common.cancelAll") : t("common.checkAll"),
+				value: "checkAll"
+			}],
+			value: checkedOptions,
+			rootClassName: "flex justify-between items-center mb-3",
+			onChange: onCheckboxChange
+		}),
+		/* @__PURE__ */ jsx(Tree, {
+			checkable: true,
+			blockNode: true,
+			defaultExpandAll: true,
+			titleRender: (node) => t(node.title),
+			onExpand,
+			expandedKeys,
+			autoExpandParent,
+			fieldNames: { key: "id" },
+			checkedKeys: value,
+			treeData,
+			onCheck
+		})
+	] });
+}
+//#endregion
+//#region src/api/home.ts
+init_request();
+function fetchPie(data) {
+	return request.get("home/pie", { searchParams: data }).json();
+}
+function fetchLine(data) {
+	return request.post("home/line", { json: data }).json();
+}
+//#endregion
+//#region src/api/system/role/index.ts
+init_request();
+function fetchRoleList(data) {
+	return request.get("role-list", {
+		searchParams: data,
+		ignoreLoading: true
+	}).json();
+}
+function fetchAddRoleItem(data) {
+	return request.post("role-item", {
+		json: data,
+		ignoreLoading: true
+	}).json();
+}
+function fetchUpdateRoleItem(data) {
+	return request.put("role-item", {
+		json: data,
+		ignoreLoading: true
+	}).json();
+}
+function fetchDeleteRoleItem(id) {
+	return request.delete("role-item", {
+		json: id,
+		ignoreLoading: true
+	}).json();
+}
+function fetchRoleMenu() {
+	return request.get("role-menu", { ignoreLoading: true }).json();
+}
+function fetchMenuByRoleId(data) {
+	return request.get("menu-by-role-id", {
+		searchParams: data,
+		ignoreLoading: false
+	}).json();
+}
+//#endregion
+//#region src/api/system/menu/index.ts
+init_request();
+function fetchMenuList(data) {
+	return request.get("menu-list", {
+		searchParams: data,
+		ignoreLoading: true
+	}).json();
+}
+function fetchAddMenuItem(data) {
+	return request.post("menu-item", {
+		json: data,
+		ignoreLoading: true
+	}).json();
+}
+function fetchUpdateMenuItem(data) {
+	return request.put("menu-item", {
+		json: data,
+		ignoreLoading: true
+	}).json();
+}
+function fetchDeleteMenuItem(id) {
+	return request.delete("menu-item", {
+		json: id,
+		ignoreLoading: true
+	}).json();
+}
+//#endregion
+//#region src/utils/get-all-expanded-keys/index.ts
+function getAllExpandedKeys(data, fieldName = "key") {
+	return data.flatMap((item) => [item[fieldName], ...item.children?.length ? getAllExpandedKeys(item.children, fieldName) : []]);
+}
+//#endregion
+//#region src/constants/options.ts
+function getYesNoOptions(t) {
+	return [{
+		label: t("common.yes"),
+		value: 1
+	}, {
+		label: t("common.no"),
+		value: 0
+	}];
+}
+function getBooleanOptions(t) {
+	return [{
+		label: t("common.yes"),
+		value: true
+	}, {
+		label: t("common.no"),
+		value: false
+	}];
+}
 //#endregion
 //#region src/module-loader/define-module.ts
 /**
@@ -168,20 +8688,20 @@ function defineModule(definition) {
 	return definition;
 }
 //#endregion
-//#region src/utils/get-app-info/index.ts
-/**
-* @zh 获取构建时注入的应用元信息（版本、依赖、构建时间等）。
-* @en Get the app meta info injected at build time (version, dependencies, build time, ...).
-*
-* 以前各模块直接读取全局 `__APP_INFO__`（由 Vite `define` 注入），导致每个模块工程都要
-* 复制同样的 define 配置（见设计文档 B9）。现统一通过本函数从框架获取，模块无需再依赖
-* 全局注入；框架内部也只有这里读取该全局，避免散落多处的隐式耦合。
-*
-* @example
-* const { version } = getAppInfo().pkg;
-*/
-function getAppInfo() {
-	return __APP_INFO__;
-}
+//#region src/index.ts
+init_basic_button();
+init_iframe();
+init_user$1();
+init_use_preferences();
+init_auth();
+init_user();
+init_icons();
+init_tree();
+init_module_loader();
+init_get_app_info();
+init_local_icons();
+init_ri();
+init_menu_icons();
+init_user$1();
 //#endregion
-export { BasicContent, defineModule, getAppInfo, getModule, getModules, getRegisteredApiPrefix, getRegisteredStore, getRoutes, loadAll };
+export { AccessControl, AccessControlRoles, BasicButton, BasicContent, BasicTable, EmbeddedIcon, ExternalIcon, FormAvatarItem, FormTreeItem, Iframe, LayoutCenterIcon, LayoutLeftIcon, LayoutRightIcon, MixedNavigationIcon, OutsidePageIcon, ProfileCardIcon, RiAccountCircleLine, RiContrastFill, RiFullscreenExitLine, RiFullscreenLine, RiMailCheckLine, RiMoonIcon, RiReactjsLine, RiSunIcon, RiUserSettingsLine, ServerErrorIcon, SideNavigationIcon, TopNavigationIcon, TwoColumnNavigationIcon, accessControlCodes, defineModule, fetchAddMenuItem, fetchAddRoleItem, fetchAsyncRoutes, fetchDeleteMenuItem, fetchDeleteRoleItem, fetchLine, fetchLogin, fetchLogout, fetchMenuByRoleId, fetchMenuList, fetchPie, fetchRefreshToken, fetchRoleList, fetchRoleMenu, fetchUpdateMenuItem, fetchUpdateRoleItem, fetchUserInfo, filterTree, getAllExpandedKeys, getAppInfo, getBooleanOptions, getModule, getModules, getRegisteredApiPrefix, getRegisteredStore, getRoutes, getYesNoOptions, handleTree, loadAll, mapTree, menuIcons, permissionPrefix, traverseTreeValues, useAccess, useAuthStore, usePreferences, useUserStore };

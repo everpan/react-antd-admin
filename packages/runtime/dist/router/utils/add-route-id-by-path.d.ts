@@ -18,13 +18,9 @@ export declare function addRouteIdByPath(routes: AppRouteRecordRaw[], parentId?:
     handle: import("../types").RouteMeta;
     children?: undefined | undefined;
     element?: import("#node_modules/@types/react").ReactNode;
-    caseSensitive?: boolean | undefined;
     path?: string | undefined;
-    middleware?: import("react-router").MiddlewareFunction[] | undefined;
-    loader?: (import("react-router").LoaderFunction | boolean) | undefined;
     action?: (import("react-router").ActionFunction | boolean) | undefined;
-    hasErrorBoundary?: boolean | undefined;
-    shouldRevalidate?: import("react-router").ShouldRevalidateFunction | undefined;
+    index: true;
     lazy?: ({
         middleware?: (() => Promise<import("react-router").MiddlewareFunction<unknown>[] | null | undefined>) | undefined;
         loader?: (() => Promise<boolean | import("react-router").LoaderFunction<any> | null | undefined>) | undefined;
@@ -39,25 +35,25 @@ export declare function addRouteIdByPath(routes: AppRouteRecordRaw[], parentId?:
         HydrateFallback?: (() => Promise<import("#node_modules/@types/react").ComponentType<{}> | null | undefined>) | undefined;
         hydrateFallbackElement?: (() => Promise<import("#node_modules/@types/react").ReactNode>) | undefined;
     } | import("react-router").LazyRouteFunction<import("react-router").BaseRouteObject>) | undefined;
+    caseSensitive?: boolean | undefined;
+    middleware?: import("react-router").MiddlewareFunction[] | undefined;
+    loader?: (import("react-router").LoaderFunction | boolean) | undefined;
+    hasErrorBoundary?: boolean | undefined;
+    shouldRevalidate?: import("react-router").ShouldRevalidateFunction | undefined;
     Component?: (React.ComponentType | null) | undefined;
     ErrorBoundary?: (React.ComponentType | null) | undefined;
     errorElement?: import("#node_modules/@types/react").ReactNode;
     HydrateFallback?: (React.ComponentType | null) | undefined;
     hydrateFallbackElement?: import("#node_modules/@types/react").ReactNode;
-    index: true;
 } | {
     id: string | undefined;
     redirect?: string;
     handle: import("../types").RouteMeta;
     children?: AppRouteRecordRaw[];
     element?: import("#node_modules/@types/react").ReactNode;
-    caseSensitive?: boolean | undefined;
     path?: string | undefined;
-    middleware?: import("react-router").MiddlewareFunction[] | undefined;
-    loader?: (import("react-router").LoaderFunction | boolean) | undefined;
     action?: (import("react-router").ActionFunction | boolean) | undefined;
-    hasErrorBoundary?: boolean | undefined;
-    shouldRevalidate?: import("react-router").ShouldRevalidateFunction | undefined;
+    index?: false | undefined;
     lazy?: ({
         middleware?: (() => Promise<import("react-router").MiddlewareFunction<unknown>[] | null | undefined>) | undefined;
         loader?: (() => Promise<boolean | import("react-router").LoaderFunction<any> | null | undefined>) | undefined;
@@ -72,10 +68,14 @@ export declare function addRouteIdByPath(routes: AppRouteRecordRaw[], parentId?:
         HydrateFallback?: (() => Promise<import("#node_modules/@types/react").ComponentType<{}> | null | undefined>) | undefined;
         hydrateFallbackElement?: (() => Promise<import("#node_modules/@types/react").ReactNode>) | undefined;
     } | import("react-router").LazyRouteFunction<import("react-router").BaseRouteObject>) | undefined;
+    caseSensitive?: boolean | undefined;
+    middleware?: import("react-router").MiddlewareFunction[] | undefined;
+    loader?: (import("react-router").LoaderFunction | boolean) | undefined;
+    hasErrorBoundary?: boolean | undefined;
+    shouldRevalidate?: import("react-router").ShouldRevalidateFunction | undefined;
     Component?: (React.ComponentType | null) | undefined;
     ErrorBoundary?: (React.ComponentType | null) | undefined;
     errorElement?: import("#node_modules/@types/react").ReactNode;
     HydrateFallback?: (React.ComponentType | null) | undefined;
     hydrateFallbackElement?: import("#node_modules/@types/react").ReactNode;
-    index?: false | undefined;
 })[];
