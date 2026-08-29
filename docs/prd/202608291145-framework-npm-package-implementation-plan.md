@@ -380,6 +380,13 @@ P2 完成判据逐条核对（2026-08-29）：
 
 **BDD 场景**：设计文档 US-8（插槽部分）。
 
+### P3.5（部分）执行小结：d.ts 阻塞解除（2026-08-29，`feature/pkg-p3-runtime-api`）
+
+- **3 处报错已解**：① ② `layout-menu/style.ts` / `layout-tabbar/style.ts` 的 TS2883；③ `locales/helper.ts` 的 `LanguageModule`（连同 `LanguageFileMap`）显式导出。`pnpm --filter @react-antd-admin/runtime build` 现可完整产出 `dist/` 声明树（146 个 d.ts），`exports["."].types` 顺手修正为真实存在的 `./dist/index.d.ts`（原指向从未存在的 `runtime.d.ts`）。
+- **对原处方的偏差**：计划写的修法是「给 `createUseStyles` 显式 `Classes` 标注」（即引用 `import("jss").Classes`）。实测 **jss 不是 runtime 的直接依赖也不在 hoist 根**，声明若引用 `import("jss")`，消费方（外部模块工程）将解析不到。改用结构化等价标注 `(data?: any) => Record<"class 名", string>`（jss 的 `Classes<C>` 定义即 `Record<C, string>`），声明产物零额外依赖，更符合「冻结出口」目标。
+- **TDD 载体**：新增 `tests/runtime-declarations.test.ts` 3 例（d.ts 存在、入口声明含 `getAppInfo`、exports types 指向真实文件）；full vitest 71/71，`tsc --noEmit` 0 错误，根完整构建通过。
+- **3.5 仍未完成**：`files` 字段核对、出口树裁剪（internal 标注）、取消 `private: true`——与 3.1 出口白名单一并做。dist 产物已随本提交入库（.gitignore 白名单放行）。
+
 ---
 
 ## P4: Shell 与共享表治理

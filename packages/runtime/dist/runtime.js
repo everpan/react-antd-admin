@@ -1,6 +1,7 @@
 import { clsx } from "clsx";
 import { jsx } from "react/jsx-runtime";
 import i18next from "i18next";
+import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
 import { request } from "#src/utils/request";
 import "#src/router/utils/flatten-routes";
 //#region src/components/basic-content/index.tsx
@@ -144,7 +145,7 @@ function getModule(name) {
 }
 function getRoutes() {
 	const routes = [];
-	for (const instance of modules.values()) if (instance.status !== "error" && instance.definition.routes.length > 0) routes.push(...instance.definition.routes);
+	for (const instance of modules.values()) if (instance.status !== "error" && instance.definition.routes.length > 0) routes.push(...resolveRouteLayouts(instance.definition.routes));
 	return routes;
 }
 function getRegisteredStore(name) {
@@ -167,4 +168,20 @@ function defineModule(definition) {
 	return definition;
 }
 //#endregion
-export { BasicContent, defineModule, getModule, getModules, getRegisteredApiPrefix, getRegisteredStore, getRoutes, loadAll };
+//#region src/utils/get-app-info/index.ts
+/**
+* @zh 获取构建时注入的应用元信息（版本、依赖、构建时间等）。
+* @en Get the app meta info injected at build time (version, dependencies, build time, ...).
+*
+* 以前各模块直接读取全局 `__APP_INFO__`（由 Vite `define` 注入），导致每个模块工程都要
+* 复制同样的 define 配置（见设计文档 B9）。现统一通过本函数从框架获取，模块无需再依赖
+* 全局注入；框架内部也只有这里读取该全局，避免散落多处的隐式耦合。
+*
+* @example
+* const { version } = getAppInfo().pkg;
+*/
+function getAppInfo() {
+	return __APP_INFO__;
+}
+//#endregion
+export { BasicContent, defineModule, getAppInfo, getModule, getModules, getRegisteredApiPrefix, getRegisteredStore, getRoutes, loadAll };

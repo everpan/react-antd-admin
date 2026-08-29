@@ -210,7 +210,7 @@ my-modules/
 
 | 任务 | 验收条件（做完的标准） | 当前状态 | 下一步 / 阻塞 |
 |---|---|---|---|
-| P3 出口冻结 | `#src/*`→`@react-antd-admin/runtime`；图标契约统一 `ReactNode`；出 `runtime.d.ts` 并取消 `private: true` | ⬜ 未开始 | **先修 d.ts 3 处报错**：`layout/layout-menu/style.ts:3` 与 `layout/layout-tabbar/style.ts:3` 的 TS2883（给 `createUseStyles` 显式 `Classes` 标注）、`locales/index.ts:19` 的 TS4023（`LanguageModule` 显式导出）。当前 `packages/runtime/dist/` 仅 `runtime.js`，无 `runtime.d.ts` |
+| P3 出口冻结 | `#src/*`→`@react-antd-admin/runtime`；图标契约统一 `ReactNode`；出 `runtime.d.ts` 并取消 `private: true` | 🔄 d.ts 阻塞已解除（`feature/pkg-p3-runtime-api`） | 3 处声明报错已修，`dist/` 声明树（146 个 d.ts）已出，`exports.types` 已指向 `dist/index.d.ts`（实测改用结构化标注而非引用 jss，见计划文档 P3.5 小结）；剩余：出口白名单、`#src` 替换、图标契约、`private: true` 取消 |
 | P4 共享表治理 | importmap 自动生成（不再手写）；dev 三件套（`jsx-dev-runtime` 映射 / react-refresh preamble / sourcemap）；`rad info` 版本矩阵；版本严格相等校验（D12） | ⬜ | D12 必须严格相等而非 semver 范围 |
 | P5 模块迁移 | `modules/` 下 8 个模块全迁新语义；旧 `manifest.json` 下线（O5，建议 P5） | ⬜ | — |
 | P6 安全加固 | CSP；iframe scheme 白名单；关生产 fake server（B15 `enableProd: true` 等同认证绕过）；`requiredRoles` 真正生效（B16）；加载失败不静默 catch（B7）；供应链防护 | ⬜ | **O7 阻塞**：refreshToken→httpOnly Cookie 需后端配合，超出前端范围；不阻塞 P0–P5 |
@@ -271,13 +271,7 @@ grep -rlE  '"#src/' modules/ | wc -l                         # 涉及文件数�
 
 （设计文档 §3 记的是 23 / 86 / 29，为 P0 前的快照。）
 
-**已探明的具体阻碍**：`pnpm --filter @react-antd-admin/runtime build` 的 tsc 声明阶段现在还有 3 处报错。原先以为是 B3 反向依赖挡着，**P2.3 之后复测确认 B3 已不是阻塞项**，只剩：
-
-1. `layout/layout-menu/style.ts:3` — TS2883，`createUseStyles` 推断类型引用了 jss 的 `Classes`，需显式类型标注
-2. `layout/layout-tabbar/style.ts:3` — 同上
-3. `locales/index.ts:19` — TS4023，`i18nResources` 用到 `helper.ts` 里未导出的 `LanguageModule`
-
-所以目前 `packages/runtime/dist/` 只有 `runtime.js`，没有 `runtime.d.ts`。shell 构建链路走的是 `vite build`（只出 JS），不受影响。
+**~~已探明的具体阻碍~~（P3 起步已解除）**：tsc 声明阶段的 3 处报错（`layout-menu/style.ts` / `layout-tabbar/style.ts` 的 TS2883、`locales/helper.ts` 未导出 `LanguageModule` 导致的 TS4023）已在 `feature/pkg-p3-runtime-api` 分支修复，`dist/` 声明树可完整产出。修法与原处方（显式引用 jss `Classes`）有偏差——实际用结构化 `Record<C, string>` 标注，原因见计划文档 P3.5 小结。
 
 ### P4：Shell 与共享表治理
 
