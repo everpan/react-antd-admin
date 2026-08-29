@@ -1,12 +1,59 @@
+import type { Plugin as EsbuildPlugin } from "esbuild";
 import type { Plugin } from "vite";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import process from "node:process";
 import { pathToFileURL } from "node:url";
-import { tsImport } from "tsx/esm/api";
+import { build as esbuild } from "esbuild";
 import { build } from "vite";
 import { loadModulesConfig, resolveModuleEntry } from "./config";
 import { isSharedDep } from "./shared-deps";
+
+/**
+ * `@react-antd-admin/runtime` 的只读占位源码（设计文档 B10 / §4.3）。
+ *
+ * 读取模块定义时只需要 entry 顶层调用 `defineModule({ name, version, ... })` 的
+ * 结果，而绝不需要真正加载框架运行时（其产物含 Vite 专有的 `?react`/`?url` svg
+ * 导入，Node 下无法加载）。通过 esbuild 虚拟模块插件内联进 bundle，从源头避开 svg
+ * 问题；其余共享依赖保持 external，由 tsx/Node 在 import() 时按真实包加载。
+ *
+ * 这里列出运行时的「值导出」，使 esbuild 不会报 missing export（类型导出无需提供）。
+ * `defineModule` 仅把入参原样回传，CLI 即可读取 name/version 等元数据。
+ */
+const RUNTIME_STUB_SOURCE = `
+const _fn = (...a) => a[a.length - 1];
+export const BasicContent = _fn;
+export const defineModule = (d) => d;
+export const defineRoutes = (...a) => a[a.length - 1];
+export const defineGuard = (...a) => a[a.length - 1];
+export const getModules = () => [];
+export const getModule = () => undefined;
+export const getRoutes = () => [];
+export const getRegisteredStore = () => undefined;
+export const getRegisteredApiPrefix = () => undefined;
+export const loadAll = async () => [];
+`;
+
+/**
+ * esbuild 插件：把 `@react-antd-admin/runtime` 解析到一个内联的只读占位虚拟模块，
+ * 避免真正加载框架运行时（含 svg）。用虚拟模块而非 alias 指向实体文件，是因为
+ * 实体路径依赖 import.meta.url，在 vitest 等变换环境下拿不到合法的 file URL。
+ */
+const runtimeStubPlugin: EsbuildPlugin = {
+	name: "rad-runtime-stub",
+	setup(b) {
+		b.onResolve({ filter: /^@react-antd-admin\/runtime$/ }, () => ({
+			path: "@react-antd-admin/runtime",
+			namespace: "rad-runtime-stub",
+		}));
+		b.onLoad({ filter: /.*/, namespace: "rad-runtime-stub" }, () => ({
+			contents: RUNTIME_STUB_SOURCE,
+			loader: "js",
+			resolveDir: process.cwd(),
+		}));
+	},
+};
 
 /** modules.json 中的 chunk 条目 */
 export interface ChunkEntry {
@@ -36,19 +83,47 @@ function sha384(file: string): string {
 	return `${ALGORITHM}-${digest}`;
 }
 
-/** 用 tsx 真实 import 解析模块定义，替代脆弱的正则（B10） */
-async function readModuleDefinition(entryFile: string) {
-	const mod = await tsImport(pathToFileURL(entryFile).href, import.meta.url);
-	const definition = mod.default;
-	if (!definition?.name || !definition?.version) {
-		throw new Error(`${entryFile} 的 default 导出缺少 name 或 version`);
+/**
+ * 用 esbuild 把 entry 转译并 external 所有包依赖，写出到临时目录后
+ * 以普通 `import()` 加载（此时全局注册的 stub 加载钩子会生效）：
+ *   - `@react-antd-admin/runtime` → 已构建的 dist/runtime.js（真实模块）
+ *   - 其余共享依赖 → 空 stub
+ * 从而读取模块定义（name/version/peerRuntime/config）而无需真正加载整个框架
+ * 运行时（其源码含 Vite 专有的 `?react`/`?url` svg 导入），替代脆弱的正则（B10）。
+ */
+async function readModuleDefinition(entryFile: string, projectRoot: string) {
+	// 必须落在工程目录内（而非 os.tmpdir），否则 bundle 外部化的共享依赖
+	// （react / antd …）在 import() 时无法从 /tmp 解析到 node_modules。
+	const outDir = fs.mkdtempSync(path.join(projectRoot, ".rad-tmp-"));
+	try {
+		await esbuild({
+			entryPoints: [entryFile],
+			bundle: true,
+			format: "esm",
+			platform: "node",
+			packages: "external",
+			plugins: [runtimeStubPlugin],
+			outdir: outDir,
+			jsx: "automatic",
+			loader: { ".ts": "ts", ".tsx": "tsx", ".json": "json" },
+			logLevel: "silent",
+		});
+		const bundled = path.join(outDir, "entry.js");
+		const mod = await import(pathToFileURL(bundled).href);
+		const definition = mod.default;
+		if (!definition?.name || !definition?.version) {
+			throw new Error(`${entryFile} 的 default 导出缺少 name 或 version`);
+		}
+		return definition as {
+			name: string
+			version: string
+			peerRuntime?: string
+			config?: { dependencies?: string[] }
+		};
 	}
-	return definition as {
-		name: string
-		version: string
-		peerRuntime?: string
-		config?: { dependencies?: string[] }
-	};
+	finally {
+		fs.rmSync(outDir, { recursive: true, force: true });
+	}
 }
 
 function warnUnsharedDeps(projectRoot: string) {
@@ -91,7 +166,7 @@ export async function buildModules(projectRoot: string): Promise<BuiltModule[]> 
 		}
 
 		const entryFile = resolveModuleEntry(projectRoot, item.entry);
-		const definition = await readModuleDefinition(entryFile);
+		const definition = await readModuleDefinition(entryFile, projectRoot);
 
 		if (definition.name !== item.name) {
 			throw new Error(

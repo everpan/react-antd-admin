@@ -11,8 +11,17 @@ export const PROJECT_ROOT = path.resolve(__dirname, "../..");
 /** 框架源码目录 */
 export const RUNTIME_DIR = path.join(PROJECT_ROOT, "packages/runtime/src");
 
+/** 预构建宿主（shell）产物目录 */
+export const SHELL_DIST_DIR = path.join(PROJECT_ROOT, "packages/shell/dist");
+
 /** 模块目录 */
 export const MODULES_DIR = path.join(PROJECT_ROOT, "modules");
 
 /** 模块清单 */
 export const MANIFEST_PATH = path.join(PROJECT_ROOT, "manifest.json");
+
+/** 模拟外部工程（playground）目录 */
+export const PLAYGROUND_DIR = path.join(PROJECT_ROOT, "apps/playground");
+
+/** playground 构建产物目录 */
+export const PLAYGROUND_DIST_DIR = path.join(PLAYGROUND_DIR, "dist");

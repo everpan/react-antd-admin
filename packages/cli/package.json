@@ -18,6 +18,7 @@
 		"src"
 	],
 	"dependencies": {
+		"esbuild": "^0.28.2",
 		"tsx": "^4.23.12",
 		"vite": "^8.0.13"
 	}

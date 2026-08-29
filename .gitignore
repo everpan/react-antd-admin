@@ -16,6 +16,12 @@ node_modules
 /dist
 # workspace 子包的构建产物（packages/*/dist、apps/*/dist）
 dist/
+# shell 是「预构建宿主」，其 dist 为随仓库分发的预置产物（非本地构建输出），需纳入版本管理
+!packages/shell/dist/
+!packages/shell/dist/**
+# runtime 的发布产物（dist/runtime.js）随仓库分发
+!packages/runtime/dist/
+!packages/runtime/dist/**
 
 # misc
 .DS_Store
@@ -40,3 +46,6 @@ yarn.lock
 .eslintcache
 analyzer
 TODO.md
+
+# rad CLI 临时构建产物（读取模块定义时生成的临时 bundle）
+.rad-tmp-*

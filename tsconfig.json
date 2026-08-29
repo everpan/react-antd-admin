@@ -30,6 +30,7 @@
 	},
 	"include": [
 		"packages/runtime/src",
+		"packages/cli/src",
 		"apps/playground",
 		"fake",
 		"tests",

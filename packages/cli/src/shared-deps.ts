@@ -26,6 +26,7 @@ export const HARD_SHARED_DEPS = [
 export const SOFT_SHARED_DEPS = [
 	"antd",
 	"@ant-design/icons",
+	"@ant-design/cssinjs",
 	"@ant-design/pro-components",
 	"i18next",
 	"react-i18next",

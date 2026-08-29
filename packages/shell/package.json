@@ -1,0 +1,38 @@
+{
+	"name": "@react-antd-admin/shell",
+	"type": "module",
+	"version": "0.0.0",
+	"private": true,
+	"description": "预构建宿主站点（dist + importmap），由 rad dev / rad build 使用",
+	"license": "MIT",
+	"exports": {
+		"./dist": "./dist"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsx scripts/build.mts",
+		"dev": "tsx scripts/build.mts --watch"
+	},
+	"dependencies": {
+		"@react-antd-admin/cli": "workspace:*",
+		"@react-antd-admin/runtime": "workspace:*"
+	},
+	"devDependencies": {
+		"@ant-design/cssinjs": "^1.23.0",
+		"@ant-design/icons": "^6.2.3",
+		"@tanstack/react-query": "^5.66.0",
+		"@vitejs/plugin-react": "^5.0.4",
+		"antd": "^6.4.0",
+		"clsx": "^2.1.1",
+		"dayjs": "^1.11.13",
+		"i18next": "^25.2.1",
+		"react": "^19.2.0",
+		"react-dom": "^19.2.0",
+		"react-i18next": "^16.1.1",
+		"tsx": "^4.23.12",
+		"typescript": "^6.0.3",
+		"vite": "^8.0.13"
+	}
+}

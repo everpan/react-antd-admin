@@ -1,6 +1,5 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { tsImport } from "tsx/esm/api";
 
 /** 模块清单中的单个模块声明 */
 export interface ModuleConfigEntry {
@@ -31,7 +30,7 @@ export async function loadModulesConfig(projectRoot: string): Promise<Required<M
 
 	let mod: { default?: ModulesConfig };
 	try {
-		mod = await tsImport(pathToFileURL(configPath).href, import.meta.url);
+		mod = await import(pathToFileURL(configPath).href);
 	}
 	catch (error) {
 		throw new Error(`无法加载 ${configPath}：${(error as Error).message}`, { cause: error });
