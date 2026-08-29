@@ -12,6 +12,7 @@ import i18next from "i18next";
 import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
 import { request } from "#src/utils/request";
 import { getAllRoutePaths, getKeepAliveExcludes } from "./keep-alive";
+import { registerSlot, removeModuleSlots } from "./slots";
 
 const modules = new Map<string, ModuleInstance>();
 const registeredStores = new Map<string, unknown>();
@@ -33,6 +34,9 @@ function createModuleContext(definition: ModuleDefinition): ModuleContext {
 			apiPrefix: (prefix: string) => {
 				registeredApiPrefixes.set(definition.name, prefix);
 			},
+		},
+		registerSlot: (slotName: string, node: React.ReactNode) => {
+			registerSlot(definition.name, slotName, node);
 		},
 	};
 }
@@ -204,6 +208,22 @@ export function getRegisteredStore<T = unknown>(name: string): T | undefined {
 
 export function getRegisteredApiPrefix(moduleName: string): string | undefined {
 	return registeredApiPrefixes.get(moduleName);
+}
+
+/**
+ * 卸载模块：执行 onDestroy 生命周期 → 清理其布局插槽（US-8）→ 移除实例。
+ * 供运维下线单个模块使用，其余模块不受影响。
+ */
+export async function unloadModule(name: string): Promise<void> {
+	const instance = modules.get(name);
+	if (instance) {
+		const ctx = createModuleContext(instance.definition);
+		if (instance.definition.lifecycle?.onDestroy) {
+			await instance.definition.lifecycle.onDestroy(ctx);
+		}
+	}
+	removeModuleSlots(name);
+	modules.delete(name);
 }
 
 /**

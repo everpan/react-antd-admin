@@ -1,6 +1,7 @@
 import type { ButtonProps } from "antd";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import { theme as antdTheme, Button, ConfigProvider, theme } from "antd";
+import { Fragment } from "react";
 import { useDeviceType } from "#src/hooks/use-device-type";
 import { usePreferences } from "#src/hooks/use-preferences";
 import { useLayout } from "#src/layout/hooks/use-layout";
@@ -8,6 +9,7 @@ import { GlobalSearch } from "#src/layout/widgets/global-search";
 import { NotificationContainer } from "#src/layout/widgets/notification/notification-container";
 import { Preferences } from "#src/layout/widgets/preferences";
 
+import { useSlotNodes } from "#src/module-loader/slots";
 import { useTabsStore } from "#src/store/tabs";
 import { cn } from "#src/utils/cn";
 
@@ -40,6 +42,8 @@ export default function LayoutHeader({ className, children }: LayoutHeaderProps)
 	const { isMobile } = useDeviceType();
 	const isMaximize = useTabsStore(state => state.isMaximize);
 	const { isTopNav, isMixedNav } = useLayout();
+	// P3.6 / US-8：模块经 ctx.registerSlot("header-actions", node) 挂载的操作区
+	const slotActions = useSlotNodes("header-actions");
 	const isFixedDarkTheme = isDark || (sidebarTheme === "dark" && (isMixedNav || isTopNav));
 
 	return (
@@ -80,6 +84,8 @@ export default function LayoutHeader({ className, children }: LayoutHeaderProps)
 				</div>
 
 				<div className="flex items-center">
+					{/* 插槽节点无稳定标识，按注册顺序渲染 */}
+					{slotActions.map((node, index) => <Fragment key={index}>{node}</Fragment>)}
 					<GlobalSearch />
 					<Preferences {...buttonProps} />
 					<ThemeButton {...buttonProps} />
