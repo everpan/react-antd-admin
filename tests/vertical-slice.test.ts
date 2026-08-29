@@ -65,7 +65,8 @@ function resolvePlayground() {
 }
 
 function parseImportmap(html: string): Record<string, string> {
-	const m = html.match(/<script type="importmap">([\s\S]*?)<\/script>/);
+	// P6.2 起标签带 nonce 属性
+	const m = html.match(/<script type="importmap"[^>]*>([\s\S]*?)<\/script>/);
 	if (!m)
 		throw new Error("index.html 缺少 importmap");
 	return JSON.parse(m[1]).imports as Record<string, string>;

@@ -11,7 +11,8 @@ const RUNTIME_DIST_JS = path.join(PROJECT_ROOT, "packages/runtime/dist/runtime.j
 
 function readImportmap(): Record<string, string> {
 	const html = fs.readFileSync(path.join(SHELL_DIST, "index.html"), "utf-8");
-	const match = html.match(/<script type="importmap">(.*?)<\/script>/s);
+	// P6.2 起标签带 nonce 属性
+	const match = html.match(/<script type="importmap"[^>]*>(.*?)<\/script>/s);
 	expect(match, "index.html 缺少 importmap").toBeTruthy();
 	return JSON.parse(match![1]).imports;
 }
