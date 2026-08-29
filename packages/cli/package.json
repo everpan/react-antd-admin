@@ -2,7 +2,6 @@
 	"name": "@react-antd-admin/cli",
 	"type": "module",
 	"version": "0.0.0",
-	"private": true,
 	"description": "React Antd Admin 模块工程命令行工具",
 	"license": "MIT",
 	"exports": {
@@ -22,5 +21,9 @@
 		"esbuild": "^0.28.2",
 		"tsx": "^4.23.12",
 		"vite": "^8.0.13"
+	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org/",
+		"access": "public"
 	}
 }
