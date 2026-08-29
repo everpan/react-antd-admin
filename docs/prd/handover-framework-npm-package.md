@@ -166,14 +166,14 @@ my-modules/
 | 2.2 | 引入 `handle.layout` 契约 | ✅ | `87bd842` |
 | 2.3 | 框架内置 `NotFound` / `UnknownComponent` | ✅ | `db2d05f` |
 | 2.4 | CI 卡口：禁 runtime 内出现 `#modules` | ✅ | |
-| 2.5 | 移除主包对模块页面的 glob 收录 | ⬜ | |
+| 2.5 | 移除主包对模块页面的 glob 收录 | ✅ | |
 | 2.6 | `__APP_INFO__` → `getAppInfo()` | ⬜ | |
 | 2.7 | 先迁 1–2 个模块 dogfooding 验证语义 | ⬜ | |
 | 2.8 | P2 TDD 验收与文档回填 | ⬜ | |
 
 **2.4 具体做了什么**：ESLint 增加本地规则 `runtime-guard/no-modules-in-runtime`（仅作用于 `packages/runtime/src/**`，对 `import` / `export ... from` / 动态 `import()` 的 source 做 `#modules` 前缀判断），CI 新增 `.github/workflows/ci.yml` 跑 `grep -rn "#modules" packages/runtime/src && exit 1` 作为硬兜底。注意：**不能用 `no-restricted-imports`**——它底层用 minimatch，而 minimatch 默认把以 `#` 开头的 pattern 当注释忽略，导致 `#modules` 永远匹配不到（实测 `react` 能匹配、`#modules/**` 匹配不到）。测试侧对照断言已在 `tests/framework-fallback.test.ts`（全量扫描 runtime 源码），2.4 把它升级成了 lint + CI 双卡口。
 
-**2.5 注意**：删掉 `generate-routes-from-backend.ts` 里 glob 的 `/modules/*/pages/**` 之后，要同步把 `tests/module-route-priority.test.ts` 的断言改成**不含** `/modules/`。
+**2.5 具体做了什么**：`generate-routes-from-backend.ts` 的 `import.meta.glob` 移除 `/modules/*/pages/**/*.tsx`，`pageModules` 只收录框架自身 `packages/runtime/src/pages/**`；并删除了 `getComponentPathByRoute` 中已无法命中的「modules/<name>/pages」回退分支（死代码）。模块路由由 `loadAllModules` 经各模块自身 entry glob 注册，`auth-guard` 的 `filterBackendRoutes` 已把与模块重复的后端路径剔除，所以 `generateRoutesFromBackend` 实际只处理框架路径，框架不再 glob 模块页面。`tests/module-route-priority.test.ts` 该用例已翻转为断言「不得 glob 收录 /modules/」。
 
 **2.6 注意**：`__APP_INFO__` 有两个消费点，框架侧 `packages/runtime/src/utils/get-app-namespace/index.ts` 和模块侧 `modules/about/pages/constants.ts`（B9）。两边都要覆盖，否则外部模块工程需要复制同样的 define 配置。
 

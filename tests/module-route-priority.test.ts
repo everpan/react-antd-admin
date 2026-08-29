@@ -39,15 +39,15 @@ describe("模块路由优先级", () => {
 		}
 	});
 
-	it("后端路由生成应同时搜索 modules/ 目录中的页面组件", () => {
+	it("后端路由生成不得直接收录模块页面（只能经 manifest + defineModule 进入）", () => {
 		const content = fs.readFileSync(BACKEND_ROUTE_GEN_PATH, "utf-8");
 
 		const globMatch = content.match(/import\.meta\.glob\(\[([^\]]+)\]\)/);
 		expect(globMatch, "应包含 import.meta.glob 定义").not.toBeNull();
 
 		const globPatterns = globMatch![1];
-		expect(globPatterns, "应搜索 /src/pages/ 目录").toContain("/src/pages/");
-		expect(globPatterns, "后端路由生成应同时搜索 modules/ 目录中的页面组件").toContain("/modules/");
+		expect(globPatterns, "应搜索框架自身 /src/pages/ 目录").toContain("/src/pages/");
+		expect(globPatterns, "框架不得直接 glob 收录模块页面 /modules/").not.toContain("/modules/");
 	});
 
 	it("每个模块的 entry.ts 中引用的页面组件文件必须存在", () => {

@@ -8,17 +8,16 @@ import { resolveLayoutComponent } from "./resolve-layout";
 const UnknownComponent = lazy(() => import("#src/components/unknown-component"));
 
 /**
- * @zh 异步获取页面组件（包含框架 pages 和模块 pages）
- * @en Async load page components (from both framework and modules)
+ * @zh 异步获取页面组件（仅框架自身 pages；模块页面由模块各自通过 defineModule/manifest 注册，框架不收录）
+ * @en Async load page components (framework pages only; module pages are registered by each module via defineModule/manifest, so the framework does NOT glob them)
  */
 const pageModules = import.meta.glob([
 	"/packages/runtime/src/pages/**/*.tsx",
-	"/modules/*/pages/**/*.tsx",
 ]);
 
 /**
- * @zh 根据路由获取组件路径（先查 src/pages，再查 modules/<name>/pages）
- * @en Get component path based on route (search src/pages first, then modules/<name>/pages)
+ * @zh 根据路由获取框架页面组件路径（仅 src/pages；模块页面不在此解析）
+ * @en Get framework page component path by route (src/pages only; module pages are resolved elsewhere)
  */
 export function getComponentPathByRoute(route: AppRouteRecordRaw & { component?: string }) {
 	const pageModulePaths = Object.keys(pageModules);
@@ -29,12 +28,6 @@ export function getComponentPathByRoute(route: AppRouteRecordRaw & { component?:
 		if (pageModulePaths.includes(srcPath)) {
 			return srcPath;
 		}
-		// 尝试在 modules/ 中查找
-		const routeBase = routePath.split("/").slice(0, 2).join("/");
-		const moduleGlobPath = `/modules${routeBase}/pages${route.component}`;
-		if (pageModulePaths.includes(moduleGlobPath)) {
-			return moduleGlobPath;
-		}
 		return srcPath;
 	}
 	else {
@@ -42,11 +35,7 @@ export function getComponentPathByRoute(route: AppRouteRecordRaw & { component?:
 		if (pageModulePaths.includes(srcPath)) {
 			return srcPath;
 		}
-		// 尝试在 modules/ 中查找
-		const routeBase = routePath.split("/").slice(0, 2).join("/");
-		const subPath = routePath.slice(routeBase.length);
-		const moduleGlobPath = `/modules${routeBase}/pages${subPath}/index.tsx`;
-		return moduleGlobPath;
+		return srcPath;
 	}
 }
 

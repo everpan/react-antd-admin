@@ -288,7 +288,7 @@ pnpm build
 | 2.2 | 引入 `handle.layout` 契约 | `"container" \| "parent" \| "none"`，迁移期默认 `container`（P2.7 后改为 `none`）；`src/router/types.ts` 的 `RouteMeta` 加字段 | ✅ 已完成（`87bd842`） |
 | 2.3 | 框架内置 `NotFound` / `UnknownComponent` | 替代 `fallback.ts:5`、`generate-routes-from-backend.ts:8` 对 `#modules/exception` 的依赖；exception 模块降级为可选覆盖 | ✅ 已完成 |
 | 2.4 | 加 CI 卡口 | `eslint.config.js` 的 `no-restricted-imports` 禁 runtime 内出现 `#modules`；CI 跑 `grep -rn "#modules" packages/runtime/src && exit 1` | ✅ 已完成 |
-| 2.5 | 移除主包对模块页面的 glob 收录 | `generate-routes-from-backend.ts:14-17` 去掉 `/modules/*/pages/**`；同步改 `tests/module-route-priority.test.ts:43-52` 的断言为**不含** `/modules/` | ⬜ 待开始 |
+| 2.5 | 移除主包对模块页面的 glob 收录 | `generate-routes-from-backend.ts:14-17` 去掉 `/modules/*/pages/**`；同步改 `tests/module-route-priority.test.ts:43-52` 的断言为**不含** `/modules/` | ✅ 已完成 |
 | 2.6 | `__APP_INFO__` → `getAppInfo()` | 覆盖 `modules/about/pages/constants.ts:1` 与 `src/utils/get-app-namespace/index.ts:13` | ⬜ 待开始 |
 | 2.7 | 先迁 1–2 个 dogfooding 模块验证语义 | 建议 `route-nest`（有嵌套）+ `system`（有 `keepAlive: false`） | ⬜ 待开始 |
 | 2.8 | TDD 验收与文档更新 | 缓存行为不回退、整站 chrome 不消失、路由优先级断言更新；完成后回填本表与总结 | ⬜ 待开始 |
@@ -314,6 +314,15 @@ pnpm build
 - **验证**：临时探针文件 `import("#modules/exception/pages/404")` 与该路径的静态 `import` 均被规则拦截（已删探针）；对真实 `packages/runtime/src` 跑 eslint，`no-modules-in-runtime` 报错数为 0（无误伤）；`grep -rn "#modules" packages/runtime/src` 当前为空（pass 路径 exit 0，fail 路径 exit 1 已模拟通过）。
 
 **BDD 场景**：设计文档 US-4、US-8。
+
+### P2.5 执行小结
+
+- **改动**：`generate-routes-from-backend.ts` 的 `import.meta.glob` 移除 `/modules/*/pages/**/*.tsx`，`pageModules` 现仅收录框架自身 `packages/runtime/src/pages/**`。同时删除 `getComponentPathByRoute` 中「先查 src/pages、再查 modules/<name>/pages」的模块回退分支——该分支在移除 glob 后已无法命中，属死代码；现在函数只返回框架路径，命中则返回、未命中由 `loadRouteComponent` 统一降级为 `UnknownComponent`。
+- **为什么安全**：模块路由由 `loadAllModules(manifest)` 经各模块自身 `entry.ts` 的 glob 注册，进入 `auth-guard` 前 `filterBackendRoutes` 已把「与模块重复的后端路径」剔除（见 `auth-guard.tsx:119/127/134`），因此 `generateRoutesFromBackend` 实际只处理框架路径。框架不再 glob 模块页面，等价于「框架单向依赖模块」的反向耦合被切断。
+- **测试同步**：`tests/module-route-priority.test.ts` 该用例从「应搜索 modules/」翻转为「不得 glob 收录模块页面 /modules/」，并更正了测试名与断言语义。
+- **验证**：full vitest 57/57；`tsc --noEmit` 0 错误；`runtime` 库构建 6 模块（不再打包任何模块页面）；根 `pnpm run build` 全量通过，9 个模块各自独立构建到 `build/modules/*`（证明模块页面改由模块侧自行打包）。
+
+**BDD 场景**：设计文档 US-8（插槽部分）、US-4。
 
 ---
 
