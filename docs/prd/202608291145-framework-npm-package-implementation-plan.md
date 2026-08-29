@@ -220,14 +220,14 @@ pnpm build
 | 0.3 workspace 与 runtime 包元数据 | ✅ | `pnpm install` 通过，workspace 识别 3 个项目 |
 | 0.4 测试路径常量化 | ✅ | 新增 `tests/helpers/paths.ts`，3 个测试文件改用常量 |
 | 0.5 验收 | ✅ | 见下表 |
-| 0.6 双 Spike | ⏳ | 未开始 |
+| 0.6 双 Spike | ✅ | Spike A **GO**、Spike B 完成，见下 |
 
 **验收数据**
 
 | 检查项 | 迁移前 | 迁移后 | 结论 |
 |--------|--------|--------|------|
 | `pnpm typecheck` | 通过 | 通过 | ✅ |
-| `pnpm lint` | 176 问题（116 错误 / 60 警告） | 176 问题（116 错误 / 60 警告） | ✅ 零新增 |
+| `pnpm lint` | 176 问题（116 错误 / 60 警告） | 迁移后仍 176（零新增），随后独立提交修复 → **59 问题（0 错误 / 59 警告）** | ✅ |
 | `pnpm test` | 20 用例通过 | 24 用例通过（+4 条 `monorepo-layout`） | ✅ |
 | `pnpm build` | 61 文件 / 4,521,985 字节 | 61 文件 / 4,522,138 字节 | ✅ +153 字节（0.003%，glob 路径字符串变长） |
 | dev 冒烟 | — | `/` 返回正确入口路径，入口模块 HTTP 200，无错误日志 | ✅ |
@@ -238,9 +238,11 @@ pnpm build
 2. TDD：先改测试常量指向新路径，确认 5 个用例按预期失败，再执行迁移
 3. `git mv src packages/runtime/src`，随后逐个修正不会被 alias 改写的字面量
 4. 构建两次失败，均落入同一个根因（A11），修正后一次通过
-5. 用 `git worktree` 在基线提交上跑 lint 做对照，确认迁移零新增问题
+5. 用 `git worktree` 在基线提交上跑 lint 做对照，确认**迁移零新增问题**
+6. 提交时因 pre-commit 会跑 `eslint --fix`，采用「先在 HEAD 的 worktree 上生成独立的 lint 修复提交，再把 P0 rebase 上去」，使 P0 的 diff 保持为**纯重命名**（仅 14 个预期文件带内容改动）
+7. 两个 Spike 并行收尾，Spike A 给出 GO，Spike B 修正了 B14 的描述
 
-**耗时**：约 1 小时 50 分（含两次构建失败的排查；若不含排查，纯搬迁约 30 分钟）。
+**耗时**：约 3 小时 30 分（P0 迁移约 1h50m，含两次构建失败排查；Spike A 约 50 分钟；Spike B 约 40 分钟；文档与提交约 10 分钟）。
 
 **与计划的偏差**
 
@@ -249,6 +251,9 @@ pnpm build
 | 分支从 `main` 切出 | 从 `modularization` 切出 | `main` 落后 32 个提交且不含模块系统，已同步修正本文档 |
 | 只需改 glob 与 FileSystemIconLoader 两处字面量 | 实际 4 处 | 另加 `index.html:23` 入口路径、`vite.config.ts:121` setupFiles |
 | 未预料子包 package.json 会截断 imports | 触发 2 次构建失败 | 已记为 A11，并补进上方坑位表 |
+| P0 与 Spike 并行 | 实际串行执行 | 单会话下串行更稳妥；Spike 结论未影响 P0 |
+| B14「宿主扫不到模块源码」 | 仅对外部模块工程成立 | monorepo dogfooding 不受影响，见 Spike B |
+| 未预料 CJS `export *` 与 `process.env.NODE_ENV` 两个坑 | Spike A 中暴露 | 已记为 A13 / A14、风险 R14 / R15 |
 
 ---
 

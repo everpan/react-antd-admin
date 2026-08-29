@@ -66,7 +66,7 @@
 | B11 | **共享依赖集合不自洽** | importmap 草案 12 项 vs `SHARED_EXTERNALS` 20+ 项；两侧都不含 `@tanstack/react-query` | 漏配即运行期崩（见 B12） |
 | B12 | **`@tanstack/react-query` 漏配** | `modules/system/pages/role/index.tsx:23` 用 `useQuery`，Provider 由 shell 提供 | 模块自带副本 → 脱离 context → 抛 "No QueryClient set" |
 | B13 | **KeepAlive 位置与 L1 冲突** | KeepAlive 实例在 `ContainerLayout → LayoutContent`（`src/layout/layout-content/index.tsx:116-126`），exclude 由 `flatRouteList` 中 `keepAlive === false` 计算（:87-92）；全项目仅 `system/entry.ts:70` 一处显式 `keepAlive: false` | 页面不套 ContainerLayout 就完全没缓存，去中心化会整体失效 |
-| B14 | **Tailwind 4 扫不到模块** | 宿主 `@tailwindcss/vite` 只扫构建 root 源码；modules/ 下 7 个文件用了 tailwind class | 外部模块样式全丢 |
+| B14 | **Tailwind 扫不到外部模块源码**（仅外部模块工程） | 宿主 `@tailwindcss/vite` 只扫 vite root 下的源码 | 外部模块样式全丢。**注意**：monorepo 内 dogfooding 不受影响——Spike B 实测宿主产物已含只出现在 `modules/` 的 class（`ml-10` / `gap-y-1` / `h-fit` 在 src/ 中 0 次） |
 | B15 | 生产启用 fake server | `vite.config.ts:37-41` `enableProd: true` | shell 若走 vite preview/中间件，`/api` mock 登录在生产可达，等同认证绕过 |
 | B16 | `requiredRoles` 从未被消费 | `module-loader/index.ts:188-196` 只看 status | 非目标角色仍可见菜单 |
 
@@ -311,10 +311,12 @@ require-trusted-types-for 'script'; upgrade-insecure-requests;
 
 ### 4.9 Tailwind 与样式（新增，解决 B14）
 
-- **外部模块工程**：装 `@tailwindcss/vite`，构建产出 `order.css`；`modules.json` 声明 `css` 数组，宿主以 `<link>` 注入。
-- **monorepo 内 dogfooding**：`src/styles/tailwind.css` 加 `@source "../../modules"`。
+- **外部模块工程**（不在宿主 vite root 下）：装 `@tailwindcss/vite`，构建产出 `order.css`；`modules.json` 声明 `css` 数组，宿主以 `<link>` 注入。体积可忽略（Spike B 实测 6 个 class 仅 2.4 KB）。
+- **monorepo 内 dogfooding**：**无需改动**。Tailwind 4 从 vite root 自动探测，已覆盖 `modules/`（A21）——原计划的 `@source "../../modules"` 不必做。
+- **注入顺序（硬约束）**：模块 CSS 必须在**宿主 CSS 之前**注入。模块 CSS 不能只产 utilities（A19），必然重复输出 theme 变量；同 layer 内后声明者胜出，若模块 CSS 在后就会用 Tailwind 默认值覆盖宿主主题定制（R16）。
 - **禁止**扫构建产物（class 已拼接，扫不准）。
-- 注意 `StyleProvider layer`（`src/app.tsx:120`）与 `tailwind.css:1` 的 `@layer` 顺序耦合，模块侧 antd 组件样式顺序需在 P4 验证。
+- 若模块需要 antd 色板 class（如 `bg-colorPrimary`），框架的 `@plugin "../plugins/tailwind.ts"` 必须随 runtime 包发布——外部工程拿不到该文件。当前模块只用标准工具类，暂不需要。
+- 注意 `StyleProvider layer`（`packages/runtime/src/app.tsx:120`）与 `packages/runtime/src/styles/tailwind.css:1` 的 `@layer` 顺序耦合，模块侧 antd 组件样式顺序需在 P4 用真机验证。
 
 ---
 
@@ -597,7 +599,7 @@ Feature: 模块级权限真实生效
 |---|------|------|------|
 | R1 | 共享依赖版本漂移导致双实例 | 高 | D12 严格相等校验；`SHARED_DEPS` 单一常量源；实例计数自检 |
 | R2 | ~~blob URL 破坏 code splitting~~ | — | **已消除**：D5 改用真实 URL；CLI 构建后扫描产物是否含 `blob:`/`data:` import |
-| R3 | antd 6 / react-router 7 单入口自包含 ESM 化困难（含深路径、`StyleProvider layer`、`@layer` 顺序） | 高 | **Spike A 前置到 P0**；失败则退化：antd 属软共享，可改由 runtime 内包再 re-export |
+| R3 | ~~antd 6 / react-router 7 单入口自包含 ESM 化困难~~ | — | **Spike A 已验证可行（GO）**，见 `spikes/esm-importmap/README.md`。新增两项约束，记为 R14 / R15 |
 | R4 | 多 importmap 支持度 | 低 | importmap 只映射共享依赖（静态不变），模块走 URL 动态 import，绕开该问题 |
 | R5 | 加载第三方模块 = 引入任意代码 | 高 | 信任根（D10）+ L2 完整性 + CSP + scoped request；沙箱化列为非目标 |
 | R6 | Runtime API 表面膨胀成新耦合 | 中 | P3 冻结出口白名单 + 明确 deprecate 策略 |
@@ -608,6 +610,9 @@ Feature: 模块级权限真实生效
 | R11 | Tailwind 样式丢失 | 中 | Spike B + §4.9 |
 | R12 | 多团队各出一份 modules.json，合并/覆盖未定义 | 中 | P5 定义清单合并策略（同名冲突拒绝 + 显式报错） |
 | R13 | 不签名的残留风险：有清单写权限者可替换 chunk 与 integrity | 中 | 同组织信任模型下接受；以「CI 单一出口 + 分目录分发布凭据 + origin 白名单 + 清单变更审计日志」收敛。若将来跨组织分发，必须补签名 |
+| R14 | 共享依赖导出表需显式维护且可能静默失效 | 高 | CJS 包无法 `export *`（A13）：构建不报错但产物为空。导出表需显式维护，并用 Spike A 的 `verify-static.mjs` 原型做 CI 校验，导出缺失即失败 |
+| R15 | 宿主 lib 构建漏配 `process.env.NODE_ENV` | 高 | 产物在模块顶层引用即抛 `process is not defined`，整包不可用（A14）。构建配置必须 define，并加静态扫描卡口 |
+| R16 | 模块 CSS 顺序错误会覆盖宿主主题 | 中 | 模块 CSS 必然含 theme 层（不能只产 utilities，见 Spike B），同 layer 内后声明者胜出 → **模块 CSS 必须在宿主 CSS 之前注入** |
 
 ---
 
@@ -641,6 +646,15 @@ Feature: 模块级权限真实生效
 | A10 | L1（只校验入口 chunk）的防护价值≈0 | 子 chunk 才是真正的注入点；这也是 D7 直接跳到 L2 的原因 |
 | A11 | **新建子包 `package.json` 会截断父包的 `imports` 解析** | Node 的 subpath imports 只查找**最近的** package.json，**不向上回溯**。P0 把 `src/` 迁到 `packages/runtime/src/` 并新建 `packages/runtime/package.json` 后，Tailwind 经 jiti 加载 `plugins/tailwind.ts` 时 `#src/styles/...` 解析失败——此处走 Node `require`，Vite alias 与 tsconfig paths 均不生效。修复：子包 package.json 必须自行声明 `imports`。**推广结论**：任何被 Node 侧（jiti / tsx / 脚本）加载的文件，其 `#` 说明符都要由最近的 package.json 兜住 |
 | A12 | 页面入口路径写在 `index.html` 里，同样不会被 alias 改写 | `index.html:23` 的 `/src/index.tsx` 需同步改为 `/packages/runtime/src/index.tsx`，Vite 能启动但页面 404 |
+| A13 | **CJS 包不能用 `export *`，产物会静默变空**（Spike A） | `export * from "react-dom"` 构建**不报错**，但产物 2 行 0 导出，且 `createRoot` 在整个 dist 出现 0 次——react-dom 实现根本没进包。rolldown 无法对 CJS 做 `export *` 静态分析，必须显式列举具名导出。React 侧实际用量很小（13 个具名导出 + `createRoot` + `flushSync`），但导出表成了新增维护面（R14） |
+| A14 | **Vite lib 模式默认不替换 `process.env.NODE_ENV`**（Spike A） | 设计上留给使用方决定，但产物跑浏览器就炸：shared.js 有 398 处，模块顶层一处即让整包抛 `process is not defined`。补 define 后顺带剔除 dev 分支（react-dom-client 1256→454 KB） |
+| A15 | 产物里的 `module.exports` 多数是正常的 | rolldown 的 CJS→ESM 互操作把源码包进 `__commonJSMin((exports, module) => {...})`，`module`/`exports` 是局部桩。检测脚本只应判**顶层**（非缩进）的 `module.exports`，否则误报 |
+| A16 | antd 6.6.1 没有 `exports` 字段 | 深路径走文件系统解析（`antd/es/*`、`antd/locale/*` 可直接访问），代价是 antd 内部目录结构成了事实 API |
+| A17 | 项目里 4 处 antd 深路径**全是 `import type`** | 类型在构建期擦除，运行时不依赖任何 antd 深路径 → 深路径运行时映射问题当前不存在。需约束：新增深路径运行时导入要评审 |
+| A18 | react 19 只发布 CJS，没有 ESM 产物 | 无法直接进 importmap，必须由宿主预打包；多 entry + code splitting 可让 react 抽成共享 chunk 保证单例 |
+| A19 | 模块 Tailwind 产物不能只含 utilities（Spike B） | 无 theme 命名空间时，引用 `var(--spacing)` / `var(--radius-lg)` 的工具类全部不生成（实测 `.gap-4` `.rounded-l-lg` `.tracking-widest` `.shadow-indigo-500` 全丢，只剩字面的 `.flex`）。故模块 CSS 必然重复输出 theme 变量 → 必须在宿主 CSS 之前注入（R16） |
+| A20 | Tailwind 会把层序声明拆开 | 源码 `@layer theme, base, antd, components, utilities;` 变成 `@layer theme{...}` + `@layer base,antd,components;` + `@layer utilities{...}`。语义保留但字面不再存在，校验要按相对位置断言 |
+| A21 | Tailwind 4 从 vite root 自动探测，已覆盖 `modules/` | 宿主产物已含只出现在 `modules/` 的 class → monorepo dogfooding 无需改 Tailwind 配置；B14 只影响不在宿主 vite root 下的外部模块工程 |
 
 ---
 
