@@ -10,5 +10,5 @@ interface AccessAction {
     setAccessStore: (routes: AppRouteRecordRaw[]) => AccessState;
     reset: () => void;
 }
-export declare const useAccessStore: import("#node_modules/zustand/esm/react.mjs").UseBoundStore<import("#node_modules/zustand/esm/vanilla.mjs").StoreApi<AccessState & AccessAction>>;
+export declare const useAccessStore: import("zustand").UseBoundStore<import("zustand").StoreApi<AccessState & AccessAction>>;
 export {};

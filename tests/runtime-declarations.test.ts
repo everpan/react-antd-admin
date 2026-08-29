@@ -22,3 +22,42 @@ describe("runtime 声明产物（P3.5 载体）", () => {
 		expect(fs.existsSync(path.join(PROJECT_ROOT, "packages/runtime", typesPath))).toBe(true);
 	});
 });
+
+/**
+ * P3.5 收尾：取消 private、包元数据定稿。
+ * 出口树裁剪 = exports 只开主入口（"."），dist 内其余目录（layout/router 内部
+ * 模块等）不作为子路径出口暴露；内部性由不导出保证，而非额外标注。
+ */
+describe("runtime 包元数据定稿（P3.5）", () => {
+	function readRuntimePkg() {
+		return JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, "packages/runtime/package.json"), "utf-8"));
+	}
+
+	it("取消 private: true（具备发版资格）", () => {
+		expect(readRuntimePkg().private).toBeUndefined();
+	});
+
+	it("files 含 dist 且 exports 仅开放主入口", () => {
+		const pkg = readRuntimePkg();
+		expect(pkg.files).toContain("dist");
+		expect(Object.keys(pkg.exports)).toEqual(["."]);
+	});
+
+	it("peerDependencies 覆盖 dist/runtime.js 全部 bare 外部导入（防漂移）", () => {
+		const pkg = readRuntimePkg();
+		const peers = new Set(Object.keys(pkg.peerDependencies ?? {}));
+
+		const source = fs.readFileSync(path.join(PROJECT_ROOT, "packages/runtime/dist/runtime.js"), "utf-8");
+		// 仅匹配 import/export 语句（jsdoc 注释文本里的 "#src/..." 示例不算导入）
+		const specifiers = [...source.matchAll(/^\s*(?:import|export)[^;]*?from\s*"([^"]+)"/gm)]
+			.map(m => m[1])
+			.filter(spec => !spec.startsWith(".") && !spec.startsWith("/"));
+		// bare 说明符归一为包名：react/jsx-runtime → react，@dnd-kit/core 保持
+		const packages = new Set(specifiers.map(spec =>
+			spec.startsWith("@") ? spec.split("/").slice(0, 2).join("/") : spec.split("/")[0],
+		));
+
+		const uncovered = [...packages].filter(name => !peers.has(name));
+		expect(uncovered, `产物裸导入未声明进 peerDependencies：${uncovered.join(", ")}`).toEqual([]);
+	});
+});

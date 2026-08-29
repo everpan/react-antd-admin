@@ -50,7 +50,7 @@ interface TabsAction {
  * @zh 标签页状态管理
  * @en Tab state management.
  */
-export declare const useTabsStore: import("#node_modules/zustand/esm/react.mjs").UseBoundStore<Omit<import("#node_modules/zustand/esm/vanilla.mjs").StoreApi<{
+export declare const useTabsStore: import("zustand").UseBoundStore<Omit<import("zustand").StoreApi<{
     /**
      * @zh 标签页集合
      * @en Tab collection.
@@ -243,7 +243,7 @@ export declare const useTabsStore: import("#node_modules/zustand/esm/react.mjs")
         isMaximize: boolean;
     } & TabsAction), replace: true): unknown;
     persist: {
-        setOptions: (options: Partial<import("#node_modules/zustand/esm/middleware.mjs").PersistOptions<{
+        setOptions: (options: Partial<import("zustand/middleware").PersistOptions<{
             /**
              * @zh 标签页集合
              * @en Tab collection.
@@ -314,7 +314,7 @@ export declare const useTabsStore: import("#node_modules/zustand/esm/react.mjs")
              */
             isMaximize: boolean;
         } & TabsAction) => void) => () => void;
-        getOptions: () => Partial<import("#node_modules/zustand/esm/middleware.mjs").PersistOptions<{
+        getOptions: () => Partial<import("zustand/middleware").PersistOptions<{
             /**
              * @zh 标签页集合
              * @en Tab collection.

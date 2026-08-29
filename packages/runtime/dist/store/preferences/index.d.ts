@@ -64,17 +64,17 @@ interface PreferencesAction {
 /**
  * 偏好设置状态管理
  */
-export declare const usePreferencesStore: import("#node_modules/zustand/esm/react.mjs").UseBoundStore<Omit<import("#node_modules/zustand/esm/vanilla.mjs").StoreApi<PreferencesState & PreferencesAction>, "setState" | "persist"> & {
+export declare const usePreferencesStore: import("zustand").UseBoundStore<Omit<import("zustand").StoreApi<PreferencesState & PreferencesAction>, "setState" | "persist"> & {
     setState(partial: (PreferencesState & PreferencesAction) | Partial<PreferencesState & PreferencesAction> | ((state: PreferencesState & PreferencesAction) => (PreferencesState & PreferencesAction) | Partial<PreferencesState & PreferencesAction>), replace?: false | undefined): unknown;
     setState(state: (PreferencesState & PreferencesAction) | ((state: PreferencesState & PreferencesAction) => PreferencesState & PreferencesAction), replace: true): unknown;
     persist: {
-        setOptions: (options: Partial<import("#node_modules/zustand/esm/middleware.mjs").PersistOptions<PreferencesState & PreferencesAction, PreferencesState & PreferencesAction, unknown>>) => void;
+        setOptions: (options: Partial<import("zustand/middleware").PersistOptions<PreferencesState & PreferencesAction, PreferencesState & PreferencesAction, unknown>>) => void;
         clearStorage: () => void;
         rehydrate: () => Promise<void> | void;
         hasHydrated: () => boolean;
         onHydrate: (fn: (state: PreferencesState & PreferencesAction) => void) => () => void;
         onFinishHydration: (fn: (state: PreferencesState & PreferencesAction) => void) => () => void;
-        getOptions: () => Partial<import("#node_modules/zustand/esm/middleware.mjs").PersistOptions<PreferencesState & PreferencesAction, PreferencesState & PreferencesAction, unknown>>;
+        getOptions: () => Partial<import("zustand/middleware").PersistOptions<PreferencesState & PreferencesAction, PreferencesState & PreferencesAction, unknown>>;
     };
 }>;
 export {};
