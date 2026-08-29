@@ -2,7 +2,7 @@
 
 > 面向新接手这项工作的开发者。
 > 覆盖：要做成什么、为什么这么做、已经做到哪、每步怎么验收、哪些坑必踩。
-> 最后更新：2026-08-29（对应分支 `feature/pkg-p2-inversion`，HEAD `4ed730d`；P2.6 代码已完成并验证通过，当前以 staged 形式待提交）
+> 最后更新：2026-08-29（P2 全部完成于 `feature/pkg-p2-inversion`；下一步 P3，见 §8）
 
 ## 0. 五分钟上手
 
@@ -18,7 +18,7 @@ pnpm --filter @react-antd-admin/shell build     # 先出预构建宿主
 cd apps/playground && pnpm dev                   # 等价于 rad dev
 
 # 3) 校验
-pnpm test          # vitest，当前 59 例全绿（P2.6 后新增 2 例）
+pnpm test          # vitest，当前 68 例全绿（P2.7 新增 9 例）
 npx tsc --noEmit   # 0 错误
 pnpm lint
 ```
@@ -152,7 +152,7 @@ my-modules/
 | Spike A | antd / react-router / react-query 单入口 ESM + importmap 验证 | ✅ Go |
 | Spike B | 外部模块 Tailwind 产出与注入验证 | ✅ Go |
 | P1 | 垂直切片：`rad build` / `rad dev` / shell importmap / playground | ✅ |
-| **P2** | **依赖反转与语义迁移** | 🔄 **进行中，2.1–2.6 完成（剩 2.7 dogfooding 与 2.8 验收）** |
+| **P2** | **依赖反转与语义迁移** | ✅ **全部完成（2.1–2.8）** |
 | P3 | Runtime 出口收敛与冻结 | ⬜ |
 | P4 | Shell 与共享表治理 | ⬜ |
 | P5 | 模块迁移与测试改造 | ⬜ |
@@ -167,9 +167,9 @@ my-modules/
 | 2.3 | 框架内置 `NotFound` / `UnknownComponent` | ✅ | `db2d05f` |
 | 2.4 | CI 卡口：禁 runtime 内出现 `#modules` | ✅ | `c283a04` |
 | 2.5 | 移除主包对模块页面的 glob 收录 | ✅ | `4ed730d` |
-| 2.6 | `__APP_INFO__` → `getAppInfo()` | ✅（代码已就绪，working tree 中 staged 待提交） | `c283a04` 之后 |
-| 2.7 | 先迁 1–2 个模块 dogfooding 验证语义 | ⬜ | |
-| 2.8 | P2 TDD 验收与文档回填 | ⬜ | |
+| 2.6 | `__APP_INFO__` → `getAppInfo()` | ✅ | `a23abfa` |
+| 2.7 | 先迁 1–2 个模块 dogfooding 验证语义 | ✅（route-nest + system 迁移 + 默认值翻转为 none） | `766e4c3` / `5ffa2db` |
+| 2.8 | P2 TDD 验收与文档回填 | ✅（五条判据全绿） | 文档提交 |
 
 **2.4 具体做了什么**：ESLint 增加本地规则 `runtime-guard/no-modules-in-runtime`（仅作用于 `packages/runtime/src/**`，对 `import` / `export ... from` / 动态 `import()` 的 source 做 `#modules` 前缀判断），CI 新增 `.github/workflows/ci.yml` 跑 `grep -rn "#modules" packages/runtime/src && exit 1` 作为硬兜底。注意：**不能用 `no-restricted-imports`**——它底层用 minimatch，而 minimatch 默认把以 `#` 开头的 pattern 当注释忽略，导致 `#modules` 永远匹配不到（实测 `react` 能匹配、`#modules/**` 匹配不到）。测试侧对照断言已在 `tests/framework-fallback.test.ts`（全量扫描 runtime 源码），2.4 把它升级成了 lint + CI 双卡口。
 
@@ -201,15 +201,15 @@ my-modules/
 | P2.2 `handle.layout` 契约 | `tests/resolve-layout.test.ts` 通过；未声明路由默认 `container`，行为不变 | ✅ | `87bd842` |
 | P2.3 内置兜底页 | `tests/framework-fallback.test.ts` 5 例通过；runtime 源码全量无 `#modules/exception`；full vitest 57；`tsc --noEmit` 0；完整 `vite build` 通过 | ✅ | `db2d05f` |
 | P2.4 `#modules` 卡口 | eslint 规则 + CI grep 双卡口就位；`grep -rn "#modules" packages/runtime/src` 无输出；探针（静态+动态 import）均被拦截 | ✅ | `c283a04` |
-| P2.5 去模块 glob | `tests/module-route-priority.test.ts` 断言翻转为「不得收录 /modules/」并过；runtime 不再 glob 模块页面；full vitest 57；根 `pnpm run build` 9 模块独立构建通过 | ✅ | `4ed730d` |
-| P2.6 `getAppInfo()` | `tests/app-info-api.test.ts` 2 例通过；模块源码零 `__APP_INFO__` 直接引用；runtime 入口导出 `getAppInfo`；full vitest 59；`tsc --noEmit` 0；build 通过 | ✅ **代码就绪，暂未提交**（working tree 中 staged） | 待 commit |
+| P2.5 去模块 glob | `tests/module-route-priority.test.ts` 断言翻转为「不得收录 /modules/」并过；runtime 不再 glob 模块页面；full vitest 57；根 `pnpm run build` 8 模块独立构建通过 | ✅ | `4ed730d` |
+| P2.6 `getAppInfo()` | `tests/app-info-api.test.ts` 2 例通过；模块源码零 `__APP_INFO__` 直接引用；runtime 入口导出 `getAppInfo`；full vitest 59；`tsc --noEmit` 0；build 通过 | ✅ 通过 | `a23abfa` |
+| P2.7 模块布局解耦 dogfooding | `resolveRouteLayouts` 按 `handle.layout` 注入布局；route-nest/system 零 layout import 且产物无 `#src/layout`；默认值按 D9 翻转为 `none`；full vitest 68；`tsc --noEmit` 0；build 通过 | ✅ 通过 | `766e4c3` / `5ffa2db` |
+| P2.8 P2 验收 | §3 P2 完成判据 5 条全绿；本文与计划文档同步更新 | ✅ 通过 | 文档提交 |
 
 #### 未完成（待接手）
 
 | 任务 | 验收条件（做完的标准） | 当前状态 | 下一步 / 阻塞 |
 |---|---|---|---|
-| P2.7 dogfooding 验证 | 选 1–2 个模块（建议 `route-nest` + `system`）按新语义显式标注 `handle.layout` 等；验证缓存 / chrome / 路由优先级不回退；通过后把 `resolve-layout.ts` 默认 `container`→`none` | ⬜ 未开始 | 见 §5 与新同事上手清单；默认值的翻转见 §2.3 ⚠️ |
-| P2.8 P2 TDD 验收与文档回填 | P2 全任务 TDD 验收通过；计划文档各小结齐全；本文 §3.5 与 §3 同步到最新 | ⬜ 未开始 | 收尾，确认 P2 完成判据 5 条全绿 |
 | P3 出口冻结 | `#src/*`→`@react-antd-admin/runtime`；图标契约统一 `ReactNode`；出 `runtime.d.ts` 并取消 `private: true` | ⬜ 未开始 | **先修 d.ts 3 处报错**：`layout/layout-menu/style.ts:3` 与 `layout/layout-tabbar/style.ts:3` 的 TS2883（给 `createUseStyles` 显式 `Classes` 标注）、`locales/index.ts:19` 的 TS4023（`LanguageModule` 显式导出）。当前 `packages/runtime/dist/` 仅 `runtime.js`，无 `runtime.d.ts` |
 | P4 共享表治理 | importmap 自动生成（不再手写）；dev 三件套（`jsx-dev-runtime` 映射 / react-refresh preamble / sourcemap）；`rad info` 版本矩阵；版本严格相等校验（D12） | ⬜ | D12 必须严格相等而非 semver 范围 |
 | P5 模块迁移 | `modules/` 下 8 个模块全迁新语义；旧 `manifest.json` 下线（O5，建议 P5） | ⬜ | — |
@@ -360,13 +360,12 @@ d.ts 生成失败时仍会写出一部分声明文件到 `packages/runtime/dist/
 
 ## 8. 接手清单（按此顺序，给下一棒）
 
-> 交接时工作树状态：`feature/pkg-p2-inversion` 已提交到 `4ed730d`（P2.5）。**P2.6 的代码已写好并通过全部校验，但仍是 staged 未提交**（涉及 `packages/runtime/src/utils/get-app-info/`、`types/app-info.ts`、`tests/app-info-api.test.ts`，以及 `get-app-namespace`、`index.ts`、`global.d.ts`、`modules/about/*` 的改动）。
+> 当前状态：`feature/pkg-p2-inversion` 上 P2 全部任务（2.1–2.8）已完成并逐任务提交，五条完成判据全绿（68 测试 / tsc 0 错 / 完整构建通过）。
 
-1. **先收尾 P2.6 的提交**：`git commit`（沿用 `feat(p2.6): ...` 风格，subject 拉丁词小写）。保持「一个任务一个提交」。
-2. **确认基线**：`npx tsc --noEmit`（应 0 错）→ `pnpm test`（应为 59 绿）→ `pnpm run build`（9 模块独立构建通过）。
-3. **接 P2.7（dogfooding）**：挑 `modules/route-nest` + `modules/system`，按新语义显式标注 `handle.layout` 等；跑 `pnpm test` 并手动 `pnpm dev` 验证「整站 chrome 不消失 / 路由级 KeepAlive 仍生效 / 路由优先级断言通过」；**确认无误后再**把 `resolve-layout.ts` 的默认 `container` 翻成 `none`（⚠️ 见 §2.3，别看 D9 就直接改）。
-4. **收尾 P2.8**：逐条核对 §3 的 P2 完成判据 5 条全绿，补计划文档小结（若还缺），同步本文 §3.5。
-5. **进入 P3**：**先修 d.ts 3 处报错**（见 §3.5 / §5 的「已探明的具体阻碍」）——`layout-menu/style.ts`、`layout-tabbar/style.ts` 的 TS2883 给 `createUseStyles` 加显式 `Classes` 标注，`locales/index.ts:19` 的 TS4023 把 `LanguageModule` 显式导出。这三项解掉后 `pnpm --filter @react-antd-admin/runtime build` 才能出 `runtime.d.ts`，出口冻结才有载体。
-6. **P4–P6** 详见 §5 与各阶段计划。O7（refreshToken→httpOnly Cookie）需后端配合，不阻塞 P0–P5。
+1. **从 P2 分支切出 P3 分支**：`git switch -c feature/pkg-p3-runtime-api`（分支名见计划文档 §0）。
+2. **P3 第一步——修 d.ts 3 处报错**（见 §3.5 / §5 的「已探明的具体阻碍」）：`layout-menu/style.ts`、`layout-tabbar/style.ts` 的 TS2883 给 `createUseStyles` 加显式 `Classes` 标注，`locales/index.ts:19` 的 TS4023 把 `LanguageModule` 显式导出。这三项解掉后 `pnpm --filter @react-antd-admin/runtime build` 才能出 `runtime.d.ts`，出口冻结才有载体。
+3. **注意**：默认值已翻转为 `none`（§2.3），新模块不声明 `handle.layout` 就没有 chrome；后端下发的父级路由也须携带 layout。给模块排障时先查这个。
+4. **P3 后续**：出口白名单（3.1）、`#src/*` 说明符替换（3.2，23 个说明符 / 83 条 import / 28 文件，动手前重量）、图标契约（3.3）、`build-modules` 正则替换（3.4）、`registerSlot`（3.6）、playground 类型自证（3.7）。
+5. **P4–P6** 详见 §5 与各阶段计划。O7（refreshToken→httpOnly Cookie）需后端配合，不阻塞 P0–P5。
 
 **最小验证回路（任何改动后都跑）**：`npx tsc --noEmit` → `pnpm test` → 相关构建（runtime lib / shell / 完整 app）。测试里的路径从 `tests/helpers/paths.ts` 取，别硬编码。

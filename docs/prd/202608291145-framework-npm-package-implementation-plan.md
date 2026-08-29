@@ -290,8 +290,8 @@ pnpm build
 | 2.4 | 加 CI 卡口 | `eslint.config.js` 的 `no-restricted-imports` 禁 runtime 内出现 `#modules`；CI 跑 `grep -rn "#modules" packages/runtime/src && exit 1` | ✅ 已完成 |
 | 2.5 | 移除主包对模块页面的 glob 收录 | `generate-routes-from-backend.ts:14-17` 去掉 `/modules/*/pages/**`；同步改 `tests/module-route-priority.test.ts:43-52` 的断言为**不含** `/modules/` | ✅ 已完成 |
 | 2.6 | `__APP_INFO__` → `getAppInfo()` | 覆盖 `modules/about/pages/constants.ts:1` 与 `src/utils/get-app-namespace/index.ts:13` | ✅ 已完成 |
-| 2.7 | 先迁 1–2 个 dogfooding 模块验证语义 | 建议 `route-nest`（有嵌套）+ `system`（有 `keepAlive: false`） | ⬜ 待开始 |
-| 2.8 | TDD 验收与文档更新 | 缓存行为不回退、整站 chrome 不消失、路由优先级断言更新；完成后回填本表与总结 | ⬜ 待开始 |
+| 2.7 | 先迁 1–2 个 dogfooding 模块验证语义 | 建议 `route-nest`（有嵌套）+ `system`（有 `keepAlive: false`） | ✅ 已完成（`766e4c3` / `5ffa2db`） |
+| 2.8 | TDD 验收与文档更新 | 缓存行为不回退、整站 chrome 不消失、路由优先级断言更新；完成后回填本表与总结 | ✅ 已完成（五条判据全绿） |
 
 ### P2.1 执行小结
 
@@ -320,7 +320,7 @@ pnpm build
 - **改动**：`generate-routes-from-backend.ts` 的 `import.meta.glob` 移除 `/modules/*/pages/**/*.tsx`，`pageModules` 现仅收录框架自身 `packages/runtime/src/pages/**`。同时删除 `getComponentPathByRoute` 中「先查 src/pages、再查 modules/<name>/pages」的模块回退分支——该分支在移除 glob 后已无法命中，属死代码；现在函数只返回框架路径，命中则返回、未命中由 `loadRouteComponent` 统一降级为 `UnknownComponent`。
 - **为什么安全**：模块路由由 `loadAllModules(manifest)` 经各模块自身 `entry.ts` 的 glob 注册，进入 `auth-guard` 前 `filterBackendRoutes` 已把「与模块重复的后端路径」剔除（见 `auth-guard.tsx:119/127/134`），因此 `generateRoutesFromBackend` 实际只处理框架路径。框架不再 glob 模块页面，等价于「框架单向依赖模块」的反向耦合被切断。
 - **测试同步**：`tests/module-route-priority.test.ts` 该用例从「应搜索 modules/」翻转为「不得 glob 收录模块页面 /modules/」，并更正了测试名与断言语义。
-- **验证**：full vitest 57/57；`tsc --noEmit` 0 错误；`runtime` 库构建 6 模块（不再打包任何模块页面）；根 `pnpm run build` 全量通过，9 个模块各自独立构建到 `build/modules/*`（证明模块页面改由模块侧自行打包）。
+- **验证**：full vitest 57/57；`tsc --noEmit` 0 错误；`runtime` 库构建 6 模块（不再打包任何模块页面）；根 `pnpm run build` 全量通过，8 个模块各自独立构建到 `build/modules/*`（证明模块页面改由模块侧自行打包）。
 
 **BDD 场景**：设计文档 US-8（插槽部分）、US-4。
 
@@ -330,9 +330,36 @@ pnpm build
 - **消费点迁移**：① 框架侧 `get-app-namespace/index.ts` 由 `__APP_INFO__.pkg.version` 改为 `getAppInfo().pkg.version`；② 模块侧 `modules/about/pages/constants.ts` 与 `index.tsx`（共 4 处：`pkg.version` / `lastBuildTime` / `pkg.license` / `pkg.author`）全部改为 `getAppInfo()`。模块通过 `#src/utils/get-app-info` 引入，无需再依赖 Vite `define` 注入的全局（B9 解除）。
 - **为什么保留 vite `define`**：`__APP_INFO__` 仍由宿主/框架构建期注入，仅框架内部 `getAppInfo` 读取；模块不再引用该全局，因此外部模块工程不必复制同样的 define 配置。
 - **测试**：新增 `tests/app-info-api.test.ts`（2 例）——断言 runtime 入口导出 `getAppInfo`、模块源码零 `__APP_INFO__` 直接引用、框架内除 `getAppInfo` 外无直接读取点。
-- **验证**：full vitest 59/59（原 57 + 2）；`tsc --noEmit` 0 错误；根 `pnpm run build` 全量通过，9 个模块（含 about）各自独立构建成功。
+- **验证**：full vitest 59/59（原 57 + 2）；`tsc --noEmit` 0 错误；根 `pnpm run build` 全量通过，8 个模块（含 about）各自独立构建成功。
 
 **BDD 场景**：设计文档 US-8（插槽部分）、US-4。
+
+### P2.7 执行小结
+
+- **机制先行（TDD）**：US-8 要求「模块代码中无 layout import」，而 `handle.layout` 此前只被后端路由生成消费，模块路由原样透传。因此先在 `resolve-layout.ts` 新增纯函数 `resolveRouteLayouts()`（递归为**无 Component 且有 children** 的父级路由按 `handle.layout` 注入布局组件，不改原树，避免污染模块 definition），再接到 `module-loader.getRoutes()` 这一模块路由唯一出口。
+- **迁移两个模块**：`route-nest`（顶层 `container` + 嵌套 `parent`，覆盖两种布局语义）与 `system`（`container`，含 `keepAlive: false` 页面）删除布局 import，改为 `handle.layout` 显式声明。
+- **默认值翻转（同任务第二提交）**：`resolveLayoutComponent` 未声明时由 `ContainerLayout` 翻转为 `Outlet`（D9 目标态）。**翻转安全性论证**：① 默认 dev 配置下 fake 后端的 7 个顶级路径全部被模块覆盖，`filterBackendRoutes` 过滤后 `generateRoutesFromBackend` 实际收到空数组，后端路径对默认值的依赖在现状下不可达；② 未迁移的 6 个模块仍硬挂 `Component`，不经过解析器；③ 已迁移模块显式声明。翻转后契约显式化：**后端下发的父级路由此后须在 handle 携带 layout**。
+- **验证**：新增 `tests/module-layout.test.ts` 9 例（解析单测 6 例 + 迁移静态断言 3 例，其中 `LAYOUT_MIGRATED_MODULES` 列表供 P5 扩展）；full vitest 68/68；`tsc --noEmit` 0 错误；完整构建通过且 `build/modules/{route-nest,system}` 产物中已无 `#src/layout` 外部引用；`pnpm dev` 冒烟 200。注入的 ContainerLayout 与原硬挂为同一组件，路由树结构等价，浏览器可视级 chrome/keepalive 复核建议随 P5 全量迁移一并人工确认。
+
+### P2.8 验收记录
+
+P2 完成判据逐条核对（2026-08-29）：
+
+| # | 判据 | 结果 |
+|---|------|------|
+| 1 | `grep -rn "#modules" packages/runtime/src` 无输出 | ✅ exit 1（无命中） |
+| 2 | 缓存行为不回退 | ✅ `tests/keep-alive.test.ts` 3 例通过；`system/dept` 的 `keepAlive: false` 仍生效 |
+| 3 | 整站 chrome 不消失 | ✅ `resolveRouteLayouts` 注入同一 `ContainerLayout`（module-layout 单测锁定）；dev 冒烟 200 |
+| 4 | 路由优先级断言更新且通过 | ✅ `tests/module-route-priority.test.ts` 通过 |
+| 5 | `pnpm test` / `npx tsc --noEmit` / 完整 `vite build` 全绿 | ✅ 68/68、0 错误、EXIT=0 |
+
+### P2 阶段总结（2026-08-29）
+
+**关键过程**：P2 六个任务（2.1 KeepAlive 上移 → 2.2 layout 契约 → 2.3 内置兜底页 → 2.4 双卡口 → 2.5 去模块 glob → 2.6 getAppInfo）+ P2.7 dogfooding（模块布局解析机制 + 2 模块迁移 + D9 默认值翻转）+ P2.8 验收回填。全程 TDD：每个任务先写失败断言再实现；文档与实现不一致处（D9 默认值、`__REACT_INSTANCE_COUNT__`、模块数 9→8）均已在文档中改正。
+
+**对本计划文档的修正**：P2.6 小结中「9 个模块」实为 8 个（manifest.json 仅 8 项），已顺手更正。
+
+**耗时**：P2.7 + P2.8（本次会话）约 1 小时（含基线校验、两轮完整构建、文档回填）；P2.1–2.6 见各任务小结与提交记录（`26cc3d7`…`a23abfa`）。
 
 ---
 
