@@ -387,6 +387,20 @@ P2 完成判据逐条核对（2026-08-29）：
 - **TDD 载体**：新增 `tests/runtime-declarations.test.ts` 3 例（d.ts 存在、入口声明含 `getAppInfo`、exports types 指向真实文件）；full vitest 71/71，`tsc --noEmit` 0 错误，根完整构建通过。
 - **3.5 仍未完成**：`files` 字段核对、出口树裁剪（internal 标注）、取消 `private: true`——与 3.1 出口白名单一并做。dist 产物已随本提交入库（.gitignore 白名单放行）。
 
+### P3.1 执行小结：出口白名单冻结（2026-08-29，`feature/pkg-p3-runtime-api`）
+
+- **出口面**：`index.ts` 按 P1 全量用量统计（29 文件 / 23 种 `#src/*` 说明符）冻结为：组件（BasicContent/BasicButton/BasicTable/Iframe/AccessControl/表单项）、api（home/user/system-role/system-menu）、hooks（useAccess/usePreferences/权限常量）、store（useAuthStore/useUserStore）、icons、utils（tree/getAllExpandedKeys）、constants（options）及既有契约与类型面。`tests/runtime-exports.test.ts`（7 例）即冻结契约：运行时符号逐项断言 + 类型面交由 `tsc --noEmit`。P3.2 的 codemod 之后，模块工程超出此面的 import 一律不允许。
+- **布局组件不进出口**：剩余 6 个模块的 `#src/layout/container-layout` import 在 P3.2 一并迁移为 `handle.layout` 声明（前跑 P5.1 的布局部分，`resolveRouteLayouts` 机制 P2.7 已就位），布局组件保持框架内部。
+- **图标出口零泄漏**：`local-icons.ts` / `ri.ts` 改为「import 原始组件 + `IconComponent` 类型注解包装导出」，d.ts 内联组件类型，`~icons/*` 虚拟模块不再出现在声明里（与 P3.5 的 jss `Classes` 同类问题）。
+- **全绿**：tsc 0 错误，vitest 78/78（新增 7），根构建通过，runtime 包 `dist/` 重建（164 个声明文件），产物 `#src` / `~icons` 残留为零。
+
+**P3.1 过程中发现的问题（分类记录）**：
+
+1. 【反常规·发布物缺陷】`@ant-design/pro-components` 的 package.json 标 `type: "module"`，但 `main`（`lib/`）是 CJS 语法，`module`（`es/`）内部又是目录导入——node/vitest 按 ESM 加载必然失败，仅 vite bundler 解析可用。测试中以 `vi.mock` stub 规避（出口契约只关心 `BasicTable` 被导出）。
+2. 【既有缺陷被放大】runtime 产物长期残留 `from "#src/..."` 外部导入（HEAD 版即有 3 处，`package.json` imports field 解析时好时坏），浏览器 importmap 无此映射、必然崩溃，P1 垂直切片因未触发 auth-guard/request 链而未暴露。根修：runtime `vite.config.ts` 增加 `resolve.alias`（`#src → src`）并在 `external` 放行 `#src/*`、`~icons/*`，两类说明符全部构建期内联。
+3. 【债务登记 → P4 输入】出口扩大后 `dist/runtime.js` 的裸依赖面扩至 24 个（zustand、ahooks、ky、@ant-design/pro-components、@dnd-kit/*、keepalive-for-react、motion/react、nprogress、pinyin-pro、react-error-boundary、simplebar-react、spin-delay、tailwind-merge、antd-img-crop、react-jss 等）。monorepo alias 模式不受影响，但 shell importmap（P1 手工 15 项）远未覆盖；`shell/dist/assets/runtime.js` 亦已过期。P4「SHARED_DEPS 单一来源 + importmap 自动生成」须以此为输入清单，并重建 shell。
+4. 【工具链】vitest 处理「假 ESM」依赖的三个开关（`server.deps.inline` / `deps.optimizer.ssr.include` / `server.deps.web`）在 alias 与包名两种 id 形态下均未能命中，最终以 `vi.mock` 解决——记录避免后续重复试错。
+
 ---
 
 ## P4: Shell 与共享表治理
