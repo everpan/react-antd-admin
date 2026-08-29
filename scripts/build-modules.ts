@@ -5,67 +5,7 @@ import process from "node:process";
 import react from "@vitejs/plugin-react";
 import { build } from "vite";
 import { readModuleDefinition } from "../packages/cli/src/build";
-
-const SHARED_EXTERNALS: (string | RegExp)[] = [
-	// React
-	"react",
-	"react-dom",
-	"react/jsx-runtime",
-	/^react\//,
-	// Router
-	"react-router",
-	/^react-router\//,
-	// Ant Design
-	"antd",
-	/^antd\//,
-	/^@ant-design\//,
-	// State
-	"zustand",
-	/^zustand\//,
-	// i18n
-	"i18next",
-	/^i18next\//,
-	"react-i18next",
-	/^react-i18next\//,
-	// HTTP
-	"ky",
-	/^ky\//,
-	// Date
-	"dayjs",
-	/^dayjs\//,
-	// Hooks
-	"ahooks",
-	/^ahooks\//,
-	// CSS-in-JS
-	"react-jss",
-	/^react-jss\//,
-	/^@ant-design\/cssinjs/,
-	// Animation
-	"motion",
-	/^motion\//,
-	// Charts
-	"echarts",
-	/^echarts\//,
-	"echarts-for-react",
-	// Form
-	"@ant-design/pro-components",
-	/^@ant-design\/pro-components\//,
-	// Other
-	"nprogress",
-	"keepalive-for-react",
-	"simplebar-react",
-	"tailwind-merge",
-	/^@dnd-kit\//,
-];
-
-function isExternal(id: string): boolean {
-	return SHARED_EXTERNALS.some((pattern) => {
-		if (typeof pattern === "string") {
-			return id === pattern || id.startsWith(`${pattern}/`);
-		}
-		return pattern.test(id);
-	});
-}
+import { isSharedDep } from "../packages/cli/src/shared-deps";
 
 function getOutputDir(moduleName: string, version: string): string {
 	return path.resolve("build", "modules", moduleName, version);
@@ -96,14 +36,12 @@ async function buildModule(moduleDir: string) {
 			emptyOutDir: true,
 			rollupOptions: {
 				external: (id) => {
-					if (id.startsWith("#src/") || id.startsWith("#modules/")) {
-						return true;
-					}
 					if (id === "@react-antd-admin/runtime") {
 						// 框架运行时由宿主 importmap 提供（P3.2）
 						return true;
 					}
-					return isExternal(id);
+					// P4.7：共享表收敛到 cli 单一来源，本地 SHARED_EXTERNALS 已删（B1/B11）
+					return isSharedDep(id);
 				},
 			},
 		},

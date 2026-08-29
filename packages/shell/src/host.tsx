@@ -100,7 +100,23 @@ function Boot() {
 				const res = await fetch("./modules.json");
 				if (!res.ok)
 					throw new Error(`modules.json 加载失败：HTTP ${res.status}`);
-				const manifest = await res.json();
+				const list: { name?: string, entry?: string, css?: string[] }[] = await res.json();
+
+				// P4.6 / Spike B：外部模块的 tailwind/css 产物由模块侧构建、
+				// 宿主侧 <link> 注入（在 loadAll 之前，避免样式闪断）
+				for (const mod of list) {
+					for (const href of mod.css ?? []) {
+						if (!document.querySelector(`link[href="${href}"]`)) {
+							const link = document.createElement("link");
+							link.rel = "stylesheet";
+							link.href = href;
+							document.head.appendChild(link);
+						}
+					}
+				}
+
+				// modules.json（cli BuiltModule[]）→ loader 的 Manifest 形状
+				const manifest = { modules: list.map(m => ({ name: m.name ?? "", entry: m.entry ?? "" })) };
 
 				// 并发加载、拓扑排序、生命周期、i18n 合并（见 runtime module-loader）
 				await loadAll(manifest);

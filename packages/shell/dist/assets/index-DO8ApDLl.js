@@ -99,7 +99,17 @@ function Boot() {
 				await ensureI18n();
 				const res = await fetch("./modules.json");
 				if (!res.ok) throw new Error(`modules.json 加载失败：HTTP ${res.status}`);
-				const manifest = await res.json();
+				const list = await res.json();
+				for (const mod of list) for (const href of mod.css ?? []) if (!document.querySelector(`link[href="${href}"]`)) {
+					const link = document.createElement("link");
+					link.rel = "stylesheet";
+					link.href = href;
+					document.head.appendChild(link);
+				}
+				const manifest = { modules: list.map((m) => ({
+					name: m.name ?? "",
+					entry: m.entry ?? ""
+				})) };
 				await loadAll(manifest);
 				if (cancelled) return;
 				setRouter(createBrowserRouter([{
