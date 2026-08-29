@@ -285,7 +285,7 @@ pnpm build
 | # | 任务 | 说明 | 状态 |
 |---|------|------|------|
 | 2.1 | **KeepAlive 上移到 shell 固定层**（必须第一个做） | 从 `ContainerLayout → LayoutContent`（`src/layout/layout-content/index.tsx:116-126`）移到 LayoutRoot 之后、路由 outlet 之外；exclude 改由 module-loader 汇总各模块 `handle` 计算 | ✅ 已完成（`26cc3d7`） |
-| 2.2 | 引入 `handle.layout` 契约 | `"container" \| "parent" \| "none"`，迁移期默认 `container`（P2.7 后改为 `none`）；`src/router/types.ts` 的 `RouteMeta` 加字段 | ✅ 已完成（`87bd842`） |
+| 2.2 | 引入 `handle.layout` 契约 | `"container" \| "parent" \| "none"`，迁移期默认 `container`（**P2.7 已翻转为 `none`**，见 2.7 小结）；`src/router/types.ts` 的 `RouteMeta` 加字段 | ✅ 已完成（`87bd842`） |
 | 2.3 | 框架内置 `NotFound` / `UnknownComponent` | 替代 `fallback.ts:5`、`generate-routes-from-backend.ts:8` 对 `#modules/exception` 的依赖；exception 模块降级为可选覆盖 | ✅ 已完成 |
 | 2.4 | 加 CI 卡口 | `eslint.config.js` 的 `no-restricted-imports` 禁 runtime 内出现 `#modules`；CI 跑 `grep -rn "#modules" packages/runtime/src && exit 1` | ✅ 已完成 |
 | 2.5 | 移除主包对模块页面的 glob 收录 | `generate-routes-from-backend.ts:14-17` 去掉 `/modules/*/pages/**`；同步改 `tests/module-route-priority.test.ts:43-52` 的断言为**不含** `/modules/` | ✅ 已完成 |

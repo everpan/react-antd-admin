@@ -9,18 +9,20 @@ import ParentLayout from "#src/layout/parent-layout";
  * 根据路由 `handle.layout` 解析所用布局组件（P2.2，设计文档 D9）。
  *
  * - `"parent"` → ParentLayout（自身含 Outlet，用于嵌套菜单场景）
- * - `"none"`   → Outlet（无 chrome，页面 / 子路由直接渲染）
- * - `"container"` / 未声明 → ContainerLayout（**迁移期默认**，保持既有行为，
- *   避免整站 chrome 消失；目标在 P2.7 所有路由显式声明 layout 后改为 `"none"`）
+ * - `"container"` → ContainerLayout（整站 chrome：header / sidebar / tabbar / footer）
+ * - `"none"` / 未声明 → Outlet（无 chrome，页面 / 子路由直接渲染）
+ *
+ * 未声明即 `none` 是 D9 的目标态（P2.7 dogfooding 验证后自迁移期默认 `container` 翻转）：
+ * 布局必须显式声明，框架不做隐式推导；后端下发的父级路由需在 handle 中携带 layout。
  */
 export function resolveLayoutComponent(handle?: Partial<RouteMeta>): ComponentType {
 	switch (handle?.layout) {
 		case "parent":
 			return ParentLayout;
-		case "none":
-			return Outlet;
-		default:
+		case "container":
 			return ContainerLayout;
+		default:
+			return Outlet;
 	}
 }
 

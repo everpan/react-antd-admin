@@ -104,7 +104,7 @@ my-modules/
 
 因此改为显式契约 `handle.layout: "container" | "parent" | "none"`。
 
-> ⚠️ 设计文档 D9 写的默认值是 `none`，但**当前实现的默认值是 `container`**（`packages/runtime/src/router/utils/resolve-layout.ts`）。这是刻意的：迁移期未声明的路由必须保持既有行为，否则现有 8 个模块立刻全炸。等 P2.7 dogfooding 把模块逐个显式标注完，再把默认值切到 `none`。**接手时别看到 D9 就直接改默认值。**
+> ✅ **默认值已翻转（P2.7）**：迁移期默认值曾是 `container`（未声明的路由保持既有行为，否则现有 8 个模块立刻全炸）。P2.7 dogfooding（route-nest + system）验证新语义后，`resolve-layout.ts` 的默认值已按 D9 翻转为 `none`（未声明 → 直接渲染）。配套机制：模块路由由 `module-loader.getRoutes()` 出口的 `resolveRouteLayouts()` 按 `handle.layout` 统一包裹，模块不再 import 布局组件。
 
 ### 2.4 KeepAlive 必须先上移，再做布局去中心化
 

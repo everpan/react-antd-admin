@@ -18,8 +18,8 @@ describe("resolveLayoutComponent (P2.2)", () => {
 		expect(resolveLayoutComponent({ layout: "container" })).toBe(ContainerLayout);
 	});
 
-	it("未声明 → 默认 ContainerLayout（迁移期向后兼容）", () => {
-		expect(resolveLayoutComponent()).toBe(ContainerLayout);
-		expect(resolveLayoutComponent({})).toBe(ContainerLayout);
+	it("未声明 → 默认 Outlet（P2.7 后落地 D9 目标态：布局必须显式声明）", () => {
+		expect(resolveLayoutComponent()).toBe(Outlet);
+		expect(resolveLayoutComponent({})).toBe(Outlet);
 	});
 });
