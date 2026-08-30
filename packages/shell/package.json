@@ -2,9 +2,12 @@
 	"name": "@react-antd-admin/shell",
 	"type": "module",
 	"version": "0.0.0",
-	"private": true,
 	"description": "预构建宿主站点（dist + importmap），由 rad dev / rad build 使用",
 	"license": "MIT",
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org/",
+		"access": "public"
+	},
 	"exports": {
 		"./dist": "./dist"
 	},

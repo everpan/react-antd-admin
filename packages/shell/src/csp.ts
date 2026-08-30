@@ -28,13 +28,16 @@ export function generateCsp(trustedOrigins: string[], nonce: string): string {
 		"default-src 'none'",
 		`script-src 'self' ${cdn} 'nonce-${nonce}'`.replace(/\s+/g, " ").trim(),
 		"script-src-attr 'none'",
-		"connect-src 'self'",
+		// P7.4：跨源模块的 fetch 与 CSS <link> 同样需要信任源，
+		// 否则脚本可加载而样式/请求被拦（此前只加了 script-src）
+		`connect-src 'self' ${cdn}`.replace(/\s+/g, " ").trim(),
 		// antd CSS-in-JS 必需（cssinjs 动态插 <style>）
-		"style-src 'self' 'unsafe-inline'",
+		`style-src 'self' ${cdn} 'unsafe-inline'`.replace(/\s+/g, " ").trim(),
 		"img-src 'self' data: https:",
 		"font-src 'self' data:",
-		// iframe 模块域名白名单（P6.4 同源收敛；部署时按业务域增补）
-		"frame-src https://ant.design https://react.dev",
+		// iframe 模块域名白名单（P6.4 同源收敛；与 runtime IFRAME_ALLOWED_HOSTS
+		// 保持一致，tests/iframe-whitelist-consistency.test.ts 断言）
+		"frame-src https://ant.design https://react.dev https://condorheroblog.github.io",
 		"form-action 'none'",
 		"base-uri 'none'",
 		"object-src 'none'",

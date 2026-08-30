@@ -23,9 +23,11 @@ describe("fake server 生产门禁（P6.5 / B15）", () => {
 		expect(source).toContain("VITE_ENABLE_FAKE_PROD");
 	});
 
-	it("构建产物不含 fake server 代码", (ctx) => {
+	it("构建产物不含 fake server 代码", () => {
+		// P7.5 / 评审 S6：产物缺失时不得静默 skip（此前 CI 若未先 build，
+		// 本断言永远空转，B15 门禁形同虚设）——缺失即失败并给出指引
 		if (!fs.existsSync(BUILD_DIR)) {
-			ctx.skip();
+			throw new Error("build/ 不存在：本断言必须排在 pnpm build 之后执行（CI 顺序见 .github/workflows/ci.yml）");
 		}
 		const assets = path.join(BUILD_DIR, "assets");
 		const files = fs.readdirSync(assets);

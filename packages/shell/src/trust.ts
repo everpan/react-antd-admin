@@ -15,14 +15,27 @@ export const TRUSTED_ORIGINS: string[] = [
 	"https://modules.cdn.example.com",
 ];
 
-/** 判定单个资源 URL 是否可信：相对路径（同源）或命中白名单 */
+/**
+ * 判定单个资源 URL 是否可信：同源相对路径或命中白名单。
+ *
+ * P7.1 修复：不得以「不含 ://」判同源——协议相对 URL（//host/x）、
+ * 反斜杠（https:\\host\x，WHATWG 解析为跨源）、data:/blob:（违反 C6）
+ * 均不含 "://"。一律经 new URL 归一化后比对 origin。
+ */
 function isTrustedUrl(url: string): boolean {
 	if (!url)
 		return true;
-	if (!url.includes("://"))
-		return true; // 同源相对路径
+	// 浏览器环境取真实 origin；Node（测试/构建）下落一个不冲突的占位 origin
+	const base = typeof location === "undefined" ? "http://shell.local" : location.origin;
 	try {
-		return TRUSTED_ORIGINS.includes(new URL(url).origin);
+		const resolved = new URL(url, base);
+		// blob:/data:/file: 等非 http(s) 协议一律拒绝（C6）；blob: 的 origin
+		// 会解包成内层 origin，不能依赖 origin 比对
+		if (resolved.protocol !== "http:" && resolved.protocol !== "https:")
+			return false;
+		if (resolved.origin === new URL(base).origin)
+			return true; // 同源（含相对路径）
+		return TRUSTED_ORIGINS.includes(resolved.origin);
 	}
 	catch {
 		return false;

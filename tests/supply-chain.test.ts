@@ -20,15 +20,14 @@ function readPkg(name: string) {
  *  - R13（不签名，O3 已定）在 README 明示。
  */
 describe("供应链加固（P6.6）", () => {
-	it.each(["runtime", "cli"])("%s 包 publishConfig 锁定官方 registry 且公开访问", (name) => {
+	// P7.10 决策翻转：P6.6 曾定「shell 保持 private 以 dist 交付」，但外部工程的
+	// rad dev/build 依赖 node_modules/@react-antd-admin/shell/dist（resolveShellDist），
+	// 不发布则 US-1/US-2 第一步即失败（评审 F5）——回到 §4.1 的发布形态
+	it.each(["runtime", "cli", "shell"])("%s 包 publishConfig 锁定官方 registry 且公开访问", (name) => {
 		const pkg = readPkg(name);
 		expect(pkg.private).toBeUndefined();
 		expect(pkg.publishConfig?.registry).toBe(NPMJS);
 		expect(pkg.publishConfig?.access).toBe("public");
-	});
-
-	it("shell 保持 private（预构建宿主以 dist 交付，不走 npm）", () => {
-		expect(readPkg("shell").private).toBe(true);
 	});
 
 	it(".npmrc 锁定安装源并开启 provenance", () => {

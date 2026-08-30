@@ -60,6 +60,36 @@ describe("scoped request 单元（P6.3）", () => {
 		prefix = "/b";
 		expect(() => scoped("/b/x")).not.toThrow();
 	});
+
+	// P7.2：startsWith 裸匹配的三类绕过全部必须拒绝
+	it("兄弟前缀不放行（/order-api 登记后 /order-api-evil 越界）", () => {
+		const scoped = createScopedRequest("m1", () => "/order-api", fakeRequest);
+		expect(() => scoped("/order-api-evil/list")).toThrow(/越界/);
+	});
+
+	it("路径穿越不放行（../ 归一化后越界）", () => {
+		const scoped = createScopedRequest("m1", () => "/order-api", fakeRequest);
+		expect(() => scoped("/order-api/../user/list")).toThrow(/越界/);
+	});
+
+	it("逐请求 prefix/prefixUrl 覆盖被剥离（防带 token 打到外域）", () => {
+		const calls2: [string, any][] = [];
+		const spy = ((url: string, options?: any) => {
+			calls2.push([url, options]);
+			return Promise.resolve(url);
+		}) as any;
+		const scoped = createScopedRequest("m1", () => "/order-api", spy);
+		scoped("/order-api/list", { prefix: "https://evil.example.com", other: 1 } as any);
+		expect(calls2).toHaveLength(1);
+		expect(calls2[0]?.[1]).not.toHaveProperty("prefix");
+		expect(calls2[0]?.[1]).not.toHaveProperty("prefixUrl");
+		expect(calls2[0]?.[1]).toHaveProperty("other", 1);
+	});
+
+	it("前缀恰好命中本身（无尾段）放行", () => {
+		const scoped = createScopedRequest("m1", () => "/order-api", fakeRequest);
+		expect(() => scoped("/order-api")).not.toThrow();
+	});
 });
 
 describe("scoped request 模块集成（P6.3 / D11）", () => {

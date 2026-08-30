@@ -8,7 +8,7 @@ import { pathToFileURL } from "node:url";
 import { build as esbuild } from "esbuild";
 import { build } from "vite";
 import { loadModulesConfig, resolveModuleEntry } from "./config";
-import { isSharedDep } from "./shared-deps";
+import { isSharedDep, SHARED_DEPS } from "./shared-deps";
 import { checkSharedVersions, resolveShellDist } from "./versions";
 
 /**
@@ -102,6 +102,8 @@ export const getRoutes = () => [];
 export const getRegisteredStore = () => undefined;
 export const getRegisteredApiPrefix = () => undefined;
 export const loadAll = async () => [];
+export const unloadModule = async () => {};
+export const useSlotNodes = () => [];
 `;
 
 /**
@@ -178,12 +180,10 @@ function sha384(file: string): string {
 }
 
 /**
- * 用 esbuild 把 entry 转译并 external 所有包依赖，写出到临时目录后
- * 以普通 `import()` 加载（此时全局注册的 stub 加载钩子会生效）：
- *   - `@react-antd-admin/runtime` → 已构建的 dist/runtime.js（真实模块）
- *   - 其余共享依赖 → 空 stub
- * 从而读取模块定义（name/version/peerRuntime/config）而无需真正加载整个框架
- * 运行时（其源码含 Vite 专有的 `?react`/`?url` svg 导入），替代脆弱的正则（B10）。
+ * 用 esbuild 把 entry 打包成单文件（含 runtime 占位 stub 与动态 import 空 stub），
+ * 写出到工程内临时目录后以普通 `import()` 加载，从而读取模块定义
+ * （name/version/peerRuntime/config）而无需真正加载整个框架运行时
+ * （其源码含 Vite 专有的 `?react`/`?url` svg 导入），替代脆弱的正则（B10）。
  *
  * P3.4 起同时供主仓库 `scripts/build-modules.ts` 复用（经 exports `./build`）。
  */
@@ -238,6 +238,73 @@ function warnUnsharedDeps(projectRoot: string) {
 		console.warn(
 			`[rad] ⚠️ 以下运行时依赖不在共享表内，会被打进模块产物：${unshared.join(", ")}\n`
 			+ "     若它应与宿主共用，请加入 SHARED_DEPS 并在宿主 importmap 中映射（设计文档 C8）",
+		);
+	}
+}
+
+/** 提取产物文件中的全部裸说明符（排除相对/绝对/# 路径） */
+function collectBareSpecifiers(file: string): string[] {
+	const source = fs.readFileSync(file, "utf-8");
+	const found = new Set<string>();
+	const patterns = [
+		/(?:import|export)\s[^'";]*?from\s*["']([^"']+)["']/g, // import/export ... from "x"
+		/import\s*["']([^"']+)["']/g, // 副作用导入 import "x"
+		/import\(\s*["']([^"']+)["']\s*\)/g, // 动态 import("x")
+	];
+	for (const pattern of patterns) {
+		for (const match of source.matchAll(pattern)) {
+			const spec = match[1]!;
+			if (!spec.startsWith(".") && !spec.startsWith("/") && !spec.startsWith("#"))
+				found.add(spec);
+		}
+	}
+	return [...found];
+}
+
+/**
+ * P7.9 / B11 + C8：构建期扫描模块产物的裸说明符。
+ * - 深路径命中共享表前缀但非精确 importmap 键（如 dayjs/plugin/utc）：
+ *   构建期直接报错——importmap 无前缀通配，浏览器必抛
+ *   "Failed to resolve module specifier"，不能拖到运行期（§4.7 错误契约）。
+ * - 表外说明符：C8 构建期告警（按真实 import 分析，不依赖 package.json 字段）。
+ */
+function assertResolvableSpecifiers(
+	moduleName: string,
+	moduleOutDir: string,
+	emitted: Map<string, { type: string, fileName: string }>,
+): void {
+	const exactKeys = new Set(SHARED_DEPS.map(dep => dep.specifier));
+	const deepPathErrors: string[] = [];
+	const unsharedWarnings = new Set<string>();
+
+	for (const info of emitted.values()) {
+		if (info.type !== "chunk")
+			continue;
+		for (const spec of collectBareSpecifiers(path.join(moduleOutDir, info.fileName))) {
+			if (exactKeys.has(spec))
+				continue;
+			if (isSharedDep(spec)) {
+				deepPathErrors.push(`  · ${info.fileName} → "${spec}"`);
+			}
+			else {
+				unsharedWarnings.add(spec);
+			}
+		}
+	}
+
+	if (deepPathErrors.length > 0) {
+		throw new Error(
+			`[rad] 模块 "${moduleName}" 的产物含 importmap 无法解析的深路径说明符：\n`
+			+ `${deepPathErrors.join("\n")}\n`
+			+ "共享表只提供精确键（importmap 无前缀通配）。修复建议：改从包根导入"
+			+ "（如 dayjs 插件改在宿主侧注册），或联系框架方在 SHARED_DEPS 增补该深路径条目。",
+		);
+	}
+
+	if (unsharedWarnings.size > 0) {
+		console.warn(
+			`[rad] ⚠️ 模块 "${moduleName}" import 了共享表外的三方库：${[...unsharedWarnings].join(", ")}\n`
+			+ "     它们会被打进模块产物。若应与宿主共用，请加入 SHARED_DEPS（设计文档 C8）",
 		);
 	}
 }
@@ -332,15 +399,33 @@ export async function buildModules(projectRoot: string): Promise<BuiltModule[]> 
 					css.push(`${prefix}${info.fileName}`);
 				continue;
 			}
-			if (info.isEntry)
-				continue;
 
+			// P7.3：entry 也进 chunks（lazy:false）——宿主 L2 完整性按 chunks[]
+			// 注入 modulepreload+integrity，此前 entry 被 isEntry 跳过导致
+			// 顶层 integrity 成为死字段（评审 S3：入口恰好不受保护）
 			chunks.push({
 				url: `${prefix}${info.fileName}`,
 				integrity: sha384(path.join(moduleOutDir, info.fileName)),
-				lazy: info.isDynamicEntry,
+				lazy: info.isEntry ? false : info.isDynamicEntry,
 			});
 		}
+
+		// §4.6：lazy chunk 不受 L2 完整性保护，构建期必须显式提示
+		const lazyChunks = chunks.filter(c => c.lazy);
+		if (lazyChunks.length > 0) {
+			console.warn(
+				`[rad] 模块 "${definition.name}" 含 ${lazyChunks.length} 个 lazy chunk，`
+				+ "它们在 L2 完整性档位下不受保护（§4.7 D7）：\n"
+				+ `${lazyChunks.map(c => `  · ${c.url}`).join("\n")}\n`
+				+ "若这些 chunk 也要求完整性，请升级到 L3（Service Worker）或使用逃生通道（§4.7）。",
+			);
+		}
+
+		// P7.9 / B11：扫描产物中的裸说明符，构建期拦截 importmap 无法解析的
+		// 深路径（如 dayjs/plugin/utc——isSharedDep 前缀命中但 importmap 只有
+		// 精确键，浏览器必抛 Failed to resolve module specifier）；
+		// 顺带以真实 import 分析落地 C8 表外依赖告警（不再只扫 package.json 字段）
+		assertResolvableSpecifiers(definition.name, moduleOutDir, emitted);
 
 		built.push({
 			name: definition.name,

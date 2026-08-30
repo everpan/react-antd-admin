@@ -17,6 +17,9 @@ export interface HostChunk {
 export interface HostModule {
 	name?: string
 	entry?: string
+	enabled?: boolean
+	dependencies?: string[]
+	peerRuntime?: string
 	css?: string[]
 	chunks?: HostChunk[]
 }

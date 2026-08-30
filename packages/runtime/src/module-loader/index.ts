@@ -13,6 +13,7 @@ import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
 import { useUserStore } from "#src/store/user";
 import { createScopedRequest } from "#src/utils/request/scoped";
 import { getAllRoutePaths, getKeepAliveExcludes } from "./keep-alive";
+import { satisfiesSemver } from "./semver";
 import { registerSlot, removeModuleSlots } from "./slots";
 
 const modules = new Map<string, ModuleInstance>();
@@ -137,6 +138,24 @@ export async function loadAll(manifest: Manifest): Promise<ModuleInstance[]> {
 
 	for (const { entry, definition } of loadResults) {
 		if (definition) {
+			// P7.6 / US-5 / D12：peerRuntime 与宿主 runtime 版本不兼容 →
+			// 显式失败（含模块名/期望/实际），禁止静默成功
+			const peerRuntime = definition.peerRuntime ?? entry.peerRuntime;
+			if (manifest.runtimeVersion && peerRuntime && !satisfiesSemver(manifest.runtimeVersion, peerRuntime)) {
+				console.error(
+					`[module-loader] 模块 "${entry.name}" 与宿主 runtime 版本不兼容：`
+					+ `期望 ${peerRuntime}，实际 ${manifest.runtimeVersion}。已跳过加载。`
+					+ "修复建议：升级宿主 runtime 或按兼容范围重新构建该模块（US-5）。",
+				);
+				modules.set(entry.name, {
+					definition,
+					status: "error",
+					error: new Error(
+						`模块 "${entry.name}" peerRuntime 不兼容：期望 ${peerRuntime}，实际 ${manifest.runtimeVersion}`,
+					),
+				});
+				continue;
+			}
 			definitions.set(entry.name, definition);
 			validEntries.push(entry);
 			modules.set(entry.name, {
@@ -150,6 +169,28 @@ export async function loadAll(manifest: Manifest): Promise<ModuleInstance[]> {
 				status: "error",
 				error: new Error("Failed to load module entry"),
 			});
+		}
+	}
+
+	// P7.8 / US-9：依赖缺失（未声明在清单或加载失败）→ 标 missing-deps 并跳过
+	// 生命周期与路由注册，不得半加载；提示包含缺失的依赖名
+	for (let i = validEntries.length - 1; i >= 0; i--) {
+		const entry = validEntries[i]!;
+		const definition = definitions.get(entry.name)!;
+		const deps = definition.config?.dependencies ?? entry.dependencies ?? [];
+		const missing = deps.filter(dep => !definitions.has(dep));
+		if (missing.length > 0) {
+			console.error(
+				`[module-loader] 模块 "${entry.name}" 依赖缺失：${missing.join(", ")} 未加载。`
+				+ "已跳过该模块（不执行生命周期、不注册路由）。修复建议：先部署依赖模块，或在清单中移除该依赖（US-9）。",
+			);
+			modules.set(entry.name, {
+				definition,
+				status: "missing-deps",
+				error: new Error(`模块 "${entry.name}" 依赖缺失：${missing.join(", ")}`),
+			});
+			validEntries.splice(i, 1);
+			definitions.delete(entry.name);
 		}
 	}
 
@@ -200,13 +241,18 @@ export function getModule(name: string): ModuleInstance | undefined {
 export function getRoutes(): AppRouteRecordRaw[] {
 	// P5.9 / B16：模块级 requiredRoles 在路由注入前过滤——
 	// 无角色的用户拿不到路由本身（菜单同源），而非渲染后 403
-	const { roles } = useUserStore.getState();
+	// P7.12：requiredPermissions 同样前置过滤（须全部满足），两者可叠加
+	const { roles, permissions = [] } = useUserStore.getState();
 	const routes: AppRouteRecordRaw[] = [];
 	for (const instance of modules.values()) {
-		if (instance.status === "error")
+		// error / missing-deps（P7.8）等一切非就绪状态都不产出路由
+		if (instance.status !== "loaded" && instance.status !== "active")
 			continue;
 		const requiredRoles = instance.definition.config?.requiredRoles;
 		if (requiredRoles?.length && !requiredRoles.some(role => roles.includes(role)))
+			continue;
+		const requiredPermissions = instance.definition.config?.requiredPermissions;
+		if (requiredPermissions?.length && !requiredPermissions.every(perm => permissions.includes(perm)))
 			continue;
 		if (instance.definition.routes.length > 0) {
 			// P2.7：布局不再由模块自行 import，按 handle.layout 在出口统一包裹
@@ -241,11 +287,11 @@ export async function unloadModule(name: string): Promise<void> {
 }
 
 /**
- * 当前已加载（非 error）模块的全部定义，供 keep-alive 聚合使用。
+ * 当前已就绪（loaded/active）模块的全部定义，供 keep-alive 聚合使用。
  */
 function loadedDefinitions(): ModuleDefinition[] {
 	return Array.from(modules.values())
-		.filter(instance => instance.status !== "error")
+		.filter(instance => instance.status === "loaded" || instance.status === "active")
 		.map(instance => instance.definition);
 }
 

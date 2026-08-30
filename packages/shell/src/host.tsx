@@ -31,6 +31,7 @@ import {
 	RouterProvider,
 	useNavigate,
 } from "react-router/dom";
+import { extractRuntimeVersion, toLoaderManifest } from "./manifest";
 import { collectPreloads } from "./preload";
 import { assertTrustedModules } from "./trust";
 
@@ -101,10 +102,21 @@ function Boot() {
 			try {
 				await ensureI18n();
 
-				const res = await fetch("./modules.json");
+				// 模块清单与宿主版本矩阵并行拉取（versions.json 提供
+				// peerRuntime 校验所需的宿主 runtime 版本，P7.6；404 容忍——
+				// 拿不到则跳过版本校验并告警，不阻断启动）
+				const [res, versionsRes] = await Promise.all([
+					fetch("./modules.json"),
+					fetch("./versions.json").catch(() => null),
+				]);
 				if (!res.ok)
 					throw new Error(`modules.json 加载失败：HTTP ${res.status}`);
 				const list: HostModule[] = await res.json();
+				const runtimeVersion = versionsRes?.ok
+					? extractRuntimeVersion(await versionsRes.json())
+					: undefined;
+				if (!runtimeVersion)
+					console.warn("[shell] 未获取到宿主 runtime 版本（versions.json 缺失），peerRuntime 校验跳过");
 
 				// P6.1 / D10 信任根：来源白名单校验在 CSS/预载/加载之前
 				assertTrustedModules(list);
@@ -112,12 +124,21 @@ function Boot() {
 				// P4.6 / Spike B：外部模块的 tailwind/css 产物由模块侧构建、
 				// 宿主侧 <link> 注入（在 loadAll 之前，避免样式闪断）
 				for (const mod of list) {
+					// P7.7 / US-9：enabled:false 的模块连 CSS 都不注入
+					if (mod.enabled === false)
+						continue;
 					for (const href of mod.css ?? []) {
 						if (!document.querySelector(`link[href="${href}"]`)) {
 							const link = document.createElement("link");
 							link.rel = "stylesheet";
 							link.href = href;
-							document.head.appendChild(link);
+							// R16 / §4.9 硬约束：模块 CSS 必须在宿主 CSS 之前注入——
+							// 模块 CSS 必含 theme 层（A19），同 layer 后声明者胜出
+							const firstStyle = document.head.querySelector("link[rel=\"stylesheet\"], style");
+							if (firstStyle)
+								document.head.insertBefore(link, firstStyle);
+							else
+								document.head.appendChild(link);
 						}
 					}
 				}
@@ -135,8 +156,9 @@ function Boot() {
 					document.head.appendChild(link);
 				}
 
-				// modules.json（cli BuiltModule[]）→ loader 的 Manifest 形状
-				const manifest = { modules: list.map(m => ({ name: m.name ?? "", entry: m.entry ?? "" })) };
+				// P7.7：清单字段原样透传（enabled/dependencies/peerRuntime），
+				// loader 侧已有全部消费逻辑；裁剪曾导致 US-5/US-9 双双失效
+				const manifest = toLoaderManifest(list, runtimeVersion);
 
 				// 并发加载、拓扑排序、生命周期、i18n 合并（见 runtime module-loader）
 				await loadAll(manifest);

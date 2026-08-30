@@ -77,4 +77,8 @@ async function main() {
 	console.log("[build-modules] All modules built.");
 }
 
-main().catch(console.error);
+// P7.10 / 评审 F8：构建失败必须以非 0 退出，否则 CI 静默放行坏产物
+main().catch((error) => {
+	console.error(error);
+	process.exit(1);
+});

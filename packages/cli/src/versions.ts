@@ -36,9 +36,19 @@ export function resolveShellDist(projectRoot: string): string {
  * 读取模块工程中某共享依赖的安装后版本（node_modules 解析，跟随 pnpm symlink）；
  * 未安装返回 undefined（仅声明未安装时跳过版本比对，由包管理器保证一致性）。
  */
+/**
+ * 说明符 → 包名：深路径（react/jsx-runtime、@scope/pkg/sub）取包名段。
+ * P7.15 修复：此前直接按说明符拼 node_modules/<specifier>/package.json，
+ * 深路径下该文件不存在，版本比对被静默跳过（评审 I36）。
+ */
+export function packageNameOf(specifier: string): string {
+	const parts = specifier.split("/");
+	return specifier.startsWith("@") ? parts.slice(0, 2).join("/") : parts[0]!;
+}
+
 export function readInstalledVersion(projectRoot: string, specifier: string): string | undefined {
 	try {
-		const pkgJson = path.join(projectRoot, "node_modules", specifier, "package.json");
+		const pkgJson = path.join(projectRoot, "node_modules", packageNameOf(specifier), "package.json");
 		const parsed = JSON.parse(fs.readFileSync(pkgJson, "utf-8"));
 		return typeof parsed.version === "string" ? parsed.version : undefined;
 	}

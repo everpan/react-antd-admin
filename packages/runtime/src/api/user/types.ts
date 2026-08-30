@@ -18,6 +18,8 @@ export interface UserInfoType {
 	phoneNumber: string
 	description: string
 	roles: Array<string>
+	/** 权限码列表（后端下发；模块级 requiredPermissions 门禁消费，P7.12） */
+	permissions?: Array<string>
 	// 路由可以在此处动态添加
 	menus?: AppRouteRecordRaw[]
 }

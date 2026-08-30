@@ -42,10 +42,13 @@ export {
 	getRegisteredStore,
 	getRoutes,
 	loadAll,
+	unloadModule,
 } from "./module-loader";
 
 // 模块契约
 export { defineModule } from "./module-loader/define-module";
+
+export { useSlotNodes } from "./module-loader/slots";
 export type {
 	ModuleConfig,
 	ModuleContext,

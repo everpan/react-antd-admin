@@ -2,9 +2,10 @@ name: CI Guard
 
 on:
   push:
-    branches: ['feature/pkg-*']
+    # P7.5 / 评审 P1：此前仅 feature/pkg-*，modularization 的 push 不触发卡口
+    branches: [main, modularization, 'feature/*']
   pull_request:
-    branches: ['feature/pkg-*', main]
+    branches: [main, modularization, 'feature/*']
 
 permissions:
   contents: read
@@ -29,3 +30,26 @@ jobs:
             exit 1
           fi
           echo "OK: packages/runtime/src 未反向依赖 #modules"
+
+  # P7.5 / 评审 S6：B15 fake 门禁、完整性、契约断言全部在 tests/ 下，
+  # 此前无任何 workflow 执行 pnpm test——断言存在却永不运行（§4.8 违约）。
+  # 注意必须排在 build 之后：no-fake-in-dist 的产物扫描依赖 build/ 存在。
+  test:
+    name: 'Test: 契约断言与 fake 门禁（含产物扫描）'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install（锁定 lockfile）
+        run: pnpm install --frozen-lockfile
+      - name: Build（产物扫描的前置）
+        run: pnpm build
+      - name: Test
+        run: pnpm test

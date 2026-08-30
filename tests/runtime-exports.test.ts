@@ -50,6 +50,9 @@ describe("runtime 主入口出口白名单 (P3.1)", () => {
 		expect(Runtime.getRegisteredStore).toBeTypeOf("function");
 		expect(Runtime.getRoutes).toBeTypeOf("function");
 		expect(Runtime.loadAll).toBeTypeOf("function");
+		// P7.12：手册 §7.3 承诺的卸载与插槽订阅出口
+		expect(Runtime.unloadModule).toBeTypeOf("function");
+		expect(Runtime.useSlotNodes).toBeTypeOf("function");
 		expect(Runtime.getAppInfo).toBeTypeOf("function");
 	});
 
