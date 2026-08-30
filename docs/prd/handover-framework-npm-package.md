@@ -2,7 +2,7 @@
 
 > 面向新接手这项工作的开发者。
 > 覆盖：要做成什么、为什么这么做、已经做到哪、每步怎么验收、哪些坑必踩。
-> 最后更新：2026-08-30（**P0–P6 全部完成**并依次本地合并回 `modularization`；O7 按需求方指示搁置。遗留项见 §3.5「遗留」与 §8）
+> 最后更新：2026-08-30（**P0–P7 全部完成**；P7 为「对 P0–P6 的独立评审 + 36 项整改」，分支 `feature/pkg-p7-review-fixes`。遗留项见 §3.5「遗留」与 §8）
 
 ## 0. 五分钟上手
 
@@ -157,6 +157,7 @@ my-modules/
 | P4 | Shell 与共享表治理 | ✅（`feature/pkg-p4-shell`） |
 | P5 | 模块迁移与测试改造 | ✅（`feature/pkg-p5-migration`） |
 | P6 | 安全加固 | ✅（`feature/pkg-p6-security`；O7 搁置） |
+| P7 | 独立评审 + 整改（36 项确认问题，16 个任务） | ✅（`feature/pkg-p7-review-fixes`；报告与计划见 `docs/prd/202608300957-*`） |
 
 ### P2 明细
 
@@ -305,6 +306,19 @@ importmap 自动生成（不再手写）、dev 体验三件套（`jsx-dev-runtim
 
 **O7 搁置（需求方指示）**：refreshToken 迁到 httpOnly Cookie 需要后端配合。在此之前，风险是「同组织内的模块可读取 localStorage 里的 refreshToken」，由组织内信任模型承担，已记 R13/O7。
 
+### P7：独立评审与整改（已完成）
+
+对 P0–P6 全貌做了一次独立 code review（5 个并行评审维度 + 逐项置信度打分），确认 36 项问题，归档于 `docs/prd/202608300957-review-report-framework-npm-package.md`；整改计划与逐项判据在 `docs/prd/202608300957-p7-review-remediation-plan.md`（16 个任务全部完成）。
+
+核心结论：**22/22 确认问题中 9 项的根因是「文档/注释承诺了但实现漂移」**——peerRuntime 校验只有类型没有执行、requiredPermissions 声明了没人消费、设计文档声称的「深路径报错」「rad info/merge」并不存在。整改方向因此不是逐条打补丁，而是给每条承诺补测试卡口：
+
+- 安全：信任 URL 归一化堵 `//evil.com`、`\`、blob: 绕过（S1）；scoped client 段边界匹配 + 归一化 + 剥离单次请求 `prefix` 覆盖（S2，token 外泄通道）；iframe 白名单与 CSP/modules 三方一致性测试卡口（S4）。
+- 契约闭环：peerRuntime 真实 semver 校验（最小实现 `satisfiesSemver`）、依赖缺失 `status: "missing-deps"` 半加载杜绝、requiredPermissions 落地、shell 清单 `toLoaderManifest` 全字段透传（F1/F2 被裁剪）、shell 包转 npm 发布（**翻转 P6.6 的 private 决策**，F5）。
+- 工具补齐：`rad info` / `rad merge` 真实落地（P7.11/P7.15）；entry 并入 chunks[] 完整性链路（P7.3）；深路径裸说明符构建期报错（P7.9）。
+- 新决策 D-P7-1/2/3：create-module 不并入 CLI（playground 复制降级）；动态 import 无法携带 integrity（浏览器限制）写回设计文档；CSP 静态 nonce 保留。
+
+**接手者注意**：凡在设计文档/手册里读到的行为承诺，应能在 `tests/` 找到对应卡口；找不到即视为漂移嫌疑（P7 的教训）。
+
 ---
 
 ## 6. 工程约定与雷区
@@ -359,6 +373,9 @@ d.ts 生成失败时仍会写出一部分声明文件到 `packages/runtime/dist/
 | shell 完整性 / 信任根 / CSP | `tests/shell-integrity.test.ts`、`tests/shell-trust.test.ts`、`tests/shell-csp.test.ts` |
 | scoped request / iframe 守卫 | `tests/scoped-request.test.ts`、`tests/iframe-guard.test.ts` |
 | fake 门禁 / 供应链 | `tests/no-fake-in-dist.test.ts`、`tests/supply-chain.test.ts` |
+| peerRuntime / missing-deps / requiredPermissions | `tests/p7-module-contracts.test.ts` |
+| iframe 白名单 ↔ CSP ↔ 模块用法一致性 | `tests/iframe-whitelist-consistency.test.ts` |
+| shell 清单透传 / create-module 模板 / 异常页兜底 | `tests/shell-manifest-passthrough.test.ts`、`tests/create-module-template.test.ts`、`tests/exception-fallback.test.ts` |
 | 模块 i18n 规范 | `tests/module-i18n-consistency.test.ts` |
 | 目录结构 | `tests/monorepo-layout.test.ts`、`tests/playground-structure.test.ts` |
 
@@ -376,7 +393,7 @@ d.ts 生成失败时仍会写出一部分声明文件到 `packages/runtime/dist/
 
 ## 8. 接手清单（按此顺序，给下一棒）
 
-> 当前状态：**P0–P6 全部完成**，六个阶段分支依次本地合并回 `modularization`（分支均保留，未推送远端）。收尾全量 161 用例 / 32 文件绿，tsc 0 错误，完整构建通过。
+> 当前状态：**P0–P7 全部完成**。P7 整改在 `feature/pkg-p7-review-fixes` 分支（3 个代码提交 + 文档提交）。收尾全量 209 用例绿，tsc 0 错误，完整构建通过。
 
 1. **对照遗留表**（§3.5「遗留」）按需处理：O7 等后端确认；`TRUSTED_ORIGINS` / `frame-src` 部署时替换占位域名（`packages/shell/src/trust.ts` / `src/csp.ts`，改后重建 shell）。
 2. **首次真实发布时**：按 README「Security & Publishing」checklist 走（2FA、`--provenance`、`--frozen-lockfile`），并把 CI 版本回归（宿主升级 → 已发布模块）补进发布流程。

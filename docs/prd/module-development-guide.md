@@ -7,6 +7,11 @@
 > 按 `apiPrefix` 的 scoped client、模块资源 URL 受 moduleOrigins 白名单
 > 约束、iframe 路由启用 https + 域名白名单 + sandbox。
 >
+> 更新：2026-08-30 P7 评审整改（详见 `202608300957-p7-review-remediation-plan.md`）——
+> peerRuntime 校验真实生效、依赖缺失标记 missing-deps、requiredPermissions 落地、
+> scoped client 增加路径归一化与 prefix 剥离、entry 并入 L2 完整性链路、
+> 新增 `rad info` / `rad merge`、shell 包转 npm 发布。
+>
 > 前置阅读：`202608291145-framework-npm-package-implementation-plan.md`（设计文档），
 > 本文引用其中决策编号（D*）与需求编号（B*/O*/R*）。
 
@@ -69,6 +74,7 @@
 	"devDependencies": {
 		"@react-antd-admin/cli": "<与宿主同版本>",
 		"@react-antd-admin/runtime": "<与宿主同版本>",
+		"@react-antd-admin/shell": "<与宿主同版本>",   // P7.10 起经 npm 发布，rad dev/build 的宿主产物来源
 		"@types/react": "^19.x",
 		"typescript": "^5.x"
 	}
@@ -220,13 +226,24 @@ build/modules.json         # BuiltModule[]（含每 chunk sha384 完整性）
 框架方登记（同时覆盖信任根校验与 CSP `script-src`），否则宿主在
 加载前直接拒绝整份清单。
 
-**完整性档位（§4.7）**：宿主按 L2 保护——所有非 lazy chunk 以
-`modulepreload + integrity + crossorigin` 注入，浏览器加载前校验；
-lazy chunk 按需加载不受保护（D7）。entry 篡改会被直接拒绝执行。
+**完整性档位（§4.7）**：宿主按 L2 保护——所有非 lazy chunk（P7.3 起含 entry）
+以 `modulepreload + integrity + crossorigin` 注入，浏览器加载前校验；
+lazy chunk 按需加载不受保护（D7），`rad build` 会在产物含 lazy chunk 时
+显式提示。注意：篡改的 chunk 会被预载通道拒绝并触发控制台报错，但随后的
+动态 import() 不带 integrity（浏览器限制）——需要「拒绝执行」语义时升级到 L3。
+
+**深路径约束（P7.9）**：共享表外的深路径裸说明符（如 `dayjs/plugin/utc`）
+无法被 importmap 解析（无前缀通配），`rad build` 会**构建期报错**；
+请改从包根导入，或联系框架方在 SHARED_DEPS 增补条目。
 
 ## 5. 多团队清单合并
 
-宿主消费多份 `modules.json` 时由 `mergeModuleManifests` 合并（R12）：
+宿主消费多份 `modules.json` 时由 `mergeModuleManifests` 合并（R12）——
+P7.15 起可直接用 CLI 执行：
+
+```bash
+rad merge dist/modules.json team-a/modules.json team-b/modules.json
+```
 
 - **同名模块在任意两份清单中重复 = 构建期直接拒绝**，报错定位两个来源。
   同名即两个团队对同一路由/菜单的竞争声明，绝不静默覆盖。
@@ -249,6 +266,10 @@ lazy chunk 按需加载不受保护（D7）。entry 篡改会被直接拒绝执�
 - shell 宿主：Boot 组件内捕获并渲染错误信息。
 - 单模块 entry 加载失败：该模块标记 `status: "error"`，**其余模块不受影响**，
   其路由/菜单缺失可从 `getModules()` 观测。
+- **版本不兼容（P7.6/US-5）**：模块 `peerRuntime` 与宿主 runtime 版本不匹配时
+  标记 `error` 并显式报错（含模块名/期望/实际版本），不静默成功。
+- **依赖缺失（P7.8/US-9）**：声明的依赖模块未加载时标记 `status: "missing-deps"`，
+  不执行生命周期、不注册路由（杜绝半加载），报错含缺失依赖名。
 
 ### 6.4 卸载
 
@@ -259,15 +280,17 @@ lazy chunk 按需加载不受保护（D7）。entry 篡改会被直接拒绝执�
 ### 7.1 defineModule
 
 见 [3.2](#32-entryts)。`ModuleConfig` 字段：`dependencies`、
-`requiredRoles`（满足其一即激活）、`requiredPermissions`（须全部满足）。
-`ModuleDefinition` 另有 `peerRuntime`（宿主 runtime 兼容范围，不匹配拒绝加载）。
+`requiredRoles`（满足其一即激活）、`requiredPermissions`（须全部满足，
+P7.12 起在 `getRoutes()` 真实过滤）。`ModuleDefinition` 另有
+`peerRuntime`（宿主 runtime 兼容范围，P7.6 起由 loader 按 semver 真实校验，
+不匹配标记 `error` 并显式报错）。
 
 ### 7.2 ModuleContext（生命周期入参）
 
 | 成员 | 说明 |
 | --- | --- |
 | `ctx.module` | `{ name, version }` |
-| `ctx.utils.request` | **scoped client（P6.3/D11）**：底层 ky 实例的按前缀收敛视图（token 注入/401 刷新/进度条已配置）。仅当请求 URL 以本模块登记的 `apiPrefix` 开头才放行；未登记先请求、或越界访问其他前缀，都会直接抛人话错误。`create`/`extend` 不暴露（可绕过全局 hooks） |
+| `ctx.utils.request` | **scoped client（P6.3/D11，P7.2 加固）**：底层 ky 实例的按前缀收敛视图（token 注入/401 刷新/进度条已配置）。仅当请求 URL **归一化后**以本模块登记的 `apiPrefix` 为完整路径段前缀才放行（`/order-api` 放行 `/order-api/list`，拒绝 `/order-api-v2/...` 与 `../` 逃逸）；未登记先请求直接抛人话错误。单次请求的 `prefix`/`prefixUrl` 选项会被剥离（P7.2，防 token 外泄）；`create`/`extend` 不暴露（可绕过全局 hooks） |
 | `ctx.register.store(name, store)` | 注册私有 store，跨模块经 `getRegisteredStore` 消费 |
 | `ctx.register.apiPrefix(prefix)` | 声明模块 API 前缀；`ctx.utils.request` 的放行边界即此值，可重新登记（惰性求值，下一请求生效） |
 | `ctx.registerSlot(slotName, node)` | 注册布局插槽（现支持 `header-actions`），随模块卸载自动清理 |
@@ -326,4 +349,9 @@ cssinjs 已验证兼容（P4.8：`hashPriority="high"` 不加 layer）。
 
 **Q: 如何调试模块加载？**
 DEV 下 loader 会打 `[module-loader]` 前缀日志（加载清单、✓ 每模块成功、
-依赖缺失/成环告警）；生产用 `getModules()` 检查各实例 status。
+依赖缺失/成环告警）；生产用 `getModules()` 检查各实例 status
+（`missing-deps` 即依赖未就绪）。
+
+**Q: 怀疑 runtime 有 bug，如何向框架团队报障？（P7.11）**
+在模块工程根目录执行 `rad info`——输出 cli/runtime/shell 三方版本 +
+共享依赖版本矩阵 + 当前模块清单，完整粘贴即可复现环境。

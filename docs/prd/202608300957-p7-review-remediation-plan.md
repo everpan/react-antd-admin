@@ -10,22 +10,22 @@
 
 | # | 任务 | 来源 | 完成判据 | 状态 |
 |---|------|------|----------|------|
-| P7.1 | trust.ts 改 `new URL(url, location.origin)` 归一化比对；显式拒绝 `//`、`data:`、`blob:` | S1 | tests/trust 新增绕过用例（协议相对/反斜杠/data/blob）全拒绝 | 待做 |
-| P7.2 | scoped.ts：URL 归一化后按段匹配（`=== prefix \|\| startsWith(prefix + "/")`）；剥离逐请求 options 中的 prefix/prefixUrl | S2 | 三绕过用例（兄弟前缀、`../`、逐请求 prefix）全拒绝 | 待做 |
-| P7.3 | entry 并入 chunks[]（lazy:false）走同一 modulepreload+integrity 链路；设计文档回写「动态 import 无法携带 SRI」机制缺陷（US-6 入口档改述） | S3 + 报告§已排除 | modules.json entry 出现在 chunks 且 preload 覆盖；设计文档 §4.7/US-6 已修订 | 待做 |
-| P7.4 | CSP trustedOrigins 同步进 style-src/connect-src；iframe 白名单补 condorheroblog.github.io；新增「仓库全部 iframeLink ⊆ 白名单 + frame-src」一致性测试 | S4/S5 | 一致性测试红→绿 | 待做 |
-| P7.5 | CI 增加 test job（build 之后）；ci.yml 分支触发器改 `[main, modularization, feature/*]`；no-fake-in-dist 测试去掉静默 skip（build 缺失时 fail） | S6/P1 | workflow 含 pnpm test 且顺序正确；测试在产物缺失时失败 | 待做 |
-| P7.6 | peerRuntime 校验落地：shell 构建产 versions.json 含 runtime 版本（已有），host 加载前 semver satisfies 比对，不兼容→显式人话报错（模块名/期望/实际），telemetry console | F1 | US-5 场景测试通过 | 待做 |
-| P7.7 | host.tsx 停止裁剪清单：原样透传 enabled/dependencies/peerRuntime/integrity/chunks/css 给 loadAll | F2/F3(部分) | enabled:false 模块不被加载；US-9 下线场景测试通过 | 待做 |
-| P7.8 | module-loader 新增 `status: "missing-deps"`：依赖缺失跳过生命周期与路由注册，提示含缺失依赖名 | F3 | US-9 依赖缺失场景测试通过 | 待做 |
-| P7.9 | importmap 为共享依赖补 `包名/` 尾斜杠前缀键（指向 dist 目录），并加构建期卡口：模块产物裸说明符必须 ⊆ importmap 键集合 | F4 | `dayjs/plugin/utc` 用例：构建期即提示或 importmap 可解析 | 待做 |
-| P7.10 | shell 取消 private + publishConfig；build-modules.ts 失败 exit(1) | F5/F8 | shell pack 可行；构建失败退出码非 0 | 待做 |
-| P7.11 | CLI 新增 `rad info`（runtime/shell/cli 版本 + 共享依赖版本矩阵 + 模块清单）；@react-antd-admin/create-module 包降级决策：本期不做，US-1 改述为 playground 拷贝，回写设计/手册/交接文档 | F6 | rad info 输出可用；文档矛盾消除 | 待做 |
-| P7.12 | runtime 入口补导出 unloadModule/useSlotNodes；requiredPermissions 实现（getRoutes 与 requiredRoles 同样式过滤，须全部满足） | F7 + 次要项 | 手册 §7.3 出口全部可 import；requiredPermissions 有过滤测试 | 待做 |
-| P7.13 | create-module 模板重写为现行契约（@react-antd-admin/runtime 导入 + handle.layout + ReactNode icon）；修 hasI18n=n ENOENT；加模板快照测试 | F9/F10 | 向导两种选择均产出可构建模块 | 待做 |
-| P7.14 | 框架内置 /exception/403\|404\|500 core 路由兜底（复用内置 NotFound/新增简易 403/500 页），exception 模块降级为可选覆盖；auth-guard 不再依赖可选模块路径 | F11 | 禁用 exception 模块后 403/500 跳转正常 | 待做 |
-| P7.15 | 契约断言层：CLAUDE.md 架构路径改写至 packages/runtime/src；修 P2/P3 两处；lazy chunk 构建期提示；模块 CSS 改 insertBefore 首个样式节点前；mergeModuleManifests 接 rad 子命令 `rad merge`；清理 getComponentPathByRoute 死分支与 4 处过时注释；深路径版本比对取包名 | F2/P2-P5 + 次要项 | 全部落地；CI 新增契约断言测试组 | 待做 |
-| P7.16 | 文档回写：设计文档 §4.7/US-6（SRI 机制缺陷）、手册同步 P7 行为变化、交接手册补 P7 章节、本计划回填执行小结与耗时 | 报告§改进意见 | 文档与实现一致 | 待做 |
+| P7.1 | trust.ts 改 `new URL(url, location.origin)` 归一化比对；显式拒绝 `//`、`data:`、`blob:` | S1 | tests/trust 新增绕过用例（协议相对/反斜杠/data/blob）全拒绝 | ✅ 完成（协议相对/反斜杠/data/blob 用例全拒绝） |
+| P7.2 | scoped.ts：URL 归一化后按段匹配；剥离逐请求 options 中的 prefix/prefixUrl | S2 | 三绕过用例（兄弟前缀、`../`、逐请求 prefix）全拒绝 | ✅ 完成（4 组绕过用例全拒绝） |
+| P7.3 | entry 并入 chunks[]（lazy:false）走同一 modulepreload+integrity 链路；设计文档回写「动态 import 无法携带 SRI」机制缺陷 | S3 + 报告§已排除 | modules.json entry 出现在 chunks 且 preload 覆盖；设计文档 §4.7/US-6 已修订 | ✅ 完成（entry 入 chunks + §4.7/US-6 回写） |
+| P7.4 | CSP trustedOrigins 同步进 style-src/connect-src；iframe 白名单补 condorheroblog.github.io；新增一致性测试 | S4/S5 | 一致性测试红→绿 | ✅ 完成（tests/iframe-whitelist-consistency.test.ts） |
+| P7.5 | CI 增加 test job；ci.yml 分支触发器改 `[main, modularization, feature/*]`；no-fake-in-dist 测试去掉静默 skip | S6/P1 | workflow 含 pnpm test 且顺序正确；测试在产物缺失时失败 | ✅ 完成 |
+| P7.6 | peerRuntime 校验落地：加载前 semver satisfies 比对，不兼容→显式人话报错 | F1 | US-5 场景测试通过 | ✅ 完成（最小 satisfiesSemver + p7-module-contracts 测试） |
+| P7.7 | host.tsx 停止裁剪清单：原样透传 enabled/dependencies/peerRuntime/integrity/chunks/css | F2/F3(部分) | enabled:false 模块不被加载 | ✅ 完成（toLoaderManifest 全字段透传 + 测试） |
+| P7.8 | module-loader 新增 `status: "missing-deps"`：依赖缺失跳过生命周期与路由注册 | F3 | US-9 依赖缺失场景测试通过 | ✅ 完成 |
+| P7.9 | 构建期卡口：模块产物裸说明符必须 ⊆ importmap 键集合（深路径报错；尾斜杠前缀键经评估不改 importmap，见执行小结） | F4 | `dayjs/plugin/utc` 用例构建期即报错 | ✅ 完成（assertResolvableSpecifiers 构建期报错 + C8 告警） |
+| P7.10 | shell 取消 private + publishConfig；build-modules.ts 失败 exit(1) | F5/F8 | shell pack 可行；构建失败退出码非 0 | ✅ 完成（翻转 P6.6 决策，测试已注记） |
+| P7.11 | CLI 新增 `rad info`；create-module 包降级决策（D-P7-1），文档矛盾消除 | F6 | rad info 输出可用 | ✅ 完成（rad info + US-1 改述 playground 拷贝） |
+| P7.12 | runtime 入口补导出 unloadModule/useSlotNodes；requiredPermissions 实现 | F7 + 次要项 | 出口全部可 import；requiredPermissions 有过滤测试 | ✅ 完成 |
+| P7.13 | create-module 模板重写为现行契约；修 hasI18n=n ENOENT；加模板快照测试 | F9/F10 | 向导两种选择均产出可构建模块 | ✅ 完成（tests/create-module-template.test.ts） |
+| P7.14 | 框架内置 /exception/403\|404\|500 core 路由兜底，exception 模块降级为可选覆盖 | F11 | 禁用 exception 模块后 403/500 跳转正常 | ✅ 完成（ensureBuiltinExceptionRoutes + 测试） |
+| P7.15 | 契约断言层：CLAUDE.md 架构路径改写；lazy chunk 构建期提示；模块 CSS insertBefore；`rad merge` 接线；死分支与过时注释清理；深路径版本比对取包名 | F2/P2-P5 + 次要项 | 全部落地 | ✅ 完成（含 prod manifest.json 消费链路 P5） |
+| P7.16 | 文档回写：设计文档 §4.7/US-6、手册同步 P7 行为变化、交接手册补 P7 章节、本计划回填 | 报告§改进意见 | 文档与实现一致 | ✅ 完成 |
 
 ## 关键 BDD 验收场景
 
@@ -82,4 +82,43 @@ Feature: 依赖缺失不半加载（P7.8）
 
 ## 执行小结（回填）
 
-（待执行完成后回填）
+**执行时间：2026-08-30，评审（含报告）约 2.5h，整改约 3.5h，合计约 6h。**
+16 个任务全部完成，分支 `feature/pkg-p7-review-fixes`（3 个代码提交 + 1 个文档提交）。
+收尾全量：209 用例绿，`tsc --noEmit` 0 错误，lint 0 错误，`pnpm build` 通过。
+
+### 关键过程
+
+1. **评审先于整改**：先把 41 条原始发现去重为 36 项、逐项置信度打分（22×75 / 10×50-60 / 40 / 20），
+   报告归档后才规划任务——避免「边改边发现」导致的范围失控。
+2. **根因归一**：9/22 确认问题同根——「文档承诺了但实现漂移」（peerRuntime、requiredPermissions、
+   rad info/merge、深路径报错均只存在于纸面）。整改主线因此是**给每条承诺补测试卡口**，
+   而非逐条打补丁。
+3. **TDD 落地**：每个修复先有失败用例（shell-trust 绕过组、scoped-request 绕过组、
+   p7-module-contracts 20 例、iframe-whitelist-consistency 等），再实现到绿。
+
+### 执行中的偏差与修正（相对本计划初稿）
+
+- **P7.9 方案收窄（反常规问题记录）**：初稿要求 importmap 补 `包名/` 尾斜杠前缀键。
+  经查 importmap 规范，尾斜杠键只做路径前缀映射，指向 dist **目录**会导致子路径解析出
+  不存在的文件——收益不抵复杂度。最终只做「构建期卡口」半边：`assertResolvableSpecifiers`
+  对产物真实 import 分析，深路径裸说明符构建期报错。判据「构建期即提示」达成，前缀键不做。
+- **P7.10 翻转历史决策**：P6.6 曾有意将 shell 设为 `private: true` 并写入测试；但 §4.1
+  的外部工程链路（rad dev/build 从 node_modules 取 shell dist）要求 shell 可发布。
+  两处冲突以「shell 可发布」为准，原测试改注记说明翻转原因。评审报告编号 F5。
+- **P7.14 实现方式微调**：内置异常页组件用 antd Result + createElement（`.ts` 而非 `.tsx`），
+  规避 react-refresh/only-export-components 规则对「同文件导出路由数组 + 组件」的限制。
+- **blob: URL 的信任绕过（执行中新发现）**：`new URL("blob:https://...").origin` 会解包出
+  内层 origin 骗过白名单——归一化后必须显式校验 protocol ∈ {http, https}。
+
+### 新增决策
+
+D-P7-1/2/3 见上表，均已写回设计文档与手册。其中 D-P7-2（动态 import 无法携带 SRI）
+属浏览器机制层面的硬约束，设计文档 §4.7 完整性表与 US-6 表述均已修订，
+「拒绝执行」语义明确降级为「预载拒绝 + 可观测」，真正拒绝执行需 L3 SW。
+
+### 问题分类汇总（按仓库约定）
+
+- **反常识**：动态 import() 无法携带 integrity（W3C 现状）；importmap 无前缀通配（尾斜杠键≠通配）。
+- **反常规**：ky 2.x 允许逐请求覆盖 prefixUrl，使 scoped client 形同虚设（已堵）；
+  `blob:` URL 的 origin 解包行为（已堵）。
+- **与业界不符**：P6.6 将对外消费链路上的 shell 包设 private（已翻转）。

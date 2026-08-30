@@ -272,11 +272,17 @@ dist/
 
 **完整性档位**（D7 定为默认 L2）
 
+> ⚠️ **P7 修订（评审 S3 + 机制缺陷回写）**：动态 `import()` 无法携带 integrity——
+> modulepreload 校验失败后 import() 会不带 integrity 重新拉取同一 URL。因此 L2 的真实
+> 保护语义是「预载通道拦截篡改并告警」，而非「拒绝执行」。P7.3 已把 entry 并入
+> chunks[] 走同一 modulepreload+integrity 链路（此前 entry 的 integrity 是死字段）；
+> 要达成 US-6 的「拒绝执行」，需改用 script 标签注入或升级 L3（SW 逐请求校验）。
+
 | 档 | 做法 | 覆盖 | 代价 |
 |----|------|------|------|
 | L0 | 仅审计告警 | 无 | 零 |
 | L1 | 入口 chunk 走 `<script type="module" integrity>` | 入口 | 防护≈0（改子 chunk 即可注入），**不采用** |
-| **L2（默认）** | 全部非 lazy chunk 走 `modulepreload + integrity`，入口再叠 SRI | 全图（除 lazy） | 需 CORS；lazy chunk 不受保护 |
+| **L2（默认）** | 全部非 lazy chunk（含 entry，P7.3）走 `modulepreload + integrity`，篡改预载被浏览器拒绝并触发控制台报错 | 全图（除 lazy） | 需 CORS；lazy chunk 不受保护；import() 重拉不受校验（见上方修订） |
 | L3 | Service Worker 拦截 `/modules/**` 逐请求校验 | 全图 + lazy | 需管 SW 生命周期 |
 
 **逃生通道**：若模块既要求懒加载又要求完整性，用 Vite `experimental.renderBuiltUrl` 把 chunk 引用改写为绝对 URL，配合 fetch 校验 + blob import（绝对 URL 在 blob 模块中可解析）。代价：产物与 CDN 域名硬绑定。
@@ -311,6 +317,8 @@ require-trusted-types-for 'script'; upgrade-insecure-requests;
 
 内联 importmap 必须带 nonce，否则被 `script-src 'self'` 拦掉。**不要**加 `'strict-dynamic'`——它会让任意 host 的动态 import 合法，反而废掉来源白名单。
 
+> ⚠️ **P7 注记（评审 I15）**：纯静态托管下 per-request nonce 架构上不可行，实现为**构建期随机 nonce**（每次 build 轮换，csp.ts 注释已明示）。静态 nonce 对所有访问者相同，防护价值低于 per-request；若未来有边缘函数/服务端能力，应切回 per-request 或改用 `'sha256-<hash>'`。
+
 ### 4.9 Tailwind 与样式（新增，解决 B14）
 
 - **外部模块工程**（不在宿主 vite root 下）：装 `@tailwindcss/vite`，构建产出 `order.css`；`modules.json` 声明 `css` 数组，宿主以 `<link>` 注入。体积可忽略（Spike B 实测 6 个 class 仅 2.4 KB）。
@@ -326,22 +334,16 @@ require-trusted-types-for 'script'; upgrade-insecure-requests;
 
 ### US-1 模块开发者初始化工程
 
+> ⚠️ **P7 降级（D-P7-1）**：`@react-antd-admin/create-module` 独立包本期不做；
+> 初始化路径改述为「复制 `apps/playground` 起步」。`rad dev/build/info/merge` 均已落地（P7.11）。
+
 ```gherkin
 Feature: 只含模块的工程能被创建并跑起来
-  Scenario: 从零创建模块工程
-    Given 一个空目录
-    When 执行 npm create @react-antd-admin my-admin
-    Then 生成 modules/、modules.config.ts、vite.config.ts、package.json
-    And 工程内不存在任何框架源码文件
-    And npm install 后 @react-antd-admin/cli 存在
-
-  Scenario: first-run 端到端（新增）
-    Given 刚创建并 install 完成的工程
-    When 依次执行 rad dev
-    Then 浏览器打开即看到宿主界面
-    And 侧边栏出现模板自带的示例菜单
-    And 点击该菜单能渲染出模块页面
-    And 全程无需手工编辑任何配置文件
+  Scenario: 从 playground 起步（P7 修订）
+    Given 复制 apps/playground 为新工程
+    When npm install 并执行 rad dev
+    Then 工程内不存在任何框架源码文件
+    And @react-antd-admin/cli 与 shell dist 可用（P7.10 起 shell 走 npm 发布）
 ```
 
 ### US-2 本地开发
@@ -442,6 +444,9 @@ Feature: 版本不兼容必须显式失败
 ```
 
 ### US-6 产物防篡改
+
+> ⚠️ **P7 修订**：L2 下「拒绝执行」对动态 import() 加载链不成立（见 §4.7 修订注记）；
+> 以下「拒绝执行」的实际语义是「预载被浏览器拒绝 + 控制台报错 + 可观测」。
 
 ```gherkin
 Feature: 篡改行为被分级处置（默认 L2）
