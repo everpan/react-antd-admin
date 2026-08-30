@@ -40,7 +40,7 @@ function renderModuleLoadError(error: unknown) {
 			</p>
 			<p>
 				<strong>修复建议：</strong>
-				请依次检查：① modules.json / manifest.json 是否存在且可访问；
+				请依次检查：① module-manifest.json 是否存在且可访问；
 				② 模块 entry 资源 URL 是否正确（部署路径 / CDN / 跨域配置）；
 				③ 模块声明的依赖模块是否已部署。修正后刷新页面重试。
 			</p>
@@ -66,9 +66,11 @@ async function setupApp() {
 		/**
 		 * @zh 模块在应用启动时统一加载（P5.5/O5）：路由守卫只消费 getRoutes()，
 		 * 不再每次鉴权都动态 import 清单——router 域与模块清单彻底解耦。
-		 * P7.15 / 评审 P5：生产环境改为运行时 fetch manifest.json（由
+		 * P7.15 / 评审 P5：生产环境改为运行时 fetch module-manifest.json（由
 		 * scripts/build-modules.ts 产出，指向构建产物 entry.js），不再把
 		 * 开发态源码路径（/modules/<name>/entry.ts）打进 bundle。
+		 * 命名避开 public/manifest.json（PWA 清单）——同名会被 vite build
+		 * 的 public 拷贝覆盖，fetch 拿到 PWA 内容导致启动失败。
 		 * @en Modules load once at bootstrap (P5.5/O5): the auth guard only
 		 * consumes getRoutes() and never imports the manifest itself.
 		 */
@@ -77,10 +79,12 @@ async function setupApp() {
 			manifest = (await import("#manifest.json")).default;
 		}
 		else {
-			const res = await fetch(`${import.meta.env.BASE_URL}manifest.json`);
+			const res = await fetch(`${import.meta.env.BASE_URL}module-manifest.json`);
 			if (!res.ok)
-				throw new Error(`manifest.json 加载失败：HTTP ${res.status}`);
+				throw new Error(`module-manifest.json 加载失败：HTTP ${res.status}`);
 			manifest = await res.json();
+			if (!Array.isArray(manifest.modules))
+				throw new Error("module-manifest.json 内容非法：缺少 modules 数组（是否被 PWA manifest 等同名文件覆盖？）");
 			// 生产清单的 entry 为相对产物路径（modules/<name>/<version>/entry.js），
 			// 部署子路径（base）在此补齐；绝对 URL（CDN）原样保留
 			for (const mod of manifest.modules) {

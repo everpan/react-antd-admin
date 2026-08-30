@@ -81,9 +81,11 @@ async function main() {
 		}
 	}
 
-	// P7.15 / 评审 P5：产出生产清单 build/manifest.json——entry 指向版本化
+	// P7.15 / 评审 P5：产出生产清单 build/module-manifest.json——entry 指向版本化
 	// 构建产物（相对路径，由 runtime 启动时按 base 补齐），替代根 manifest.json
-	// 中的开发态源码路径（/modules/<name>/entry.ts，生产环境 404）
+	// 中的开发态源码路径（/modules/<name>/entry.ts，生产环境 404）。
+	// 命名不能叫 manifest.json：vite build 会把 public/manifest.json（PWA 清单）
+	// 拷进 build/ 覆盖同名文件，运行时 fetch 到 PWA 内容直接启动失败。
 	const prodManifest = {
 		modules: built.map(definition => ({
 			name: definition.name,
@@ -94,10 +96,10 @@ async function main() {
 		})),
 	};
 	fs.writeFileSync(
-		path.resolve("build", "manifest.json"),
+		path.resolve("build", "module-manifest.json"),
 		`${JSON.stringify(prodManifest, null, 2)}\n`,
 	);
-	console.log("[build-modules] 生产清单已生成 → build/manifest.json");
+	console.log("[build-modules] 生产清单已生成 → build/module-manifest.json");
 
 	console.log("[build-modules] All modules built.");
 }
