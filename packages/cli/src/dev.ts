@@ -10,10 +10,11 @@
  *      /modules.json           → 本地 dist/modules.json
  *      /modules/*              → 本地 dist/modules/*
  *    共享依赖（react/antd/runtime…）由 importmap 指向 /assets/*，与模块命中同一份。
- * 4. 监听 modules/ 源码变更，增量重建对应模块，提示刷新浏览器。
+ * 4. 监听 modules/ 源码变更并重建（当前为全量重建，非按变更定位增量），
+ *    提示刷新浏览器。
  *
- * 注：完整 HMR（react-refresh preamble、dev-runtime 映射）属于 P4.4；本切片先做到
- * 「保存即重建 + 手动刷新」，保证单例与加载链路打通。
+ * 注：完整 HMR（react-refresh preamble、dev-runtime 映射）未落地，见设计
+ * 文档 P5 偏差记录；本形态先做到「保存即重建 + 手动刷新」，保证单例与加载链路打通。
  */
 
 import { existsSync, readFileSync, statSync, watch } from "node:fs";

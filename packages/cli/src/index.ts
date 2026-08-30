@@ -1,6 +1,7 @@
 import process from "node:process";
 import { buildModules } from "./build";
 import { devServer } from "./dev";
+import { mergeManifests, printInfo } from "./info";
 
 const [command] = process.argv.slice(2);
 
@@ -10,6 +11,8 @@ function usage(): never {
 用法:
   rad dev [port]   启动开发服务器（宿主代理 + 本地模块重建）
   rad build        构建模块产物与 modules.json
+  rad info         输出版本矩阵与模块清单（报障用，US-7）
+  rad merge <out.json> <in1.json> [in2.json ...]  合并多团队清单（R12）
 `);
 	process.exit(command ? 1 : 0);
 }
@@ -27,6 +30,12 @@ async function main() {
 			await devServer(projectRoot, port);
 			break;
 		}
+		case "info":
+			await printInfo(projectRoot);
+			break;
+		case "merge":
+			await mergeManifests(process.argv[3] ?? "", process.argv.slice(4));
+			break;
 		default:
 			usage();
 	}

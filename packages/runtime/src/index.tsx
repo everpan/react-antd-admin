@@ -1,4 +1,5 @@
 // import { StrictMode } from "react";
+import type { Manifest } from "#src/module-loader/types";
 import { createRoot } from "react-dom/client";
 import { TanstackQuery } from "#src/components/tanstack-query";
 import { setupI18n } from "#src/locales";
@@ -65,11 +66,29 @@ async function setupApp() {
 		/**
 		 * @zh 模块在应用启动时统一加载（P5.5/O5）：路由守卫只消费 getRoutes()，
 		 * 不再每次鉴权都动态 import 清单——router 域与模块清单彻底解耦。
+		 * P7.15 / 评审 P5：生产环境改为运行时 fetch manifest.json（由
+		 * scripts/build-modules.ts 产出，指向构建产物 entry.js），不再把
+		 * 开发态源码路径（/modules/<name>/entry.ts）打进 bundle。
 		 * @en Modules load once at bootstrap (P5.5/O5): the auth guard only
 		 * consumes getRoutes() and never imports the manifest itself.
 		 */
-		const manifest = await import("#manifest.json");
-		await loadAll(manifest.default);
+		let manifest: Manifest;
+		if (import.meta.env.DEV) {
+			manifest = (await import("#manifest.json")).default;
+		}
+		else {
+			const res = await fetch(`${import.meta.env.BASE_URL}manifest.json`);
+			if (!res.ok)
+				throw new Error(`manifest.json 加载失败：HTTP ${res.status}`);
+			manifest = await res.json();
+			// 生产清单的 entry 为相对产物路径（modules/<name>/<version>/entry.js），
+			// 部署子路径（base）在此补齐；绝对 URL（CDN）原样保留
+			for (const mod of manifest.modules) {
+				if (!/^(?:https?:)?\/\//.test(mod.entry))
+					mod.entry = `${import.meta.env.BASE_URL}${mod.entry}`;
+			}
+		}
+		await loadAll(manifest);
 	}
 	catch (error) {
 		renderModuleLoadError(error);

@@ -8,7 +8,9 @@
 		".": "./src/index.ts",
 		"./build": "./src/build.ts",
 		"./shared-deps": "./src/shared-deps.ts",
-		"./config": "./src/config.ts"
+		"./config": "./src/config.ts",
+		"./manifest": "./src/manifest.ts",
+		"./info": "./src/info.ts"
 	},
 	"bin": {
 		"rad": "./bin/rad.mjs"

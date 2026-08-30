@@ -9,6 +9,7 @@ import { setupLoading } from "#src/plugins/loading";
 import { exception403Path, exception404Path, exception500Path, loginPath } from "#src/router/extra-info";
 import { accessRoutes, whiteRouteNames } from "#src/router/routes";
 import { isSendRoutingRequest } from "#src/router/routes/config";
+import { ensureBuiltinExceptionRoutes } from "#src/router/routes/core/exception";
 import { addRouteIdByPath } from "#src/router/utils/add-route-id-by-path";
 import { generateRoutesFromBackend } from "#src/router/utils/generate-routes-from-backend";
 import { generateRoutesByFrontend } from "#src/router/utils/generate-routes-from-frontend";
@@ -136,7 +137,12 @@ export function AuthGuard({ children }: AuthGuardProps) {
 				routes.push(...generateRoutesByFrontend(accessRoutes, latestRoles));
 			}
 
-			const uniqueRoutes = removeDuplicateRoutes(routes);
+			/**
+			 * P7.14 / 评审 F11：/exception/403|404|500 是守卫的硬编码跳转目标，
+			 * 属框架契约——任何来源（模块/后端/前端）未覆盖时注入框架内置兜底页，
+			 * 避免禁用 exception 模块后跳转落 catch-all 显示 404。
+			 */
+			const uniqueRoutes = removeDuplicateRoutes(ensureBuiltinExceptionRoutes(routes));
 			setAccessStore(uniqueRoutes);
 
 			const hasError = results.some(result => result.status === "rejected");

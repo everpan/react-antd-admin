@@ -15,12 +15,13 @@ async function buildModule(moduleDir: string) {
 	const entryPath = path.join(moduleDir, "entry.ts");
 	if (!fs.existsSync(entryPath)) {
 		console.warn(`[build-modules] Skip ${path.basename(moduleDir)}: entry.ts not found`);
-		return;
+		return null;
 	}
 
 	// P3.4 / B10：元数据由 esbuild bundle + 真实 import() 解析（复用 cli 实现），
 	// 替换此前从源码抠 name/version 字符串的脆弱正则
-	const { name: moduleName, version } = await readModuleDefinition(entryPath, path.resolve());
+	const definition = await readModuleDefinition(entryPath, path.resolve());
+	const { name: moduleName, version } = definition;
 
 	console.log(`[build-modules] Building ${moduleName}@${version}...`);
 
@@ -50,11 +51,13 @@ async function buildModule(moduleDir: string) {
 	} as UserConfig);
 
 	console.log(`[build-modules] ✓ ${moduleName}@${version} → build/modules/${moduleName}/${version}/`);
+	return definition;
 }
 
 async function main() {
 	const targetModule = process.argv.find(arg => arg.startsWith("--module="))?.split("=")[1];
 	const modulesDir = path.resolve("modules");
+	const built: NonNullable<Awaited<ReturnType<typeof buildModule>>>[] = [];
 
 	if (targetModule) {
 		const moduleDir = path.join(modulesDir, targetModule);
@@ -62,7 +65,9 @@ async function main() {
 			console.error(`[build-modules] Module "${targetModule}" not found in ${modulesDir}`);
 			process.exit(1);
 		}
-		await buildModule(moduleDir);
+		const definition = await buildModule(moduleDir);
+		if (definition)
+			built.push(definition);
 	}
 	else {
 		const entries = fs.readdirSync(modulesDir, { withFileTypes: true })
@@ -70,9 +75,29 @@ async function main() {
 			.map(d => path.join(modulesDir, d.name));
 
 		for (const moduleDir of entries) {
-			await buildModule(moduleDir);
+			const definition = await buildModule(moduleDir);
+			if (definition)
+				built.push(definition);
 		}
 	}
+
+	// P7.15 / 评审 P5：产出生产清单 build/manifest.json——entry 指向版本化
+	// 构建产物（相对路径，由 runtime 启动时按 base 补齐），替代根 manifest.json
+	// 中的开发态源码路径（/modules/<name>/entry.ts，生产环境 404）
+	const prodManifest = {
+		modules: built.map(definition => ({
+			name: definition.name,
+			entry: `modules/${definition.name}/${definition.version}/entry.js`,
+			enabled: true,
+			dependencies: definition.config?.dependencies ?? [],
+			...(definition.peerRuntime ? { peerRuntime: definition.peerRuntime } : {}),
+		})),
+	};
+	fs.writeFileSync(
+		path.resolve("build", "manifest.json"),
+		`${JSON.stringify(prodManifest, null, 2)}\n`,
+	);
+	console.log("[build-modules] 生产清单已生成 → build/manifest.json");
 
 	console.log("[build-modules] All modules built.");
 }

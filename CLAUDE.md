@@ -31,11 +31,22 @@ pnpm check:circular-deps  # Check for circular dependencies
 
 ## Architecture
 
-### Entry & Bootstrapping (`src/index.tsx`)
+### Monorepo 结构（P0 起）
 
-App bootstrap order matters: i18n setup first, then loading animation, then React root render. The app is wrapped in `TanstackQuery` provider at the top level.
+框架源码已从 `src/` 迁至 `packages/runtime/src/`（发布为 `@react-antd-admin/runtime`），其余包：
 
-### Module System (`modules/` + `src/module-loader/`)
+- `packages/runtime/` → `@react-antd-admin/runtime`：框架运行时（路由/布局/store/请求/组件/module-loader）
+- `packages/shell/` → `@react-antd-admin/shell`：预构建宿主站点（dist + importmap，由共享表生成）
+- `packages/cli/` → `@react-antd-admin/cli`：`rad dev / build / info / merge`
+- `modules/`：自带模块（dogfooding）；`apps/playground/`：模拟外部模块工程
+
+`#src/*` alias 指向 `packages/runtime/src/*`（由 packages/runtime/package.json 的 imports 字段与 vite alias 双声明，A11）。
+
+### Entry & Bootstrapping (`packages/runtime/src/index.tsx`)
+
+App bootstrap order matters: i18n setup first, then loading animation, then module loading（`loadAll`），then React root render. The app is wrapped in `TanstackQuery` provider at the top level. 生产环境清单经 `fetch(BASE_URL + manifest.json)` 运行时获取（产物由 `scripts/build-modules.ts` 生成），dev 环境 import 根 `manifest.json`。
+
+### Module System (`modules/` + `packages/runtime/src/module-loader/`)
 
 Feature pages are organized as independent modules under `modules/`. Each module is self-contained and can be developed and released independently.
 
@@ -48,40 +59,42 @@ modules/<name>/
 ```
 
 **Module loading flow:**
-1. `manifest.json` (root) declares enabled modules with entry paths
-2. `packages/runtime/src/index.tsx` loads modules once at app bootstrap (`loadAll`): parallel entry loading → topological sort (by dependencies) → lifecycle hooks → i18n merge; failure renders a human-readable fatal error page
-3. The auth guard only consumes `getRoutes()`; module routes are injected before backend/frontend routes. Module-level `config.requiredRoles` filters routes **before** injection (B16)
+1. `manifest.json` (root, dev) / `build/manifest.json` (prod) declares enabled modules with entry paths
+2. `packages/runtime/src/index.tsx` loads modules once at app bootstrap (`loadAll`): parallel entry loading → peerRuntime 校验 → 依赖缺失标记（missing-deps）→ topological sort → lifecycle hooks → i18n merge; manifest 级失败渲染人话 fatal error 页，单模块失败标 `error`/`missing-deps` 并可经 `getModules()` 观测
+3. The auth guard only consumes `getRoutes()`; module routes are injected before backend/frontend routes. Module-level `config.requiredRoles` / `requiredPermissions` filter routes **before** injection (B16)
 
 **Key conventions:**
 - `entry.ts` is the sole source for module metadata (name, version, description) — no separate `package.json` or `meta.json`
 - Menu title keys use i18next namespace syntax: `"<moduleName>:menu.<key>"` (e.g. `"system:menu.user"`)
 - Route order values are defined inline in `entry.ts` route handles
 - Module i18n is registered into i18next under the module name as namespace
-- Build script (`scripts/build-modules.ts`) parses name/version from `entry.ts` via regex
+- Build script (`scripts/build-modules.ts`) parses name/version from `entry.ts` via esbuild bundle + 真实 import()（复用 `packages/cli/src/build.ts` 的 `readModuleDefinition`，B10）
+- 布局由 `handle.layout`（`"container" | "parent" | "none"`，默认 `none`）在框架出口统一包裹，模块不 import 布局组件（D9）
+- 框架内置 `/exception/403|404|500` 兜底页，exception 模块仅为可选覆盖（P7.14）
 
 **Creating a new module:**
 ```bash
-pnpm create-module     # Interactive wizard (scripts/create-module.ts)
+pnpm create:module     # Interactive wizard (scripts/create-module.ts)
 ```
 
-### Routing System (`src/router/`)
+### Routing System (`packages/runtime/src/router/`)
 
 Routes are organized into three categories:
 
-- **Core routes** (`routes/core/`): Auth pages (login), exception pages (403/404/500), fallback. Always present.
-- **External routes** (`routes/external/`): Public pages like privacy-policy, terms-of-service. No auth check, no user info request.
+- **Core routes** (`packages/runtime/src/router/routes/core/`): Auth pages (login), fallback. Always present.
+- **External routes** (`packages/runtime/src/router/routes/external/`): Public pages like privacy-policy, terms-of-service. No auth check, no user info request.
 - **Module routes** (`modules/*/entry.ts`): Feature pages loaded via `module-loader` from `manifest.json`.
 
 Permission routes come from two sources, toggled by `enableBackendAccess` / `enableFrontendAccess` preferences:
 
-- **Static routes** (`routes/static/`): Defined at build time in frontend code.
+- **Static routes** (`packages/runtime/src/router/routes/index.ts` 的 `accessRoutes`): Defined at build time in frontend code.
 - **Dynamic routes**: Fetched from backend API at runtime and patched into the router via `router.patchRoutes()`.
 
 When module routes and backend routes share the same top-level path, module routes take priority. Backend routes for already-covered paths are filtered out before component resolution (`filterBackendRoutes` in `auth-guard.tsx`).
 
-Route meta (title, icon, roles, permissions, keepAlive, hideInMenu, iframeLink, etc.) is stored in the `handle` field of each route object. See `src/router/types.ts` → `RouteMeta`.
+Route meta (title, icon, roles, permissions, keepAlive, hideInMenu, iframeLink, etc.) is stored in the `handle` field of each route object. See `packages/runtime/src/router/types.ts` → `RouteMeta`.
 
-### State Management (`src/store/`)
+### State Management (`packages/runtime/src/store/`)
 
 Uses Zustand stores:
 
@@ -94,7 +107,7 @@ Uses Zustand stores:
 
 All persisted stores use `getAppNamespace()` prefix to avoid conflicts in multi-project setups.
 
-### Layout System (`src/layout/`)
+### Layout System (`packages/runtime/src/layout/`)
 
 Composed layout with these parts:
 
@@ -102,7 +115,7 @@ Composed layout with these parts:
 - `container-layout`: Wraps page content with keepAlive caching based on open tabs.
 - `parent-layout`: Wrapper for nested route parents that don't render their own UI.
 
-### HTTP Client (`src/utils/request/`)
+### HTTP Client (`packages/runtime/src/utils/request/`)
 
 Uses `ky` (not axios or fetch directly). Configured with:
 
@@ -111,18 +124,19 @@ Uses `ky` (not axios or fetch directly). Configured with:
 - 401 handling with refresh token retry logic
 - Global progress bar integration (NProgress)
 - Language header injection
+- 模块只拿按 `apiPrefix` 登记前缀收敛的 scoped client（`ctx.utils.request`，D11/P6.3）：越界、`../` 穿越、逐请求 prefix 覆盖均被拒绝
 
 ### API Mocking (`fake/`)
 
 Uses `vite-plugin-fake-server` with fake endpoint files in `fake/*.fake.ts`. Mock server is enabled in dev; production builds only include it when `VITE_ENABLE_FAKE_PROD=1` is set explicitly (P6.5/B15 — a test asserts the build output contains no fake code).
 
-### Internationalization (`src/locales/`)
+### Internationalization (`packages/runtime/src/locales/`)
 
-Uses `react-i18next`. Translation JSON files in `src/locales/zh-CN/` and `src/locales/en-US/`. Helper function `t()` in `src/locales/t.tsx`. Ant Design locale is also switched based on language preference.
+Uses `react-i18next`. Translation JSON files in `packages/runtime/src/locales/zh-CN/` and `packages/runtime/src/locales/en-US/`. Helper function `t()` in `packages/runtime/src/locales/t.tsx`. Ant Design locale is also switched based on language preference.
 
 Module i18n is self-contained: each module has its own `locales/` directory with translation files registered via i18next namespace (`moduleName:key`). Framework-level `common.json` only contains shared UI strings, not module-specific menu translations.
 
-### Components (`src/components/`)
+### Components (`packages/runtime/src/components/`)
 
 Reusable components include `basic-table`, `basic-form`, `basic-content`, `antd-app` (provides `App.useApp()` context), `access-control`, `jss-theme-provider`, `tanstack-query`, `global-spin`, `scrollbar`, `iframe`, `page-error`.
 

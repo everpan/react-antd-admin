@@ -22,23 +22,14 @@ const pageModules = import.meta.glob([
  * @en Get framework page component path by route (src/pages only; module pages are resolved elsewhere)
  */
 export function getComponentPathByRoute(route: AppRouteRecordRaw & { component?: string }) {
-	const pageModulePaths = Object.keys(pageModules);
 	const routePath = route.path ?? "/";
 
+	// P7.15 / 评审 I24：清理 4ed730d 留下的死分支（两分支同值）。
+	// 命中校验已无意义——未命中的路径由调用方落 UnknownComponent
 	if (route.component) {
-		const srcPath = `/packages/runtime/src/pages${route.component}`;
-		if (pageModulePaths.includes(srcPath)) {
-			return srcPath;
-		}
-		return srcPath;
+		return `/packages/runtime/src/pages${route.component}`;
 	}
-	else {
-		const srcPath = `/packages/runtime/src/pages${routePath}/index.tsx`;
-		if (pageModulePaths.includes(srcPath)) {
-			return srcPath;
-		}
-		return srcPath;
-	}
+	return `/packages/runtime/src/pages${routePath}/index.tsx`;
 }
 
 /**

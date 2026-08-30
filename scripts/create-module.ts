@@ -62,8 +62,8 @@ async function main() {
 		fs.mkdirSync(path.join(moduleDir, dir), { recursive: true });
 	}
 
-	// 页面组件
-	const pageContent = `import { BasicContent } from "#src/components/basic-content";
+	// 页面组件（P7.13：现行契约——从 runtime 包导入，禁用 #src/*）
+	const pageContent = `import { BasicContent } from "@react-antd-admin/runtime";
 
 export default function ${modulePascalName}() {
 	return <BasicContent>${description}</BasicContent>;
@@ -71,18 +71,23 @@ export default function ${modulePascalName}() {
 `;
 	fs.writeFileSync(path.join(moduleDir, "pages", "index.tsx"), pageContent);
 
-	// i18n 文件（始终创建，包含菜单翻译）
-	const zhCn = `${JSON.stringify({ menu: { [moduleName]: description } }, null, "\t")}\n`;
-	const enUs = `${JSON.stringify({ menu: { [moduleName]: description } }, null, "\t")}\n`;
-	fs.writeFileSync(path.join(moduleDir, "locales", "zh-CN.json"), zhCn);
-	fs.writeFileSync(path.join(moduleDir, "locales", "en-US.json"), enUs);
+	// P7.13 / 评审 F9：locales 目录与翻译文件只在 hasI18n 时创建
+	// （此前目录条件创建、文件无条件写入，选 n 必然 ENOENT 并残留半成品）
+	if (hasI18n) {
+		const zhCn = `${JSON.stringify({ menu: { [moduleName]: description } }, null, "\t")}\n`;
+		const enUs = `${JSON.stringify({ menu: { [moduleName]: description } }, null, "\t")}\n`;
+		fs.writeFileSync(path.join(moduleDir, "locales", "zh-CN.json"), zhCn);
+		fs.writeFileSync(path.join(moduleDir, "locales", "en-US.json"), enUs);
+	}
 
 	// entry.ts（模块元信息的唯一来源）
-	const i18nBlock = `,
+	const i18nBlock = hasI18n
+		? `,
 \ti18n: {
 \t\t"zh-CN": () => import("./locales/zh-CN.json"),
 \t\t"en-US": () => import("./locales/en-US.json"),
-\t}`;
+\t}`
+		: "";
 
 	const configBlock = requiredRoles
 		? `,
@@ -91,10 +96,12 @@ export default function ${modulePascalName}() {
 \t}`
 		: "";
 
-	const entryContent = `import type { ModuleDefinition } from "#src/module-loader/types";
-import type { AppRouteRecordRaw } from "#src/router/types";
+	// P7.13 / 评审 F10：模板对齐现行契约——
+	// 包导入（非 #src/*）、handle.layout 显式声明（不再由模块自挂布局组件）、
+	// icon 为 ReactNode（非字符串）
+	const entryContent = `import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
 
-import ContainerLayout from "#src/layout/container-layout";
+import { AppstoreOutlined } from "@ant-design/icons";
 
 import { createElement, lazy } from "react";
 
@@ -103,11 +110,11 @@ const ${modulePascalName}Page = lazy(() => import("./pages/index"));
 const routes: AppRouteRecordRaw[] = [
 \t{
 \t\tpath: "/${moduleName}",
-\t\tComponent: ContainerLayout,
 \t\thandle: {
+\t\t\tlayout: "container",
 \t\t\torder: ${order},
 \t\t\ttitle: "${moduleName}:menu.${moduleName}",
-\t\t\ticon: "AppstoreOutlined",
+\t\t\ticon: createElement(AppstoreOutlined),
 \t\t},
 \t\tchildren: [
 \t\t\t{
@@ -115,7 +122,7 @@ const routes: AppRouteRecordRaw[] = [
 \t\t\t\tComponent: ${modulePascalName}Page,
 \t\t\t\thandle: {
 \t\t\t\t\ttitle: "${moduleName}:menu.${moduleName}",
-\t\t\t\t\ticon: "AppstoreOutlined",
+\t\t\t\t\ticon: createElement(AppstoreOutlined),
 \t\t\t\t},
 \t\t\t},
 \t\t],
@@ -161,4 +168,8 @@ export default mod;
 	console.log("");
 }
 
-main().catch(console.error);
+// P7.10 同款：失败必须非 0 退出（含向导中途 ENOENT 等异常）
+main().catch((error) => {
+	console.error(error);
+	process.exit(1);
+});

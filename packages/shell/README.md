@@ -55,11 +55,7 @@ dist/
 
 宿主与模块产物都不打包这些依赖，浏览器按同一个 URL 解析 ⇒ 同一份模块实例。漏配任何一项（例如 `@tanstack/react-query`）会让模块脱离对应 Context 而在运行期崩溃，因此共享依赖的判定统一取自 `@react-antd-admin/cli/shared-deps`。
 
-> **已知缺口（P4.1 / P4.3 收敛）**：`rad build` 的 `external` 判定用的是完整共享表，但本包的 `IMPORTMAP` / `SHARED_ENTRIES` 目前是**手写**的，只覆盖了硬共享全部 9 项 + 软共享 7 项。以下软共享依赖会被 `rad build` external 掉却没有 importmap 映射，模块一旦使用就会在运行期报解析失败：
->
-> `@ant-design/pro-components`、`zustand`、`echarts`、`echarts-for-react`、`motion`、`@dnd-kit/{core,sortable,utilities}`、`react-countup`
->
-> P4 会把 importmap 与入口列表改为从共享表**自动生成**，从根上消除手写漏配。在那之前，模块用到上述依赖时需要先补齐本包的 `SHARED_ENTRIES` + `IMPORTMAP`。
+> P4.1/P4.3 起 importmap 与预构建入口均由 SHARED_DEPS 单一常量表**自动生成**（`generateImportmap` / `generateShellEntries`），不再存在手写漏配；P7.9 起 `rad build` 还会扫描模块产物的裸说明符，深路径无法被 importmap 解析时构建期直接报错。
 
 ## 启动流程
 
@@ -85,10 +81,9 @@ pnpm --filter @react-antd-admin/shell dev     # 同上，watch 模式
 
 ## 新增共享依赖
 
-在 P4 自动生成落地前，改动需要同步三处，否则会出现「某处漏配 → 运行期崩」：
+共享表单一来源（`packages/cli/src/shared-deps.ts` 的 `SHARED_DEPS`）驱动一切，
+只需改动一处：
 
-1. `packages/cli/src/shared-deps.ts` 的 `HARD_SHARED_DEPS` / `SOFT_SHARED_DEPS`；
-2. 本包 `src/entries/<name>.ts` 加单入口文件，并登记到 `scripts/build.mts` 的 `SHARED_ENTRIES`；
-3. `scripts/build.mts` 的 `IMPORTMAP` 加映射。
-
-改完重新 `build` 并提交 `dist/`。
+1. 在 `SHARED_DEPS` 增补条目（`specifier` 为 importmap 键，`asset` 为产物名）；
+2. 深路径（如 `dayjs/plugin/utc`）必须**单独成条**——importmap 无前缀通配；
+3. 重新 `build` 并提交 `dist/`（versions.json 随之更新，版本门禁自动对齐）。
