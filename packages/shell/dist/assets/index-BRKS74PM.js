@@ -1,12 +1,12 @@
 import { StyleProvider } from "@ant-design/cssinjs";
 import { getRoutes, loadAll } from "@react-antd-admin/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { App, ConfigProvider, Layout, Menu, theme } from "antd";
+import { App, ConfigProvider, theme } from "antd";
 import i18next from "i18next";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { initReactI18next, useTranslation } from "react-i18next";
-import { Outlet, RouterProvider, createBrowserRouter, useNavigate } from "react-router";
+import { initReactI18next } from "react-i18next";
+import { Navigate, Outlet, RouterProvider, createBrowserRouter } from "react-router";
 import { jsx, jsxs } from "react/jsx-runtime";
 //#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
@@ -142,46 +142,6 @@ async function ensureI18n() {
 		resources: {}
 	});
 }
-function Shell({ routes }) {
-	const navigate = useNavigate();
-	const { t } = useTranslation();
-	const items = routes.filter((route) => route.handle?.title).map((route) => ({
-		key: route.path ?? "",
-		icon: route.handle?.icon,
-		label: t(route.handle.title)
-	}));
-	return /* @__PURE__ */ jsxs(Layout, {
-		style: { minHeight: "100vh" },
-		children: [/* @__PURE__ */ jsxs(Layout.Sider, {
-			theme: "dark",
-			collapsible: true,
-			children: [/* @__PURE__ */ jsx("div", {
-				style: {
-					color: "#fff",
-					fontWeight: 600,
-					padding: "16px",
-					whiteSpace: "nowrap",
-					overflow: "hidden"
-				},
-				children: "React Antd Admin"
-			}), /* @__PURE__ */ jsx(Menu, {
-				theme: "dark",
-				mode: "inline",
-				items,
-				onClick: ({ key }) => navigate(key)
-			})]
-		}), /* @__PURE__ */ jsxs(Layout, { children: [/* @__PURE__ */ jsx(Layout.Header, {
-			style: {
-				background: "#fff",
-				paddingInline: 16
-			},
-			children: "框架宿主（shell）"
-		}), /* @__PURE__ */ jsx(Layout.Content, {
-			style: { margin: 16 },
-			children: /* @__PURE__ */ jsx(Outlet, {})
-		})] })]
-	});
-}
 function Boot() {
 	const [router, setRouter] = useState(null);
 	const [error, setError] = useState(null);
@@ -221,8 +181,14 @@ function Boot() {
 				if (cancelled) return;
 				setRouter(createBrowserRouter([{
 					path: "/",
-					element: /* @__PURE__ */ jsx(Shell, { routes: getRoutes() }),
-					children: getRoutes()
+					element: /* @__PURE__ */ jsx(Outlet, {}),
+					children: [{
+						index: true,
+						element: /* @__PURE__ */ jsx(Navigate, {
+							to: getRoutes()[0]?.path ?? "/",
+							replace: true
+						})
+					}, ...getRoutes()]
 				}]));
 			} catch (e) {
 				if (!cancelled) setError(e instanceof Error ? e.message : String(e));

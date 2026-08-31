@@ -1,5 +1,5 @@
 import type { AppRouteRecordRaw } from "#src/router/types";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { matchRoutes, Navigate, useLocation, useNavigate, useSearchParams } from "react-router";
 import { fetchAsyncRoutes } from "#src/api/user";
 import { useCurrentRoute } from "#src/hooks/use-current-route";
@@ -47,6 +47,20 @@ export function AuthGuard({ children }: AuthGuardProps) {
 	const userRoles = useUserStore(state => state.roles);
 	const { setAccessStore, isAccessChecked, routeList } = useAccessStore();
 	const { enableBackendAccess, enableFrontendAceess } = usePreferencesStore(state => state);
+
+	/**
+	 * 模块路由是经清单信任校验后加载的受信 bundle（P5.5/O5），与宿主用户体系
+	 * 解耦：模块可独立运行，不依赖后端登录即可显示菜单、访问模块页面。
+	 * 据此判断「当前路由是否为已加载模块路由」，用于下方鉴权门槛放行。
+	 */
+	const moduleRoutePaths = useMemo(
+		() => new Set(getModuleRoutes().map(r => r.path).filter((p): p is string => Boolean(p))),
+		[],
+	);
+	const isModuleRoute = useMemo(
+		() => [...moduleRoutePaths].some(p => pathname === p || pathname.startsWith(`${p}/`)),
+		[moduleRoutePaths, pathname],
+	);
 
 	const isPathInNoLoginWhiteList = noLoginWhiteList.includes(pathname);
 
@@ -192,6 +206,21 @@ export function AuthGuard({ children }: AuthGuardProps) {
 		 * 3. Unable to obtain user information and route information
 		 *
 		 */
+		/**
+		 * 模块路由解耦注册：模块加载后即把模块路由并入菜单/路由表，使菜单与
+		 * 模块页面在「无后端鉴权」的模块独立运行场景下立即可用（playground /
+		 * rad dev）。模块是受信 bundle，无需等待后端 userInfo。已注册则跳过，
+		 * 避免每次路由变更重复合并。生产自身路由仍由下方登录分支拉取。
+		 */
+		const moduleRoutes = addRouteIdByPath(getModuleRoutes());
+		if (moduleRoutes.length > 0) {
+			const existing = useAccessStore.getState().routeList;
+			const alreadyRegistered = moduleRoutes.every(m => existing.some(r => r.path === m.path));
+			if (!alreadyRegistered) {
+				setAccessStore(moduleRoutes);
+			}
+		}
+
 		if (!whiteRouteNames.includes(pathname) && isLogin && !isAuthorized) {
 			fetchUserInfoAndRoutes();
 		}
@@ -214,6 +243,13 @@ export function AuthGuard({ children }: AuthGuardProps) {
 	/* --------------- Start ------------------ */
 	if (!isLogin) {
 		hideLoading();
+		/**
+		 * 受信模块路由：无需登录即可访问（模块与宿主用户体系解耦），直接放行，
+		 * 不再重定向到登录页。生产自身路由仍走下方登录重定向逻辑。
+		 */
+		if (isModuleRoute) {
+			return children;
+		}
 		// 未登录且目标页不是登录页，则跳转到登录页
 		if (pathname !== loginPath) {
 			// pathname 长度大于 1，则携带当前路径跳转登录页，否则直接跳转登录页
@@ -270,14 +306,14 @@ export function AuthGuard({ children }: AuthGuardProps) {
 	 * @zh 等待获取用户信息
 	 * @en  Waiting for user information to be obtained
 	 */
-	if (!isAuthorized) {
+	if (!isAuthorized && !isModuleRoute) {
 		return null;
 	}
 	/**
 	 * @zh 等待获取路由信息
 	 * @en Waiting for route information to be obtained
 	 */
-	if (!isAccessChecked) {
+	if (!isAccessChecked && !isModuleRoute) {
 		return null;
 	}
 

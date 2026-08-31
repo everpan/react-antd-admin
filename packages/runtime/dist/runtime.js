@@ -10,9 +10,9 @@ import { Avatar, Badge, Breadcrumb, Button, Checkbox, Col, ColorPicker, ConfigPr
 import { Fragment as Fragment$1, jsx, jsxs } from "react/jsx-runtime";
 import i18next from "i18next";
 import { useCountDown, useDebounceFn, useFullscreen, useKeyPress, useLocalStorageState, useResponsive, useSize, useToggle } from "ahooks";
+import { ThemeProvider, createUseStyles } from "react-jss";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { createUseStyles } from "react-jss";
 import { useSpinDelay } from "spin-delay";
 import SimpleBar from "simplebar-react";
 import { KeepAlive, useKeepAliveContext, useKeepAliveRef } from "keepalive-for-react";
@@ -129,7 +129,7 @@ function getAppInfo() {
 			"version": "0.0.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-08-31 00:02:35"
+		"lastBuildTime": "2026-08-31 14:56:53"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -284,7 +284,7 @@ var VITE_BASE_HOME_PATH$2;
 var init_page_error = __esmMin((() => {
 	init_undraw_bug_fixing();
 	init_preferences$3();
-	({VITE_BASE_HOME_PATH: VITE_BASE_HOME_PATH$2} = {});
+	({VITE_BASE_HOME_PATH: VITE_BASE_HOME_PATH$2} = { "VITE_BASE_HOME_PATH": "/home" });
 }));
 //#endregion
 //#region src/utils/is-dark-theme/index.ts
@@ -524,6 +524,37 @@ var init_use_layout_style = __esmMin((() => {
 	init_dom();
 }));
 //#endregion
+//#region src/components/jss-theme-provider/index.tsx
+/**
+* JSSThemeProvider 组件
+*
+* @zh JSSThemeProvider 组件，用于将 Ant Design 的 token 和全局主题状态传递给子组件
+* @en JSSThemeProvider component, used to pass Ant Design tokens and global theme state to child components
+*
+* @param {JSSThemeProviderProps} props 组件属性
+* @returns {JSX.Element} 返回的JSX元素
+*/
+function JSSThemeProvider({ children }) {
+	const prefixCls = use(ConfigProvider.ConfigContext).getPrefixCls();
+	const { token } = useToken();
+	const { theme, isDark, isLight } = usePreferences();
+	return /* @__PURE__ */ jsx(ThemeProvider, {
+		theme: {
+			token,
+			theme,
+			isDark,
+			isLight,
+			prefixCls
+		},
+		children
+	});
+}
+var useToken;
+var init_jss_theme_provider = __esmMin((() => {
+	init_use_preferences();
+	({useToken} = theme);
+}));
+//#endregion
 //#region src/store/tabs.ts
 var initialState$4, useTabsStore;
 var init_tabs = __esmMin((() => {
@@ -573,7 +604,7 @@ var init_tabs = __esmMin((() => {
 		*/
 		insertBeforeTab: (routePath, tabProps) => {
 			set((state) => {
-				if (routePath.length) {
+				if (routePath?.length) {
 					const newMap = /* @__PURE__ */ new Map([[routePath, tabProps]]);
 					for (const [key, value] of state.openTabs) newMap.set(key, value);
 					return { openTabs: newMap };
@@ -587,7 +618,7 @@ var init_tabs = __esmMin((() => {
 		*/
 		addTab: (routePath, tabProps) => {
 			set((state) => {
-				if (routePath.length) {
+				if (routePath?.length) {
 					const newTabs = new Map(state.openTabs);
 					/**
 					* 1. 如果 tab 已经存在，则更新 historyState 属性，所以不去重，且 ...newTabs.get(routePath) 是为了保证首页的 closable 属性不被覆盖
@@ -608,7 +639,7 @@ var init_tabs = __esmMin((() => {
 		*/
 		removeTab: (routePath) => {
 			set((state) => {
-				const homePath = void 0;
+				const homePath = "/home";
 				if (routePath === homePath) return state;
 				const newTabs = new Map(state.openTabs);
 				newTabs.delete(routePath);
@@ -654,7 +685,7 @@ var init_tabs = __esmMin((() => {
 		closeLeftTabs: (routePath) => {
 			set((state) => {
 				const newTabs = /* @__PURE__ */ new Map();
-				const homePath = void 0;
+				const homePath = "/home";
 				let found = false;
 				let newActiveKey = state.activeKey;
 				let activeKeyOnRight = false;
@@ -681,7 +712,7 @@ var init_tabs = __esmMin((() => {
 		closeOtherTabs: (routePath) => {
 			set((state) => {
 				const newTabs = /* @__PURE__ */ new Map();
-				const homePath = void 0;
+				const homePath = "/home";
 				newTabs.set(homePath, state.openTabs.get(homePath));
 				if (routePath !== homePath && state.openTabs.has(routePath)) newTabs.set(routePath, state.openTabs.get(routePath));
 				let newActiveKey = state.activeKey;
@@ -699,7 +730,7 @@ var init_tabs = __esmMin((() => {
 		closeAllTabs: () => {
 			set((state) => {
 				const newTabs = /* @__PURE__ */ new Map();
-				const homePath = void 0;
+				const homePath = "/home";
 				newTabs.set(homePath, state.openTabs.get(homePath));
 				return {
 					openTabs: newTabs,
@@ -2448,7 +2479,7 @@ var init_notification = __esmMin((() => {
 			onEventChange && onEventChange("read", item);
 		};
 		dot = useMemo(() => {
-			return !!notifications?.filter((item) => !item.isRead).length;
+			return !!notifications?.filter((item) => !item?.isRead).length;
 		}, [notifications]);
 		return /* @__PURE__ */ jsx(Popover, {
 			placement: "bottomLeft",
@@ -2484,7 +2515,7 @@ var init_notification = __esmMin((() => {
 						children: t("widgets.viewAll")
 					})]
 				}),
-				dataSource: notifications,
+				dataSource: (notifications ?? []).filter((item) => Boolean(item)),
 				renderItem: (item) => /* @__PURE__ */ jsxs(List.Item, {
 					className: "relative justify-start gap-5 hover:bg-gray-100 cursor-pointer",
 					onClick: () => handleClick(item),
@@ -2535,7 +2566,10 @@ function NotificationContainer({ ...restProps }) {
 	const [notifications, setNotifications] = useState([]);
 	useEffect(() => {
 		fetchNotifications().then((res) => {
-			setNotifications(Array.from({ length: 20 }).flatMap(() => res.result));
+			const list = Array.isArray(res?.result) ? res.result : [];
+			setNotifications(Array.from({ length: 20 }).flatMap(() => list));
+		}).catch(() => {
+			setNotifications([]);
 		});
 	}, []);
 	return /* @__PURE__ */ jsx(NotificationPopup, {
@@ -4142,7 +4176,7 @@ function Logo({ sidebarCollapsed, className }) {
 	return /* @__PURE__ */ jsxs("div", {
 		style: { height: 48 },
 		className: clsx("flex items-center justify-center gap-2 cursor-pointer", className),
-		onClick: () => navigate(void 0),
+		onClick: () => navigate("/home"),
 		children: [/* @__PURE__ */ jsx("img", {
 			src: logo_default,
 			alt: "logo",
@@ -4152,7 +4186,7 @@ function Logo({ sidebarCollapsed, className }) {
 			level: 1,
 			className: clsx("text-sm m-0", { hidden: sidebarCollapsed }),
 			ellipsis: true,
-			children: void 0
+			children: "React Antd Admin"
 		})]
 	});
 }
@@ -4243,7 +4277,7 @@ function LayoutMixedSidebar({ computedSidebarWidth = zero, sideNavItems = emptyA
 						ellipsis: true,
 						className: "flex items-center my-0 pl-2 text-lg mx-3",
 						style: { height: 52 },
-						children: void 0
+						children: "React Antd Admin"
 					}) : null,
 					/* @__PURE__ */ jsx("div", {
 						className: "overflow-hidden",
@@ -4526,7 +4560,7 @@ function useDropdownMenu() {
 var homePath, TabActionKeys;
 var init_use_dropdown_menu = __esmMin((() => {
 	init_tabs();
-	homePath = void 0;
+	homePath = "/home";
 	TabActionKeys = {
 		REFRESH: "refresh",
 		CLOSE: "close",
@@ -4846,10 +4880,10 @@ function LayoutTabbar() {
 	* 用户刷新当前页面，但不是默认 Tab 页面时，需要添加默认 Tab
 	*/
 	useEffect(() => {
-		if (!Array.from(openTabs.keys()).includes(void 0)) {
-			const routeTitle = flatRouteList[void 0]?.handle?.title;
-			insertBeforeTab(void 0, {
-				key: void 0,
+		if (!Array.from(openTabs.keys()).includes("/home")) {
+			const routeTitle = flatRouteList["/home"]?.handle?.title;
+			insertBeforeTab("/home", {
+				key: "/home",
 				label: isValidElement(routeTitle) ? routeTitle.props?.children : routeTitle,
 				closable: false,
 				draggable: false
@@ -4876,8 +4910,8 @@ function LayoutTabbar() {
 					search: location.search,
 					hash: location.hash
 				},
-				closable: normalizedPath !== void 0,
-				draggable: normalizedPath !== void 0
+				closable: normalizedPath !== "/home",
+				draggable: normalizedPath !== "/home"
 			});
 		}
 	}, [
@@ -4999,7 +5033,7 @@ function ContainerLayout() {
 	useEffect(() => {
 		setLayoutFooterHeight(40);
 	}, []);
-	return /* @__PURE__ */ jsx(Watermark, {
+	return /* @__PURE__ */ jsx(JSSThemeProvider, { children: /* @__PURE__ */ jsx(Watermark, {
 		content: watermark ? watermarkContent : "",
 		children: /* @__PURE__ */ jsxs("section", {
 			style: { paddingLeft: computedSidebarWidth },
@@ -5038,12 +5072,13 @@ function ContainerLayout() {
 				}) : null
 			]
 		})
-	});
+	}) });
 }
 var useBreakpoint;
 var init_container_layout = __esmMin((() => {
 	init_use_device_type();
 	init_use_layout_style();
+	init_jss_theme_provider();
 	init_preferences$3();
 	init_tabs();
 	init_cn();
@@ -5392,6 +5427,15 @@ async function loadAll(manifest) {
 			});
 		}
 	}
+	/**
+	* 模块路由与宿主用户体系解耦（模块独立运行方案）：模块经清单信任校验后
+	* 即注册进 access store，使菜单/路由表在「无后端鉴权」场景（playground /
+	* rad dev）下立即可用，无需等待后端 userInfo。模块是受信 bundle（P5.5/O5），
+	* 默认可访问。对完整应用：模块路由由「加载完成」前置到注册，不再依赖登录
+	* 后才注入；生产自身路由仍由 AuthGuard 走原鉴权流程，不受影响。
+	*/
+	const moduleRoutes = getRoutes();
+	if (moduleRoutes.length > 0) useAccessStore.getState().setAccessStore(moduleRoutes);
 	return Array.from(modules.values());
 }
 function getModules() {
@@ -5452,6 +5496,7 @@ function getAllRoutePathKeys() {
 var modules, registeredStores, registeredApiPrefixes;
 var init_module_loader = __esmMin((() => {
 	init_resolve_layout();
+	init_access();
 	init_user();
 	init_scoped();
 	init_keep_alive();
@@ -7014,7 +7059,7 @@ function PasswordLogin() {
 			window.$message?.success(t("authority.loginSuccess"));
 			const redirect = searchParams.get("redirect");
 			if (redirect) navigate(`/${redirect.slice(1)}`);
-			else navigate(void 0);
+			else navigate("/home");
 		}).finally(() => {
 			messageLoadingApi?.destroy();
 			setTimeout(() => {
@@ -7122,7 +7167,7 @@ function RegisterPassword() {
 		}), /* @__PURE__ */ jsx(Title, {
 			className: "mt-0",
 			level: 5,
-			children: void 0
+			children: "React Antd Admin"
 		})]
 	}), /* @__PURE__ */ jsxs(Form, {
 		name: "registerForm",
@@ -7253,7 +7298,7 @@ function Login$1() {
 					className: "mr-2 w-11"
 				}), /* @__PURE__ */ jsx("h1", {
 					className: "m-0 text-xl font-medium",
-					children: void 0
+					children: "React Antd Admin"
 				})]
 			}), /* @__PURE__ */ jsxs("div", {
 				className: "flex items-center",
@@ -7383,7 +7428,7 @@ function NotFound() {
 }
 var VITE_BASE_HOME_PATH$1;
 var init_not_found = __esmMin((() => {
-	({VITE_BASE_HOME_PATH: VITE_BASE_HOME_PATH$1} = {});
+	({VITE_BASE_HOME_PATH: VITE_BASE_HOME_PATH$1} = { "VITE_BASE_HOME_PATH": "/home" });
 }));
 //#endregion
 //#region src/router/routes/core/fallback.ts
@@ -7603,7 +7648,7 @@ function UnknownComponent$1() {
 var Paragraph, VITE_BASE_HOME_PATH;
 var init_unknown_component = __esmMin((() => {
 	({Paragraph} = Typography);
-	({VITE_BASE_HOME_PATH} = {});
+	({VITE_BASE_HOME_PATH} = { "VITE_BASE_HOME_PATH": "/home" });
 }));
 //#endregion
 //#region src/router/utils/generate-routes-from-backend.ts
@@ -7746,6 +7791,13 @@ function AuthGuard({ children }) {
 	const userRoles = useUserStore((state) => state.roles);
 	const { setAccessStore, isAccessChecked, routeList } = useAccessStore();
 	const { enableBackendAccess, enableFrontendAceess } = usePreferencesStore((state) => state);
+	/**
+	* 模块路由是经清单信任校验后加载的受信 bundle（P5.5/O5），与宿主用户体系
+	* 解耦：模块可独立运行，不依赖后端登录即可显示菜单、访问模块页面。
+	* 据此判断「当前路由是否为已加载模块路由」，用于下方鉴权门槛放行。
+	*/
+	const moduleRoutePaths = useMemo(() => new Set(getRoutes().map((r) => r.path).filter((p) => Boolean(p))), []);
+	const isModuleRoute = useMemo(() => [...moduleRoutePaths].some((p) => pathname === p || pathname.startsWith(`${p}/`)), [moduleRoutePaths, pathname]);
 	const isPathInNoLoginWhiteList = noLoginWhiteList.includes(pathname);
 	/**
 	* @zh 异步获取用户信息和路由配置
@@ -7856,6 +7908,17 @@ function AuthGuard({ children }) {
 		* 3. Unable to obtain user information and route information
 		*
 		*/
+		/**
+		* 模块路由解耦注册：模块加载后即把模块路由并入菜单/路由表，使菜单与
+		* 模块页面在「无后端鉴权」的模块独立运行场景下立即可用（playground /
+		* rad dev）。模块是受信 bundle，无需等待后端 userInfo。已注册则跳过，
+		* 避免每次路由变更重复合并。生产自身路由仍由下方登录分支拉取。
+		*/
+		const moduleRoutes = addRouteIdByPath(getRoutes());
+		if (moduleRoutes.length > 0) {
+			const existing = useAccessStore.getState().routeList;
+			if (!moduleRoutes.every((m) => existing.some((r) => r.path === m.path))) setAccessStore(moduleRoutes);
+		}
 		if (!whiteRouteNames.includes(pathname) && isLogin && !isAuthorized) fetchUserInfoAndRoutes();
 	}, [
 		pathname,
@@ -7877,6 +7940,11 @@ function AuthGuard({ children }) {
 	*/
 	if (!isLogin) {
 		hideLoading();
+		/**
+		* 受信模块路由：无需登录即可访问（模块与宿主用户体系解耦），直接放行，
+		* 不再重定向到登录页。生产自身路由仍走下方登录重定向逻辑。
+		*/
+		if (isModuleRoute) return children;
 		if (pathname !== "/login") {
 			const redirectPath = pathname.length > 1 ? `${loginPath}?redirect=${pathname}${search}` : loginPath;
 			return /* @__PURE__ */ jsx(Navigate, {
@@ -7906,7 +7974,7 @@ function AuthGuard({ children }) {
 			replace: true
 		});
 		return /* @__PURE__ */ jsx(Navigate, {
-			to: void 0,
+			to: "/home",
 			replace: true
 		});
 	}
@@ -7914,12 +7982,12 @@ function AuthGuard({ children }) {
 	* @zh 等待获取用户信息
 	* @en  Waiting for user information to be obtained
 	*/
-	if (!isAuthorized) return null;
+	if (!isAuthorized && !isModuleRoute) return null;
 	/**
 	* @zh 等待获取路由信息
 	* @en Waiting for route information to be obtained
 	*/
-	if (!isAccessChecked) return null;
+	if (!isAccessChecked && !isModuleRoute) return null;
 	/**
 	* @zh 隐藏加载动画
 	* @en Hide loading animation
@@ -7932,7 +8000,7 @@ function AuthGuard({ children }) {
 	* @en pathname returns the path relative to import.meta.env.BASE_URL, so here is the root route "/" relative to BASE_URL
 	*/
 	if (pathname === "/") return /* @__PURE__ */ jsx(Navigate, {
-		to: void 0,
+		to: "/home",
 		replace: true
 	});
 	/**
@@ -8472,7 +8540,7 @@ var init_request = __esmMin((() => {
 	init_refresh();
 	requestWhiteList = [loginPath];
 	defaultConfig = {
-		prefix: void 0,
+		prefix: "/api",
 		timeout: 1e4,
 		retry: { limit: 3 },
 		hooks: {
@@ -8702,7 +8770,7 @@ function FormAvatarItem({ value, onChange }) {
 				accept: "image/*",
 				showUploadList: false,
 				name: "file",
-				action: `undefined/upload`,
+				action: `/api/upload`,
 				headers: { authorization: "authorization-text" },
 				onChange: (info) => {
 					if (info.file.status === "done") {

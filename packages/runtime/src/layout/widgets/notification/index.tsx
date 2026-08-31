@@ -74,7 +74,7 @@ export const NotificationPopup: React.FC<Props> = ({ dot, notifications, onEvent
 	};
 
 	dot = useMemo(() => {
-		return !!notifications?.filter(item => !item.isRead).length;
+		return !!notifications?.filter(item => !item?.isRead).length;
 	}, [notifications]);
 
 	return (
@@ -120,7 +120,7 @@ export const NotificationPopup: React.FC<Props> = ({ dot, notifications, onEvent
 							</BasicButton>
 						</div>
 					)}
-					dataSource={notifications}
+					dataSource={(notifications ?? []).filter((item): item is NotificationItem => Boolean(item))}
 					renderItem={item => (
 						<List.Item className="relative justify-start gap-5 hover:bg-gray-100 cursor-pointer" onClick={() => handleClick(item)}>
 							{!item.isRead && <span className="absolute w-2 h-2 rounded bg-primary right-2 top-2"></span>}

@@ -1,8 +1,8 @@
 import { HomeOutlined } from "@ant-design/icons";
 import { defineModule } from "@react-antd-admin/runtime";
-import { createElement, lazy } from "react";
+import { createElement } from "react";
 
-const DemoPage = lazy(() => import("./pages/index"));
+import DemoPage from "./pages/index";
 
 /**
  * 垂直切片演示模块。

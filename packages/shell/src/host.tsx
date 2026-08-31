@@ -10,26 +10,27 @@
  * - 所有共享依赖（react / antd / runtime …）由 importmap 注入，宿主本身
  *   external 这些裸说明符，保证与模块命中同一份实例（单例，D5/D12）；
  * - 模块通过 `loadAll(manifest)` 加载，`getRoutes()` 收集路由后注入 react-router；
+ * - 路由根只渲染「容器」（`Outlet`），**整站 chrome（侧边栏 / 顶栏 / 页签）由模块
+ *   自带的 `ContainerLayout` 提供**（模块路由默认 layout=container）。宿主刻意不
+ *   再叠加自己的 Layout chrome —— 否则会出现「宿主侧栏 + 模块侧栏」双层嵌套的混乱布局；
  * - 本文件编译进 `host.js`，其余共享依赖编译进各自的单入口 ESM（见 scripts/build.mts）。
  */
 
-import type { AppRouteRecordRaw } from "@react-antd-admin/runtime";
-import type { ReactNode } from "react";
 import type { HostModule } from "./preload";
 import { StyleProvider } from "@ant-design/cssinjs";
 import { getRoutes, loadAll } from "@react-antd-admin/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { App as AntdApp, ConfigProvider, Layout, Menu, theme } from "antd";
+import { App as AntdApp, ConfigProvider, theme } from "antd";
 import i18next from "i18next";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { initReactI18next, useTranslation } from "react-i18next";
+import { initReactI18next } from "react-i18next";
 
 import {
 	createBrowserRouter,
+	Navigate,
 	Outlet,
 	RouterProvider,
-	useNavigate,
 } from "react-router";
 import { extractRuntimeVersion, toLoaderManifest } from "./manifest";
 import { collectPreloads } from "./preload";
@@ -45,51 +46,6 @@ async function ensureI18n() {
 		fallbackLng: "en-US",
 		resources: {},
 	});
-}
-
-function Shell({ routes }: { routes: AppRouteRecordRaw[] }) {
-	const navigate = useNavigate();
-	const { t } = useTranslation();
-
-	const items = routes
-		.filter(route => route.handle?.title)
-		.map(route => ({
-			key: route.path ?? "",
-			icon: route.handle?.icon as ReactNode | undefined,
-			label: t(route.handle!.title as string),
-		}));
-
-	return (
-		<Layout style={{ minHeight: "100vh" }}>
-			<Layout.Sider theme="dark" collapsible>
-				<div
-					style={{
-						color: "#fff",
-						fontWeight: 600,
-						padding: "16px",
-						whiteSpace: "nowrap",
-						overflow: "hidden",
-					}}
-				>
-					React Antd Admin
-				</div>
-				<Menu
-					theme="dark"
-					mode="inline"
-					items={items}
-					onClick={({ key }) => navigate(key)}
-				/>
-			</Layout.Sider>
-			<Layout>
-				<Layout.Header style={{ background: "#fff", paddingInline: 16 }}>
-					框架宿主（shell）
-				</Layout.Header>
-				<Layout.Content style={{ margin: 16 }}>
-					<Outlet />
-				</Layout.Content>
-			</Layout>
-		</Layout>
-	);
 }
 
 function Boot() {
@@ -169,9 +125,18 @@ function Boot() {
 				setRouter(
 					createBrowserRouter([
 						{
+						// 路由根只渲染容器（Outlet），整站 chrome 由模块自带的
+						// ContainerLayout 提供；宿主不叠加自己的 Layout chrome，
+						// 避免「宿主侧栏 + 模块侧栏」双层嵌套（布局混乱）。
 							path: "/",
-							element: <Shell routes={getRoutes()} />,
-							children: getRoutes(),
+							element: <Outlet />,
+							// 落地 `/` 时跳到首个模块路由，确保模块 ContainerLayout 立即渲染
+							// （否则根 Outlet 无匹配子路由会空白）。等同全量 App 的
+							// `/` → VITE_BASE_HOME_PATH 重定向语义。
+							children: [
+								{ index: true, element: <Navigate to={getRoutes()[0]?.path ?? "/"} replace /> },
+								...getRoutes(),
+							],
 						},
 					]),
 				);

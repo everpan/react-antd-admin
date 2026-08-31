@@ -90,6 +90,14 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 	await buildModules(projectRoot);
 
 	const server = http.createServer((req, res) => {
+		// 开发态严禁缓存：模块/宿主频繁重建，浏览器若按启发式缓存（无
+		// Cache-Control 头时默认如此）会一直复用「修复前」的 runtime.js /
+		// host.js，导致「改了源码、重启 dev、刷新页面却仍报旧错」的迷惑现象
+		// （正是此前 insertBeforeTab 崩溃在重启后依旧出现的根因——服务器已
+		// 发修复产物，浏览器却命中 HTTP 缓存的旧文件）。no-store 让每次请求
+		// 都回源，是 dev 循环的正确行为；生产由静态托管层另行设缓存策略。
+		res.setHeader("Cache-Control", "no-store");
+
 		const urlPath = decodeURIComponent((req.url ?? "/").split("?")[0]);
 		const rel = normalize(urlPath).replace(/^(\.\.[/\\])+/, "");
 
@@ -115,6 +123,21 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 		// 本地模块清单与产物
 		if (rel === "/modules.json" || rel.startsWith("/modules/")) {
 			const filePath = resolve(localDist, rel.replace(/^\//, ""));
+			if (existsSync(filePath) && statSync(filePath).isFile()) {
+				sendFile(res, filePath);
+				return;
+			}
+			res.writeHead(404, { "content-type": "text/plain" });
+			res.end(`404 Not Found: ${rel}`);
+			return;
+		}
+
+		// 宿主版本矩阵（versions.json）：peerRuntime 校验（P7.6 / US-5）的真源，
+		// 生产宿主从 dist 根直接提供；dev 宿主同样从 shell dist 提供，避免
+		// `fetch("./versions.json")` 404 且无版本门禁可校验。缺失时 404 由
+		// 宿主侧容忍（跳过校验），不阻断启动。
+		if (rel === "/versions.json") {
+			const filePath = resolve(shellDist, "versions.json");
 			if (existsSync(filePath) && statSync(filePath).isFile()) {
 				sendFile(res, filePath);
 				return;

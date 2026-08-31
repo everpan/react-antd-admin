@@ -10,6 +10,10 @@
  * 运行：node tests/e2e/verify-shell-iconcontext.mjs
  * （依赖 tests/e2e/shell-importmap-loader.mjs 做 importmap 重定向）
  */
+
+// 本文件由 `node` 直接执行的 e2e 脚本（非被导入模块）：顶层 await 与 process
+// 全局均为合法用法，关闭对应规则以免 pre-commit lint 误报阻断提交。
+/* eslint-disable antfu/no-top-level-await, node/prefer-global/process */
 import { register } from "node:module";
 
 register("./shell-importmap-loader.mjs", import.meta.url);
@@ -19,11 +23,29 @@ const { Window } = await import("happy-dom");
 const win = new Window({ url: "http://localhost/" });
 globalThis.window = win;
 globalThis.document = win.document;
-globalThis.navigator = win.navigator;
+// Node 25 起 globalThis.navigator 为只读，直接赋值会抛；用 defineProperty 兜底
+try {
+	globalThis.navigator = win.navigator;
+}
+catch {
+	Object.defineProperty(globalThis, "navigator", { value: win.navigator, configurable: true, writable: true });
+}
 for (const k of [
-	"HTMLElement", "Element", "Node", "Event", "CustomEvent", "DocumentFragment",
-	"getComputedStyle", "MutationObserver", "location", "history", "localStorage",
-	"CSSStyleSheet", "DOMParser", "Text", "SVGElement",
+	"HTMLElement",
+	"Element",
+	"Node",
+	"Event",
+	"CustomEvent",
+	"DocumentFragment",
+	"getComputedStyle",
+	"MutationObserver",
+	"location",
+	"history",
+	"localStorage",
+	"CSSStyleSheet",
+	"DOMParser",
+	"Text",
+	"SVGElement",
 ]) {
 	if (win[k] !== undefined)
 		globalThis[k] = win[k];
@@ -41,11 +63,17 @@ globalThis.IntersectionObserver = class {
 		return [];
 	}
 };
-globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0);
-globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
-win.matchMedia = win.matchMedia || ((q) => ({
-	matches: false, media: q, onchange: null,
-	addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, dispatchEvent: () => false,
+globalThis.requestAnimationFrame = cb => setTimeout(() => cb(Date.now()), 0);
+globalThis.cancelAnimationFrame = id => clearTimeout(id);
+win.matchMedia = win.matchMedia || (q => ({
+	matches: false,
+	media: q,
+	onchange: null,
+	addEventListener() {},
+	removeEventListener() {},
+	addListener() {},
+	removeListener() {},
+	dispatchEvent: () => false,
 }));
 globalThis.IS_REACT_ACT_ENVIRONMENT = false;
 
@@ -72,7 +100,7 @@ root.render(
 	),
 );
 
-await new Promise((r) => setTimeout(r, 300));
+await new Promise(r => setTimeout(r, 300));
 
 const html = container.innerHTML;
 if (!html || !html.includes("ok"))
@@ -84,5 +112,5 @@ const IconContext = ctxMod.default ?? ctxMod.IconContext;
 if (!IconContext || typeof IconContext.Provider !== "object" || typeof IconContext.Consumer !== "object")
 	throw new Error("IconContext 资产未导出有效的 React Context（default 应为 IconContext）");
 
-console.log("E2E PASS · shell antd 资产可加载，ConfigProvider/Card/Tag 渲染正常，IconContext 修复有效");
+console.warn("E2E PASS · shell antd 资产可加载，ConfigProvider/Card/Tag 渲染正常，IconContext 修复有效");
 process.exit(0);

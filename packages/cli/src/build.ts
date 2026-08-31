@@ -383,8 +383,18 @@ export async function buildModules(projectRoot: string): Promise<BuiltModule[]> 
 					// 只把共享依赖留给宿主 importmap；
 					// 相对路径 / 绝对路径是模块自身代码，需要打包
 					external: (id: string) => !id.startsWith(".") && !path.isAbsolute(id) && isSharedDep(id),
-					// 保留 code splitting（设计文档 D6）：模块入口以真实 URL 加载，
-					// 相对 import 按 import.meta.url 解析，不需要内联成单文件
+					output: {
+						// P7.x / e2e：模块产物内联动态 import（lazy 页面、i18n 等），
+						// 输出为**单文件**。原因：
+						// 1. 拆出的 chunk 只能靠 import.meta.url 在「真实 HTTP 服务」下解析，
+						//    任何非 HTTP 加载上下文（e2e harness、离线/原生壳、L2 完整性之外的
+					//    加载路径）都会 ECONNREFUSED / 404，导致页面空白；
+					// 2. 拆出的 lazy chunk 不受 L2 完整性保护（构建期已告警），是模块化
+					//    方案的真实完整性缺陷；单文件后整包受 modulepreload+integrity 覆盖；
+					// 3. 单文件模块是微前端模块的通用形态，宿主按真实 URL 一次性加载即可，
+					//    无孤儿 chunk 依赖。
+						codeSplitting: false as any,
+					},
 				},
 			},
 		});

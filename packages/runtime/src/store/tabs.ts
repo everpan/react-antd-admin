@@ -116,7 +116,7 @@ export const useTabsStore = create<TabsState & TabsAction>()(
 			 */
 			insertBeforeTab: (routePath: string, tabProps: TabStateType) => {
 				set((state) => {
-					if (routePath.length) {
+					if (routePath?.length) {
 						const newMap = new Map([[routePath, tabProps]]);
 						for (const [key, value] of state.openTabs) {
 							newMap.set(key, value);
@@ -133,7 +133,7 @@ export const useTabsStore = create<TabsState & TabsAction>()(
 			 */
 			addTab: (routePath: string, tabProps: TabStateType) => {
 				set((state) => {
-					if (routePath.length) {
+					if (routePath?.length) {
 						const newTabs = new Map(state.openTabs);
 						/**
 						 * 1. 如果 tab 已经存在，则更新 historyState 属性，所以不去重，且 ...newTabs.get(routePath) 是为了保证首页的 closable 属性不被覆盖

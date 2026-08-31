@@ -10,6 +10,7 @@ import type {
 import i18next from "i18next";
 
 import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
+import { useAccessStore } from "#src/store/access";
 import { useUserStore } from "#src/store/user";
 import { createScopedRequest } from "#src/utils/request/scoped";
 import { getAllRoutePaths, getKeepAliveExcludes } from "./keep-alive";
@@ -225,6 +226,18 @@ export async function loadAll(manifest: Manifest): Promise<ModuleInstance[]> {
 				error: error instanceof Error ? error : new Error(String(error)),
 			});
 		}
+	}
+
+	/**
+	 * 模块路由与宿主用户体系解耦（模块独立运行方案）：模块经清单信任校验后
+	 * 即注册进 access store，使菜单/路由表在「无后端鉴权」场景（playground /
+	 * rad dev）下立即可用，无需等待后端 userInfo。模块是受信 bundle（P5.5/O5），
+	 * 默认可访问。对完整应用：模块路由由「加载完成」前置到注册，不再依赖登录
+	 * 后才注入；生产自身路由仍由 AuthGuard 走原鉴权流程，不受影响。
+	 */
+	const moduleRoutes = getRoutes();
+	if (moduleRoutes.length > 0) {
+		useAccessStore.getState().setAccessStore(moduleRoutes);
 	}
 
 	return Array.from(modules.values());

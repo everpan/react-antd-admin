@@ -1,9 +1,10 @@
 import { RocketOutlined } from "@ant-design/icons";
 import { FloatButton, Grid, Watermark } from "antd";
 import { useEffect, useMemo } from "react";
+import { JSSThemeProvider } from "#src/components/jss-theme-provider";
 import { useDeviceType } from "#src/hooks/use-device-type";
-import { useLayoutFooterStyle, useLayoutHeaderStyle } from "#src/hooks/use-layout-style";
 
+import { useLayoutFooterStyle, useLayoutHeaderStyle } from "#src/hooks/use-layout-style";
 import { usePreferencesStore } from "#src/store/preferences";
 import { useTabsStore } from "#src/store/tabs";
 import { cn } from "#src/utils/cn";
@@ -107,72 +108,74 @@ export default function ContainerLayout() {
 	}, []);
 
 	return (
-		<Watermark content={watermark ? watermarkContent : ""}>
-			<section
-				style={{
-					paddingLeft: computedSidebarWidth,
-				}}
-				className={cn(
-					"transition-all flex flex-col h-screen",
-				)}
-			>
-				<LayoutHeader>
-					{isTopNav || isMixedNav
-						? (
-							<>
-								{isTopNav ? <Logo sidebarCollapsed={false} className="mr-8" /> : null}
-								<LayoutMenu mode="horizontal" menus={topNavItems} handleMenuSelect={handleMenuSelect} />
-							</>
-						)
-						: <BreadcrumbViews />}
-				</LayoutHeader>
-				{tabbarEnable ? <LayoutTabbar /> : null}
+		<JSSThemeProvider>
+			<Watermark content={watermark ? watermarkContent : ""}>
+				<section
+					style={{
+						paddingLeft: computedSidebarWidth,
+					}}
+					className={cn(
+						"transition-all flex flex-col h-screen",
+					)}
+				>
+					<LayoutHeader>
+						{isTopNav || isMixedNav
+							? (
+								<>
+									{isTopNav ? <Logo sidebarCollapsed={false} className="mr-8" /> : null}
+									<LayoutMenu mode="horizontal" menus={topNavItems} handleMenuSelect={handleMenuSelect} />
+								</>
+							)
+							: <BreadcrumbViews />}
+					</LayoutHeader>
+					{tabbarEnable ? <LayoutTabbar /> : null}
 
-				{/* Mobile Menu */}
-				<LayoutMobileMenu />
+					{/* Mobile Menu */}
+					<LayoutMobileMenu />
 
-				{/* PC */}
-				{
-					sidebarEnableState && !isTwoColumnNav
-						? (
-							<LayoutSidebar
-								computedSidebarWidth={computedSidebarWidth}
-							>
-								<LayoutMenu
-									autoExpandCurrentMenu
-									menus={sideNavItems}
+					{/* PC */}
+					{
+						sidebarEnableState && !isTwoColumnNav
+							? (
+								<LayoutSidebar
+									computedSidebarWidth={computedSidebarWidth}
+								>
+									<LayoutMenu
+										autoExpandCurrentMenu
+										menus={sideNavItems}
+										handleMenuSelect={handleMenuSelect}
+									/>
+								</LayoutSidebar>
+							)
+							: null
+					}
+					{
+						isTwoColumnNav
+							? (
+								<LayoutMixedSidebar
+									sideNavMenuKeyInSplitMode={sideNavMenuKeyInSplitMode}
+									computedSidebarWidth={computedSidebarWidth}
+									sideNavItems={sideNavItems}
+									topNavItems={topNavItems}
 									handleMenuSelect={handleMenuSelect}
 								/>
-							</LayoutSidebar>
-						)
-						: null
-				}
-				{
-					isTwoColumnNav
+							)
+							: null
+					}
+
+					<LayoutContent />
+
+					{enableFooter && fixedFooter ? <LayoutFooter className="bg-colorBgContainer" /> : null}
+					{enableBackTopButton
 						? (
-							<LayoutMixedSidebar
-								sideNavMenuKeyInSplitMode={sideNavMenuKeyInSplitMode}
-								computedSidebarWidth={computedSidebarWidth}
-								sideNavItems={sideNavItems}
-								topNavItems={topNavItems}
-								handleMenuSelect={handleMenuSelect}
+							<FloatButton.BackTop
+								icon={<RocketOutlined />}
+								target={() => document.querySelector(`#${ELEMENT_ID_MAIN_CONTENT} .simplebar-content-wrapper`) as HTMLElement || document}
 							/>
 						)
-						: null
-				}
-
-				<LayoutContent />
-
-				{enableFooter && fixedFooter ? <LayoutFooter className="bg-colorBgContainer" /> : null}
-				{enableBackTopButton
-					? (
-						<FloatButton.BackTop
-							icon={<RocketOutlined />}
-							target={() => document.querySelector(`#${ELEMENT_ID_MAIN_CONTENT} .simplebar-content-wrapper`) as HTMLElement || document}
-						/>
-					)
-					: null}
-			</section>
-		</Watermark>
+						: null}
+				</section>
+			</Watermark>
+		</JSSThemeProvider>
 	);
 }

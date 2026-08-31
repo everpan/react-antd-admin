@@ -1,10 +1,10 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { cleanupSVG, isEmptyColor, parseColors, runSVGO, SVG } from "@iconify/tools";
+import dayjs from "dayjs";
 import { FileSystemIconLoader } from "unplugin-icons/loaders";
 import Icons from "unplugin-icons/vite";
-import dayjs from "dayjs";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 
 import { license, name, version } from "./package.json";
 
@@ -104,18 +104,26 @@ export default defineConfig({
 	// 产物跑在浏览器会抛 process is not defined（风险 R15）
 	define: {
 		"process.env.NODE_ENV": JSON.stringify("production"),
-		// 同一个坑的第二处：`getAppNamespace()` 读 `import.meta.env.VITE_APP_NAMESPACE`，
-		// 该值来自仓库根 `.env`（`VITE_APP_NAMESPACE=react-antd-admin`），而 vite 只从
-		// 自己的 root 加载 .env —— runtime 在 packages/runtime 下独立构建，根 .env
-		// 根本不生效，于是产物带着「取不到就抛」的守卫发布，浏览器初始化
-		// usePreferences 时直接 Error。分发产物必须自带默认值（A26）。
-		"import.meta.env.VITE_APP_NAMESPACE": JSON.stringify("react-antd-admin"),
-		// 同族的第二个构建期全局：`getAppInfo()` 读 `__APP_INFO__`，
-		// 而它只在**根** vite.config.ts 里 define —— 根配置只作用于主应用构建，
-		// 不会给 runtime 产物留下一个运行期全局。于是 runtime.js 带着裸的
-		// `__APP_INFO__` 发布，宿主（shell）也没注入，浏览器一初始化
-		// usePreferences（name: getAppNamespace("preferences")）就 ReferenceError。
-		// runtime 是要当 npm 包分发的，必须自带这份信息（A26）。
-		__APP_INFO__: JSON.stringify(APP_INFO),
+		// 同一个坑的第三处（同族 A26）：runtime 在 packages/runtime 下独立构建，
+		// vite 仅从自己的 root 加载 .env，仓库根 `.env` 的 VITE_* 全部不生效。
+		// 于是产物里 `import.meta.env.VITE_BASE_HOME_PATH` 等是 undefined，发布到宿主
+		// （shell）/ 外部模块工程后：
+		//   · VITE_BASE_HOME_PATH 缺失 → tabbar 的 insertBeforeTab(undefined) 在 effect 里
+		//     读 `undefined.length` 崩溃（React Router 默认 ErrorBoundary → 整页白屏）；
+		//   · VITE_API_BASE_URL / VITE_GLOB_APP_TITLE 等同样带着 undefined 发布。
+		// runtime 是要当 npm 包分发的，必须自带这些构建期全局（与已处理的
+		// VITE_APP_NAMESPACE / __APP_INFO__ 同族）。这里显式把仓库根 `.env` 的 VITE_*
+		// 全部注入产物，使预构建 runtime.js 自包含——宿主/外部工程无需再各自 define。
+		// 注意：只取基础 `.env`（不取 `.env.production`），避免把 VITE_ROUTER_MODE=hash
+		// 等生产专属值烤进会被 dev 宿主复用的同一份 dist。
+		...Object.fromEntries(
+			Object.entries(loadEnv("", path.join(DIR, "..", ".."), "VITE_")).map(
+				([key, value]) => [`import.meta.env.${key}`, JSON.stringify(value)],
+			),
+		),
+		// runtime 包未声明 author；dependencies 也刻意不注入（P6.5 教训：
+		// 注入依赖清单等于把工具链构成公开给攻击者）。此处字段少于 AppInfo
+		// 是刻意的——消费方只应经 getAppInfo() 读取，缺字段走空态即可。
+		"__APP_INFO__": JSON.stringify(APP_INFO),
 	},
 });
