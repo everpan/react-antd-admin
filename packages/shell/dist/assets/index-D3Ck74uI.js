@@ -1,5 +1,5 @@
 import { StyleProvider } from "@ant-design/cssinjs";
-import { LayoutEffects, getRoutes, loadAll, setupI18n } from "@react-antd-admin/runtime";
+import { LayoutEffects, getRoutes, loadAll, setupI18n, useUserStore } from "@react-antd-admin/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App, ConfigProvider, theme } from "antd";
 import { useEffect, useState } from "react";
@@ -132,6 +132,15 @@ ${offenders.join("\n")}\n修复建议：该来源不在宿主内置白名单中�
 //#endregion
 //#region src/host.tsx
 var queryClient = new QueryClient();
+useUserStore.setState({
+	id: "1",
+	avatar: "https://avatars.githubusercontent.com/u/47056890",
+	username: "Admin",
+	email: "",
+	phoneNumber: "",
+	description: "manager",
+	roles: ["admin"]
+});
 var i18nReady = false;
 function ensureI18n() {
 	if (!i18nReady) {

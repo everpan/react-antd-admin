@@ -23,6 +23,7 @@ import {
 	LayoutEffects,
 	loadAll,
 	setupI18n,
+	useUserStore,
 } from "@react-antd-admin/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App as AntdApp, ConfigProvider, theme } from "antd";
@@ -40,6 +41,20 @@ import { collectPreloads } from "./preload";
 import { assertTrustedModules } from "./trust";
 
 const queryClient = new QueryClient();
+
+// 免登录演示宿主：无登录流程填充 user store，头像/用户名恒为空兜底
+// （UserIcon 人形图标）。播种演示用户（与 App 链 fake 数据一致），
+// 保持两链显示同构——playground 显示差异调查
+// docs/prd/202609011045-playground-display-parity-plan.md 差异项 3
+useUserStore.setState({
+	id: "1",
+	avatar: "https://avatars.githubusercontent.com/u/47056890",
+	username: "Admin",
+	email: "",
+	phoneNumber: "",
+	description: "manager",
+	roles: ["admin"],
+});
 
 // i18n 由 runtime 的 setupI18n 统一初始化：装载框架 translation 命名空间
 // （preferences/common 等）。此前这里以空 resources 自行 init，框架级文案
