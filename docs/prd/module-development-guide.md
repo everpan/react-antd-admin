@@ -12,6 +12,10 @@
 > scoped client 增加路径归一化与 prefix 剥离、entry 并入 L2 完整性链路、
 > 新增 `rad info` / `rad merge`、shell 包转 npm 发布。
 >
+> 更新：2026-09-01 随 playground 全量模块接入（`202609010056-playground-full-modules-plan.md`）
+> ——新增 rad dev 工程 mock 约定（§3.4）、路由相对 path 的菜单 key/id 契约
+> （§3.2 要点 4）、AppInfo 缺字段空态契约（§9 常见问题）。
+>
 > 前置阅读：`202608291145-framework-npm-package-implementation-plan.md`（设计文档），
 > 本文引用其中决策编号（D*）与需求编号（B*/O*/R*）。
 
@@ -173,6 +177,14 @@ export default definition;
   在导航时校验 403。两者语义不同，可叠加。
 - 菜单 title 必须用自己模块的 namespace（`order:menu.xxx`），翻译文件
   随模块自管理，框架 `common.json` 不含业务词条。
+- **路由 path 建议一律写绝对路径**（`/order/list`）。react-router 允许
+  子路由相对 path（`"list"`），框架会把菜单 key 与路由 id 统一拼接为
+  绝对路径（相对 key 曾导致点击被按当前路由相对解析而落 404、选中态
+  与手风琴展开态错乱，202609010056 暴露后已在框架侧修复）；写绝对路径
+  可完全绕开这条转换链，也便于排查。
+- `peerRuntime` 写 semver 范围时的 **0.x 陷阱**：`^0.0.0` 在 semver 下
+  等价于「恰好 0.0.0」，宿主一升级即误判不兼容。宿主 runtime 尚在
+  0.x 阶段时请写开放范围（如 `>=0.0.0`），1.0 后再收紧。
 
 ### 3.3 依赖规则
 
@@ -194,6 +206,30 @@ pnpm dev        # = rad dev 5174
 `rad dev` 是「构建 + watch + 静态服务」架构：宿主页面（shell dist）
 代理访问，模块产物变更后**手动刷新**生效。真正的 HMR 需要 vite 中间件
 形态的 dev server（已知差距，见设计文档 P5 偏差记录）。
+
+**工程 mock 约定**：`rad dev` 会加载工程根目录 `mock/*.mock.mjs`
+（或 `.mock.js`）下 default 导出的路由数组，挂到同源 `/api` 前缀，
+供本地开发替代后端：
+
+```js
+// mock/order.mock.mjs
+export default [
+	{
+		url: "/order-api/list",              // 归一化到 /api/order-api/list
+		method: "POST",                       // 缺省 GET
+		response: ({ body, query }) => ({     // 返回值即响应 JSON
+			code: 200,
+			result: { list: [], total: 0 },
+			success: true,
+		}),
+	},
+];
+```
+
+- url + method **精确匹配**，未命中返回 404 JSON（不做透传）——
+  mock 表就是该 dev 形态的后端边界；
+- 无 `mock/` 目录时零行为变化；**重启 `rad dev` 生效**（不热载）；
+- 生产构建不受影响（约定仅存在于 rad dev）。
 
 ## 4. 构建与发布
 
@@ -369,3 +405,17 @@ DEV 下 loader 会打 `[module-loader]` 前缀日志（加载清单、✓ 每模
 **Q: 怀疑 runtime 有 bug，如何向框架团队报障？（P7.11）**
 在模块工程根目录执行 `rad info`——输出 cli/runtime/shell 三方版本 +
 共享依赖版本矩阵 + 当前模块清单，完整粘贴即可复现环境。
+
+**Q: 使用 `getAppInfo()` 的字段报 undefined / 崩溃？**
+AppInfo 契约（P6.5）：不同宿主注入的应用元信息**字段可缺省**——runtime
+产物即不携带 `pkg.dependencies`/`pkg.devDependencies`（供应链信息泄露
+防护）。缺字段必须走空态而非崩溃：`Object.keys(getAppInfo().pkg.dependencies ?? {})`。
+直接解构后调用曾让宿主形态整页崩（React Router ErrorBoundary）。
+另注意：模块源码**不得直接引用全局 `__APP_INFO__`**（CI 契约测试锁定），
+一律经 `getAppInfo()`。
+
+**Q: 菜单点击跳到奇怪的路由（如 /system/detail）或选中态丢失？**
+十有八九是子路由写了**相对 path**（`path: "detail"`）：点击导航按当前
+路由相对解析（在 /system/dept 下点「detail」→ /system/detail）。
+框架已把菜单 key/路由 id 统一拼为绝对路径，但仍建议路由 path 一律写
+绝对路径（见 §3.2 要点 4）。

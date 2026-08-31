@@ -35,6 +35,9 @@ export const SHARED_DEPS: SharedDepEntry[] = [
 	// runtime 由 shell 直接拷贝其 dist/runtime.js
 	{ specifier: "@react-antd-admin/runtime", asset: "runtime", hard: true },
 	// —— 软共享 ——
+	// 注：@rc-component/form（antd 6 Form 底层）曾尝试单例化以修 my-profile
+	// 崩溃（React #130），假说未证实——多副本并非充分根因，已回退；见
+	// docs/prd/202609010056-playground-full-modules-plan.md 差异项 D2。
 	{ specifier: "antd", asset: "antd", hard: false },
 	{ specifier: "antd/locale/en_US", asset: "antd-locale-en_US", hard: false },
 	{ specifier: "antd/locale/zh_CN", asset: "antd-locale-zh_CN", hard: false },

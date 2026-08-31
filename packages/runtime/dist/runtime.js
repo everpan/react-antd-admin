@@ -136,7 +136,7 @@ function getAppInfo() {
 			"version": "0.0.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-09-01 00:36:28"
+		"lastBuildTime": "2026-09-01 02:30:15"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -1402,11 +1402,12 @@ var init_ascending = __esmMin((() => {}));
 */
 function addRouteIdByPath(routes, parentId = "") {
 	return routes.map((route) => {
+		const absolutePath = route.path && !route.path.startsWith("/") ? `${parentId.replace(/\/+$/, "")}/${route.path}` : route.path;
 		const newRoute = {
 			...route,
-			id: route.index ? `${parentId}/` : route.path
+			id: route.index ? `${parentId}/` : absolutePath
 		};
-		if (newRoute.children && newRoute.children.length > 0) newRoute.children = addRouteIdByPath(newRoute.children, route.path);
+		if (newRoute.children && newRoute.children.length > 0) newRoute.children = addRouteIdByPath(newRoute.children, absolutePath ?? parentId);
 		return newRoute;
 	});
 }
@@ -8287,18 +8288,31 @@ var init_router = __esmMin((() => {
 //#endregion
 //#region src/router/utils/generate-menu-items-from-routes.ts
 /**
+* 解析菜单 key 为绝对路径。
+*
+* react-router 允许子路由使用相对 path（如父 "/demo" 下的 "detail"），但菜单
+* 点击导航 navigate(key) 需要绝对路径——相对 key（"detail"）会被按当前路由
+* 解析（/system/dept 下点击 → /system/detail），落 404。
+*/
+function resolveMenuKey(path, parentPath) {
+	if (!path) return parentPath;
+	return path.startsWith("/") ? path : `${parentPath.replace(/\/+$/, "")}/${path}`;
+}
+/**
 * 根据路由列表生成菜单项数组
 *
 * @param routeList 路由列表，类型为 AppRouteRecordRaw 数组
+* @param parentPath 父路由绝对路径（递归用，顶层为 "/"）
 * @returns 返回菜单项数组，数组元素类型为 MenuItemType
 */
-function generateMenuItemsFromRoutes(routeList) {
+function generateMenuItemsFromRoutes(routeList, parentPath = "/") {
 	return routeList.reduce((acc, item) => {
 		const label = item.handle?.title;
 		const externalLink = item?.handle?.externalLink;
 		const icon = item?.handle?.icon;
+		const absolutePath = resolveMenuKey(item.path, parentPath);
 		const menuItem = {
-			key: item.path,
+			key: absolutePath,
 			label: externalLink ? createElement(Link, {
 				onClick: (e) => {
 					e.stopPropagation();
@@ -8311,7 +8325,7 @@ function generateMenuItemsFromRoutes(routeList) {
 		if (icon) menuItem.icon = icon;
 		if (Array.isArray(item.children) && item.children.length > 0) {
 			const noIndexRoute = item.children.filter((route) => !route.index && !route?.handle?.hideInMenu);
-			if (noIndexRoute.length > 0) menuItem.children = generateMenuItemsFromRoutes(noIndexRoute);
+			if (noIndexRoute.length > 0) menuItem.children = generateMenuItemsFromRoutes(noIndexRoute, absolutePath);
 		}
 		if (item?.handle?.hideInMenu) return acc;
 		return [...acc, menuItem];

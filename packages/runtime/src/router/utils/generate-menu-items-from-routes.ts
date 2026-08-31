@@ -5,19 +5,38 @@ import { createElement } from "react";
 import { Link } from "react-router";
 
 /**
+ * 解析菜单 key 为绝对路径。
+ *
+ * react-router 允许子路由使用相对 path（如父 "/demo" 下的 "detail"），但菜单
+ * 点击导航 navigate(key) 需要绝对路径——相对 key（"detail"）会被按当前路由
+ * 解析（/system/dept 下点击 → /system/detail），落 404。
+ */
+function resolveMenuKey(path: string | undefined, parentPath: string): string {
+	if (!path)
+		return parentPath;
+	// 以 "/" 开头已是绝对路径；否则拼接父路径（父尾斜杠归一，避免 "//"）
+	return path.startsWith("/") ? path : `${parentPath.replace(/\/+$/, "")}/${path}`;
+}
+
+/**
  * 根据路由列表生成菜单项数组
  *
  * @param routeList 路由列表，类型为 AppRouteRecordRaw 数组
+ * @param parentPath 父路由绝对路径（递归用，顶层为 "/"）
  * @returns 返回菜单项数组，数组元素类型为 MenuItemType
  */
-export function generateMenuItemsFromRoutes(routeList: AppRouteRecordRaw[]) {
+export function generateMenuItemsFromRoutes(
+	routeList: AppRouteRecordRaw[],
+	parentPath = "/",
+): MenuItemType[] {
 	return routeList.reduce<MenuItemType[]>((acc, item) => {
 		const label = item.handle?.title;
 		const externalLink = item?.handle?.externalLink;
 		const icon = item?.handle?.icon;
+		const absolutePath = resolveMenuKey(item.path, parentPath);
 
 		const menuItem: MenuItemType = {
-			key: item.path!,
+			key: absolutePath,
 			label: externalLink
 				? createElement(
 					Link,
@@ -45,7 +64,7 @@ export function generateMenuItemsFromRoutes(routeList: AppRouteRecordRaw[]) {
 			// 过滤掉非首页，且不显示在菜单中的路由
 			const noIndexRoute = item.children.filter(route => !route.index && !route?.handle?.hideInMenu);
 			if (noIndexRoute.length > 0) {
-				menuItem.children = generateMenuItemsFromRoutes(noIndexRoute);
+				menuItem.children = generateMenuItemsFromRoutes(noIndexRoute, absolutePath);
 			}
 		}
 		if (item?.handle?.hideInMenu) {

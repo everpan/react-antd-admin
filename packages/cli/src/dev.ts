@@ -9,6 +9,7 @@
  *      /assets/*               → shell/dist/assets/*
  *      /modules.json           → 本地 dist/modules.json
  *      /modules/*              → 本地 dist/modules/*
+ *      /api/*                  → 工程 mock/*.mock.mjs（可选约定，未命中 404）
  *    共享依赖（react/antd/runtime…）由 importmap 指向 /assets/*，与模块命中同一份。
  * 4. 监听 modules/ 源码变更并重建（当前为全量重建，非按变更定位增量），
  *    提示刷新浏览器。
@@ -17,11 +18,14 @@
  * 文档 P5 偏差记录；本形态先做到「保存即重建 + 手动刷新」，保证单例与加载链路打通。
  */
 
+import type { MockRoute } from "./dev-mock";
+import { Buffer } from "node:buffer";
 import { existsSync, readFileSync, statSync, watch } from "node:fs";
 import http from "node:http";
-import { extname, normalize, resolve } from "node:path";
 
+import { extname, normalize, resolve } from "node:path";
 import { buildModules } from "./build";
+import { loadProjectMocks, matchMockRoute } from "./dev-mock";
 
 const DEFAULT_PORT = 5174;
 
@@ -89,6 +93,11 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 	console.log("[rad] 构建本地模块…");
 	await buildModules(projectRoot);
 
+	// 工程 mock（可选约定 mock/*.mock.mjs）：挂到同源 /api 前缀，让依赖
+	// 后端接口的模块页面在纯静态 dev 形态下也能渲染数据（如 home 仪表盘
+	// 的 echarts 图表）。无 mock 目录时为空表，行为与此前完全一致。
+	const mocks: MockRoute[] = await loadProjectMocks(projectRoot);
+
 	const server = http.createServer((req, res) => {
 		// 开发态严禁缓存：模块/宿主频繁重建，浏览器若按启发式缓存（无
 		// Cache-Control 头时默认如此）会一直复用「修复前」的 runtime.js /
@@ -105,6 +114,34 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 		if (rel === "/" || rel === "/index.html") {
 			res.writeHead(200, { "content-type": MIME[".html"] });
 			res.end(readFileSync(resolve(shellDist, "index.html")));
+			return;
+		}
+
+		// 工程 mock：/api/* 按 url+method 精确匹配（url 不含 /api 前缀），
+		// 未命中则 404——mock 表就是该 dev 形态的后端边界，不做透传
+		if (rel.startsWith("/api/")) {
+			const route = matchMockRoute(mocks, req.method ?? "get", rel.slice("/api".length));
+			if (!route) {
+				res.writeHead(404, { "content-type": MIME[".json"] });
+				res.end(JSON.stringify({ code: 404, message: `No mock for ${req.method} ${rel}` }));
+				return;
+			}
+			const chunks: Buffer[] = [];
+			req.on("data", chunk => chunks.push(chunk));
+			req.on("end", () => {
+				let body: Record<string, unknown> = {};
+				try {
+					body = JSON.parse(Buffer.concat(chunks).toString() || "{}");
+				}
+				catch {
+					// 非 JSON 请求体按空 body 交给 mock 处理
+				}
+				res.writeHead(200, { "content-type": MIME[".json"] });
+				res.end(JSON.stringify(route.response({
+					body,
+					query: new URLSearchParams((req.url ?? "").split("?")[1] ?? ""),
+				})));
+			});
 			return;
 		}
 
@@ -175,6 +212,9 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 	console.log(`\n[rad] 开发服务器已启动：http://localhost:${actualPort}`);
 
 	console.log("[rad] 宿主来自 @react-antd-admin/shell（importmap 单例），模块来自本地 dist/");
+
+	if (mocks.length)
+		console.log(`[rad] 工程 mock：${mocks.length} 条路由（mock/ 目录，重启生效）`);
 
 	console.log("[rad] 修改 modules/ 下的源码会触发重建，刷新浏览器即可生效。\n");
 

@@ -35,6 +35,22 @@ function specifiersOf(file: string): string[] {
 }
 
 describe("rad build 产出模块 chunk", () => {
+	// modules.json 单条清单（只含本测试消费的字段）
+	interface ModuleManifest {
+		name: string
+		version: string
+		enabled: boolean
+		peerRuntime: string
+		entry: string
+		integrity: string
+		chunks: Array<{ url: string, integrity: string }>
+		css: string[]
+	}
+
+	function readManifest(): ModuleManifest[] {
+		return JSON.parse(fs.readFileSync(path.join(DIST, "modules.json"), "utf-8")) as ModuleManifest[];
+	}
+
 	beforeAll(() => {
 		execFileSync("./node_modules/.bin/rad", ["build"], { cwd: PLAYGROUND, stdio: "pipe" });
 	}, 120_000);
@@ -43,8 +59,13 @@ describe("rad build 产出模块 chunk", () => {
 		const manifestPath = path.join(DIST, "modules.json");
 		expect(fs.existsSync(manifestPath), "应生成 modules.json").toBe(true);
 
-		const [mod] = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
-		expect(mod.name).toBe("demo");
+		// playground 登记全量仓库模块（docs/prd/202609010056）：8 个仓库模块 + demo。
+		// 断言锚定 demo 模块本身而非 manifest 首项（首项随登记顺序变化）
+		const mods = readManifest();
+		expect(mods.length, "应包含全部登记模块").toBeGreaterThanOrEqual(9);
+		expect(mods.some(m => m.name === "home"), "仓库 home 模块应在列").toBe(true);
+
+		const mod = mods.find(m => m.name === "demo") as ModuleManifest;
 		expect(mod.version).toBe("0.1.0");
 		expect(mod.enabled).toBe(true);
 		expect(mod.peerRuntime, "应声明 peerRuntime 供宿主校验").toBeTruthy();
@@ -55,7 +76,7 @@ describe("rad build 产出模块 chunk", () => {
 	});
 
 	it("entry 与每个 chunk 的 integrity 与文件内容一致", () => {
-		const [mod] = JSON.parse(fs.readFileSync(path.join(DIST, "modules.json"), "utf-8"));
+		const mod = readManifest().find(m => m.name === "demo") as ModuleManifest;
 
 		expect(sha384(path.join(MODULE_DIR, "entry.js"))).toBe(mod.integrity);
 

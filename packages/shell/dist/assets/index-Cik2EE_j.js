@@ -1,5 +1,5 @@
 import { StyleProvider } from "@ant-design/cssinjs";
-import { LayoutEffects, getRoutes, loadAll, setupI18n, useUserStore } from "@react-antd-admin/runtime";
+import { LayoutEffects, getRoutes, loadAll, setupI18n, usePreferences, useUserStore } from "@react-antd-admin/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App, ConfigProvider, theme } from "antd";
 import { useEffect, useState } from "react";
@@ -215,16 +215,40 @@ function Boot() {
 	});
 	return /* @__PURE__ */ jsx(RouterProvider, { router });
 }
+/**
+* 主题边界：ConfigProvider 响应 preferences 的暗黑/主色/圆角，与 App 链
+* app.tsx 的 theme 计算同源同值（customAntd* 主题均为空对象，无需复制）。
+* 此前硬编码 defaultAlgorithm——切暗黑后侧栏（tailwind dark: 类）变暗而
+* antd 组件仍亮色，顶栏图标白色融进白底「消失」——playground 全量模块
+* 暗黑对比（docs/prd/202609010056-playground-full-modules-plan.md）暴露。
+*/
+function HostProviders() {
+	const { isDark, themeColorPrimary, themeRadius, sideCollapsedWidth } = usePreferences();
+	return /* @__PURE__ */ jsx(StyleProvider, {
+		layer: true,
+		hashPriority: "high",
+		children: /* @__PURE__ */ jsx(ConfigProvider, {
+			theme: {
+				cssVar: {},
+				hashed: false,
+				algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
+				token: {
+					borderRadius: themeRadius,
+					colorPrimary: themeColorPrimary
+				},
+				components: { Menu: {
+					darkItemBg: "#141414",
+					itemBg: "#fff",
+					collapsedWidth: sideCollapsedWidth
+				} }
+			},
+			children: /* @__PURE__ */ jsx(App, { children: /* @__PURE__ */ jsx(QueryClientProvider, {
+				client: queryClient,
+				children: /* @__PURE__ */ jsx(Boot, {})
+			}) })
+		})
+	});
+}
 var rootElement = document.getElementById("root");
-if (rootElement) createRoot(rootElement).render(/* @__PURE__ */ jsx(StyleProvider, {
-	layer: true,
-	hashPriority: "high",
-	children: /* @__PURE__ */ jsx(ConfigProvider, {
-		theme: { algorithm: theme.defaultAlgorithm },
-		children: /* @__PURE__ */ jsx(App, { children: /* @__PURE__ */ jsx(QueryClientProvider, {
-			client: queryClient,
-			children: /* @__PURE__ */ jsx(Boot, {})
-		}) })
-	})
-}));
+if (rootElement) createRoot(rootElement).render(/* @__PURE__ */ jsx(HostProviders, {}));
 //#endregion

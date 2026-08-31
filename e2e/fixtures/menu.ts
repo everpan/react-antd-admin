@@ -17,16 +17,24 @@ const settle = (page: Page) => page.waitForTimeout(250); // 展开动画 + 子�
  * 递归遍历所有叶子菜单项（深度优先，手风琴安全）：
  * 先访问本组已挂载的叶子，再逐个打开嵌套子组继续下钻。
  * 手风琴会关闭同层兄弟，但兄弟的叶子必然已被访问（先叶后组的顺序保证）。
+ *
+ * shouldVisit 返回 false 的项不点击（默认全访问）。用于已知存量缺陷页：
+ * 崩溃页会替换整棵路由树并毒化同一会话内的后续遍历（菜单 locator 失效），
+ * 必须完全跳过点击，而非仅跳过断言。
  */
 async function visitUlChildren(
 	page: Page,
 	ul: Locator,
 	visit: (item: Locator) => Promise<void>,
+	shouldVisit: (item: Locator) => Promise<boolean>,
 ): Promise<void> {
 	const items = ul.locator("> li.ant-menu-item");
 	const itemCount = await items.count();
-	for (let i = 0; i < itemCount; i++)
-		await visit(items.nth(i));
+	for (let i = 0; i < itemCount; i++) {
+		const item = items.nth(i);
+		if (await shouldVisit(item))
+			await visit(item);
+	}
 
 	const groups = ul.locator("> li.ant-menu-submenu");
 	const groupCount = await groups.count();
@@ -38,7 +46,7 @@ async function visitUlChildren(
 			await group.locator("> .ant-menu-submenu-title").click();
 			await settle(page);
 		}
-		await visitUlChildren(page, group.locator("> ul"), visit);
+		await visitUlChildren(page, group.locator("> ul"), visit, shouldVisit);
 	}
 }
 
@@ -46,8 +54,18 @@ async function visitUlChildren(
 export async function visitEveryMenuItem(
 	page: Page,
 	visit: (item: Locator) => Promise<void>,
+	shouldVisit: (item: Locator) => Promise<boolean> = async () => true,
 ): Promise<void> {
-	await visitUlChildren(page, page.locator(".ant-menu-root"), visit);
+	await visitUlChildren(page, page.locator(".ant-menu-root"), visit, shouldVisit);
+}
+
+/**
+ * 从菜单项 DOM 提取路由路径（data-menu-id 形如 "rc-menu-uuid-/system/user"）。
+ * 与 e2e 侧 KNOWN_BROKEN_ROUTES 豁免表配合使用。
+ */
+export async function getItemRoutePath(item: Locator): Promise<string> {
+	const id = await item.getAttribute("data-menu-id");
+	return (id ?? "").replace(/^rc-menu-uuid-/, "");
 }
 
 /**
