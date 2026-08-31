@@ -252,7 +252,7 @@ git commit -m "test(e2e): S1 布局 chrome 与菜单非空冒烟（HANDOFF §4 �
 **Interfaces:**
 - Consumes: `enterApp`
 
-- [ ] **Step 1: 写用例**
+- [x] **Step 1: 写用例**
 
 ```ts
 // e2e/layout/menu-consistency.spec.ts
@@ -291,13 +291,13 @@ test.describe("menu-consistency", () => {
 });
 ```
 
-- [ ] **Step 2: 运行至 PASS**（红则按 Phase 1 Task 2 Step 3 同样流程定位修复）
+- [x] **Step 2: 运行至 PASS**（红则按 Phase 1 Task 2 Step 3 同样流程定位修复；实际 M2 首跑红，根因与修复见 §7 Phase 2 小结）
 
 ```bash
 pnpm test:e2e
 ```
 
-- [ ] **Step 3: Commit** `test(e2e): M1/M2 菜单↔路由数据驱动一致性`
+- [x] **Step 3: Commit** `test(e2e): M1/M2 菜单↔路由数据驱动一致性`
 
 ### Task 4: demo 模块补第二页 + S2-S5 sidebar 行为
 
@@ -310,7 +310,7 @@ pnpm test:e2e
 **Interfaces:**
 - Produces: demo 模块第二路由 `/demo/detail`，页面含一个受控 `Input`（`placeholder="detail-input"`）——Task 5 的 T2 keepalive 用例依赖它。
 
-- [ ] **Step 1: 写失败测试（S2-S5 追加到 sidebar.spec.ts）**
+- [x] **Step 1: 写失败测试（S2-S5 追加到 sidebar.spec.ts）**
 
 ```ts
 	// S2/S3：折叠触发器收起再展开
@@ -342,9 +342,9 @@ pnpm test:e2e
 	});
 ```
 
-- [ ] **Step 2: 运行确认新增用例状态**（S2/S3/S4 应可直接 PASS；S5 取决于菜单层级；同时 M1 现在仍只覆盖 1 项）
+- [x] **Step 2: 运行确认新增用例状态**（S2/S3/S4 应可直接 PASS；S5 取决于菜单层级；同时 M1 现在仍只覆盖 1 项）
 
-- [ ] **Step 3: demo 模块加 `/demo/detail` 页**
+- [x] **Step 3: demo 模块加 `/demo/detail` 页**
 
 ```tsx
 // apps/playground/modules/demo/pages/detail.tsx
@@ -381,7 +381,7 @@ export default function DemoDetailPage() {
 
 locales 两个 json 各加 `menu.detail` 与 `page.detail`。重建：`pnpm --filter playground build`。
 
-- [ ] **Step 4: 全套 e2e 跑绿后 Commit**
+- [x] **Step 4: 全套 e2e 跑绿后 Commit**
 
 ```bash
 pnpm test:e2e
@@ -642,7 +642,7 @@ git add -A && git commit -m "test(e2e): legacy(411e353b) 双环境基线贯通�
 > 每 Phase 结束追加一段：状态、关键过程、耗时。
 
 - [x] Phase 1 小结：骨架一次成型；`pnpm add` 把全部 devDeps 迁入 catalog 触发 yaml/sort-keys，已排序修复（反常规：pnpm 11 的 catalog 迁移副作用）。S1 首跑即暴露 HANDOFF §8 坑——5174 被 pid 90710（交接期残留进程）占用，`reuseExistingServer:false` 正确拦截；kill 后**真实浏览器一次通过**，证实「菜单空白」是残留进程/缓存幻觉（H1），非代码缺陷，HANDOFF §4 闭环。耗时约 25 分钟（含 chromium 下载与构建）。
-- [ ] Phase 2 小结（待填）
+- [x] Phase 2 小结：M1/M2 一次成型，但 **M2 首跑红，捕获演进偏差 1（真缺陷）**——host.tsx 链路（rad dev）路由无 `id`，菜单选中态依赖 `useMatches().match.id`，`addRouteIdByPath` 只在 auth-guard 里做，宿主链不经守卫 → 菜单永远无高亮。修复取单点根因：`getRoutes()` 出口统一 `addRouteIdByPath`（幂等，auth-guard 双重应用无害），并加单元回归断言 `getRoutes()[0]?.id === "/demo"`。S1/M1 因 demo 模块新增 detail 子路由使 `/demo` 变 submenu，`.ant-menu` 同时匹配根菜单与弹层 → 全部收敛为 `.ant-menu-root`（反常规：antd Menu 嵌套时类选择器有歧义）。S2-S3 揭示实现与常规 antd 布局不同（与业界不符类）：侧栏是自绘 `<aside>`（无 `.ant-layout-sider-collapsed` 类），折叠态 = aside 宽度收缩 + 菜单 `ant-menu-inline-collapsed`；PC 折叠触发器在侧栏底部 SiderTrigger，header 内折叠按钮仅移动端渲染——spec 按实现校准。demo 模块补 `/demo/detail`（keepAlive + 受控 Input）供 T2。playground 6/6 绿（5.0s）。耗时约 45 分钟。
 - [ ] Phase 3 小结（待填）
 - [ ] Phase 4 小结（待填）
 - [ ] Phase 5 总结（待填）
