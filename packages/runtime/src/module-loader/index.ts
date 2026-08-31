@@ -9,6 +9,7 @@ import type {
 
 import i18next from "i18next";
 
+import { addRouteIdByPath } from "#src/router/utils/add-route-id-by-path";
 import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
 import { useAccessStore } from "#src/store/access";
 import { useUserStore } from "#src/store/user";
@@ -272,7 +273,10 @@ export function getRoutes(): AppRouteRecordRaw[] {
 			routes.push(...resolveRouteLayouts(instance.definition.routes));
 		}
 	}
-	return routes;
+	// 菜单选中态依赖 useMatches 的 match.id（=path）。在出口统一补 id，
+	// host.tsx 等不经 auth-guard 的链路也能拿到（此前仅 auth-guard 补，
+	// 导致 rad dev 下菜单无高亮）；auth-guard 重复调用是幂等的。
+	return addRouteIdByPath(routes);
 }
 
 export function getRegisteredStore<T = unknown>(name: string): T | undefined {

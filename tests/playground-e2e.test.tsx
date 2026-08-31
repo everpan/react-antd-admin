@@ -150,6 +150,11 @@ describe("playground e2e", () => {
 			expect(demo, "demo 模块应加载成功（entry 可解析、依赖可读）").toBeTruthy();
 			expect(demo!.status, `demo 模块加载状态应为 loaded，实际 ${demo!.status}`).toBe("loaded");
 
+			// 回归：getRoutes() 必须自带按 path 生成的 id——菜单选中态（LayoutMenu
+			// getSelectedKeys）依赖 useMatches 的 match.id；host.tsx 链路不经
+			// auth-guard 的 addRouteIdByPath，缺 id 时菜单无高亮（e2e M2 暴露）
+			expect(getRoutes()[0]?.id).toBe("/demo");
+
 			// 播种“已登录用户”三个 store：AuthGuard 门控 + 模块路由经
 			// useAccessStore.setAccessStore() → router.patchRoutes 注入。
 			const { useAuthStore } = await import("#src/store/auth");
