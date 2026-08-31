@@ -57,6 +57,29 @@ function sendFile(res: http.ServerResponse, filePath: string) {
 	res.end(readFileSync(filePath));
 }
 
+/**
+ * 在 startPort 起尝试监听，遇到 EADDRINUSE 时顺延到下一个端口，最多尝试
+ * maxTries 次。返回实际监听的端口。这样「端口被占用」只会改个端口号，
+ * 而不会让 `pnpm dev` 直接以 Exit status 1 退出。
+ */
+function listenOnFreePort(server: http.Server, startPort: number, maxTries = 10): Promise<number> {
+	return new Promise((resolve, reject) => {
+		const attempt = (port: number) => {
+			server.once("error", (err: NodeJS.ErrnoException) => {
+				if (err.code === "EADDRINUSE" && port - startPort < maxTries) {
+					console.warn(`[rad] 端口 ${port} 已被占用，改用 ${port + 1}`);
+					attempt(port + 1);
+				}
+				else {
+					reject(err);
+				}
+			});
+			server.listen(port, () => resolve(port));
+		};
+		attempt(startPort);
+	});
+}
+
 export async function devServer(projectRoot: string, port: number = DEFAULT_PORT) {
 	const shellDist = resolveShellDist(projectRoot);
 	const localDist = resolve(projectRoot, "dist");
@@ -105,13 +128,14 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 		res.end(`404 Not Found: ${rel}`);
 	});
 
-	server.listen(port, () => {
-		console.log(`\n[rad] 开发服务器已启动：http://localhost:${port}`);
+	// 端口被占用时自动顺延，避免 `EADDRINUSE` 直接让 `pnpm dev` 以非零码退出
+	// （常见于上一次 dev 进程未退出、或被其它程序占用默认端口）。
+	const actualPort = await listenOnFreePort(server, port);
+	console.log(`\n[rad] 开发服务器已启动：http://localhost:${actualPort}`);
 
-		console.log("[rad] 宿主来自 @react-antd-admin/shell（importmap 单例），模块来自本地 dist/");
+	console.log("[rad] 宿主来自 @react-antd-admin/shell（importmap 单例），模块来自本地 dist/");
 
-		console.log("[rad] 修改 modules/ 下的源码会触发重建，刷新浏览器即可生效。\n");
-	});
+	console.log("[rad] 修改 modules/ 下的源码会触发重建，刷新浏览器即可生效。\n");
 
 	// 2) 监听本地模块源码，增量重建
 	const modulesDir = resolve(projectRoot, "modules");

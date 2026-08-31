@@ -1,404 +1,717 @@
-//#region \0rolldown/runtime.js
-var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
-var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, { get: (a, b) => (typeof require !== "undefined" ? require : a)[b] }) : x)(function(x) {
-	if (typeof require !== "undefined") return require.apply(this, arguments);
-	throw Error("Calling `require` for \"" + x + "\" in an environment that doesn't expose the `require` function. See https://rolldown.rs/in-depth/bundling-cjs#require-external-modules for more details.");
+var __defProp = Object.defineProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// ../../node_modules/.pnpm/@dnd-kit+sortable@10.0.0_@dnd-kit+core@6.3.1_react-dom@19.2.8_react@19.2.8__react@19.2.8__react@19.2.8/node_modules/@dnd-kit/sortable/dist/sortable.esm.js
+var sortable_esm_exports = {};
+__export(sortable_esm_exports, {
+  SortableContext: () => SortableContext,
+  arrayMove: () => arrayMove,
+  arraySwap: () => arraySwap,
+  defaultAnimateLayoutChanges: () => defaultAnimateLayoutChanges,
+  defaultNewIndexGetter: () => defaultNewIndexGetter,
+  hasSortableData: () => hasSortableData,
+  horizontalListSortingStrategy: () => horizontalListSortingStrategy,
+  rectSortingStrategy: () => rectSortingStrategy,
+  rectSwappingStrategy: () => rectSwappingStrategy,
+  sortableKeyboardCoordinates: () => sortableKeyboardCoordinates,
+  useSortable: () => useSortable,
+  verticalListSortingStrategy: () => verticalListSortingStrategy
 });
-//#endregion
-//#region ../../node_modules/.pnpm/@dnd-kit+sortable@10.0.0_@dnd-kit+core@6.3.1_react-dom@19.2.8_react@19.2.8__react@19.2.8__react@19.2.8/node_modules/@dnd-kit/sortable/dist/sortable.cjs.production.min.js
-var require_sortable_cjs_production_min = /* @__PURE__ */ __commonJSMin(((exports) => {
-	Object.defineProperty(exports, "__esModule", { value: !0 });
-	var e;
-	var t = __require("react");
-	var r = (e = t) && "object" == typeof e && "default" in e ? e.default : e;
-	var n = __require("@dnd-kit/core");
-	var o = __require("@dnd-kit/utilities");
-	function i(e, t, r) {
-		const n = e.slice();
-		return n.splice(r < 0 ? n.length + r : r, 0, n.splice(t, 1)[0]), n;
-	}
-	function a(e, t) {
-		return e.reduce((e, r, n) => {
-			const o = t.get(r);
-			return o && (e[n] = o), e;
-		}, Array(e.length));
-	}
-	function s(e) {
-		return null !== e && e >= 0;
-	}
-	var d = {
-		scaleX: 1,
-		scaleY: 1
-	};
-	var l = (e) => {
-		let { rects: t, activeIndex: r, overIndex: n, index: o } = e;
-		const a = i(t, n, r), s = t[o], d = a[o];
-		return d && s ? {
-			x: d.left - s.left,
-			y: d.top - s.top,
-			scaleX: d.width / s.width,
-			scaleY: d.height / s.height
-		} : null;
-	};
-	var c = {
-		scaleX: 1,
-		scaleY: 1
-	};
-	var u = r.createContext({
-		activeIndex: -1,
-		containerId: "Sortable",
-		disableTransforms: !1,
-		items: [],
-		overIndex: -1,
-		useDragOverlay: !1,
-		sortedRects: [],
-		strategy: l,
-		disabled: {
-			draggable: !1,
-			droppable: !1
-		}
-	});
-	var f = (e) => {
-		let { id: t, items: r, activeIndex: n, overIndex: o } = e;
-		return i(r, n, o).indexOf(t);
-	};
-	var p = (e) => {
-		let { containerId: t, isSorting: r, wasDragging: n, index: o, items: i, newIndex: a, previousItems: s, previousContainerId: d, transition: l } = e;
-		return !(!l || !n || s !== i && o === a || !r && (a === o || t !== d));
-	};
-	var g = {
-		duration: 200,
-		easing: "ease"
-	};
-	var b = o.CSS.Transition.toString({
-		property: "transform",
-		duration: 0,
-		easing: "linear"
-	});
-	var x = { roleDescription: "sortable" };
-	function v(e) {
-		if (!e) return !1;
-		const t = e.data.current;
-		return !!(t && "sortable" in t && "object" == typeof t.sortable && "containerId" in t.sortable && "items" in t.sortable && "index" in t.sortable);
-	}
-	var h = [
-		n.KeyboardCode.Down,
-		n.KeyboardCode.Right,
-		n.KeyboardCode.Up,
-		n.KeyboardCode.Left
-	];
-	function I(e, t) {
-		return !(!v(e) || !v(t)) && e.data.current.sortable.containerId === t.data.current.sortable.containerId;
-	}
-	exports.SortableContext = function(e) {
-		let { children: i, id: s, items: d, strategy: c = l, disabled: f = !1 } = e;
-		const { active: p, dragOverlay: g, droppableRects: b, over: x, measureDroppableContainers: v } = n.useDndContext(), h = o.useUniqueId("Sortable", s), I = Boolean(null !== g.rect), y = t.useMemo(() => d.map((e) => "object" == typeof e && "id" in e ? e.id : e), [d]), m = null != p, w = p ? y.indexOf(p.id) : -1, C = x ? y.indexOf(x.id) : -1, R = t.useRef(y), S = !function(e, t) {
-			if (e === t) return !0;
-			if (e.length !== t.length) return !1;
-			for (let r = 0; r < e.length; r++) if (e[r] !== t[r]) return !1;
-			return !0;
-		}(y, R.current), D = -1 !== C && -1 === w || S, O = function(e) {
-			return "boolean" == typeof e ? {
-				draggable: e,
-				droppable: e
-			} : e;
-		}(f);
-		o.useIsomorphicLayoutEffect(() => {
-			S && m && v(y);
-		}, [
-			S,
-			y,
-			m,
-			v
-		]), t.useEffect(() => {
-			R.current = y;
-		}, [y]);
-		const N = t.useMemo(() => ({
-			activeIndex: w,
-			containerId: h,
-			disabled: O,
-			disableTransforms: D,
-			items: y,
-			overIndex: C,
-			useDragOverlay: I,
-			sortedRects: a(y, b),
-			strategy: c
-		}), [
-			w,
-			h,
-			O.draggable,
-			O.droppable,
-			D,
-			y,
-			C,
-			b,
-			I,
-			c
-		]);
-		return r.createElement(u.Provider, { value: N }, i);
-	}, exports.arrayMove = i, exports.arraySwap = function(e, t, r) {
-		const n = e.slice();
-		return n[t] = e[r], n[r] = e[t], n;
-	}, exports.defaultAnimateLayoutChanges = p, exports.defaultNewIndexGetter = f, exports.hasSortableData = v, exports.horizontalListSortingStrategy = (e) => {
-		var t;
-		let { rects: r, activeNodeRect: n, activeIndex: o, overIndex: i, index: a } = e;
-		const s = null != (t = r[o]) ? t : n;
-		if (!s) return null;
-		const l = function(e, t, r) {
-			const n = e[t], o = e[t - 1], i = e[t + 1];
-			return n && (o || i) ? r < t ? o ? n.left - (o.left + o.width) : i.left - (n.left + n.width) : i ? i.left - (n.left + n.width) : n.left - (o.left + o.width) : 0;
-		}(r, a, o);
-		if (a === o) {
-			const e = r[i];
-			return e ? {
-				x: o < i ? e.left + e.width - (s.left + s.width) : e.left - s.left,
-				y: 0,
-				...d
-			} : null;
-		}
-		return a > o && a <= i ? {
-			x: -s.width - l,
-			y: 0,
-			...d
-		} : a < o && a >= i ? {
-			x: s.width + l,
-			y: 0,
-			...d
-		} : {
-			x: 0,
-			y: 0,
-			...d
-		};
-	}, exports.rectSortingStrategy = l, exports.rectSwappingStrategy = (e) => {
-		let t, r, { activeIndex: n, index: o, rects: i, overIndex: a } = e;
-		return o === n && (t = i[o], r = i[a]), o === a && (t = i[o], r = i[n]), r && t ? {
-			x: r.left - t.left,
-			y: r.top - t.top,
-			scaleX: r.width / t.width,
-			scaleY: r.height / t.height
-		} : null;
-	}, exports.sortableKeyboardCoordinates = (e, t) => {
-		let { context: { active: r, collisionRect: i, droppableRects: a, droppableContainers: s, over: d, scrollableAncestors: l } } = t;
-		if (h.includes(e.code)) {
-			if (e.preventDefault(), !r || !i) return;
-			const t = [];
-			s.getEnabled().forEach((r) => {
-				if (!r || null != r && r.disabled) return;
-				const o = a.get(r.id);
-				if (o) switch (e.code) {
-					case n.KeyboardCode.Down:
-						i.top < o.top && t.push(r);
-						break;
-					case n.KeyboardCode.Up:
-						i.top > o.top && t.push(r);
-						break;
-					case n.KeyboardCode.Left:
-						i.left > o.left && t.push(r);
-						break;
-					case n.KeyboardCode.Right: i.left < o.left && t.push(r);
-				}
-			});
-			const f = n.closestCorners({
-				active: r,
-				collisionRect: i,
-				droppableRects: a,
-				droppableContainers: t,
-				pointerCoordinates: null
-			});
-			let p = n.getFirstCollision(f, "id");
-			if (p === (null == d ? void 0 : d.id) && f.length > 1 && (p = f[1].id), null != p) {
-				const e = s.get(r.id), t = s.get(p), d = t ? a.get(t.id) : null, f = null == t ? void 0 : t.node.current;
-				if (f && d && e && t) {
-					const r = n.getScrollableAncestors(f).some((e, t) => l[t] !== e), a = I(e, t), s = (u = t, !(!v(c = e) || !v(u)) && !!I(c, u) && c.data.current.sortable.index < u.data.current.sortable.index), p = r || !a ? {
-						x: 0,
-						y: 0
-					} : {
-						x: s ? i.width - d.width : 0,
-						y: s ? i.height - d.height : 0
-					}, g = {
-						x: d.left,
-						y: d.top
-					};
-					return p.x && p.y ? g : o.subtract(g, p);
-				}
-			}
-		}
-		var c, u;
-	}, exports.useSortable = function(e) {
-		let { animateLayoutChanges: r = p, attributes: i, disabled: a, data: d, getNewIndex: l = f, id: c, strategy: v, resizeObserverConfig: h, transition: I = g } = e;
-		const { items: y, containerId: m, activeIndex: w, disabled: C, disableTransforms: R, sortedRects: S, overIndex: D, useDragOverlay: O, strategy: N } = t.useContext(u), E = function(e, t) {
-			var r, n;
-			return "boolean" == typeof e ? {
-				draggable: e,
-				droppable: !1
-			} : {
-				draggable: null != (r = null == e ? void 0 : e.draggable) ? r : t.draggable,
-				droppable: null != (n = null == e ? void 0 : e.droppable) ? n : t.droppable
-			};
-		}(a, C), K = y.indexOf(c), L = t.useMemo(() => ({
-			sortable: {
-				containerId: m,
-				index: K,
-				items: y
-			},
-			...d
-		}), [
-			m,
-			d,
-			K,
-			y
-		]), T = t.useMemo(() => y.slice(y.indexOf(c)), [y, c]), { rect: M, node: A, isOver: k, setNodeRef: X } = n.useDroppable({
-			id: c,
-			data: L,
-			disabled: E.droppable,
-			resizeObserverConfig: {
-				updateMeasurementsFor: T,
-				...h
-			}
-		}), { active: Y, activatorEvent: j, activeNodeRect: q, attributes: z, setNodeRef: U, listeners: B, isDragging: F, over: P, setActivatorNodeRef: _, transform: G } = n.useDraggable({
-			id: c,
-			data: L,
-			attributes: {
-				...x,
-				...i
-			},
-			disabled: E.draggable
-		}), H = o.useCombinedRefs(X, U), J = Boolean(Y), Q = J && !R && s(w) && s(D), V = !O && F, W = V && Q ? G : null, Z = Q ? null != W ? W : (null != v ? v : N)({
-			rects: S,
-			activeNodeRect: q,
-			activeIndex: w,
-			overIndex: D,
-			index: K
-		}) : null, $ = s(w) && s(D) ? l({
-			id: c,
-			items: y,
-			activeIndex: w,
-			overIndex: D
-		}) : K, ee = null == Y ? void 0 : Y.id, te = t.useRef({
-			activeId: ee,
-			items: y,
-			newIndex: $,
-			containerId: m
-		}), re = y !== te.current.items, ne = r({
-			active: Y,
-			containerId: m,
-			isDragging: F,
-			isSorting: J,
-			id: c,
-			index: K,
-			items: y,
-			newIndex: te.current.newIndex,
-			previousItems: te.current.items,
-			previousContainerId: te.current.containerId,
-			transition: I,
-			wasDragging: null != te.current.activeId
-		}), oe = function(e) {
-			let { disabled: r, index: i, node: a, rect: s } = e;
-			const [d, l] = t.useState(null), c = t.useRef(i);
-			return o.useIsomorphicLayoutEffect(() => {
-				if (!r && i !== c.current && a.current) {
-					const e = s.current;
-					if (e) {
-						const t = n.getClientRect(a.current, { ignoreTransform: !0 }), r = {
-							x: e.left - t.left,
-							y: e.top - t.top,
-							scaleX: e.width / t.width,
-							scaleY: e.height / t.height
-						};
-						(r.x || r.y) && l(r);
-					}
-				}
-				i !== c.current && (c.current = i);
-			}, [
-				r,
-				i,
-				a,
-				s
-			]), t.useEffect(() => {
-				d && l(null);
-			}, [d]), d;
-		}({
-			disabled: !ne,
-			index: K,
-			node: A,
-			rect: M
-		});
-		return t.useEffect(() => {
-			J && te.current.newIndex !== $ && (te.current.newIndex = $), m !== te.current.containerId && (te.current.containerId = m), y !== te.current.items && (te.current.items = y);
-		}, [
-			J,
-			$,
-			m,
-			y
-		]), t.useEffect(() => {
-			if (ee === te.current.activeId) return;
-			if (null != ee && null == te.current.activeId) return void (te.current.activeId = ee);
-			const e = setTimeout(() => {
-				te.current.activeId = ee;
-			}, 50);
-			return () => clearTimeout(e);
-		}, [ee]), {
-			active: Y,
-			activeIndex: w,
-			attributes: z,
-			data: L,
-			rect: M,
-			index: K,
-			newIndex: $,
-			items: y,
-			isOver: k,
-			isSorting: J,
-			isDragging: F,
-			listeners: B,
-			node: A,
-			overIndex: D,
-			over: P,
-			setNodeRef: H,
-			setActivatorNodeRef: _,
-			setDroppableNodeRef: X,
-			setDraggableNodeRef: U,
-			transform: null != oe ? oe : Z,
-			transition: oe || re && te.current.newIndex === K ? b : V && !o.isKeyboardEvent(j) || !I ? void 0 : J || ne ? o.CSS.Transition.toString({
-				...I,
-				property: "transform"
-			}) : void 0
-		};
-	}, exports.verticalListSortingStrategy = (e) => {
-		var t;
-		let { activeIndex: r, activeNodeRect: n, index: o, rects: i, overIndex: a } = e;
-		const s = null != (t = i[r]) ? t : n;
-		if (!s) return null;
-		if (o === r) {
-			const e = i[a];
-			return e ? {
-				x: 0,
-				y: r < a ? e.top + e.height - (s.top + s.height) : e.top - s.top,
-				...c
-			} : null;
-		}
-		const d = function(e, t, r) {
-			const n = e[t], o = e[t - 1], i = e[t + 1];
-			return n ? r < t ? o ? n.top - (o.top + o.height) : i ? i.top - (n.top + n.height) : 0 : i ? i.top - (n.top + n.height) : o ? n.top - (o.top + o.height) : 0 : 0;
-		}(i, o, r);
-		return o > r && o <= a ? {
-			x: 0,
-			y: -s.height - d,
-			...c
-		} : o < r && o >= a ? {
-			x: 0,
-			y: s.height + d,
-			...c
-		} : {
-			x: 0,
-			y: 0,
-			...c
-		};
-	};
-}));
-//#endregion
-//#region ../../node_modules/.pnpm/@dnd-kit+sortable@10.0.0_@dnd-kit+core@6.3.1_react-dom@19.2.8_react@19.2.8__react@19.2.8__react@19.2.8/node_modules/@dnd-kit/sortable/dist/index.js
-var require_dist = /* @__PURE__ */ __commonJSMin(((exports, module) => {
-	module.exports = require_sortable_cjs_production_min();
-}));
-//#endregion
-export default require_dist();
+import React, { useMemo, useRef, useEffect, useState, useContext } from "react";
+import { useDndContext, getClientRect, useDroppable, useDraggable, closestCorners, getFirstCollision, getScrollableAncestors, KeyboardCode } from "@dnd-kit/core";
+import { useUniqueId, useIsomorphicLayoutEffect, CSS, useCombinedRefs, isKeyboardEvent, subtract } from "@dnd-kit/utilities";
+function arrayMove(array, from, to) {
+  const newArray = array.slice();
+  newArray.splice(to < 0 ? newArray.length + to : to, 0, newArray.splice(from, 1)[0]);
+  return newArray;
+}
+function arraySwap(array, from, to) {
+  const newArray = array.slice();
+  newArray[from] = array[to];
+  newArray[to] = array[from];
+  return newArray;
+}
+function getSortedRects(items, rects) {
+  return items.reduce((accumulator, id, index) => {
+    const rect = rects.get(id);
+    if (rect) {
+      accumulator[index] = rect;
+    }
+    return accumulator;
+  }, Array(items.length));
+}
+function isValidIndex(index) {
+  return index !== null && index >= 0;
+}
+function itemsEqual(a, b) {
+  if (a === b) {
+    return true;
+  }
+  if (a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+function normalizeDisabled(disabled) {
+  if (typeof disabled === "boolean") {
+    return {
+      draggable: disabled,
+      droppable: disabled
+    };
+  }
+  return disabled;
+}
+var defaultScale = {
+  scaleX: 1,
+  scaleY: 1
+};
+var horizontalListSortingStrategy = (_ref) => {
+  var _rects$activeIndex;
+  let {
+    rects,
+    activeNodeRect: fallbackActiveRect,
+    activeIndex,
+    overIndex,
+    index
+  } = _ref;
+  const activeNodeRect = (_rects$activeIndex = rects[activeIndex]) != null ? _rects$activeIndex : fallbackActiveRect;
+  if (!activeNodeRect) {
+    return null;
+  }
+  const itemGap = getItemGap(rects, index, activeIndex);
+  if (index === activeIndex) {
+    const newIndexRect = rects[overIndex];
+    if (!newIndexRect) {
+      return null;
+    }
+    return {
+      x: activeIndex < overIndex ? newIndexRect.left + newIndexRect.width - (activeNodeRect.left + activeNodeRect.width) : newIndexRect.left - activeNodeRect.left,
+      y: 0,
+      ...defaultScale
+    };
+  }
+  if (index > activeIndex && index <= overIndex) {
+    return {
+      x: -activeNodeRect.width - itemGap,
+      y: 0,
+      ...defaultScale
+    };
+  }
+  if (index < activeIndex && index >= overIndex) {
+    return {
+      x: activeNodeRect.width + itemGap,
+      y: 0,
+      ...defaultScale
+    };
+  }
+  return {
+    x: 0,
+    y: 0,
+    ...defaultScale
+  };
+};
+function getItemGap(rects, index, activeIndex) {
+  const currentRect = rects[index];
+  const previousRect = rects[index - 1];
+  const nextRect = rects[index + 1];
+  if (!currentRect || !previousRect && !nextRect) {
+    return 0;
+  }
+  if (activeIndex < index) {
+    return previousRect ? currentRect.left - (previousRect.left + previousRect.width) : nextRect.left - (currentRect.left + currentRect.width);
+  }
+  return nextRect ? nextRect.left - (currentRect.left + currentRect.width) : currentRect.left - (previousRect.left + previousRect.width);
+}
+var rectSortingStrategy = (_ref) => {
+  let {
+    rects,
+    activeIndex,
+    overIndex,
+    index
+  } = _ref;
+  const newRects = arrayMove(rects, overIndex, activeIndex);
+  const oldRect = rects[index];
+  const newRect = newRects[index];
+  if (!newRect || !oldRect) {
+    return null;
+  }
+  return {
+    x: newRect.left - oldRect.left,
+    y: newRect.top - oldRect.top,
+    scaleX: newRect.width / oldRect.width,
+    scaleY: newRect.height / oldRect.height
+  };
+};
+var rectSwappingStrategy = (_ref) => {
+  let {
+    activeIndex,
+    index,
+    rects,
+    overIndex
+  } = _ref;
+  let oldRect;
+  let newRect;
+  if (index === activeIndex) {
+    oldRect = rects[index];
+    newRect = rects[overIndex];
+  }
+  if (index === overIndex) {
+    oldRect = rects[index];
+    newRect = rects[activeIndex];
+  }
+  if (!newRect || !oldRect) {
+    return null;
+  }
+  return {
+    x: newRect.left - oldRect.left,
+    y: newRect.top - oldRect.top,
+    scaleX: newRect.width / oldRect.width,
+    scaleY: newRect.height / oldRect.height
+  };
+};
+var defaultScale$1 = {
+  scaleX: 1,
+  scaleY: 1
+};
+var verticalListSortingStrategy = (_ref) => {
+  var _rects$activeIndex;
+  let {
+    activeIndex,
+    activeNodeRect: fallbackActiveRect,
+    index,
+    rects,
+    overIndex
+  } = _ref;
+  const activeNodeRect = (_rects$activeIndex = rects[activeIndex]) != null ? _rects$activeIndex : fallbackActiveRect;
+  if (!activeNodeRect) {
+    return null;
+  }
+  if (index === activeIndex) {
+    const overIndexRect = rects[overIndex];
+    if (!overIndexRect) {
+      return null;
+    }
+    return {
+      x: 0,
+      y: activeIndex < overIndex ? overIndexRect.top + overIndexRect.height - (activeNodeRect.top + activeNodeRect.height) : overIndexRect.top - activeNodeRect.top,
+      ...defaultScale$1
+    };
+  }
+  const itemGap = getItemGap$1(rects, index, activeIndex);
+  if (index > activeIndex && index <= overIndex) {
+    return {
+      x: 0,
+      y: -activeNodeRect.height - itemGap,
+      ...defaultScale$1
+    };
+  }
+  if (index < activeIndex && index >= overIndex) {
+    return {
+      x: 0,
+      y: activeNodeRect.height + itemGap,
+      ...defaultScale$1
+    };
+  }
+  return {
+    x: 0,
+    y: 0,
+    ...defaultScale$1
+  };
+};
+function getItemGap$1(clientRects, index, activeIndex) {
+  const currentRect = clientRects[index];
+  const previousRect = clientRects[index - 1];
+  const nextRect = clientRects[index + 1];
+  if (!currentRect) {
+    return 0;
+  }
+  if (activeIndex < index) {
+    return previousRect ? currentRect.top - (previousRect.top + previousRect.height) : nextRect ? nextRect.top - (currentRect.top + currentRect.height) : 0;
+  }
+  return nextRect ? nextRect.top - (currentRect.top + currentRect.height) : previousRect ? currentRect.top - (previousRect.top + previousRect.height) : 0;
+}
+var ID_PREFIX = "Sortable";
+var Context = /* @__PURE__ */ React.createContext({
+  activeIndex: -1,
+  containerId: ID_PREFIX,
+  disableTransforms: false,
+  items: [],
+  overIndex: -1,
+  useDragOverlay: false,
+  sortedRects: [],
+  strategy: rectSortingStrategy,
+  disabled: {
+    draggable: false,
+    droppable: false
+  }
+});
+function SortableContext(_ref) {
+  let {
+    children,
+    id,
+    items: userDefinedItems,
+    strategy = rectSortingStrategy,
+    disabled: disabledProp = false
+  } = _ref;
+  const {
+    active,
+    dragOverlay,
+    droppableRects,
+    over,
+    measureDroppableContainers
+  } = useDndContext();
+  const containerId = useUniqueId(ID_PREFIX, id);
+  const useDragOverlay = Boolean(dragOverlay.rect !== null);
+  const items = useMemo(() => userDefinedItems.map((item) => typeof item === "object" && "id" in item ? item.id : item), [userDefinedItems]);
+  const isDragging = active != null;
+  const activeIndex = active ? items.indexOf(active.id) : -1;
+  const overIndex = over ? items.indexOf(over.id) : -1;
+  const previousItemsRef = useRef(items);
+  const itemsHaveChanged = !itemsEqual(items, previousItemsRef.current);
+  const disableTransforms = overIndex !== -1 && activeIndex === -1 || itemsHaveChanged;
+  const disabled = normalizeDisabled(disabledProp);
+  useIsomorphicLayoutEffect(() => {
+    if (itemsHaveChanged && isDragging) {
+      measureDroppableContainers(items);
+    }
+  }, [itemsHaveChanged, items, isDragging, measureDroppableContainers]);
+  useEffect(() => {
+    previousItemsRef.current = items;
+  }, [items]);
+  const contextValue = useMemo(
+    () => ({
+      activeIndex,
+      containerId,
+      disabled,
+      disableTransforms,
+      items,
+      overIndex,
+      useDragOverlay,
+      sortedRects: getSortedRects(items, droppableRects),
+      strategy
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeIndex, containerId, disabled.draggable, disabled.droppable, disableTransforms, items, overIndex, droppableRects, useDragOverlay, strategy]
+  );
+  return React.createElement(Context.Provider, {
+    value: contextValue
+  }, children);
+}
+var defaultNewIndexGetter = (_ref) => {
+  let {
+    id,
+    items,
+    activeIndex,
+    overIndex
+  } = _ref;
+  return arrayMove(items, activeIndex, overIndex).indexOf(id);
+};
+var defaultAnimateLayoutChanges = (_ref2) => {
+  let {
+    containerId,
+    isSorting,
+    wasDragging,
+    index,
+    items,
+    newIndex,
+    previousItems,
+    previousContainerId,
+    transition
+  } = _ref2;
+  if (!transition || !wasDragging) {
+    return false;
+  }
+  if (previousItems !== items && index === newIndex) {
+    return false;
+  }
+  if (isSorting) {
+    return true;
+  }
+  return newIndex !== index && containerId === previousContainerId;
+};
+var defaultTransition = {
+  duration: 200,
+  easing: "ease"
+};
+var transitionProperty = "transform";
+var disabledTransition = /* @__PURE__ */ CSS.Transition.toString({
+  property: transitionProperty,
+  duration: 0,
+  easing: "linear"
+});
+var defaultAttributes = {
+  roleDescription: "sortable"
+};
+function useDerivedTransform(_ref) {
+  let {
+    disabled,
+    index,
+    node,
+    rect
+  } = _ref;
+  const [derivedTransform, setDerivedtransform] = useState(null);
+  const previousIndex = useRef(index);
+  useIsomorphicLayoutEffect(() => {
+    if (!disabled && index !== previousIndex.current && node.current) {
+      const initial = rect.current;
+      if (initial) {
+        const current = getClientRect(node.current, {
+          ignoreTransform: true
+        });
+        const delta = {
+          x: initial.left - current.left,
+          y: initial.top - current.top,
+          scaleX: initial.width / current.width,
+          scaleY: initial.height / current.height
+        };
+        if (delta.x || delta.y) {
+          setDerivedtransform(delta);
+        }
+      }
+    }
+    if (index !== previousIndex.current) {
+      previousIndex.current = index;
+    }
+  }, [disabled, index, node, rect]);
+  useEffect(() => {
+    if (derivedTransform) {
+      setDerivedtransform(null);
+    }
+  }, [derivedTransform]);
+  return derivedTransform;
+}
+function useSortable(_ref) {
+  let {
+    animateLayoutChanges = defaultAnimateLayoutChanges,
+    attributes: userDefinedAttributes,
+    disabled: localDisabled,
+    data: customData,
+    getNewIndex = defaultNewIndexGetter,
+    id,
+    strategy: localStrategy,
+    resizeObserverConfig,
+    transition = defaultTransition
+  } = _ref;
+  const {
+    items,
+    containerId,
+    activeIndex,
+    disabled: globalDisabled,
+    disableTransforms,
+    sortedRects,
+    overIndex,
+    useDragOverlay,
+    strategy: globalStrategy
+  } = useContext(Context);
+  const disabled = normalizeLocalDisabled(localDisabled, globalDisabled);
+  const index = items.indexOf(id);
+  const data = useMemo(() => ({
+    sortable: {
+      containerId,
+      index,
+      items
+    },
+    ...customData
+  }), [containerId, customData, index, items]);
+  const itemsAfterCurrentSortable = useMemo(() => items.slice(items.indexOf(id)), [items, id]);
+  const {
+    rect,
+    node,
+    isOver,
+    setNodeRef: setDroppableNodeRef
+  } = useDroppable({
+    id,
+    data,
+    disabled: disabled.droppable,
+    resizeObserverConfig: {
+      updateMeasurementsFor: itemsAfterCurrentSortable,
+      ...resizeObserverConfig
+    }
+  });
+  const {
+    active,
+    activatorEvent,
+    activeNodeRect,
+    attributes,
+    setNodeRef: setDraggableNodeRef,
+    listeners,
+    isDragging,
+    over,
+    setActivatorNodeRef,
+    transform
+  } = useDraggable({
+    id,
+    data,
+    attributes: {
+      ...defaultAttributes,
+      ...userDefinedAttributes
+    },
+    disabled: disabled.draggable
+  });
+  const setNodeRef = useCombinedRefs(setDroppableNodeRef, setDraggableNodeRef);
+  const isSorting = Boolean(active);
+  const displaceItem = isSorting && !disableTransforms && isValidIndex(activeIndex) && isValidIndex(overIndex);
+  const shouldDisplaceDragSource = !useDragOverlay && isDragging;
+  const dragSourceDisplacement = shouldDisplaceDragSource && displaceItem ? transform : null;
+  const strategy = localStrategy != null ? localStrategy : globalStrategy;
+  const finalTransform = displaceItem ? dragSourceDisplacement != null ? dragSourceDisplacement : strategy({
+    rects: sortedRects,
+    activeNodeRect,
+    activeIndex,
+    overIndex,
+    index
+  }) : null;
+  const newIndex = isValidIndex(activeIndex) && isValidIndex(overIndex) ? getNewIndex({
+    id,
+    items,
+    activeIndex,
+    overIndex
+  }) : index;
+  const activeId = active == null ? void 0 : active.id;
+  const previous = useRef({
+    activeId,
+    items,
+    newIndex,
+    containerId
+  });
+  const itemsHaveChanged = items !== previous.current.items;
+  const shouldAnimateLayoutChanges = animateLayoutChanges({
+    active,
+    containerId,
+    isDragging,
+    isSorting,
+    id,
+    index,
+    items,
+    newIndex: previous.current.newIndex,
+    previousItems: previous.current.items,
+    previousContainerId: previous.current.containerId,
+    transition,
+    wasDragging: previous.current.activeId != null
+  });
+  const derivedTransform = useDerivedTransform({
+    disabled: !shouldAnimateLayoutChanges,
+    index,
+    node,
+    rect
+  });
+  useEffect(() => {
+    if (isSorting && previous.current.newIndex !== newIndex) {
+      previous.current.newIndex = newIndex;
+    }
+    if (containerId !== previous.current.containerId) {
+      previous.current.containerId = containerId;
+    }
+    if (items !== previous.current.items) {
+      previous.current.items = items;
+    }
+  }, [isSorting, newIndex, containerId, items]);
+  useEffect(() => {
+    if (activeId === previous.current.activeId) {
+      return;
+    }
+    if (activeId != null && previous.current.activeId == null) {
+      previous.current.activeId = activeId;
+      return;
+    }
+    const timeoutId = setTimeout(() => {
+      previous.current.activeId = activeId;
+    }, 50);
+    return () => clearTimeout(timeoutId);
+  }, [activeId]);
+  return {
+    active,
+    activeIndex,
+    attributes,
+    data,
+    rect,
+    index,
+    newIndex,
+    items,
+    isOver,
+    isSorting,
+    isDragging,
+    listeners,
+    node,
+    overIndex,
+    over,
+    setNodeRef,
+    setActivatorNodeRef,
+    setDroppableNodeRef,
+    setDraggableNodeRef,
+    transform: derivedTransform != null ? derivedTransform : finalTransform,
+    transition: getTransition()
+  };
+  function getTransition() {
+    if (
+      // Temporarily disable transitions for a single frame to set up derived transforms
+      derivedTransform || // Or to prevent items jumping to back to their "new" position when items change
+      itemsHaveChanged && previous.current.newIndex === index
+    ) {
+      return disabledTransition;
+    }
+    if (shouldDisplaceDragSource && !isKeyboardEvent(activatorEvent) || !transition) {
+      return void 0;
+    }
+    if (isSorting || shouldAnimateLayoutChanges) {
+      return CSS.Transition.toString({
+        ...transition,
+        property: transitionProperty
+      });
+    }
+    return void 0;
+  }
+}
+function normalizeLocalDisabled(localDisabled, globalDisabled) {
+  var _localDisabled$dragga, _localDisabled$droppa;
+  if (typeof localDisabled === "boolean") {
+    return {
+      draggable: localDisabled,
+      // Backwards compatibility
+      droppable: false
+    };
+  }
+  return {
+    draggable: (_localDisabled$dragga = localDisabled == null ? void 0 : localDisabled.draggable) != null ? _localDisabled$dragga : globalDisabled.draggable,
+    droppable: (_localDisabled$droppa = localDisabled == null ? void 0 : localDisabled.droppable) != null ? _localDisabled$droppa : globalDisabled.droppable
+  };
+}
+function hasSortableData(entry) {
+  if (!entry) {
+    return false;
+  }
+  const data = entry.data.current;
+  if (data && "sortable" in data && typeof data.sortable === "object" && "containerId" in data.sortable && "items" in data.sortable && "index" in data.sortable) {
+    return true;
+  }
+  return false;
+}
+var directions = [KeyboardCode.Down, KeyboardCode.Right, KeyboardCode.Up, KeyboardCode.Left];
+var sortableKeyboardCoordinates = (event, _ref) => {
+  let {
+    context: {
+      active,
+      collisionRect,
+      droppableRects,
+      droppableContainers,
+      over,
+      scrollableAncestors
+    }
+  } = _ref;
+  if (directions.includes(event.code)) {
+    event.preventDefault();
+    if (!active || !collisionRect) {
+      return;
+    }
+    const filteredContainers = [];
+    droppableContainers.getEnabled().forEach((entry) => {
+      if (!entry || entry != null && entry.disabled) {
+        return;
+      }
+      const rect = droppableRects.get(entry.id);
+      if (!rect) {
+        return;
+      }
+      switch (event.code) {
+        case KeyboardCode.Down:
+          if (collisionRect.top < rect.top) {
+            filteredContainers.push(entry);
+          }
+          break;
+        case KeyboardCode.Up:
+          if (collisionRect.top > rect.top) {
+            filteredContainers.push(entry);
+          }
+          break;
+        case KeyboardCode.Left:
+          if (collisionRect.left > rect.left) {
+            filteredContainers.push(entry);
+          }
+          break;
+        case KeyboardCode.Right:
+          if (collisionRect.left < rect.left) {
+            filteredContainers.push(entry);
+          }
+          break;
+      }
+    });
+    const collisions = closestCorners({
+      active,
+      collisionRect,
+      droppableRects,
+      droppableContainers: filteredContainers,
+      pointerCoordinates: null
+    });
+    let closestId = getFirstCollision(collisions, "id");
+    if (closestId === (over == null ? void 0 : over.id) && collisions.length > 1) {
+      closestId = collisions[1].id;
+    }
+    if (closestId != null) {
+      const activeDroppable = droppableContainers.get(active.id);
+      const newDroppable = droppableContainers.get(closestId);
+      const newRect = newDroppable ? droppableRects.get(newDroppable.id) : null;
+      const newNode = newDroppable == null ? void 0 : newDroppable.node.current;
+      if (newNode && newRect && activeDroppable && newDroppable) {
+        const newScrollAncestors = getScrollableAncestors(newNode);
+        const hasDifferentScrollAncestors = newScrollAncestors.some((element, index) => scrollableAncestors[index] !== element);
+        const hasSameContainer = isSameContainer(activeDroppable, newDroppable);
+        const isAfterActive = isAfter(activeDroppable, newDroppable);
+        const offset = hasDifferentScrollAncestors || !hasSameContainer ? {
+          x: 0,
+          y: 0
+        } : {
+          x: isAfterActive ? collisionRect.width - newRect.width : 0,
+          y: isAfterActive ? collisionRect.height - newRect.height : 0
+        };
+        const rectCoordinates = {
+          x: newRect.left,
+          y: newRect.top
+        };
+        const newCoordinates = offset.x && offset.y ? rectCoordinates : subtract(rectCoordinates, offset);
+        return newCoordinates;
+      }
+    }
+  }
+  return void 0;
+};
+function isSameContainer(a, b) {
+  if (!hasSortableData(a) || !hasSortableData(b)) {
+    return false;
+  }
+  return a.data.current.sortable.containerId === b.data.current.sortable.containerId;
+}
+function isAfter(a, b) {
+  if (!hasSortableData(a) || !hasSortableData(b)) {
+    return false;
+  }
+  if (!isSameContainer(a, b)) {
+    return false;
+  }
+  return a.data.current.sortable.index < b.data.current.sortable.index;
+}
+
+// .rad-shim-dnd-kit-sortable.mjs
+var rad_shim_dnd_kit_sortable_default = void 0 ?? sortable_esm_exports;
+export {
+  SortableContext,
+  arrayMove,
+  arraySwap,
+  rad_shim_dnd_kit_sortable_default as default,
+  defaultAnimateLayoutChanges,
+  defaultNewIndexGetter,
+  hasSortableData,
+  horizontalListSortingStrategy,
+  rectSortingStrategy,
+  rectSwappingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+};

@@ -30,12 +30,14 @@ export default defineConfig({
 
 	base: isDev ? "/" : "/react-antd-admin/",
 	resolve: {
-		alias: {
-			"#src": path.resolve("packages/runtime/src"),
+		alias: [
+			{ find: "#src", replacement: path.resolve("packages/runtime/src") },
 			// monorepo 内将包名直指 runtime 源码，模块工程与宿主同源编译（P3.2）
-			"@react-antd-admin/runtime": path.resolve("packages/runtime/src/index.ts"),
-			"#modules": path.resolve("modules"),
-		},
+			{ find: "@react-antd-admin/runtime", replacement: path.resolve("packages/runtime/src/index.ts") },
+			{ find: "#modules", replacement: path.resolve("modules") },
+			// 见上方 test.deps：让 pro-components 走「已构建」的干净 ESM 资产
+			{ find: /^@ant-design\/pro-.*$/, replacement: path.resolve("packages/shell/dist/assets/pro-components.js") },
+		],
 	},
 	plugins: [
 		vitePluginFakeServer({
@@ -55,11 +57,14 @@ export default defineConfig({
 				},
 			},
 		}),
-		checker({
-			typescript: true,
-			terminal: false,
-			enableBuild: false,
-		}),
+		// 类型检查器在 vitest 下交由编辑器/CI 负责，避免拖慢测试且误报
+		...(process.env.VITEST ? [] : [
+			checker({
+				typescript: true,
+				terminal: false,
+				enableBuild: false,
+			}),
+		]),
 		/**
 		 * 点击页面 DOM 打开 IDE 并将光标自动定位到源代码位置
 		 *
@@ -67,11 +72,17 @@ export default defineConfig({
 		 * Windows 默认组合键 Alt + Shift
 		 * 在 Web 页面上按住组合键时，移动鼠标即会在 DOM 上出现遮罩层并显示相关信息，鼠标点击一下，将自动打开 IDE 并将光标定位到元素对应的代码位置
 		 * 更多用法看 https://inspector.fe-dev.cn/guide/start.html
+		 *
+		 * 注：测试环境下跳过——该插件会向 JSX 注入 data-insp-* 属性，
+		 * 与 vitest 的 oxc 转换不兼容（属性名被篡改导致 PARSE_ERROR），
+		 * 且测试不需要「点击定位源码」能力。
 		 */
-		codeInspectorPlugin({
-			bundler: "vite",
-			// hideConsole: true,
-		}),
+		...(process.env.VITEST ? [] : [
+			codeInspectorPlugin({
+				bundler: "vite",
+				// hideConsole: true,
+			}),
+		]),
 
 		/**
 		 * 按需加载图标
@@ -125,6 +136,13 @@ export default defineConfig({
 		globals: true,
 		environment: "happy-dom",
 		setupFiles: ["./packages/runtime/src/setupTests.ts"],
+		// pro-components 是 CJS（"type":"module" 却用 exports.x），vitest 的模块
+		// 求值器会按 ESM 直读而报 "exports is not defined"。这里把它指向「已构建」
+		// 的 shell 资产 pro-components.js（esbuild 已做 CJS→ESM 互操作，是干净的
+		// ESM）——仅测试生效，不影响应用构建；生产构建本就使用此资产。
+		deps: {
+			inline: [/@ant-design\/pro-components/],
+		},
 	},
 	server: {
 		port: 3333,

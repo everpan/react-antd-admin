@@ -13,12 +13,22 @@
  */
 
 import { execSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { parse, resolve } from "node:path";
 import process from "node:process";
+import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { generateImportmap, generateShellEntries, isSharedDep, SHARED_DEPS } from "@react-antd-admin/cli/shared-deps";
+import {
+	collectDynamicRequires,
+	collectExportGaps,
+	collectUnresolvedSpecifiers,
+	formatExportGap,
+	parseDynamicRequires,
+	parseEsmExports,
+} from "@react-antd-admin/cli/esm-exports";
+import { build as esbuild } from "esbuild";
 import react from "@vitejs/plugin-react";
 import { build } from "vite";
 
@@ -43,39 +53,349 @@ function injectImportmap(map: Record<string, string>) {
 	};
 }
 
-async function buildSharedEntries() {
-	for (const entry of generateShellEntries()) {
-		// 只打包自己这一个包，其余共享依赖一律 external（由 importmap 解析）
-		const external = (id: string) => isSharedDep(id) && id !== entry.pkg;
+/**
+ * react 家族（react / react-dom / react-dom/client / react/jsx-runtime /
+ * react/jsx-dev-runtime）在 npm 中仅有 CJS 产物、无 ESM 入口，且用
+ * `Object.defineProperty(exports, "x", { get })` 方式赋导出。esbuild 对这类
+ * CJS 无法静态合成具名导出（只会给 `default`），宿主 `import { useState } from
+ * "react"` 即触发 "does not provide an export named" 链接错误 → 纯白屏。
+ *
+ * 修复（P8）：构建期在 Node 侧 `import()` 读出这些 CJS 包的真实导出名，再生成
+ * 一段显式转发 shim（`export const useState = __m["useState"]; …`），由 esbuild
+ * 原样打进 ESM 产物。其余依赖（antd/es、cssinjs/es、react-router .mjs …）都是
+ * ESM，直接 `export *` 原样透传具名导出。整条链路不依赖任何 CJS 互操作插件。
+ */
+const REACT_CJS_PKGS = new Set<string>([
+	"react",
+	"react-dom",
+	"react-dom/client",
+	"react/jsx-runtime",
+	"react/jsx-dev-runtime",
+]);
 
-		// P4.3：vite lib.entry 不解析裸说明符，先经 ESM 解析转为真实路径；
-		// 产物导出即该包的全部导出（含 default），不再维护 src/entries/*.ts
-		const pkgUrl = import.meta.resolve(entry.pkg, pathToFileURL(resolve(shellDir, "package.json")).href);
-		const pkgEntry = fileURLToPath(pkgUrl);
+const VALID_ID = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
 
-		console.log(`[shell] 构建共享依赖 ${entry.name} ← ${entry.pkg}`);
-		await build({
-			root: shellDir,
-			logLevel: "warn",
+/**
+ * 「是共享依赖 且 不是本包」→ external，交给 importmap 解析（单例，D5）。
+ * esbuild 的 `external` 只接受数组，故用 onResolve 表达该条件。
+ * 子路径共享依赖同样被 external —— 这条规则正是 A22 的成因，见 explicitForwardingShim。
+ */
+function makeExternalShared(currentPkg: string): import("esbuild").Plugin {
+	return {
+		name: "rad-external-shared",
+		setup(b) {
+			b.onResolve({ filter: /.*/ }, (args) => {
+				if (isSharedDep(args.path) && args.path !== currentPkg)
+					return { path: args.path, external: true };
+				return null;
+			});
+		},
+	};
+}
+
+/** 把一份入口 shim 打成自包含 ESM 资产 */
+async function bundleShim(name: string, pkg: string, shim: string, banner?: string) {
+	const shimPath = resolve(shellDir, `.rad-shim-${name}.mjs`);
+	writeFileSync(shimPath, shim);
+	try {
+		await esbuild({
+			entryPoints: [shimPath],
+			bundle: true,
+			format: "esm",
+			platform: "browser",
+			target: "es2020",
+			// Spike A 坑 2：浏览器顶层求值会抛 process is not defined（风险 R15）
 			define: { "process.env.NODE_ENV": JSON.stringify("production") },
-			build: {
-				outDir: "dist/assets",
-				emptyOutDir: false,
-				// dev 三件套（P4.4）：sourcemap hidden —— 产物不加注释链接，
-				// 但 .map 可供内部错误栈解析（不发版）
-				sourcemap: "hidden",
-				lib: {
-					entry: pkgEntry,
-					formats: ["es"],
-					fileName: () => `${entry.name}.js`,
-				},
-				rollupOptions: {
-					external,
-				},
-				minify: false,
-			},
+			plugins: [makeExternalShared(pkg)],
+			outfile: resolve(assetsDir, `${name}.js`),
+			sourcemap: "external",
+			logLevel: "warning",
+			banner: banner ? { js: banner } : undefined,
 		});
 	}
+	finally {
+		rmSync(shimPath, { force: true });
+	}
+}
+
+/**
+ * 构建期 require 垫片（A23）。
+ *
+ * 被打包进来的 CJS 依赖（use-sync-external-store / scheduler / 各种 UMD 工厂）
+ * 会 `require("react")`，而 react 是 external（必须单例）。esbuild 只能生成
+ * `__require("react")`，它内部判 `typeof require !== "undefined"`，浏览器没有
+ * `require` → 一调用就抛，且全在模块初始化路径上，资产加载即整页崩。
+ *
+ * 对策：在产物顶部定义一个 `require`，把命中的共享包映射到真正的 ESM 导入。
+ * 只导入该资产**实际 require 的**那几个包（当前最多 2 个），
+ * 不会退化成「每个资产 import 全部共享包」。
+ * UMD 工厂自带 `e && e.hasOwnProperty("default") ? e.default : e`，与命名空间语义吻合。
+ */
+function requireShimBanner(specifiers: string[]): string {
+	const imports = specifiers.map((spec, i) => `import * as __rad_ext_${i} from ${JSON.stringify(spec)};`);
+	const entries = specifiers.map((spec, i) => `  ${JSON.stringify(spec)}: __rad_ext_${i}`).join(",\n");
+	return [
+		...imports,
+		`var __rad_require = {\n${entries}\n};`,
+		"var require = function (id) {",
+		"  if (Object.prototype.hasOwnProperty.call(__rad_require, id)) return __rad_require[id];",
+		'  throw new Error("Dynamic require of " + JSON.stringify(id) + " is not supported（该说明符未在共享表内登记）");',
+		"};",
+	].join("\n");
+}
+
+/**
+ * 构建后复查：若产物含「CJS require 共享包」，用垫片重建一次。
+ * 返回最终使用的 banner（供调用方复用）。
+ */
+async function repairDynamicRequires(name: string, pkg: string, shim: string): Promise<void> {
+	const assetPath = resolve(assetsDir, `${name}.js`);
+	const required = parseDynamicRequires(readFileSync(assetPath, "utf-8")).filter(isSharedDep);
+	if (!required.length)
+		return;
+	console.warn(
+		`[shell] ⚠️ ${pkg} 内含 CJS require(${required.join(", ")})，注入 require 垫片重建（A23）`,
+	);
+	await bundleShim(name, pkg, shim, requireShimBanner(required));
+}
+
+/**
+ * 在 Node 侧读出包的真实导出名，用于为「export * 失效」的包生成显式转发 shim。
+ *
+ * 返回 null 有两种含义，都必须**保持原策略**而不是硬凑名字：
+ *   1. 包在 Node 下抛错（浏览器专用包，如 nprogress 需要 document）；
+ *   2. 包确实只有 default 导出（dayjs / simplebar-react / antd/locale/* …）。
+ *
+ * 刻意**不**回退到 `require()`：CJS 的 module.exports 上常带 `$$typeof` / `render`
+ * 之类内部键，会被误当成公开导出名转发成 undefined，反而制造噪音。
+ * 读不到就交给 assertSharedExportsComplete —— 只有真正有人具名导入时才报错。
+ */
+async function resolveExportNames(pkg: string): Promise<string[] | null> {
+	try {
+		const mod = await import(pkg);
+		if (!mod || typeof mod !== "object")
+			return null;
+		const names = Object.keys(mod)
+			.filter(n => n !== "default" && n !== "__esModule" && VALID_ID.test(n));
+		return names.length ? names : null;
+	}
+	catch {
+		return null;
+	}
+}
+
+/**
+ * 显式转发 shim（A22 对策）。
+ *
+ * `export *` 一旦经过 external 模块，esbuild 无从静态展开，只能退化成运行期
+ * `Object.defineProperty` 拷贝（产物里的 `__reExport`），于是最终 `export {…}`
+ * 只剩 default。浏览器侧 `import { create } from "zustand"` 随即抛
+ * "does not provide an export named 'create'" —— 而构建退出码、文件体积、
+ * 存在性检查全部正常，是彻底的静默失败。
+ *
+ * 对策：构建期读出真实导出名，逐个 `export const X = __m["X"]` 转发。
+ * ESM 保证被依赖模块先于本模块求值，故求值时 __m 已由 importmap 加载完成，
+ * 取值安全。这与 react 家族（CJS、无 ESM 产物）早已在用的策略一致。
+ */
+function explicitForwardingShim(pkg: string, names: string[]): string {
+	const src = JSON.stringify(pkg);
+	return `import * as __m from ${src};\n`
+		+ names.map(n => `export const ${n} = __m[${JSON.stringify(n)}];`).join("\n") + "\n"
+		+ `export default (__m.default ?? __m);\n`;
+}
+
+/**
+ * 默认 shim：命名导出走 `export *`，default 走「有真实 default 就用它，
+ * 否则回退到命名空间」。
+ *
+ * 注：不能用 `import __m from "pkg"`（react-router 等根本没 default，
+ * esbuild 直接报 No matching export 让整条预构建失败）。
+ */
+function starShim(pkg: string): string {
+	const src = JSON.stringify(pkg);
+	return `import * as __ns from ${src};\n`
+		+ `export * from ${src};\n`
+		+ `export default (__ns.default ?? __ns);\n`;
+}
+
+/**
+ * 共享样式依赖（如 `nprogress/nprogress.css`）：生成一段自执行的 JS 垫片，
+ * 把 CSS 文本包进 <style> 注入 <head>（用 data-rad-css 标记去重，避免重复注入）。
+ * 该垫片经 importmap 解析（`nprogress/nprogress.css` → /assets/nprogress-css.js），
+ * 因此宿主/模块侧 `import "nprogress/nprogress.css"` 这类副作用导入即可生效。
+ */
+async function buildCssEntry(entry: { name: string, pkg: string }) {
+	console.log(`[shell] 构建共享依赖(样式) ${entry.name} ← ${entry.pkg}`);
+	const require = createRequire(import.meta.url);
+	const cssPath = require.resolve(entry.pkg);
+	const css = readFileSync(cssPath, "utf-8");
+	const shim = `const __css = ${JSON.stringify(css)};\n`
+		+ `if (!document.querySelector('style[data-rad-css=${JSON.stringify(entry.pkg)}]')) {\n`
+		+ `  const __s = document.createElement("style");\n`
+		+ `  __s.setAttribute("data-rad-css", ${JSON.stringify(entry.pkg)});\n`
+		+ `  __s.textContent = __css;\n`
+		+ `  document.head.appendChild(__s);\n`
+		+ `}\n`;
+	writeFileSync(resolve(assetsDir, `${entry.name}.js`), shim);
+}
+
+async function buildSharedEntries() {
+	for (const entry of generateShellEntries()) {
+		// 共享依赖的样式（*.css）：浏览器无法把 CSS 当 ES 模块 import，
+		// 故改为「importmap 映射到一段注入 <style> 的 JS 垫片」——与共享 JS 依赖
+		// 同一套 importmap 解析机制，宿主/模块命中同一份样式且无重复注入。
+		if (entry.pkg.endsWith(".css")) {
+			await buildCssEntry(entry);
+			continue;
+		}
+
+		console.log(`[shell] 构建共享依赖 ${entry.name} ← ${entry.pkg}`);
+
+		let shim: string;
+
+		// react 家族在 npm 只有 CJS 产物、且用 defineProperty getter 赋导出，
+		// esbuild 静态合成不出具名导出（A13）→ 直接走显式转发
+		if (REACT_CJS_PKGS.has(entry.pkg)) {
+			const names = await resolveExportNames(entry.pkg);
+			shim = names ? explicitForwardingShim(entry.pkg, names) : starShim(entry.pkg);
+		}
+		else {
+			shim = starShim(entry.pkg);
+		}
+
+		await bundleShim(entry.name, entry.pkg, shim);
+
+		// A22：`export *` 经 external 子路径退化后，产物零具名导出。
+		// 此时用构建期读到的真实导出名重建一次（读不到则交由此后的门禁报错）。
+		const produced = parseEsmExports(readFileSync(resolve(assetsDir, `${entry.name}.js`), "utf-8"));
+		if (produced.names.size === 0 && !produced.hasStarReexport) {
+			const names = await resolveExportNames(entry.pkg);
+			if (names) {
+				console.warn(
+					`[shell] ⚠️ ${entry.pkg} 的 export * 未产出静态具名导出（A22），`
+					+ `改用显式转发重建（${names.length} 项）`,
+				);
+				shim = explicitForwardingShim(entry.pkg, names);
+				await bundleShim(entry.name, entry.pkg, shim);
+			}
+		}
+
+		// A23：CJS 依赖 require 了 external 的共享包 → 注入 require 垫片重建
+		await repairDynamicRequires(entry.name, entry.pkg, shim);
+	}
+}
+
+/**
+ * 扫描所有已构建的共享依赖资产，找出其中「裸导入但 importmap 尚未覆盖」的说明符，
+ * 将其补进 importmap —— 并且对父包不透传的子路径直接构建一份独立共享资产，
+ * 从而一次性消除整类 "Failed to resolve module specifier" 白屏（举一反三）。
+ *
+ * 背景（本轮白屏根因）：共享依赖资产（如 antd.js / pro-components.js）内部会
+ * `import … from "antd/es/modal"`、`"@ant-design/icons/es/icons/X"`（父包 `export *`
+ * 透传具名导出），或副作用导入 `"dayjs/locale/zh-cn"`、`"zustand/react"`、
+ * `"dayjs/plugin/*"`（父包不透传）。这些子路径在 `buildSharedEntries` 里都被
+ * `isSharedDep` 判为共享依赖而 external 出去，最终以裸说明符落到产物里，必须由
+ * importmap 兜底解析，否则浏览器直接白屏。
+ *
+ * 处理分两类：
+ *   (a) 父包透传的子路径（antd、@ant-design/icons 的 es/*）—— 映射到父包资产，
+ *        命中同一份实例（单例，D5/D12），无需新增资产；
+ *   (b) 父包不透传的子路径（dayjs/locale/*、dayjs/plugin/*、zustand/react*、
+ *        echarts/charts …）—— 现场 esbuild 构建一份独立 ESM 资产并写盘，再映射。
+ *        这类子路径多为副作用注册（locale / plugin），独立资产加载即生效。
+ *
+ * 因新建资产自身也可能引入新的未覆盖子路径，故做不动点迭代（maxIter 兜底防死循环）。
+ */
+const SUBPATH_PARENT_REEXPORTS = new Set([
+	"antd",
+	"@ant-design/icons",
+]);
+
+/** 捕获三种裸导入形式：from "…" / import("…") / 副作用 import "…" */
+const BARE_IMPORT_RE = /\bimport\s*\(\s*["']([^"']+)["']\s*\)|\bfrom\s+["']([^"']+)["']|\bimport\s+["']([^"']+)["']/g;
+
+/** 自动生成的子路径资产名统一加 rad- 前缀，避免与 SHARED_DEPS 显式资产名冲突 */
+function subpathAssetName(spec: string): string {
+	return `rad-${spec.replace(/[^a-zA-Z0-9]+/g, "-")}`;
+}
+
+/** 为单个非父包透传的子路径构建独立 ESM（或 CSS）共享资产 */
+async function buildSubpathAsset(spec: string) {
+	const name = subpathAssetName(spec);
+	if (spec.endsWith(".css")) {
+		await buildCssEntry({ name, pkg: spec });
+		return;
+	}
+	const shim = starShim(spec);
+	const shimPath = resolve(shellDir, `.rad-shim-${name}.mjs`);
+	writeFileSync(shimPath, shim);
+	try {
+		await esbuild({
+			entryPoints: [shimPath],
+			bundle: true,
+			format: "esm",
+			platform: "browser",
+			target: "es2020",
+			define: { "process.env.NODE_ENV": JSON.stringify("production") },
+			plugins: [makeExternalShared(spec)],
+			outfile: resolve(assetsDir, `${name}.js`),
+			sourcemap: "external",
+			logLevel: "warning",
+		});
+	}
+	finally {
+		rmSync(shimPath, { force: true });
+	}
+	await repairDynamicRequires(name, spec, shim);
+}
+
+async function autoGenerateSubpathAssets(base: Record<string, string>): Promise<Record<string, string>> {
+	const map: Record<string, string> = { ...base };
+	const maxIter = 20;
+	let changed = true;
+	let iter = 0;
+	while (changed && iter++ < maxIter) {
+		changed = false;
+		for (const file of readdirSync(assetsDir)) {
+			if (!file.endsWith(".js"))
+				continue;
+			const src = readFileSync(resolve(assetsDir, file), "utf-8");
+			let mm: RegExpExecArray | null;
+			BARE_IMPORT_RE.lastIndex = 0;
+			while ((mm = BARE_IMPORT_RE.exec(src))) {
+				const spec = mm[1] ?? mm[2] ?? mm[3];
+				if (!spec || spec.startsWith(".") || spec.startsWith("/") || spec.startsWith("data:")
+					|| map[spec])
+					continue;
+				// 最长匹配（含子路径）的父共享依赖
+				const parent = [...SHARED_DEPS]
+					.filter(d => spec === d.specifier || spec.startsWith(`${d.specifier}/`))
+					.sort((a, b) => b.specifier.length - a.specifier.length)[0];
+				if (!parent)
+					continue; // 与共享表无关，交给浏览器/其它机制
+				if (SUBPATH_PARENT_REEXPORTS.has(parent.specifier) && parent.asset) {
+					map[spec] = `/assets/${parent.asset}.js`;
+					changed = true;
+					continue;
+				}
+				// 非父包透传的子路径：构建独立资产（失败则跳过，不阻断整构建）
+				const name = subpathAssetName(spec);
+				if (!existsSync(resolve(assetsDir, `${name}.js`))) {
+					try {
+						await buildSubpathAsset(spec);
+						console.log(`[shell] 自动构建子路径共享资产 ${name} ← ${spec}`);
+					}
+					catch (e) {
+						console.warn(`[shell] 跳过无法构建的子路径 ${spec}：${(e as Error).message}`);
+						continue;
+					}
+				}
+				map[spec] = `/assets/${name}.js`;
+				changed = true;
+			}
+		}
+	}
+	return map;
 }
 
 async function buildHost() {
@@ -84,7 +404,7 @@ async function buildHost() {
 		root: shellDir,
 		logLevel: "warn",
 		define: { "process.env.NODE_ENV": JSON.stringify("production") },
-		plugins: [react(), injectImportmap(generateImportmap())],
+		plugins: [react(), injectImportmap(await autoGenerateSubpathAssets(generateImportmap()))],
 		build: {
 			outDir: "dist",
 			emptyOutDir: false,
@@ -96,6 +416,51 @@ async function buildHost() {
 			minify: false,
 		},
 	});
+}
+
+/**
+ * 导出完整性门禁（设计文档 R14 落地）。
+ *
+ * 实现在 `@react-antd-admin/cli/esm-exports`，与 CI 测试共用同一份判定逻辑：
+ * importmap 给出的每个资产都必须**静态**提供消费方 import 的具名导出，
+ * 缺一个就是浏览器里的 "does not provide an export named 'x'" + 整页白屏。
+ */
+function assertSharedExportsComplete(): void {
+	const gaps = collectExportGaps(distDir);
+	if (gaps.length) {
+		throw new Error(
+			`[shell] 共享资产导出完整性校验失败（${gaps.length} 处）——浏览器中会抛 "does not provide an export named"：\n`
+			+ `${gaps.map(formatExportGap).join("\n")}\n`
+			+ "常见根因：该包入口用 `export *` 转出子路径，而子路径被 external 后 esbuild 只能退化成运行期对象（A22）。\n"
+			+ "修复：确认本文件的显式转发重建已覆盖该包；若已覆盖仍失败，检查该子路径是否已在 SHARED_DEPS 中登记。",
+		);
+	}
+
+	// 裸说明符未被 importmap 登记 → 浏览器抛 Failed to resolve module specifier
+	const unresolved = collectUnresolvedSpecifiers(distDir);
+	if (unresolved.length) {
+		throw new Error(
+			`[shell] 存在 importmap 未覆盖的裸说明符（${unresolved.length} 处）——浏览器中会抛 "Failed to resolve module specifier"：\n`
+			+ unresolved.map(g => `  · ${g.file} → "${g.specifier}"`).join("\n")
+			+ "\n修复：在 SHARED_DEPS 增补该深路径条目（importmap 无前缀通配，深路径须单独成条）。",
+		);
+	}
+
+	// A23：CJS 依赖 require 了 external 共享包却无垫片兜住 → 浏览器加载即抛
+	const requireHits = collectDynamicRequires(distDir);
+	if (requireHits.length) {
+		throw new Error(
+			`[shell] 共享资产存在未被垫片覆盖的动态 require（${requireHits.length} 处）——浏览器中会抛 "Dynamic require of ... is not supported"：\n`
+			+ requireHits.map(h => `  · ${h.file} 动态 require "${h.specifier}"（${h.url}）`).join("\n")
+			+ "\n修复：确认本文件的 repairDynamicRequires 已覆盖该资产；若说明符不在共享表内，请登记或改为静态 import。",
+		);
+	}
+
+	const assetCount = readdirSync(assetsDir).filter(f => f.endsWith(".js")).length;
+	console.log(
+		`[shell] 共享资产校验通过（${assetCount} 个资产：裸说明符 0 未覆盖、`
+		+ "具名导出 0 缺失、动态 require 0 未覆盖）",
+	);
 }
 
 /** 共享表各包的实际安装版本 → dist/versions.json（P4.5 版本门禁的宿主侧真源） */
@@ -153,6 +518,7 @@ async function main() {
 	copyFileSync(runtimeSrc, resolve(assetsDir, "runtime.js"));
 
 	await buildHost();
+	assertSharedExportsComplete();
 	writeVersionsJson();
 
 	console.log("[shell] 完成 →", distDir);

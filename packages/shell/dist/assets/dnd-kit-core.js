@@ -1,2049 +1,3601 @@
-import React, { useCallback, useState } from "react";
-//#region \0rolldown/runtime.js
 var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __esmMin = (fn, res, err) => () => {
-	if (err) throw err[0];
-	try {
-		return fn && (res = fn(fn = 0)), res;
-	} catch (e) {
-		throw err = [e], e;
-	}
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
-var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
-var __exportAll = (all, no_symbols) => {
-	let target = {};
-	for (var name in all) __defProp(target, name, {
-		get: all[name],
-		enumerable: true
-	});
-	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
-	return target;
-};
-var __copyProps = (to, from, except, desc) => {
-	if (from && typeof from === "object" || typeof from === "function") for (var keys = __getOwnPropNames(from), i = 0, n = keys.length, key; i < n; i++) {
-		key = keys[i];
-		if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-			get: ((k) => from[k]).bind(null, key),
-			enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-		});
-	}
-	return to;
-};
-var __toCommonJS = (mod) => __hasOwnProp.call(mod, "module.exports") ? mod["module.exports"] : __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, { get: (a, b) => (typeof require !== "undefined" ? require : a)[b] }) : x)(function(x) {
-	if (typeof require !== "undefined") return require.apply(this, arguments);
-	throw Error("Calling `require` for \"" + x + "\" in an environment that doesn't expose the `require` function. See https://rolldown.rs/in-depth/bundling-cjs#require-external-modules for more details.");
+
+// ../../node_modules/.pnpm/@dnd-kit+core@6.3.1_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/@dnd-kit/core/dist/core.esm.js
+var core_esm_exports = {};
+__export(core_esm_exports, {
+  AutoScrollActivator: () => AutoScrollActivator,
+  DndContext: () => DndContext,
+  DragOverlay: () => DragOverlay,
+  KeyboardCode: () => KeyboardCode,
+  KeyboardSensor: () => KeyboardSensor,
+  MeasuringFrequency: () => MeasuringFrequency,
+  MeasuringStrategy: () => MeasuringStrategy,
+  MouseSensor: () => MouseSensor,
+  PointerSensor: () => PointerSensor,
+  TouchSensor: () => TouchSensor,
+  TraversalOrder: () => TraversalOrder,
+  applyModifiers: () => applyModifiers,
+  closestCenter: () => closestCenter,
+  closestCorners: () => closestCorners,
+  defaultAnnouncements: () => defaultAnnouncements,
+  defaultCoordinates: () => defaultCoordinates,
+  defaultDropAnimation: () => defaultDropAnimationConfiguration,
+  defaultDropAnimationSideEffects: () => defaultDropAnimationSideEffects,
+  defaultKeyboardCoordinateGetter: () => defaultKeyboardCoordinateGetter,
+  defaultScreenReaderInstructions: () => defaultScreenReaderInstructions,
+  getClientRect: () => getClientRect,
+  getFirstCollision: () => getFirstCollision,
+  getScrollableAncestors: () => getScrollableAncestors,
+  pointerWithin: () => pointerWithin,
+  rectIntersection: () => rectIntersection,
+  useDndContext: () => useDndContext,
+  useDndMonitor: () => useDndMonitor,
+  useDraggable: () => useDraggable,
+  useDroppable: () => useDroppable,
+  useSensor: () => useSensor,
+  useSensors: () => useSensors
 });
-//#endregion
-//#region ../../node_modules/.pnpm/@dnd-kit+accessibility@3.1.1_react@19.2.8/node_modules/@dnd-kit/accessibility/dist/accessibility.esm.js
-var accessibility_esm_exports = /* @__PURE__ */ __exportAll({
-	HiddenText: () => HiddenText,
-	LiveRegion: () => LiveRegion,
-	useAnnouncement: () => useAnnouncement
-});
+import React2, { createContext, useContext, useEffect, useState as useState2, useCallback as useCallback2, useMemo, useRef, memo, useReducer, cloneElement, forwardRef } from "react";
+import { createPortal, unstable_batchedUpdates } from "react-dom";
+import { useUniqueId, getEventCoordinates, getWindow, isDocument, isHTMLElement, isSVGElement, canUseDOM, isWindow, isNode, getOwnerDocument, add, isKeyboardEvent, subtract, useLazyMemo, useInterval, usePrevious, useLatestValue, useEvent, useIsomorphicLayoutEffect, useNodeRef, findFirstFocusableNode, CSS } from "@dnd-kit/utilities";
+
+// ../../node_modules/.pnpm/@dnd-kit+accessibility@3.1.1_react@19.2.8/node_modules/@dnd-kit/accessibility/dist/accessibility.esm.js
+import React, { useState, useCallback } from "react";
+var hiddenStyles = {
+  display: "none"
+};
 function HiddenText(_ref) {
-	let { id, value } = _ref;
-	return React.createElement("div", {
-		id,
-		style: hiddenStyles
-	}, value);
+  let {
+    id,
+    value
+  } = _ref;
+  return React.createElement("div", {
+    id,
+    style: hiddenStyles
+  }, value);
 }
 function LiveRegion(_ref) {
-	let { id, announcement, ariaLiveType = "assertive" } = _ref;
-	return React.createElement("div", {
-		id,
-		style: {
-			position: "fixed",
-			top: 0,
-			left: 0,
-			width: 1,
-			height: 1,
-			margin: -1,
-			border: 0,
-			padding: 0,
-			overflow: "hidden",
-			clip: "rect(0 0 0 0)",
-			clipPath: "inset(100%)",
-			whiteSpace: "nowrap"
-		},
-		role: "status",
-		"aria-live": ariaLiveType,
-		"aria-atomic": true
-	}, announcement);
+  let {
+    id,
+    announcement,
+    ariaLiveType = "assertive"
+  } = _ref;
+  const visuallyHidden = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: 1,
+    height: 1,
+    margin: -1,
+    border: 0,
+    padding: 0,
+    overflow: "hidden",
+    clip: "rect(0 0 0 0)",
+    clipPath: "inset(100%)",
+    whiteSpace: "nowrap"
+  };
+  return React.createElement("div", {
+    id,
+    style: visuallyHidden,
+    role: "status",
+    "aria-live": ariaLiveType,
+    "aria-atomic": true
+  }, announcement);
 }
 function useAnnouncement() {
-	const [announcement, setAnnouncement] = useState("");
-	return {
-		announce: useCallback((value) => {
-			if (value != null) setAnnouncement(value);
-		}, []),
-		announcement
-	};
+  const [announcement, setAnnouncement] = useState("");
+  const announce = useCallback((value) => {
+    if (value != null) {
+      setAnnouncement(value);
+    }
+  }, []);
+  return {
+    announce,
+    announcement
+  };
 }
-var hiddenStyles;
-var init_accessibility_esm = __esmMin((() => {
-	hiddenStyles = { display: "none" };
-}));
-//#endregion
-//#region ../../node_modules/.pnpm/@dnd-kit+core@6.3.1_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/@dnd-kit/core/dist/core.cjs.production.min.js
-var require_core_cjs_production_min = /* @__PURE__ */ __commonJSMin(((exports) => {
-	Object.defineProperty(exports, "__esModule", { value: !0 });
-	var e;
-	var t = __require("react");
-	var n = (e = t) && "object" == typeof e && "default" in e ? e.default : e;
-	var r = __require("react-dom");
-	var o = __require("@dnd-kit/utilities");
-	var i = (init_accessibility_esm(), __toCommonJS(accessibility_esm_exports));
-	var a = t.createContext(null);
-	function s(e) {
-		const n = t.useContext(a);
-		t.useEffect(() => {
-			if (!n) throw new Error("useDndMonitor must be used within a children of <DndContext>");
-			return n(e);
-		}, [e, n]);
-	}
-	var l = { draggable: "\n    To pick up a draggable item, press the space bar.\n    While dragging, use the arrow keys to move the item.\n    Press space again to drop the item in its new position, or press escape to cancel.\n  " };
-	var c = {
-		onDragStart(e) {
-			let { active: t } = e;
-			return "Picked up draggable item " + t.id + ".";
-		},
-		onDragOver(e) {
-			let { active: t, over: n } = e;
-			return n ? "Draggable item " + t.id + " was moved over droppable area " + n.id + "." : "Draggable item " + t.id + " is no longer over a droppable area.";
-		},
-		onDragEnd(e) {
-			let { active: t, over: n } = e;
-			return n ? "Draggable item " + t.id + " was dropped over droppable area " + n.id : "Draggable item " + t.id + " was dropped.";
-		},
-		onDragCancel(e) {
-			let { active: t } = e;
-			return "Dragging was cancelled. Draggable item " + t.id + " was dropped.";
-		}
-	};
-	function d(e) {
-		let { announcements: a = c, container: d, hiddenTextDescribedById: u, screenReaderInstructions: f = l } = e;
-		const { announce: v, announcement: g } = i.useAnnouncement(), p = o.useUniqueId("DndLiveRegion"), [h, b] = t.useState(!1);
-		if (t.useEffect(() => {
-			b(!0);
-		}, []), s(t.useMemo(() => ({
-			onDragStart(e) {
-				let { active: t } = e;
-				v(a.onDragStart({ active: t }));
-			},
-			onDragMove(e) {
-				let { active: t, over: n } = e;
-				a.onDragMove && v(a.onDragMove({
-					active: t,
-					over: n
-				}));
-			},
-			onDragOver(e) {
-				let { active: t, over: n } = e;
-				v(a.onDragOver({
-					active: t,
-					over: n
-				}));
-			},
-			onDragEnd(e) {
-				let { active: t, over: n } = e;
-				v(a.onDragEnd({
-					active: t,
-					over: n
-				}));
-			},
-			onDragCancel(e) {
-				let { active: t, over: n } = e;
-				v(a.onDragCancel({
-					active: t,
-					over: n
-				}));
-			}
-		}), [v, a])), !h) return null;
-		const m = n.createElement(n.Fragment, null, n.createElement(i.HiddenText, {
-			id: u,
-			value: f.draggable
-		}), n.createElement(i.LiveRegion, {
-			id: p,
-			announcement: g
-		}));
-		return d ? r.createPortal(m, d) : m;
-	}
-	var u;
-	function f() {}
-	(function(e) {
-		e.DragStart = "dragStart", e.DragMove = "dragMove", e.DragEnd = "dragEnd", e.DragCancel = "dragCancel", e.DragOver = "dragOver", e.RegisterDroppable = "registerDroppable", e.SetDroppableDisabled = "setDroppableDisabled", e.UnregisterDroppable = "unregisterDroppable";
-	})(u || (u = {}));
-	var v = Object.freeze({
-		x: 0,
-		y: 0
-	});
-	function g(e, t) {
-		return Math.sqrt(Math.pow(e.x - t.x, 2) + Math.pow(e.y - t.y, 2));
-	}
-	function p(e, t) {
-		const n = o.getEventCoordinates(e);
-		return n ? (n.x - t.left) / t.width * 100 + "% " + (n.y - t.top) / t.height * 100 + "%" : "0 0";
-	}
-	function h(e, t) {
-		let { data: { value: n } } = e, { data: { value: r } } = t;
-		return n - r;
-	}
-	function b(e, t) {
-		let { data: { value: n } } = e, { data: { value: r } } = t;
-		return r - n;
-	}
-	function m(e) {
-		let { left: t, top: n, height: r, width: o } = e;
-		return [
-			{
-				x: t,
-				y: n
-			},
-			{
-				x: t + o,
-				y: n
-			},
-			{
-				x: t,
-				y: n + r
-			},
-			{
-				x: t + o,
-				y: n + r
-			}
-		];
-	}
-	function y(e, t) {
-		if (!e || 0 === e.length) return null;
-		const [n] = e;
-		return t ? n[t] : n;
-	}
-	function x(e, t, n) {
-		return void 0 === t && (t = e.left), void 0 === n && (n = e.top), {
-			x: t + .5 * e.width,
-			y: n + .5 * e.height
-		};
-	}
-	function w(e, t) {
-		const n = Math.max(t.top, e.top), r = Math.max(t.left, e.left), o = Math.min(t.left + t.width, e.left + e.width), i = Math.min(t.top + t.height, e.top + e.height);
-		if (r < o && n < i) {
-			const a = (o - r) * (i - n);
-			return Number((a / (t.width * t.height + e.width * e.height - a)).toFixed(4));
-		}
-		return 0;
-	}
-	var C = (e) => {
-		let { collisionRect: t, droppableRects: n, droppableContainers: r } = e;
-		const o = [];
-		for (const e of r) {
-			const { id: r } = e, i = n.get(r);
-			if (i) {
-				const n = w(i, t);
-				n > 0 && o.push({
-					id: r,
-					data: {
-						droppableContainer: e,
-						value: n
-					}
-				});
-			}
-		}
-		return o.sort(b);
-	};
-	function E(e, t) {
-		const { top: n, left: r, bottom: o, right: i } = t;
-		return n <= e.y && e.y <= o && r <= e.x && e.x <= i;
-	}
-	function D(e, t) {
-		return e && t ? {
-			x: e.left - t.left,
-			y: e.top - t.top
-		} : v;
-	}
-	function R(e) {
-		return function(t) {
-			for (var n = arguments.length, r = new Array(n > 1 ? n - 1 : 0), o = 1; o < n; o++) r[o - 1] = arguments[o];
-			return r.reduce((t, n) => ({
-				...t,
-				top: t.top + e * n.y,
-				bottom: t.bottom + e * n.y,
-				left: t.left + e * n.x,
-				right: t.right + e * n.x
-			}), { ...t });
-		};
-	}
-	var S = R(1);
-	function M(e) {
-		if (e.startsWith("matrix3d(")) {
-			const t = e.slice(9, -1).split(/, /);
-			return {
-				x: +t[12],
-				y: +t[13],
-				scaleX: +t[0],
-				scaleY: +t[5]
-			};
-		}
-		if (e.startsWith("matrix(")) {
-			const t = e.slice(7, -1).split(/, /);
-			return {
-				x: +t[4],
-				y: +t[5],
-				scaleX: +t[0],
-				scaleY: +t[3]
-			};
-		}
-		return null;
-	}
-	var N = { ignoreTransform: !1 };
-	function O(e, t) {
-		void 0 === t && (t = N);
-		let n = e.getBoundingClientRect();
-		if (t.ignoreTransform) {
-			const { transform: t, transformOrigin: r } = o.getWindow(e).getComputedStyle(e);
-			t && (n = function(e, t, n) {
-				const r = M(t);
-				if (!r) return e;
-				const { scaleX: o, scaleY: i, x: a, y: s } = r, l = e.left - a - (1 - o) * parseFloat(n), c = e.top - s - (1 - i) * parseFloat(n.slice(n.indexOf(" ") + 1)), d = o ? e.width / o : e.width, u = i ? e.height / i : e.height;
-				return {
-					width: d,
-					height: u,
-					top: c,
-					right: l + d,
-					bottom: c + u,
-					left: l
-				};
-			}(n, t, r));
-		}
-		const { top: r, left: i, width: a, height: s, bottom: l, right: c } = n;
-		return {
-			top: r,
-			left: i,
-			width: a,
-			height: s,
-			bottom: l,
-			right: c
-		};
-	}
-	function A(e) {
-		return O(e, { ignoreTransform: !0 });
-	}
-	function L(e, t) {
-		const n = [];
-		return e ? function r(i) {
-			if (null != t && n.length >= t) return n;
-			if (!i) return n;
-			if (o.isDocument(i) && null != i.scrollingElement && !n.includes(i.scrollingElement)) return n.push(i.scrollingElement), n;
-			if (!o.isHTMLElement(i) || o.isSVGElement(i)) return n;
-			if (n.includes(i)) return n;
-			const a = o.getWindow(e).getComputedStyle(i);
-			return i !== e && function(e, t) {
-				void 0 === t && (t = o.getWindow(e).getComputedStyle(e));
-				const n = /(auto|scroll|overlay)/;
-				return [
-					"overflow",
-					"overflowX",
-					"overflowY"
-				].some((e) => {
-					const r = t[e];
-					return "string" == typeof r && n.test(r);
-				});
-			}(i, a) && n.push(i), function(e, t) {
-				return void 0 === t && (t = o.getWindow(e).getComputedStyle(e)), "fixed" === t.position;
-			}(i, a) ? n : r(i.parentNode);
-		}(e) : n;
-	}
-	function k(e) {
-		const [t] = L(e, 1);
-		return null != t ? t : null;
-	}
-	function T(e) {
-		return o.canUseDOM && e ? o.isWindow(e) ? e : o.isNode(e) ? o.isDocument(e) || e === o.getOwnerDocument(e).scrollingElement ? window : o.isHTMLElement(e) ? e : null : null : null;
-	}
-	function K(e) {
-		return o.isWindow(e) ? e.scrollX : e.scrollLeft;
-	}
-	function P(e) {
-		return o.isWindow(e) ? e.scrollY : e.scrollTop;
-	}
-	function I(e) {
-		return {
-			x: K(e),
-			y: P(e)
-		};
-	}
-	var B;
-	function z(e) {
-		return !(!o.canUseDOM || !e) && e === document.scrollingElement;
-	}
-	function F(e) {
-		const t = {
-			x: 0,
-			y: 0
-		}, n = z(e) ? {
-			height: window.innerHeight,
-			width: window.innerWidth
-		} : {
-			height: e.clientHeight,
-			width: e.clientWidth
-		}, r = {
-			x: e.scrollWidth - n.width,
-			y: e.scrollHeight - n.height
-		};
-		return {
-			isTop: e.scrollTop <= t.y,
-			isLeft: e.scrollLeft <= t.x,
-			isBottom: e.scrollTop >= r.y,
-			isRight: e.scrollLeft >= r.x,
-			maxScroll: r,
-			minScroll: t
-		};
-	}
-	(function(e) {
-		e[e.Forward = 1] = "Forward", e[e.Backward = -1] = "Backward";
-	})(B || (B = {}));
-	var W = {
-		x: .2,
-		y: .2
-	};
-	function U(e, t, n, r, o) {
-		let { top: i, left: a, right: s, bottom: l } = n;
-		void 0 === r && (r = 10), void 0 === o && (o = W);
-		const { isTop: c, isBottom: d, isLeft: u, isRight: f } = F(e), v = {
-			x: 0,
-			y: 0
-		}, g = {
-			x: 0,
-			y: 0
-		}, p = t.height * o.y, h = t.width * o.x;
-		return !c && i <= t.top + p ? (v.y = B.Backward, g.y = r * Math.abs((t.top + p - i) / p)) : !d && l >= t.bottom - p && (v.y = B.Forward, g.y = r * Math.abs((t.bottom - p - l) / p)), !f && s >= t.right - h ? (v.x = B.Forward, g.x = r * Math.abs((t.right - h - s) / h)) : !u && a <= t.left + h && (v.x = B.Backward, g.x = r * Math.abs((t.left + h - a) / h)), {
-			direction: v,
-			speed: g
-		};
-	}
-	function j(e) {
-		if (e === document.scrollingElement) {
-			const { innerWidth: e, innerHeight: t } = window;
-			return {
-				top: 0,
-				left: 0,
-				right: e,
-				bottom: t,
-				width: e,
-				height: t
-			};
-		}
-		const { top: t, left: n, right: r, bottom: o } = e.getBoundingClientRect();
-		return {
-			top: t,
-			left: n,
-			right: r,
-			bottom: o,
-			width: e.clientWidth,
-			height: e.clientHeight
-		};
-	}
-	function q(e) {
-		return e.reduce((e, t) => o.add(e, I(t)), v);
-	}
-	function H(e, t) {
-		if (void 0 === t && (t = O), !e) return;
-		const { top: n, left: r, bottom: o, right: i } = t(e);
-		k(e) && (o <= 0 || i <= 0 || n >= window.innerHeight || r >= window.innerWidth) && e.scrollIntoView({
-			block: "center",
-			inline: "center"
-		});
-	}
-	var X = [[
-		"x",
-		["left", "right"],
-		function(e) {
-			return e.reduce((e, t) => e + K(t), 0);
-		}
-	], [
-		"y",
-		["top", "bottom"],
-		function(e) {
-			return e.reduce((e, t) => e + P(t), 0);
-		}
-	]];
-	var Y = class {
-		constructor(e, t) {
-			this.rect = void 0, this.width = void 0, this.height = void 0, this.top = void 0, this.bottom = void 0, this.right = void 0, this.left = void 0;
-			const n = L(t), r = q(n);
-			this.rect = { ...e }, this.width = e.width, this.height = e.height;
-			for (const [e, t, o] of X) for (const i of t) Object.defineProperty(this, i, {
-				get: () => {
-					const t = o(n);
-					return this.rect[i] + (r[e] - t);
-				},
-				enumerable: !0
-			});
-			Object.defineProperty(this, "rect", { enumerable: !1 });
-		}
-	};
-	var V = class {
-		constructor(e) {
-			this.target = void 0, this.listeners = [], this.removeAll = () => {
-				this.listeners.forEach((e) => {
-					var t;
-					return null == (t = this.target) ? void 0 : t.removeEventListener(...e);
-				});
-			}, this.target = e;
-		}
-		add(e, t, n) {
-			var r;
-			null == (r = this.target) || r.addEventListener(e, t, n), this.listeners.push([
-				e,
-				t,
-				n
-			]);
-		}
-	};
-	function J(e, t) {
-		const n = Math.abs(e.x), r = Math.abs(e.y);
-		return "number" == typeof t ? Math.sqrt(n ** 2 + r ** 2) > t : "x" in t && "y" in t ? n > t.x && r > t.y : "x" in t ? n > t.x : "y" in t && r > t.y;
-	}
-	var _;
-	var G;
-	function Q(e) {
-		e.preventDefault();
-	}
-	function Z(e) {
-		e.stopPropagation();
-	}
-	(function(e) {
-		e.Click = "click", e.DragStart = "dragstart", e.Keydown = "keydown", e.ContextMenu = "contextmenu", e.Resize = "resize", e.SelectionChange = "selectionchange", e.VisibilityChange = "visibilitychange";
-	})(_ || (_ = {})), (G = exports.KeyboardCode || (exports.KeyboardCode = {})).Space = "Space", G.Down = "ArrowDown", G.Right = "ArrowRight", G.Left = "ArrowLeft", G.Up = "ArrowUp", G.Esc = "Escape", G.Enter = "Enter", G.Tab = "Tab";
-	var $ = {
-		start: [exports.KeyboardCode.Space, exports.KeyboardCode.Enter],
-		cancel: [exports.KeyboardCode.Esc],
-		end: [
-			exports.KeyboardCode.Space,
-			exports.KeyboardCode.Enter,
-			exports.KeyboardCode.Tab
-		]
-	};
-	var ee = (e, t) => {
-		let { currentCoordinates: n } = t;
-		switch (e.code) {
-			case exports.KeyboardCode.Right: return {
-				...n,
-				x: n.x + 25
-			};
-			case exports.KeyboardCode.Left: return {
-				...n,
-				x: n.x - 25
-			};
-			case exports.KeyboardCode.Down: return {
-				...n,
-				y: n.y + 25
-			};
-			case exports.KeyboardCode.Up: return {
-				...n,
-				y: n.y - 25
-			};
-		}
-	};
-	var te = class {
-		constructor(e) {
-			this.props = void 0, this.autoScrollEnabled = !1, this.referenceCoordinates = void 0, this.listeners = void 0, this.windowListeners = void 0, this.props = e;
-			const { event: { target: t } } = e;
-			this.props = e, this.listeners = new V(o.getOwnerDocument(t)), this.windowListeners = new V(o.getWindow(t)), this.handleKeyDown = this.handleKeyDown.bind(this), this.handleCancel = this.handleCancel.bind(this), this.attach();
-		}
-		attach() {
-			this.handleStart(), this.windowListeners.add(_.Resize, this.handleCancel), this.windowListeners.add(_.VisibilityChange, this.handleCancel), setTimeout(() => this.listeners.add(_.Keydown, this.handleKeyDown));
-		}
-		handleStart() {
-			const { activeNode: e, onStart: t } = this.props, n = e.node.current;
-			n && H(n), t(v);
-		}
-		handleKeyDown(e) {
-			if (o.isKeyboardEvent(e)) {
-				const { active: t, context: n, options: r } = this.props, { keyboardCodes: i = $, coordinateGetter: a = ee, scrollBehavior: s = "smooth" } = r, { code: l } = e;
-				if (i.end.includes(l)) return void this.handleEnd(e);
-				if (i.cancel.includes(l)) return void this.handleCancel(e);
-				const { collisionRect: c } = n.current, d = c ? {
-					x: c.left,
-					y: c.top
-				} : v;
-				this.referenceCoordinates || (this.referenceCoordinates = d);
-				const u = a(e, {
-					active: t,
-					context: n.current,
-					currentCoordinates: d
-				});
-				if (u) {
-					const t = o.subtract(u, d), r = {
-						x: 0,
-						y: 0
-					}, { scrollableAncestors: i } = n.current;
-					for (const n of i) {
-						const o = e.code, { isTop: i, isRight: a, isLeft: l, isBottom: c, maxScroll: d, minScroll: f } = F(n), v = j(n), g = {
-							x: Math.min(o === exports.KeyboardCode.Right ? v.right - v.width / 2 : v.right, Math.max(o === exports.KeyboardCode.Right ? v.left : v.left + v.width / 2, u.x)),
-							y: Math.min(o === exports.KeyboardCode.Down ? v.bottom - v.height / 2 : v.bottom, Math.max(o === exports.KeyboardCode.Down ? v.top : v.top + v.height / 2, u.y))
-						}, p = o === exports.KeyboardCode.Right && !a || o === exports.KeyboardCode.Left && !l, h = o === exports.KeyboardCode.Down && !c || o === exports.KeyboardCode.Up && !i;
-						if (p && g.x !== u.x) {
-							const e = n.scrollLeft + t.x, i = o === exports.KeyboardCode.Right && e <= d.x || o === exports.KeyboardCode.Left && e >= f.x;
-							if (i && !t.y) return void n.scrollTo({
-								left: e,
-								behavior: s
-							});
-							r.x = i ? n.scrollLeft - e : o === exports.KeyboardCode.Right ? n.scrollLeft - d.x : n.scrollLeft - f.x, r.x && n.scrollBy({
-								left: -r.x,
-								behavior: s
-							});
-							break;
-						}
-						if (h && g.y !== u.y) {
-							const e = n.scrollTop + t.y, i = o === exports.KeyboardCode.Down && e <= d.y || o === exports.KeyboardCode.Up && e >= f.y;
-							if (i && !t.x) return void n.scrollTo({
-								top: e,
-								behavior: s
-							});
-							r.y = i ? n.scrollTop - e : o === exports.KeyboardCode.Down ? n.scrollTop - d.y : n.scrollTop - f.y, r.y && n.scrollBy({
-								top: -r.y,
-								behavior: s
-							});
-							break;
-						}
-					}
-					this.handleMove(e, o.add(o.subtract(u, this.referenceCoordinates), r));
-				}
-			}
-		}
-		handleMove(e, t) {
-			const { onMove: n } = this.props;
-			e.preventDefault(), n(t);
-		}
-		handleEnd(e) {
-			const { onEnd: t } = this.props;
-			e.preventDefault(), this.detach(), t();
-		}
-		handleCancel(e) {
-			const { onCancel: t } = this.props;
-			e.preventDefault(), this.detach(), t();
-		}
-		detach() {
-			this.listeners.removeAll(), this.windowListeners.removeAll();
-		}
-	};
-	function ne(e) {
-		return Boolean(e && "distance" in e);
-	}
-	function re(e) {
-		return Boolean(e && "delay" in e);
-	}
-	te.activators = [{
-		eventName: "onKeyDown",
-		handler: (e, t, n) => {
-			let { keyboardCodes: r = $, onActivation: o } = t, { active: i } = n;
-			const { code: a } = e.nativeEvent;
-			if (r.start.includes(a)) {
-				const t = i.activatorNode.current;
-				return !(t && e.target !== t || (e.preventDefault(), o?.({ event: e.nativeEvent }), 0));
-			}
-			return !1;
-		}
-	}];
-	var oe = class {
-		constructor(e, t, n) {
-			var r;
-			void 0 === n && (n = function(e) {
-				const { EventTarget: t } = o.getWindow(e);
-				return e instanceof t ? e : o.getOwnerDocument(e);
-			}(e.event.target)), this.props = void 0, this.events = void 0, this.autoScrollEnabled = !0, this.document = void 0, this.activated = !1, this.initialCoordinates = void 0, this.timeoutId = null, this.listeners = void 0, this.documentListeners = void 0, this.windowListeners = void 0, this.props = e, this.events = t;
-			const { event: i } = e, { target: a } = i;
-			this.props = e, this.events = t, this.document = o.getOwnerDocument(a), this.documentListeners = new V(this.document), this.listeners = new V(n), this.windowListeners = new V(o.getWindow(a)), this.initialCoordinates = null != (r = o.getEventCoordinates(i)) ? r : v, this.handleStart = this.handleStart.bind(this), this.handleMove = this.handleMove.bind(this), this.handleEnd = this.handleEnd.bind(this), this.handleCancel = this.handleCancel.bind(this), this.handleKeydown = this.handleKeydown.bind(this), this.removeTextSelection = this.removeTextSelection.bind(this), this.attach();
-		}
-		attach() {
-			const { events: e, props: { options: { activationConstraint: t, bypassActivationConstraint: n } } } = this;
-			if (this.listeners.add(e.move.name, this.handleMove, { passive: !1 }), this.listeners.add(e.end.name, this.handleEnd), e.cancel && this.listeners.add(e.cancel.name, this.handleCancel), this.windowListeners.add(_.Resize, this.handleCancel), this.windowListeners.add(_.DragStart, Q), this.windowListeners.add(_.VisibilityChange, this.handleCancel), this.windowListeners.add(_.ContextMenu, Q), this.documentListeners.add(_.Keydown, this.handleKeydown), t) {
-				if (null != n && n({
-					event: this.props.event,
-					activeNode: this.props.activeNode,
-					options: this.props.options
-				})) return this.handleStart();
-				if (re(t)) return this.timeoutId = setTimeout(this.handleStart, t.delay), void this.handlePending(t);
-				if (ne(t)) return void this.handlePending(t);
-			}
-			this.handleStart();
-		}
-		detach() {
-			this.listeners.removeAll(), this.windowListeners.removeAll(), setTimeout(this.documentListeners.removeAll, 50), null !== this.timeoutId && (clearTimeout(this.timeoutId), this.timeoutId = null);
-		}
-		handlePending(e, t) {
-			const { active: n, onPending: r } = this.props;
-			r(n, e, this.initialCoordinates, t);
-		}
-		handleStart() {
-			const { initialCoordinates: e } = this, { onStart: t } = this.props;
-			e && (this.activated = !0, this.documentListeners.add(_.Click, Z, { capture: !0 }), this.removeTextSelection(), this.documentListeners.add(_.SelectionChange, this.removeTextSelection), t(e));
-		}
-		handleMove(e) {
-			var t;
-			const { activated: n, initialCoordinates: r, props: i } = this, { onMove: a, options: { activationConstraint: s } } = i;
-			if (!r) return;
-			const l = null != (t = o.getEventCoordinates(e)) ? t : v, c = o.subtract(r, l);
-			if (!n && s) {
-				if (ne(s)) {
-					if (null != s.tolerance && J(c, s.tolerance)) return this.handleCancel();
-					if (J(c, s.distance)) return this.handleStart();
-				}
-				return re(s) && J(c, s.tolerance) ? this.handleCancel() : void this.handlePending(s, c);
-			}
-			e.cancelable && e.preventDefault(), a(l);
-		}
-		handleEnd() {
-			const { onAbort: e, onEnd: t } = this.props;
-			this.detach(), this.activated || e(this.props.active), t();
-		}
-		handleCancel() {
-			const { onAbort: e, onCancel: t } = this.props;
-			this.detach(), this.activated || e(this.props.active), t();
-		}
-		handleKeydown(e) {
-			e.code === exports.KeyboardCode.Esc && this.handleCancel();
-		}
-		removeTextSelection() {
-			var e;
-			null == (e = this.document.getSelection()) || e.removeAllRanges();
-		}
-	};
-	var ie = {
-		cancel: { name: "pointercancel" },
-		move: { name: "pointermove" },
-		end: { name: "pointerup" }
-	};
-	var ae = class extends oe {
-		constructor(e) {
-			const { event: t } = e, n = o.getOwnerDocument(t.target);
-			super(e, ie, n);
-		}
-	};
-	ae.activators = [{
-		eventName: "onPointerDown",
-		handler: (e, t) => {
-			let { nativeEvent: n } = e, { onActivation: r } = t;
-			return !(!n.isPrimary || 0 !== n.button || (r?.({ event: n }), 0));
-		}
-	}];
-	var se = {
-		move: { name: "mousemove" },
-		end: { name: "mouseup" }
-	};
-	var le;
-	(function(e) {
-		e[e.RightClick = 2] = "RightClick";
-	})(le || (le = {}));
-	var ce = class extends oe {
-		constructor(e) {
-			super(e, se, o.getOwnerDocument(e.event.target));
-		}
-	};
-	ce.activators = [{
-		eventName: "onMouseDown",
-		handler: (e, t) => {
-			let { nativeEvent: n } = e, { onActivation: r } = t;
-			return n.button !== le.RightClick && (r?.({ event: n }), !0);
-		}
-	}];
-	var de = {
-		cancel: { name: "touchcancel" },
-		move: { name: "touchmove" },
-		end: { name: "touchend" }
-	};
-	var ue = class extends oe {
-		constructor(e) {
-			super(e, de);
-		}
-		static setup() {
-			return window.addEventListener(de.move.name, e, {
-				capture: !1,
-				passive: !1
-			}), function() {
-				window.removeEventListener(de.move.name, e);
-			};
-			function e() {}
-		}
-	};
-	var fe;
-	var ve;
-	ue.activators = [{
-		eventName: "onTouchStart",
-		handler: (e, t) => {
-			let { nativeEvent: n } = e, { onActivation: r } = t;
-			const { touches: o } = n;
-			return !(o.length > 1 || (r?.({ event: n }), 0));
-		}
-	}], (fe = exports.AutoScrollActivator || (exports.AutoScrollActivator = {}))[fe.Pointer = 0] = "Pointer", fe[fe.DraggableRect = 1] = "DraggableRect", (ve = exports.TraversalOrder || (exports.TraversalOrder = {}))[ve.TreeOrder = 0] = "TreeOrder", ve[ve.ReversedTreeOrder = 1] = "ReversedTreeOrder";
-	var ge = {
-		x: {
-			[B.Backward]: !1,
-			[B.Forward]: !1
-		},
-		y: {
-			[B.Backward]: !1,
-			[B.Forward]: !1
-		}
-	};
-	var pe;
-	(pe = exports.MeasuringStrategy || (exports.MeasuringStrategy = {}))[pe.Always = 0] = "Always", pe[pe.BeforeDragging = 1] = "BeforeDragging", pe[pe.WhileDragging = 2] = "WhileDragging", (exports.MeasuringFrequency || (exports.MeasuringFrequency = {})).Optimized = "optimized";
-	var he = /* @__PURE__ */ new Map();
-	function be(e, t) {
-		return o.useLazyMemo((n) => e ? n || ("function" == typeof t ? t(e) : e) : null, [t, e]);
-	}
-	function me(e) {
-		let { callback: n, disabled: r } = e;
-		const i = o.useEvent(n), a = t.useMemo(() => {
-			if (r || "undefined" == typeof window || void 0 === window.ResizeObserver) return;
-			const { ResizeObserver: e } = window;
-			return new e(i);
-		}, [r]);
-		return t.useEffect(() => () => null == a ? void 0 : a.disconnect(), [a]), a;
-	}
-	function ye(e) {
-		return new Y(O(e), e);
-	}
-	function xe(e, n, r) {
-		void 0 === n && (n = ye);
-		const [i, a] = t.useState(null);
-		function s() {
-			a((t) => {
-				if (!e) return null;
-				var o;
-				if (!1 === e.isConnected) return null != (o = null != t ? t : r) ? o : null;
-				const i = n(e);
-				return JSON.stringify(t) === JSON.stringify(i) ? t : i;
-			});
-		}
-		const l = function(e) {
-			let { callback: n, disabled: r } = e;
-			const i = o.useEvent(n), a = t.useMemo(() => {
-				if (r || "undefined" == typeof window || void 0 === window.MutationObserver) return;
-				const { MutationObserver: e } = window;
-				return new e(i);
-			}, [i, r]);
-			return t.useEffect(() => () => null == a ? void 0 : a.disconnect(), [a]), a;
-		}({ callback(t) {
-			if (e) for (const n of t) {
-				const { type: t, target: r } = n;
-				if ("childList" === t && r instanceof HTMLElement && r.contains(e)) {
-					s();
-					break;
-				}
-			}
-		} }), c = me({ callback: s });
-		return o.useIsomorphicLayoutEffect(() => {
-			s(), e ? (c?.observe(e), l?.observe(document.body, {
-				childList: !0,
-				subtree: !0
-			})) : (c?.disconnect(), l?.disconnect());
-		}, [e]), i;
-	}
-	var we = [];
-	function Ce(e, n) {
-		void 0 === n && (n = []);
-		const r = t.useRef(null);
-		return t.useEffect(() => {
-			r.current = null;
-		}, n), t.useEffect(() => {
-			const t = e !== v;
-			t && !r.current && (r.current = e), !t && r.current && (r.current = null);
-		}, [e]), r.current ? o.subtract(e, r.current) : v;
-	}
-	function Ee(e) {
-		return t.useMemo(() => e ? function(e) {
-			const t = e.innerWidth, n = e.innerHeight;
-			return {
-				top: 0,
-				left: 0,
-				right: t,
-				bottom: n,
-				width: t,
-				height: n
-			};
-		}(e) : null, [e]);
-	}
-	var De = [];
-	function Re(e) {
-		if (!e) return null;
-		if (e.children.length > 1) return e;
-		const t = e.children[0];
-		return o.isHTMLElement(t) ? t : e;
-	}
-	var Se = [{
-		sensor: ae,
-		options: {}
-	}, {
-		sensor: te,
-		options: {}
-	}];
-	var Me = { current: {} };
-	var Ne = {
-		draggable: { measure: A },
-		droppable: {
-			measure: A,
-			strategy: exports.MeasuringStrategy.WhileDragging,
-			frequency: exports.MeasuringFrequency.Optimized
-		},
-		dragOverlay: { measure: O }
-	};
-	var Oe = class extends Map {
-		get(e) {
-			var t;
-			return null != e && null != (t = super.get(e)) ? t : void 0;
-		}
-		toArray() {
-			return Array.from(this.values());
-		}
-		getEnabled() {
-			return this.toArray().filter((e) => {
-				let { disabled: t } = e;
-				return !t;
-			});
-		}
-		getNodeFor(e) {
-			var t, n;
-			return null != (t = null == (n = this.get(e)) ? void 0 : n.node.current) ? t : void 0;
-		}
-	};
-	var Ae = {
-		activatorEvent: null,
-		active: null,
-		activeNode: null,
-		activeNodeRect: null,
-		collisions: null,
-		containerNodeRect: null,
-		draggableNodes: /* @__PURE__ */ new Map(),
-		droppableRects: /* @__PURE__ */ new Map(),
-		droppableContainers: new Oe(),
-		over: null,
-		dragOverlay: {
-			nodeRef: { current: null },
-			rect: null,
-			setRef: f
-		},
-		scrollableAncestors: [],
-		scrollableAncestorRects: [],
-		measuringConfiguration: Ne,
-		measureDroppableContainers: f,
-		windowRect: null,
-		measuringScheduled: !1
-	};
-	var Le = {
-		activatorEvent: null,
-		activators: [],
-		active: null,
-		activeNodeRect: null,
-		ariaDescribedById: { draggable: "" },
-		dispatch: f,
-		draggableNodes: /* @__PURE__ */ new Map(),
-		over: null,
-		measureDroppableContainers: f
-	};
-	var ke = t.createContext(Le);
-	var Te = t.createContext(Ae);
-	function Ke() {
-		return {
-			draggable: {
-				active: null,
-				initialCoordinates: {
-					x: 0,
-					y: 0
-				},
-				nodes: /* @__PURE__ */ new Map(),
-				translate: {
-					x: 0,
-					y: 0
-				}
-			},
-			droppable: { containers: new Oe() }
-		};
-	}
-	function Pe(e, t) {
-		switch (t.type) {
-			case u.DragStart: return {
-				...e,
-				draggable: {
-					...e.draggable,
-					initialCoordinates: t.initialCoordinates,
-					active: t.active
-				}
-			};
-			case u.DragMove: return null == e.draggable.active ? e : {
-				...e,
-				draggable: {
-					...e.draggable,
-					translate: {
-						x: t.coordinates.x - e.draggable.initialCoordinates.x,
-						y: t.coordinates.y - e.draggable.initialCoordinates.y
-					}
-				}
-			};
-			case u.DragEnd:
-			case u.DragCancel: return {
-				...e,
-				draggable: {
-					...e.draggable,
-					active: null,
-					initialCoordinates: {
-						x: 0,
-						y: 0
-					},
-					translate: {
-						x: 0,
-						y: 0
-					}
-				}
-			};
-			case u.RegisterDroppable: {
-				const { element: n } = t, { id: r } = n, o = new Oe(e.droppable.containers);
-				return o.set(r, n), {
-					...e,
-					droppable: {
-						...e.droppable,
-						containers: o
-					}
-				};
-			}
-			case u.SetDroppableDisabled: {
-				const { id: n, key: r, disabled: o } = t, i = e.droppable.containers.get(n);
-				if (!i || r !== i.key) return e;
-				const a = new Oe(e.droppable.containers);
-				return a.set(n, {
-					...i,
-					disabled: o
-				}), {
-					...e,
-					droppable: {
-						...e.droppable,
-						containers: a
-					}
-				};
-			}
-			case u.UnregisterDroppable: {
-				const { id: n, key: r } = t, o = e.droppable.containers.get(n);
-				if (!o || r !== o.key) return e;
-				const i = new Oe(e.droppable.containers);
-				return i.delete(n), {
-					...e,
-					droppable: {
-						...e.droppable,
-						containers: i
-					}
-				};
-			}
-			default: return e;
-		}
-	}
-	function Ie(e) {
-		let { disabled: n } = e;
-		const { active: r, activatorEvent: i, draggableNodes: a } = t.useContext(ke), s = o.usePrevious(i), l = o.usePrevious(null == r ? void 0 : r.id);
-		return t.useEffect(() => {
-			if (!n && !i && s && null != l) {
-				if (!o.isKeyboardEvent(s)) return;
-				if (document.activeElement === s.target) return;
-				const e = a.get(l);
-				if (!e) return;
-				const { activatorNode: t, node: n } = e;
-				if (!t.current && !n.current) return;
-				requestAnimationFrame(() => {
-					for (const e of [t.current, n.current]) {
-						if (!e) continue;
-						const t = o.findFirstFocusableNode(e);
-						if (t) {
-							t.focus();
-							break;
-						}
-					}
-				});
-			}
-		}, [
-			i,
-			n,
-			a,
-			l,
-			s
-		]), null;
-	}
-	function Be(e, t) {
-		let { transform: n, ...r } = t;
-		return null != e && e.length ? e.reduce((e, t) => t({
-			transform: e,
-			...r
-		}), n) : n;
-	}
-	var ze = t.createContext({
-		...v,
-		scaleX: 1,
-		scaleY: 1
-	});
-	var Fe;
-	(function(e) {
-		e[e.Uninitialized = 0] = "Uninitialized", e[e.Initializing = 1] = "Initializing", e[e.Initialized = 2] = "Initialized";
-	})(Fe || (Fe = {}));
-	var We = t.memo((function(e) {
-		var i, s, l, c;
-		let { id: f, accessibility: g, autoScroll: p = !0, children: h, sensors: b = Se, collisionDetection: m = C, measuring: x, modifiers: w, ...E } = e;
-		const [M, N] = t.useReducer(Pe, void 0, Ke), [A, K] = function() {
-			const [e] = t.useState(() => /* @__PURE__ */ new Set()), n = t.useCallback((t) => (e.add(t), () => e.delete(t)), [e]);
-			return [t.useCallback((t) => {
-				let { type: n, event: r } = t;
-				e.forEach((e) => {
-					var t;
-					return null == (t = e[n]) ? void 0 : t.call(e, r);
-				});
-			}, [e]), n];
-		}(), [P, F] = t.useState(Fe.Uninitialized), W = P === Fe.Initialized, { draggable: { active: j, nodes: H, translate: X }, droppable: { containers: V } } = M, J = null != j ? H.get(j) : null, _ = t.useRef({
-			initial: null,
-			translated: null
-		}), G = t.useMemo(() => {
-			var e;
-			return null != j ? {
-				id: j,
-				data: null != (e = null == J ? void 0 : J.data) ? e : Me,
-				rect: _
-			} : null;
-		}, [j, J]), Q = t.useRef(null), [Z, $] = t.useState(null), [ee, te] = t.useState(null), ne = o.useLatestValue(E, Object.values(E)), re = o.useUniqueId("DndDescribedBy", f), oe = t.useMemo(() => V.getEnabled(), [V]), ie = t.useMemo(() => ({
-			draggable: {
-				...Ne.draggable,
-				...null == ae ? void 0 : ae.draggable
-			},
-			droppable: {
-				...Ne.droppable,
-				...null == ae ? void 0 : ae.droppable
-			},
-			dragOverlay: {
-				...Ne.dragOverlay,
-				...null == ae ? void 0 : ae.dragOverlay
-			}
-		}), [
-			null == (ae = x) ? void 0 : ae.draggable,
-			null == ae ? void 0 : ae.droppable,
-			null == ae ? void 0 : ae.dragOverlay
-		]);
-		var ae;
-		const { droppableRects: se, measureDroppableContainers: le, measuringScheduled: ce } = function(e, n) {
-			let { dragging: r, dependencies: i, config: a } = n;
-			const [s, l] = t.useState(null), { frequency: c, measure: d, strategy: u } = a, f = t.useRef(e), v = function() {
-				switch (u) {
-					case exports.MeasuringStrategy.Always: return !1;
-					case exports.MeasuringStrategy.BeforeDragging: return r;
-					default: return !r;
-				}
-			}(), g = o.useLatestValue(v), p = t.useCallback((function(e) {
-				void 0 === e && (e = []), g.current || l((t) => null === t ? e : t.concat(e.filter((e) => !t.includes(e))));
-			}), [g]), h = t.useRef(null), b = o.useLazyMemo((t) => {
-				if (v && !r) return he;
-				if (!t || t === he || f.current !== e || null != s) {
-					const t = /* @__PURE__ */ new Map();
-					for (let n of e) {
-						if (!n) continue;
-						if (s && s.length > 0 && !s.includes(n.id) && n.rect.current) {
-							t.set(n.id, n.rect.current);
-							continue;
-						}
-						const e = n.node.current, r = e ? new Y(d(e), e) : null;
-						n.rect.current = r, r && t.set(n.id, r);
-					}
-					return t;
-				}
-				return t;
-			}, [
-				e,
-				s,
-				r,
-				v,
-				d
-			]);
-			return t.useEffect(() => {
-				f.current = e;
-			}, [e]), t.useEffect(() => {
-				v || p();
-			}, [r, v]), t.useEffect(() => {
-				s && s.length > 0 && l(null);
-			}, [JSON.stringify(s)]), t.useEffect(() => {
-				v || "number" != typeof c || null !== h.current || (h.current = setTimeout(() => {
-					p(), h.current = null;
-				}, c));
-			}, [
-				c,
-				v,
-				p,
-				...i
-			]), {
-				droppableRects: b,
-				measureDroppableContainers: p,
-				measuringScheduled: null != s
-			};
-		}(oe, {
-			dragging: W,
-			dependencies: [X.x, X.y],
-			config: ie.droppable
-		}), de = function(e, t) {
-			const n = null != t ? e.get(t) : void 0, r = n ? n.node.current : null;
-			return o.useLazyMemo((e) => {
-				var n;
-				return null == t ? null : null != (n = null != r ? r : e) ? n : null;
-			}, [r, t]);
-		}(H, j), ue = t.useMemo(() => ee ? o.getEventCoordinates(ee) : null, [ee]), fe = function() {
-			const e = W && !(!1 === (null == Z ? void 0 : Z.autoScrollEnabled)) && !("object" == typeof p ? !1 === p.enabled : !1 === p);
-			return "object" == typeof p ? {
-				...p,
-				enabled: e
-			} : { enabled: e };
-		}(), ve = function(e, t) {
-			return be(e, t);
-		}(de, ie.draggable.measure);
-		(function(e) {
-			let { activeNode: n, measure: r, initialRect: i, config: a = !0 } = e;
-			const s = t.useRef(!1), { x: l, y: c } = "boolean" == typeof a ? {
-				x: a,
-				y: a
-			} : a;
-			o.useIsomorphicLayoutEffect(() => {
-				if (!l && !c || !n) return void (s.current = !1);
-				if (s.current || !i) return;
-				const e = null == n ? void 0 : n.node.current;
-				if (!e || !1 === e.isConnected) return;
-				const t = D(r(e), i);
-				if (l || (t.x = 0), c || (t.y = 0), s.current = !0, Math.abs(t.x) > 0 || Math.abs(t.y) > 0) {
-					const n = k(e);
-					n && n.scrollBy({
-						top: t.y,
-						left: t.x
-					});
-				}
-			}, [
-				n,
-				l,
-				c,
-				i,
-				r
-			]);
-		})({
-			activeNode: null != j ? H.get(j) : null,
-			config: fe.layoutShiftCompensation,
-			initialRect: ve,
-			measure: ie.draggable.measure
-		});
-		const pe = xe(de, ie.draggable.measure, ve), ye = xe(de ? de.parentElement : null), Oe = t.useRef({
-			activatorEvent: null,
-			active: null,
-			activeNode: de,
-			collisionRect: null,
-			collisions: null,
-			droppableRects: se,
-			draggableNodes: H,
-			draggingNode: null,
-			draggingNodeRect: null,
-			droppableContainers: V,
-			over: null,
-			scrollableAncestors: [],
-			scrollAdjustedTranslate: null
-		}), Ae = V.getNodeFor(null == (i = Oe.current.over) ? void 0 : i.id), Le = function(e) {
-			let { measure: n } = e;
-			const [r, i] = t.useState(null), a = me({ callback: t.useCallback((e) => {
-				for (const { target: t } of e) if (o.isHTMLElement(t)) {
-					i((e) => {
-						const r = n(t);
-						return e ? {
-							...e,
-							width: r.width,
-							height: r.height
-						} : r;
-					});
-					break;
-				}
-			}, [n]) }), s = t.useCallback((e) => {
-				const t = Re(e);
-				a?.disconnect(), t && a?.observe(t), i(t ? n(t) : null);
-			}, [n, a]), [l, c] = o.useNodeRef(s);
-			return t.useMemo(() => ({
-				nodeRef: l,
-				rect: r,
-				setRef: c
-			}), [
-				r,
-				l,
-				c
-			]);
-		}({ measure: ie.dragOverlay.measure }), We = null != (s = Le.nodeRef.current) ? s : de, Ue = W ? null != (l = Le.rect) ? l : pe : null, je = Boolean(Le.nodeRef.current && Le.rect), qe = D(He = je ? null : pe, be(He));
-		var He;
-		const Xe = Ee(We ? o.getWindow(We) : null), Ye = function(e) {
-			const n = t.useRef(e), r = o.useLazyMemo((t) => e ? t && t !== we && e && n.current && e.parentNode === n.current.parentNode ? t : L(e) : we, [e]);
-			return t.useEffect(() => {
-				n.current = e;
-			}, [e]), r;
-		}(W ? null != Ae ? Ae : de : null), Ve = function(e, n) {
-			void 0 === n && (n = O);
-			const [r] = e, i = Ee(r ? o.getWindow(r) : null), [a, s] = t.useState(De);
-			function l() {
-				s(() => e.length ? e.map((e) => z(e) ? i : new Y(n(e), e)) : De);
-			}
-			const c = me({ callback: l });
-			return o.useIsomorphicLayoutEffect(() => {
-				c?.disconnect(), l(), e.forEach((e) => null == c ? void 0 : c.observe(e));
-			}, [e]), a;
-		}(Ye), Je = Be(w, {
-			transform: {
-				x: X.x - qe.x,
-				y: X.y - qe.y,
-				scaleX: 1,
-				scaleY: 1
-			},
-			activatorEvent: ee,
-			active: G,
-			activeNodeRect: pe,
-			containerNodeRect: ye,
-			draggingNodeRect: Ue,
-			over: Oe.current.over,
-			overlayNodeRect: Le.rect,
-			scrollableAncestors: Ye,
-			scrollableAncestorRects: Ve,
-			windowRect: Xe
-		}), _e = ue ? o.add(ue, X) : null, Ge = function(e) {
-			const [n, r] = t.useState(null), i = t.useRef(e), a = t.useCallback((e) => {
-				const t = T(e.target);
-				t && r((e) => e ? (e.set(t, I(t)), new Map(e)) : null);
-			}, []);
-			return t.useEffect(() => {
-				const t = i.current;
-				if (e !== t) {
-					n(t);
-					const o = e.map((e) => {
-						const t = T(e);
-						return t ? (t.addEventListener("scroll", a, { passive: !0 }), [t, I(t)]) : null;
-					}).filter((e) => null != e);
-					r(o.length ? new Map(o) : null), i.current = e;
-				}
-				return () => {
-					n(e), n(t);
-				};
-				function n(e) {
-					e.forEach((e) => {
-						T(e)?.removeEventListener("scroll", a);
-					});
-				}
-			}, [a, e]), t.useMemo(() => e.length ? n ? Array.from(n.values()).reduce((e, t) => o.add(e, t), v) : q(e) : v, [e, n]);
-		}(Ye), Qe = Ce(Ge), Ze = Ce(Ge, [pe]), $e = o.add(Je, Qe), et = Ue ? S(Ue, Je) : null, tt = G && et ? m({
-			active: G,
-			collisionRect: et,
-			droppableRects: se,
-			droppableContainers: oe,
-			pointerCoordinates: _e
-		}) : null, nt = y(tt, "id"), [rt, ot] = t.useState(null), it = function(e, t, n) {
-			return {
-				...e,
-				scaleX: t && n ? t.width / n.width : 1,
-				scaleY: t && n ? t.height / n.height : 1
-			};
-		}(je ? Je : o.add(Je, Ze), null != (c = null == rt ? void 0 : rt.rect) ? c : null, pe), at = t.useRef(null), st = t.useCallback((e, t) => {
-			let { sensor: n, options: o } = t;
-			if (null == Q.current) return;
-			const i = H.get(Q.current);
-			if (!i) return;
-			const a = e.nativeEvent, s = new n({
-				active: Q.current,
-				activeNode: i,
-				event: a,
-				options: o,
-				context: Oe,
-				onAbort(e) {
-					if (!H.get(e)) return;
-					const { onDragAbort: t } = ne.current, n = { id: e };
-					t?.(n), A({
-						type: "onDragAbort",
-						event: n
-					});
-				},
-				onPending(e, t, n, r) {
-					if (!H.get(e)) return;
-					const { onDragPending: o } = ne.current, i = {
-						id: e,
-						constraint: t,
-						initialCoordinates: n,
-						offset: r
-					};
-					o?.(i), A({
-						type: "onDragPending",
-						event: i
-					});
-				},
-				onStart(e) {
-					const t = Q.current;
-					if (null == t) return;
-					const n = H.get(t);
-					if (!n) return;
-					const { onDragStart: o } = ne.current, i = {
-						activatorEvent: a,
-						active: {
-							id: t,
-							data: n.data,
-							rect: _
-						}
-					};
-					r.unstable_batchedUpdates(() => {
-						o?.(i), F(Fe.Initializing), N({
-							type: u.DragStart,
-							initialCoordinates: e,
-							active: t
-						}), A({
-							type: "onDragStart",
-							event: i
-						}), $(at.current), te(a);
-					});
-				},
-				onMove(e) {
-					N({
-						type: u.DragMove,
-						coordinates: e
-					});
-				},
-				onEnd: l(u.DragEnd),
-				onCancel: l(u.DragCancel)
-			});
-			function l(e) {
-				return async function() {
-					const { active: t, collisions: n, over: o, scrollAdjustedTranslate: i } = Oe.current;
-					let s = null;
-					if (t && i) {
-						const { cancelDrop: r } = ne.current;
-						s = {
-							activatorEvent: a,
-							active: t,
-							collisions: n,
-							delta: i,
-							over: o
-						}, e === u.DragEnd && "function" == typeof r && await Promise.resolve(r(s)) && (e = u.DragCancel);
-					}
-					Q.current = null, r.unstable_batchedUpdates(() => {
-						N({ type: e }), F(Fe.Uninitialized), ot(null), $(null), te(null), at.current = null;
-						const t = e === u.DragEnd ? "onDragEnd" : "onDragCancel";
-						if (s) {
-							const e = ne.current[t];
-							e?.(s), A({
-								type: t,
-								event: s
-							});
-						}
-					});
-				};
-			}
-			at.current = s;
-		}, [H]), lt = function(e, n) {
-			return t.useMemo(() => e.reduce((e, t) => {
-				const { sensor: r } = t;
-				return [...e, ...r.activators.map((e) => ({
-					eventName: e.eventName,
-					handler: n(e.handler, t)
-				}))];
-			}, []), [e, n]);
-		}(b, t.useCallback((e, t) => (n, r) => {
-			const o = n.nativeEvent, i = H.get(r);
-			null !== Q.current || !i || o.dndKit || o.defaultPrevented || !0 === e(n, t.options, { active: i }) && (o.dndKit = { capturedBy: t.sensor }, Q.current = r, st(n, t));
-		}, [H, st]));
-		(function(e) {
-			t.useEffect(() => {
-				if (!o.canUseDOM) return;
-				const t = e.map((e) => {
-					let { sensor: t } = e;
-					return null == t.setup ? void 0 : t.setup();
-				});
-				return () => {
-					for (const e of t) e?.();
-				};
-			}, e.map((e) => {
-				let { sensor: t } = e;
-				return t;
-			}));
-		})(b), o.useIsomorphicLayoutEffect(() => {
-			pe && P === Fe.Initializing && F(Fe.Initialized);
-		}, [pe, P]), t.useEffect(() => {
-			const { onDragMove: e } = ne.current, { active: t, activatorEvent: n, collisions: o, over: i } = Oe.current;
-			if (!t || !n) return;
-			const a = {
-				active: t,
-				activatorEvent: n,
-				collisions: o,
-				delta: {
-					x: $e.x,
-					y: $e.y
-				},
-				over: i
-			};
-			r.unstable_batchedUpdates(() => {
-				e?.(a), A({
-					type: "onDragMove",
-					event: a
-				});
-			});
-		}, [$e.x, $e.y]), t.useEffect(() => {
-			const { active: e, activatorEvent: t, collisions: n, droppableContainers: o, scrollAdjustedTranslate: i } = Oe.current;
-			if (!e || null == Q.current || !t || !i) return;
-			const { onDragOver: a } = ne.current, s = o.get(nt), l = s && s.rect.current ? {
-				id: s.id,
-				rect: s.rect.current,
-				data: s.data,
-				disabled: s.disabled
-			} : null, c = {
-				active: e,
-				activatorEvent: t,
-				collisions: n,
-				delta: {
-					x: i.x,
-					y: i.y
-				},
-				over: l
-			};
-			r.unstable_batchedUpdates(() => {
-				ot(l), a?.(c), A({
-					type: "onDragOver",
-					event: c
-				});
-			});
-		}, [nt]), o.useIsomorphicLayoutEffect(() => {
-			Oe.current = {
-				activatorEvent: ee,
-				active: G,
-				activeNode: de,
-				collisionRect: et,
-				collisions: tt,
-				droppableRects: se,
-				draggableNodes: H,
-				draggingNode: We,
-				draggingNodeRect: Ue,
-				droppableContainers: V,
-				over: rt,
-				scrollableAncestors: Ye,
-				scrollAdjustedTranslate: $e
-			}, _.current = {
-				initial: Ue,
-				translated: et
-			};
-		}, [
-			G,
-			de,
-			tt,
-			et,
-			H,
-			We,
-			Ue,
-			se,
-			V,
-			rt,
-			Ye,
-			$e
-		]), function(e) {
-			let { acceleration: n, activator: r = exports.AutoScrollActivator.Pointer, canScroll: i, draggingRect: a, enabled: s, interval: l = 5, order: c = exports.TraversalOrder.TreeOrder, pointerCoordinates: d, scrollableAncestors: u, scrollableAncestorRects: f, delta: v, threshold: g } = e;
-			const p = function(e) {
-				let { delta: t, disabled: n } = e;
-				const r = o.usePrevious(t);
-				return o.useLazyMemo((e) => {
-					if (n || !r || !e) return ge;
-					const o = Math.sign(t.x - r.x), i = Math.sign(t.y - r.y);
-					return {
-						x: {
-							[B.Backward]: e.x[B.Backward] || -1 === o,
-							[B.Forward]: e.x[B.Forward] || 1 === o
-						},
-						y: {
-							[B.Backward]: e.y[B.Backward] || -1 === i,
-							[B.Forward]: e.y[B.Forward] || 1 === i
-						}
-					};
-				}, [
-					n,
-					t,
-					r
-				]);
-			}({
-				delta: v,
-				disabled: !s
-			}), [h, b] = o.useInterval(), m = t.useRef({
-				x: 0,
-				y: 0
-			}), y = t.useRef({
-				x: 0,
-				y: 0
-			}), x = t.useMemo(() => {
-				switch (r) {
-					case exports.AutoScrollActivator.Pointer: return d ? {
-						top: d.y,
-						bottom: d.y,
-						left: d.x,
-						right: d.x
-					} : null;
-					case exports.AutoScrollActivator.DraggableRect: return a;
-				}
-			}, [
-				r,
-				a,
-				d
-			]), w = t.useRef(null), C = t.useCallback(() => {
-				const e = w.current;
-				e && e.scrollBy(m.current.x * y.current.x, m.current.y * y.current.y);
-			}, []), E = t.useMemo(() => c === exports.TraversalOrder.TreeOrder ? [...u].reverse() : u, [c, u]);
-			t.useEffect(() => {
-				if (s && u.length && x) {
-					for (const e of E) {
-						if (!1 === (null == i ? void 0 : i(e))) continue;
-						const t = u.indexOf(e), r = f[t];
-						if (!r) continue;
-						const { direction: o, speed: a } = U(e, r, x, n, g);
-						for (const e of ["x", "y"]) p[e][o[e]] || (a[e] = 0, o[e] = 0);
-						if (a.x > 0 || a.y > 0) return b(), w.current = e, h(C, l), m.current = a, void (y.current = o);
-					}
-					m.current = {
-						x: 0,
-						y: 0
-					}, y.current = {
-						x: 0,
-						y: 0
-					}, b();
-				} else b();
-			}, [
-				n,
-				C,
-				i,
-				b,
-				s,
-				l,
-				JSON.stringify(x),
-				JSON.stringify(p),
-				h,
-				u,
-				E,
-				f,
-				JSON.stringify(g)
-			]);
-		}({
-			...fe,
-			delta: X,
-			draggingRect: et,
-			pointerCoordinates: _e,
-			scrollableAncestors: Ye,
-			scrollableAncestorRects: Ve
-		});
-		const ct = t.useMemo(() => ({
-			active: G,
-			activeNode: de,
-			activeNodeRect: pe,
-			activatorEvent: ee,
-			collisions: tt,
-			containerNodeRect: ye,
-			dragOverlay: Le,
-			draggableNodes: H,
-			droppableContainers: V,
-			droppableRects: se,
-			over: rt,
-			measureDroppableContainers: le,
-			scrollableAncestors: Ye,
-			scrollableAncestorRects: Ve,
-			measuringConfiguration: ie,
-			measuringScheduled: ce,
-			windowRect: Xe
-		}), [
-			G,
-			de,
-			pe,
-			ee,
-			tt,
-			ye,
-			Le,
-			H,
-			V,
-			se,
-			rt,
-			le,
-			Ye,
-			Ve,
-			ie,
-			ce,
-			Xe
-		]), dt = t.useMemo(() => ({
-			activatorEvent: ee,
-			activators: lt,
-			active: G,
-			activeNodeRect: pe,
-			ariaDescribedById: { draggable: re },
-			dispatch: N,
-			draggableNodes: H,
-			over: rt,
-			measureDroppableContainers: le
-		}), [
-			ee,
-			lt,
-			G,
-			pe,
-			N,
-			re,
-			H,
-			rt,
-			le
-		]);
-		return n.createElement(a.Provider, { value: K }, n.createElement(ke.Provider, { value: dt }, n.createElement(Te.Provider, { value: ct }, n.createElement(ze.Provider, { value: it }, h)), n.createElement(Ie, { disabled: !1 === (null == g ? void 0 : g.restoreFocus) })), n.createElement(d, {
-			...g,
-			hiddenTextDescribedById: re
-		}));
-	}));
-	var Ue = t.createContext(null);
-	var je = "button";
-	function qe() {
-		return t.useContext(Te);
-	}
-	var He = { timeout: 25 };
-	function Xe(e) {
-		let { animation: r, children: i } = e;
-		const [a, s] = t.useState(null), [l, c] = t.useState(null), d = o.usePrevious(i);
-		return i || a || !d || s(d), o.useIsomorphicLayoutEffect(() => {
-			if (!l) return;
-			const e = null == a ? void 0 : a.props.id;
-			null != (null == a ? void 0 : a.key) && null != e ? Promise.resolve(r(e, l)).then(() => {
-				s(null);
-			}) : s(null);
-		}, [
-			r,
-			a,
-			l
-		]), n.createElement(n.Fragment, null, i, a ? t.cloneElement(a, { ref: c }) : null);
-	}
-	var Ye = {
-		x: 0,
-		y: 0,
-		scaleX: 1,
-		scaleY: 1
-	};
-	function Ve(e) {
-		let { children: t } = e;
-		return n.createElement(ke.Provider, { value: Le }, n.createElement(ze.Provider, { value: Ye }, t));
-	}
-	var Je = {
-		position: "fixed",
-		touchAction: "none"
-	};
-	var _e = (e) => o.isKeyboardEvent(e) ? "transform 250ms ease" : void 0;
-	var Ge = t.forwardRef((e, t) => {
-		let { as: r, activatorEvent: i, adjustScale: a, children: s, className: l, rect: c, style: d, transform: u, transition: f = _e } = e;
-		if (!c) return null;
-		const v = a ? u : {
-			...u,
-			scaleX: 1,
-			scaleY: 1
-		}, g = {
-			...Je,
-			width: c.width,
-			height: c.height,
-			top: c.top,
-			left: c.left,
-			transform: o.CSS.Transform.toString(v),
-			transformOrigin: a && i ? p(i, c) : void 0,
-			transition: "function" == typeof f ? f(i) : f,
-			...d
-		};
-		return n.createElement(r, {
-			className: l,
-			style: g,
-			ref: t
-		}, s);
-	});
-	var Qe = (e) => (t) => {
-		let { active: n, dragOverlay: r } = t;
-		const o = {}, { styles: i, className: a } = e;
-		if (null != i && i.active) for (const [e, t] of Object.entries(i.active)) void 0 !== t && (o[e] = n.node.style.getPropertyValue(e), n.node.style.setProperty(e, t));
-		if (null != i && i.dragOverlay) for (const [e, t] of Object.entries(i.dragOverlay)) void 0 !== t && r.node.style.setProperty(e, t);
-		return null != a && a.active && n.node.classList.add(a.active), null != a && a.dragOverlay && r.node.classList.add(a.dragOverlay), function() {
-			for (const [e, t] of Object.entries(o)) n.node.style.setProperty(e, t);
-			null != a && a.active && n.node.classList.remove(a.active);
-		};
-	};
-	var Ze = {
-		duration: 250,
-		easing: "ease",
-		keyframes: (e) => {
-			let { transform: { initial: t, final: n } } = e;
-			return [{ transform: o.CSS.Transform.toString(t) }, { transform: o.CSS.Transform.toString(n) }];
-		},
-		sideEffects: Qe({ styles: { active: { opacity: "0" } } })
-	};
-	var $e = 0;
-	function et(e) {
-		return t.useMemo(() => {
-			if (null != e) return $e++, $e;
-		}, [e]);
-	}
-	var tt = n.memo((e) => {
-		let { adjustScale: r = !1, children: i, dropAnimation: a, style: s, transition: l, modifiers: c, wrapperElement: d = "div", className: u, zIndex: f = 999 } = e;
-		const { activatorEvent: v, active: g, activeNodeRect: p, containerNodeRect: h, draggableNodes: b, droppableContainers: m, dragOverlay: y, over: x, measuringConfiguration: w, scrollableAncestors: C, scrollableAncestorRects: E, windowRect: D } = qe(), R = t.useContext(ze), S = et(null == g ? void 0 : g.id), N = Be(c, {
-			activatorEvent: v,
-			active: g,
-			activeNodeRect: p,
-			containerNodeRect: h,
-			draggingNodeRect: y.rect,
-			over: x,
-			overlayNodeRect: y.rect,
-			scrollableAncestors: C,
-			scrollableAncestorRects: E,
-			transform: R,
-			windowRect: D
-		}), O = be(p), A = function(e) {
-			let { config: t, draggableNodes: n, droppableContainers: r, measuringConfiguration: i } = e;
-			return o.useEvent((e, a) => {
-				if (null === t) return;
-				const s = n.get(e);
-				if (!s) return;
-				const l = s.node.current;
-				if (!l) return;
-				const c = Re(a);
-				if (!c) return;
-				const { transform: d } = o.getWindow(a).getComputedStyle(a), u = M(d);
-				if (!u) return;
-				const f = "function" == typeof t ? t : function(e) {
-					const { duration: t, easing: n, sideEffects: r, keyframes: o } = {
-						...Ze,
-						...e
-					};
-					return (e) => {
-						let { active: i, dragOverlay: a, transform: s, ...l } = e;
-						if (!t) return;
-						const c = {
-							x: s.x - (a.rect.left - i.rect.left),
-							y: s.y - (a.rect.top - i.rect.top),
-							scaleX: 1 !== s.scaleX ? i.rect.width * s.scaleX / a.rect.width : 1,
-							scaleY: 1 !== s.scaleY ? i.rect.height * s.scaleY / a.rect.height : 1
-						}, d = o({
-							...l,
-							active: i,
-							dragOverlay: a,
-							transform: {
-								initial: s,
-								final: c
-							}
-						}), [u] = d, f = d[d.length - 1];
-						if (JSON.stringify(u) === JSON.stringify(f)) return;
-						const v = null == r ? void 0 : r({
-							active: i,
-							dragOverlay: a,
-							...l
-						}), g = a.node.animate(d, {
-							duration: t,
-							easing: n,
-							fill: "forwards"
-						});
-						return new Promise((e) => {
-							g.onfinish = () => {
-								v?.(), e();
-							};
-						});
-					};
-				}(t);
-				return H(l, i.draggable.measure), f({
-					active: {
-						id: e,
-						data: s.data,
-						node: l,
-						rect: i.draggable.measure(l)
-					},
-					draggableNodes: n,
-					dragOverlay: {
-						node: a,
-						rect: i.dragOverlay.measure(c)
-					},
-					droppableContainers: r,
-					measuringConfiguration: i,
-					transform: u
-				});
-			});
-		}({
-			config: a,
-			draggableNodes: b,
-			droppableContainers: m,
-			measuringConfiguration: w
-		});
-		return n.createElement(Ve, null, n.createElement(Xe, { animation: A }, g && S ? n.createElement(Ge, {
-			key: S,
-			id: g.id,
-			ref: O ? y.setRef : void 0,
-			as: d,
-			activatorEvent: v,
-			adjustScale: r,
-			className: u,
-			transition: l,
-			rect: O,
-			style: {
-				zIndex: f,
-				...s
-			},
-			transform: N
-		}, i) : null));
-	});
-	exports.DndContext = We, exports.DragOverlay = tt, exports.KeyboardSensor = te, exports.MouseSensor = ce, exports.PointerSensor = ae, exports.TouchSensor = ue, exports.applyModifiers = Be, exports.closestCenter = (e) => {
-		let { collisionRect: t, droppableRects: n, droppableContainers: r } = e;
-		const o = x(t, t.left, t.top), i = [];
-		for (const e of r) {
-			const { id: t } = e, r = n.get(t);
-			if (r) {
-				const n = g(x(r), o);
-				i.push({
-					id: t,
-					data: {
-						droppableContainer: e,
-						value: n
-					}
-				});
-			}
-		}
-		return i.sort(h);
-	}, exports.closestCorners = (e) => {
-		let { collisionRect: t, droppableRects: n, droppableContainers: r } = e;
-		const o = m(t), i = [];
-		for (const e of r) {
-			const { id: t } = e, r = n.get(t);
-			if (r) {
-				const n = m(r), a = o.reduce((e, t, r) => e + g(n[r], t), 0), s = Number((a / 4).toFixed(4));
-				i.push({
-					id: t,
-					data: {
-						droppableContainer: e,
-						value: s
-					}
-				});
-			}
-		}
-		return i.sort(h);
-	}, exports.defaultAnnouncements = c, exports.defaultCoordinates = v, exports.defaultDropAnimation = Ze, exports.defaultDropAnimationSideEffects = Qe, exports.defaultKeyboardCoordinateGetter = ee, exports.defaultScreenReaderInstructions = l, exports.getClientRect = O, exports.getFirstCollision = y, exports.getScrollableAncestors = L, exports.pointerWithin = (e) => {
-		let { droppableContainers: t, droppableRects: n, pointerCoordinates: r } = e;
-		if (!r) return [];
-		const o = [];
-		for (const e of t) {
-			const { id: t } = e, i = n.get(t);
-			if (i && E(r, i)) {
-				const n = m(i).reduce((e, t) => e + g(r, t), 0), a = Number((n / 4).toFixed(4));
-				o.push({
-					id: t,
-					data: {
-						droppableContainer: e,
-						value: a
-					}
-				});
-			}
-		}
-		return o.sort(h);
-	}, exports.rectIntersection = C, exports.useDndContext = qe, exports.useDndMonitor = s, exports.useDraggable = function(e) {
-		let { id: n, data: r, disabled: i = !1, attributes: a } = e;
-		const s = o.useUniqueId("Draggable"), { activators: l, activatorEvent: c, active: d, activeNodeRect: u, ariaDescribedById: f, draggableNodes: v, over: g } = t.useContext(ke), { role: p = je, roleDescription: h = "draggable", tabIndex: b = 0 } = null != a ? a : {}, m = (null == d ? void 0 : d.id) === n, y = t.useContext(m ? ze : Ue), [x, w] = o.useNodeRef(), [C, E] = o.useNodeRef(), D = function(e, n) {
-			return t.useMemo(() => e.reduce((e, t) => {
-				let { eventName: r, handler: o } = t;
-				return e[r] = (e) => {
-					o(e, n);
-				}, e;
-			}, {}), [e, n]);
-		}(l, n), R = o.useLatestValue(r);
-		return o.useIsomorphicLayoutEffect(() => (v.set(n, {
-			id: n,
-			key: s,
-			node: x,
-			activatorNode: C,
-			data: R
-		}), () => {
-			const e = v.get(n);
-			e && e.key === s && v.delete(n);
-		}), [v, n]), {
-			active: d,
-			activatorEvent: c,
-			activeNodeRect: u,
-			attributes: t.useMemo(() => ({
-				role: p,
-				tabIndex: b,
-				"aria-disabled": i,
-				"aria-pressed": !(!m || p !== je) || void 0,
-				"aria-roledescription": h,
-				"aria-describedby": f.draggable
-			}), [
-				i,
-				p,
-				b,
-				m,
-				h,
-				f.draggable
-			]),
-			isDragging: m,
-			listeners: i ? void 0 : D,
-			node: x,
-			over: g,
-			setNodeRef: w,
-			setActivatorNodeRef: E,
-			transform: y
-		};
-	}, exports.useDroppable = function(e) {
-		let { data: n, disabled: r = !1, id: i, resizeObserverConfig: a } = e;
-		const s = o.useUniqueId("Droppable"), { active: l, dispatch: c, over: d, measureDroppableContainers: f } = t.useContext(ke), v = t.useRef({ disabled: r }), g = t.useRef(!1), p = t.useRef(null), h = t.useRef(null), { disabled: b, updateMeasurementsFor: m, timeout: y } = {
-			...He,
-			...a
-		}, x = o.useLatestValue(null != m ? m : i), w = me({
-			callback: t.useCallback(() => {
-				g.current ? (null != h.current && clearTimeout(h.current), h.current = setTimeout(() => {
-					f(Array.isArray(x.current) ? x.current : [x.current]), h.current = null;
-				}, y)) : g.current = !0;
-			}, [y]),
-			disabled: b || !l
-		}), C = t.useCallback((e, t) => {
-			w && (t && (w.unobserve(t), g.current = !1), e && w.observe(e));
-		}, [w]), [E, D] = o.useNodeRef(C), R = o.useLatestValue(n);
-		return t.useEffect(() => {
-			w && E.current && (w.disconnect(), g.current = !1, w.observe(E.current));
-		}, [E, w]), t.useEffect(() => (c({
-			type: u.RegisterDroppable,
-			element: {
-				id: i,
-				key: s,
-				disabled: r,
-				node: E,
-				rect: p,
-				data: R
-			}
-		}), () => c({
-			type: u.UnregisterDroppable,
-			key: s,
-			id: i
-		})), [i]), t.useEffect(() => {
-			r !== v.current.disabled && (c({
-				type: u.SetDroppableDisabled,
-				id: i,
-				key: s,
-				disabled: r
-			}), v.current.disabled = r);
-		}, [
-			i,
-			s,
-			r,
-			c
-		]), {
-			active: l,
-			rect: p,
-			isOver: (null == d ? void 0 : d.id) === i,
-			node: E,
-			over: d,
-			setNodeRef: D
-		};
-	}, exports.useSensor = function(e, n) {
-		return t.useMemo(() => ({
-			sensor: e,
-			options: null != n ? n : {}
-		}), [e, n]);
-	}, exports.useSensors = function() {
-		for (var e = arguments.length, n = new Array(e), r = 0; r < e; r++) n[r] = arguments[r];
-		return t.useMemo(() => [...n].filter((e) => null != e), [...n]);
-	};
-}));
-//#endregion
-//#region ../../node_modules/.pnpm/@dnd-kit+core@6.3.1_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/@dnd-kit/core/dist/index.js
-var require_dist = /* @__PURE__ */ __commonJSMin(((exports, module) => {
-	module.exports = require_core_cjs_production_min();
-}));
-//#endregion
-export default require_dist();
+
+// ../../node_modules/.pnpm/@dnd-kit+core@6.3.1_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/@dnd-kit/core/dist/core.esm.js
+var DndMonitorContext = /* @__PURE__ */ createContext(null);
+function useDndMonitor(listener) {
+  const registerListener = useContext(DndMonitorContext);
+  useEffect(() => {
+    if (!registerListener) {
+      throw new Error("useDndMonitor must be used within a children of <DndContext>");
+    }
+    const unsubscribe = registerListener(listener);
+    return unsubscribe;
+  }, [listener, registerListener]);
+}
+function useDndMonitorProvider() {
+  const [listeners] = useState2(() => /* @__PURE__ */ new Set());
+  const registerListener = useCallback2((listener) => {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  }, [listeners]);
+  const dispatch = useCallback2((_ref) => {
+    let {
+      type,
+      event
+    } = _ref;
+    listeners.forEach((listener) => {
+      var _listener$type;
+      return (_listener$type = listener[type]) == null ? void 0 : _listener$type.call(listener, event);
+    });
+  }, [listeners]);
+  return [dispatch, registerListener];
+}
+var defaultScreenReaderInstructions = {
+  draggable: "\n    To pick up a draggable item, press the space bar.\n    While dragging, use the arrow keys to move the item.\n    Press space again to drop the item in its new position, or press escape to cancel.\n  "
+};
+var defaultAnnouncements = {
+  onDragStart(_ref) {
+    let {
+      active
+    } = _ref;
+    return "Picked up draggable item " + active.id + ".";
+  },
+  onDragOver(_ref2) {
+    let {
+      active,
+      over
+    } = _ref2;
+    if (over) {
+      return "Draggable item " + active.id + " was moved over droppable area " + over.id + ".";
+    }
+    return "Draggable item " + active.id + " is no longer over a droppable area.";
+  },
+  onDragEnd(_ref3) {
+    let {
+      active,
+      over
+    } = _ref3;
+    if (over) {
+      return "Draggable item " + active.id + " was dropped over droppable area " + over.id;
+    }
+    return "Draggable item " + active.id + " was dropped.";
+  },
+  onDragCancel(_ref4) {
+    let {
+      active
+    } = _ref4;
+    return "Dragging was cancelled. Draggable item " + active.id + " was dropped.";
+  }
+};
+function Accessibility(_ref) {
+  let {
+    announcements = defaultAnnouncements,
+    container,
+    hiddenTextDescribedById,
+    screenReaderInstructions = defaultScreenReaderInstructions
+  } = _ref;
+  const {
+    announce,
+    announcement
+  } = useAnnouncement();
+  const liveRegionId = useUniqueId("DndLiveRegion");
+  const [mounted, setMounted] = useState2(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  useDndMonitor(useMemo(() => ({
+    onDragStart(_ref2) {
+      let {
+        active
+      } = _ref2;
+      announce(announcements.onDragStart({
+        active
+      }));
+    },
+    onDragMove(_ref3) {
+      let {
+        active,
+        over
+      } = _ref3;
+      if (announcements.onDragMove) {
+        announce(announcements.onDragMove({
+          active,
+          over
+        }));
+      }
+    },
+    onDragOver(_ref4) {
+      let {
+        active,
+        over
+      } = _ref4;
+      announce(announcements.onDragOver({
+        active,
+        over
+      }));
+    },
+    onDragEnd(_ref5) {
+      let {
+        active,
+        over
+      } = _ref5;
+      announce(announcements.onDragEnd({
+        active,
+        over
+      }));
+    },
+    onDragCancel(_ref6) {
+      let {
+        active,
+        over
+      } = _ref6;
+      announce(announcements.onDragCancel({
+        active,
+        over
+      }));
+    }
+  }), [announce, announcements]));
+  if (!mounted) {
+    return null;
+  }
+  const markup = React2.createElement(React2.Fragment, null, React2.createElement(HiddenText, {
+    id: hiddenTextDescribedById,
+    value: screenReaderInstructions.draggable
+  }), React2.createElement(LiveRegion, {
+    id: liveRegionId,
+    announcement
+  }));
+  return container ? createPortal(markup, container) : markup;
+}
+var Action;
+(function(Action2) {
+  Action2["DragStart"] = "dragStart";
+  Action2["DragMove"] = "dragMove";
+  Action2["DragEnd"] = "dragEnd";
+  Action2["DragCancel"] = "dragCancel";
+  Action2["DragOver"] = "dragOver";
+  Action2["RegisterDroppable"] = "registerDroppable";
+  Action2["SetDroppableDisabled"] = "setDroppableDisabled";
+  Action2["UnregisterDroppable"] = "unregisterDroppable";
+})(Action || (Action = {}));
+function noop() {
+}
+function useSensor(sensor, options) {
+  return useMemo(
+    () => ({
+      sensor,
+      options: options != null ? options : {}
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sensor, options]
+  );
+}
+function useSensors() {
+  for (var _len = arguments.length, sensors = new Array(_len), _key = 0; _key < _len; _key++) {
+    sensors[_key] = arguments[_key];
+  }
+  return useMemo(
+    () => [...sensors].filter((sensor) => sensor != null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [...sensors]
+  );
+}
+var defaultCoordinates = /* @__PURE__ */ Object.freeze({
+  x: 0,
+  y: 0
+});
+function distanceBetween(p1, p2) {
+  return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+}
+function getRelativeTransformOrigin(event, rect) {
+  const eventCoordinates = getEventCoordinates(event);
+  if (!eventCoordinates) {
+    return "0 0";
+  }
+  const transformOrigin = {
+    x: (eventCoordinates.x - rect.left) / rect.width * 100,
+    y: (eventCoordinates.y - rect.top) / rect.height * 100
+  };
+  return transformOrigin.x + "% " + transformOrigin.y + "%";
+}
+function sortCollisionsAsc(_ref, _ref2) {
+  let {
+    data: {
+      value: a
+    }
+  } = _ref;
+  let {
+    data: {
+      value: b
+    }
+  } = _ref2;
+  return a - b;
+}
+function sortCollisionsDesc(_ref3, _ref4) {
+  let {
+    data: {
+      value: a
+    }
+  } = _ref3;
+  let {
+    data: {
+      value: b
+    }
+  } = _ref4;
+  return b - a;
+}
+function cornersOfRectangle(_ref5) {
+  let {
+    left,
+    top,
+    height,
+    width
+  } = _ref5;
+  return [{
+    x: left,
+    y: top
+  }, {
+    x: left + width,
+    y: top
+  }, {
+    x: left,
+    y: top + height
+  }, {
+    x: left + width,
+    y: top + height
+  }];
+}
+function getFirstCollision(collisions, property) {
+  if (!collisions || collisions.length === 0) {
+    return null;
+  }
+  const [firstCollision] = collisions;
+  return property ? firstCollision[property] : firstCollision;
+}
+function centerOfRectangle(rect, left, top) {
+  if (left === void 0) {
+    left = rect.left;
+  }
+  if (top === void 0) {
+    top = rect.top;
+  }
+  return {
+    x: left + rect.width * 0.5,
+    y: top + rect.height * 0.5
+  };
+}
+var closestCenter = (_ref) => {
+  let {
+    collisionRect,
+    droppableRects,
+    droppableContainers
+  } = _ref;
+  const centerRect = centerOfRectangle(collisionRect, collisionRect.left, collisionRect.top);
+  const collisions = [];
+  for (const droppableContainer of droppableContainers) {
+    const {
+      id
+    } = droppableContainer;
+    const rect = droppableRects.get(id);
+    if (rect) {
+      const distBetween = distanceBetween(centerOfRectangle(rect), centerRect);
+      collisions.push({
+        id,
+        data: {
+          droppableContainer,
+          value: distBetween
+        }
+      });
+    }
+  }
+  return collisions.sort(sortCollisionsAsc);
+};
+var closestCorners = (_ref) => {
+  let {
+    collisionRect,
+    droppableRects,
+    droppableContainers
+  } = _ref;
+  const corners = cornersOfRectangle(collisionRect);
+  const collisions = [];
+  for (const droppableContainer of droppableContainers) {
+    const {
+      id
+    } = droppableContainer;
+    const rect = droppableRects.get(id);
+    if (rect) {
+      const rectCorners = cornersOfRectangle(rect);
+      const distances = corners.reduce((accumulator, corner, index) => {
+        return accumulator + distanceBetween(rectCorners[index], corner);
+      }, 0);
+      const effectiveDistance = Number((distances / 4).toFixed(4));
+      collisions.push({
+        id,
+        data: {
+          droppableContainer,
+          value: effectiveDistance
+        }
+      });
+    }
+  }
+  return collisions.sort(sortCollisionsAsc);
+};
+function getIntersectionRatio(entry, target) {
+  const top = Math.max(target.top, entry.top);
+  const left = Math.max(target.left, entry.left);
+  const right = Math.min(target.left + target.width, entry.left + entry.width);
+  const bottom = Math.min(target.top + target.height, entry.top + entry.height);
+  const width = right - left;
+  const height = bottom - top;
+  if (left < right && top < bottom) {
+    const targetArea = target.width * target.height;
+    const entryArea = entry.width * entry.height;
+    const intersectionArea = width * height;
+    const intersectionRatio = intersectionArea / (targetArea + entryArea - intersectionArea);
+    return Number(intersectionRatio.toFixed(4));
+  }
+  return 0;
+}
+var rectIntersection = (_ref) => {
+  let {
+    collisionRect,
+    droppableRects,
+    droppableContainers
+  } = _ref;
+  const collisions = [];
+  for (const droppableContainer of droppableContainers) {
+    const {
+      id
+    } = droppableContainer;
+    const rect = droppableRects.get(id);
+    if (rect) {
+      const intersectionRatio = getIntersectionRatio(rect, collisionRect);
+      if (intersectionRatio > 0) {
+        collisions.push({
+          id,
+          data: {
+            droppableContainer,
+            value: intersectionRatio
+          }
+        });
+      }
+    }
+  }
+  return collisions.sort(sortCollisionsDesc);
+};
+function isPointWithinRect(point, rect) {
+  const {
+    top,
+    left,
+    bottom,
+    right
+  } = rect;
+  return top <= point.y && point.y <= bottom && left <= point.x && point.x <= right;
+}
+var pointerWithin = (_ref) => {
+  let {
+    droppableContainers,
+    droppableRects,
+    pointerCoordinates
+  } = _ref;
+  if (!pointerCoordinates) {
+    return [];
+  }
+  const collisions = [];
+  for (const droppableContainer of droppableContainers) {
+    const {
+      id
+    } = droppableContainer;
+    const rect = droppableRects.get(id);
+    if (rect && isPointWithinRect(pointerCoordinates, rect)) {
+      const corners = cornersOfRectangle(rect);
+      const distances = corners.reduce((accumulator, corner) => {
+        return accumulator + distanceBetween(pointerCoordinates, corner);
+      }, 0);
+      const effectiveDistance = Number((distances / 4).toFixed(4));
+      collisions.push({
+        id,
+        data: {
+          droppableContainer,
+          value: effectiveDistance
+        }
+      });
+    }
+  }
+  return collisions.sort(sortCollisionsAsc);
+};
+function adjustScale(transform, rect1, rect2) {
+  return {
+    ...transform,
+    scaleX: rect1 && rect2 ? rect1.width / rect2.width : 1,
+    scaleY: rect1 && rect2 ? rect1.height / rect2.height : 1
+  };
+}
+function getRectDelta(rect1, rect2) {
+  return rect1 && rect2 ? {
+    x: rect1.left - rect2.left,
+    y: rect1.top - rect2.top
+  } : defaultCoordinates;
+}
+function createRectAdjustmentFn(modifier) {
+  return function adjustClientRect(rect) {
+    for (var _len = arguments.length, adjustments = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      adjustments[_key - 1] = arguments[_key];
+    }
+    return adjustments.reduce((acc, adjustment) => ({
+      ...acc,
+      top: acc.top + modifier * adjustment.y,
+      bottom: acc.bottom + modifier * adjustment.y,
+      left: acc.left + modifier * adjustment.x,
+      right: acc.right + modifier * adjustment.x
+    }), {
+      ...rect
+    });
+  };
+}
+var getAdjustedRect = /* @__PURE__ */ createRectAdjustmentFn(1);
+function parseTransform(transform) {
+  if (transform.startsWith("matrix3d(")) {
+    const transformArray = transform.slice(9, -1).split(/, /);
+    return {
+      x: +transformArray[12],
+      y: +transformArray[13],
+      scaleX: +transformArray[0],
+      scaleY: +transformArray[5]
+    };
+  } else if (transform.startsWith("matrix(")) {
+    const transformArray = transform.slice(7, -1).split(/, /);
+    return {
+      x: +transformArray[4],
+      y: +transformArray[5],
+      scaleX: +transformArray[0],
+      scaleY: +transformArray[3]
+    };
+  }
+  return null;
+}
+function inverseTransform(rect, transform, transformOrigin) {
+  const parsedTransform = parseTransform(transform);
+  if (!parsedTransform) {
+    return rect;
+  }
+  const {
+    scaleX,
+    scaleY,
+    x: translateX,
+    y: translateY
+  } = parsedTransform;
+  const x = rect.left - translateX - (1 - scaleX) * parseFloat(transformOrigin);
+  const y = rect.top - translateY - (1 - scaleY) * parseFloat(transformOrigin.slice(transformOrigin.indexOf(" ") + 1));
+  const w = scaleX ? rect.width / scaleX : rect.width;
+  const h = scaleY ? rect.height / scaleY : rect.height;
+  return {
+    width: w,
+    height: h,
+    top: y,
+    right: x + w,
+    bottom: y + h,
+    left: x
+  };
+}
+var defaultOptions = {
+  ignoreTransform: false
+};
+function getClientRect(element, options) {
+  if (options === void 0) {
+    options = defaultOptions;
+  }
+  let rect = element.getBoundingClientRect();
+  if (options.ignoreTransform) {
+    const {
+      transform,
+      transformOrigin
+    } = getWindow(element).getComputedStyle(element);
+    if (transform) {
+      rect = inverseTransform(rect, transform, transformOrigin);
+    }
+  }
+  const {
+    top,
+    left,
+    width,
+    height,
+    bottom,
+    right
+  } = rect;
+  return {
+    top,
+    left,
+    width,
+    height,
+    bottom,
+    right
+  };
+}
+function getTransformAgnosticClientRect(element) {
+  return getClientRect(element, {
+    ignoreTransform: true
+  });
+}
+function getWindowClientRect(element) {
+  const width = element.innerWidth;
+  const height = element.innerHeight;
+  return {
+    top: 0,
+    left: 0,
+    right: width,
+    bottom: height,
+    width,
+    height
+  };
+}
+function isFixed(node, computedStyle) {
+  if (computedStyle === void 0) {
+    computedStyle = getWindow(node).getComputedStyle(node);
+  }
+  return computedStyle.position === "fixed";
+}
+function isScrollable(element, computedStyle) {
+  if (computedStyle === void 0) {
+    computedStyle = getWindow(element).getComputedStyle(element);
+  }
+  const overflowRegex = /(auto|scroll|overlay)/;
+  const properties2 = ["overflow", "overflowX", "overflowY"];
+  return properties2.some((property) => {
+    const value = computedStyle[property];
+    return typeof value === "string" ? overflowRegex.test(value) : false;
+  });
+}
+function getScrollableAncestors(element, limit) {
+  const scrollParents = [];
+  function findScrollableAncestors(node) {
+    if (limit != null && scrollParents.length >= limit) {
+      return scrollParents;
+    }
+    if (!node) {
+      return scrollParents;
+    }
+    if (isDocument(node) && node.scrollingElement != null && !scrollParents.includes(node.scrollingElement)) {
+      scrollParents.push(node.scrollingElement);
+      return scrollParents;
+    }
+    if (!isHTMLElement(node) || isSVGElement(node)) {
+      return scrollParents;
+    }
+    if (scrollParents.includes(node)) {
+      return scrollParents;
+    }
+    const computedStyle = getWindow(element).getComputedStyle(node);
+    if (node !== element) {
+      if (isScrollable(node, computedStyle)) {
+        scrollParents.push(node);
+      }
+    }
+    if (isFixed(node, computedStyle)) {
+      return scrollParents;
+    }
+    return findScrollableAncestors(node.parentNode);
+  }
+  if (!element) {
+    return scrollParents;
+  }
+  return findScrollableAncestors(element);
+}
+function getFirstScrollableAncestor(node) {
+  const [firstScrollableAncestor] = getScrollableAncestors(node, 1);
+  return firstScrollableAncestor != null ? firstScrollableAncestor : null;
+}
+function getScrollableElement(element) {
+  if (!canUseDOM || !element) {
+    return null;
+  }
+  if (isWindow(element)) {
+    return element;
+  }
+  if (!isNode(element)) {
+    return null;
+  }
+  if (isDocument(element) || element === getOwnerDocument(element).scrollingElement) {
+    return window;
+  }
+  if (isHTMLElement(element)) {
+    return element;
+  }
+  return null;
+}
+function getScrollXCoordinate(element) {
+  if (isWindow(element)) {
+    return element.scrollX;
+  }
+  return element.scrollLeft;
+}
+function getScrollYCoordinate(element) {
+  if (isWindow(element)) {
+    return element.scrollY;
+  }
+  return element.scrollTop;
+}
+function getScrollCoordinates(element) {
+  return {
+    x: getScrollXCoordinate(element),
+    y: getScrollYCoordinate(element)
+  };
+}
+var Direction;
+(function(Direction2) {
+  Direction2[Direction2["Forward"] = 1] = "Forward";
+  Direction2[Direction2["Backward"] = -1] = "Backward";
+})(Direction || (Direction = {}));
+function isDocumentScrollingElement(element) {
+  if (!canUseDOM || !element) {
+    return false;
+  }
+  return element === document.scrollingElement;
+}
+function getScrollPosition(scrollingContainer) {
+  const minScroll = {
+    x: 0,
+    y: 0
+  };
+  const dimensions = isDocumentScrollingElement(scrollingContainer) ? {
+    height: window.innerHeight,
+    width: window.innerWidth
+  } : {
+    height: scrollingContainer.clientHeight,
+    width: scrollingContainer.clientWidth
+  };
+  const maxScroll = {
+    x: scrollingContainer.scrollWidth - dimensions.width,
+    y: scrollingContainer.scrollHeight - dimensions.height
+  };
+  const isTop = scrollingContainer.scrollTop <= minScroll.y;
+  const isLeft = scrollingContainer.scrollLeft <= minScroll.x;
+  const isBottom = scrollingContainer.scrollTop >= maxScroll.y;
+  const isRight = scrollingContainer.scrollLeft >= maxScroll.x;
+  return {
+    isTop,
+    isLeft,
+    isBottom,
+    isRight,
+    maxScroll,
+    minScroll
+  };
+}
+var defaultThreshold = {
+  x: 0.2,
+  y: 0.2
+};
+function getScrollDirectionAndSpeed(scrollContainer, scrollContainerRect, _ref, acceleration, thresholdPercentage) {
+  let {
+    top,
+    left,
+    right,
+    bottom
+  } = _ref;
+  if (acceleration === void 0) {
+    acceleration = 10;
+  }
+  if (thresholdPercentage === void 0) {
+    thresholdPercentage = defaultThreshold;
+  }
+  const {
+    isTop,
+    isBottom,
+    isLeft,
+    isRight
+  } = getScrollPosition(scrollContainer);
+  const direction = {
+    x: 0,
+    y: 0
+  };
+  const speed = {
+    x: 0,
+    y: 0
+  };
+  const threshold = {
+    height: scrollContainerRect.height * thresholdPercentage.y,
+    width: scrollContainerRect.width * thresholdPercentage.x
+  };
+  if (!isTop && top <= scrollContainerRect.top + threshold.height) {
+    direction.y = Direction.Backward;
+    speed.y = acceleration * Math.abs((scrollContainerRect.top + threshold.height - top) / threshold.height);
+  } else if (!isBottom && bottom >= scrollContainerRect.bottom - threshold.height) {
+    direction.y = Direction.Forward;
+    speed.y = acceleration * Math.abs((scrollContainerRect.bottom - threshold.height - bottom) / threshold.height);
+  }
+  if (!isRight && right >= scrollContainerRect.right - threshold.width) {
+    direction.x = Direction.Forward;
+    speed.x = acceleration * Math.abs((scrollContainerRect.right - threshold.width - right) / threshold.width);
+  } else if (!isLeft && left <= scrollContainerRect.left + threshold.width) {
+    direction.x = Direction.Backward;
+    speed.x = acceleration * Math.abs((scrollContainerRect.left + threshold.width - left) / threshold.width);
+  }
+  return {
+    direction,
+    speed
+  };
+}
+function getScrollElementRect(element) {
+  if (element === document.scrollingElement) {
+    const {
+      innerWidth,
+      innerHeight
+    } = window;
+    return {
+      top: 0,
+      left: 0,
+      right: innerWidth,
+      bottom: innerHeight,
+      width: innerWidth,
+      height: innerHeight
+    };
+  }
+  const {
+    top,
+    left,
+    right,
+    bottom
+  } = element.getBoundingClientRect();
+  return {
+    top,
+    left,
+    right,
+    bottom,
+    width: element.clientWidth,
+    height: element.clientHeight
+  };
+}
+function getScrollOffsets(scrollableAncestors) {
+  return scrollableAncestors.reduce((acc, node) => {
+    return add(acc, getScrollCoordinates(node));
+  }, defaultCoordinates);
+}
+function getScrollXOffset(scrollableAncestors) {
+  return scrollableAncestors.reduce((acc, node) => {
+    return acc + getScrollXCoordinate(node);
+  }, 0);
+}
+function getScrollYOffset(scrollableAncestors) {
+  return scrollableAncestors.reduce((acc, node) => {
+    return acc + getScrollYCoordinate(node);
+  }, 0);
+}
+function scrollIntoViewIfNeeded(element, measure) {
+  if (measure === void 0) {
+    measure = getClientRect;
+  }
+  if (!element) {
+    return;
+  }
+  const {
+    top,
+    left,
+    bottom,
+    right
+  } = measure(element);
+  const firstScrollableAncestor = getFirstScrollableAncestor(element);
+  if (!firstScrollableAncestor) {
+    return;
+  }
+  if (bottom <= 0 || right <= 0 || top >= window.innerHeight || left >= window.innerWidth) {
+    element.scrollIntoView({
+      block: "center",
+      inline: "center"
+    });
+  }
+}
+var properties = [["x", ["left", "right"], getScrollXOffset], ["y", ["top", "bottom"], getScrollYOffset]];
+var Rect = class {
+  constructor(rect, element) {
+    this.rect = void 0;
+    this.width = void 0;
+    this.height = void 0;
+    this.top = void 0;
+    this.bottom = void 0;
+    this.right = void 0;
+    this.left = void 0;
+    const scrollableAncestors = getScrollableAncestors(element);
+    const scrollOffsets = getScrollOffsets(scrollableAncestors);
+    this.rect = {
+      ...rect
+    };
+    this.width = rect.width;
+    this.height = rect.height;
+    for (const [axis, keys, getScrollOffset] of properties) {
+      for (const key2 of keys) {
+        Object.defineProperty(this, key2, {
+          get: () => {
+            const currentOffsets = getScrollOffset(scrollableAncestors);
+            const scrollOffsetsDeltla = scrollOffsets[axis] - currentOffsets;
+            return this.rect[key2] + scrollOffsetsDeltla;
+          },
+          enumerable: true
+        });
+      }
+    }
+    Object.defineProperty(this, "rect", {
+      enumerable: false
+    });
+  }
+};
+var Listeners = class {
+  constructor(target) {
+    this.target = void 0;
+    this.listeners = [];
+    this.removeAll = () => {
+      this.listeners.forEach((listener) => {
+        var _this$target;
+        return (_this$target = this.target) == null ? void 0 : _this$target.removeEventListener(...listener);
+      });
+    };
+    this.target = target;
+  }
+  add(eventName, handler, options) {
+    var _this$target2;
+    (_this$target2 = this.target) == null ? void 0 : _this$target2.addEventListener(eventName, handler, options);
+    this.listeners.push([eventName, handler, options]);
+  }
+};
+function getEventListenerTarget(target) {
+  const {
+    EventTarget
+  } = getWindow(target);
+  return target instanceof EventTarget ? target : getOwnerDocument(target);
+}
+function hasExceededDistance(delta, measurement) {
+  const dx = Math.abs(delta.x);
+  const dy = Math.abs(delta.y);
+  if (typeof measurement === "number") {
+    return Math.sqrt(dx ** 2 + dy ** 2) > measurement;
+  }
+  if ("x" in measurement && "y" in measurement) {
+    return dx > measurement.x && dy > measurement.y;
+  }
+  if ("x" in measurement) {
+    return dx > measurement.x;
+  }
+  if ("y" in measurement) {
+    return dy > measurement.y;
+  }
+  return false;
+}
+var EventName;
+(function(EventName2) {
+  EventName2["Click"] = "click";
+  EventName2["DragStart"] = "dragstart";
+  EventName2["Keydown"] = "keydown";
+  EventName2["ContextMenu"] = "contextmenu";
+  EventName2["Resize"] = "resize";
+  EventName2["SelectionChange"] = "selectionchange";
+  EventName2["VisibilityChange"] = "visibilitychange";
+})(EventName || (EventName = {}));
+function preventDefault(event) {
+  event.preventDefault();
+}
+function stopPropagation(event) {
+  event.stopPropagation();
+}
+var KeyboardCode;
+(function(KeyboardCode2) {
+  KeyboardCode2["Space"] = "Space";
+  KeyboardCode2["Down"] = "ArrowDown";
+  KeyboardCode2["Right"] = "ArrowRight";
+  KeyboardCode2["Left"] = "ArrowLeft";
+  KeyboardCode2["Up"] = "ArrowUp";
+  KeyboardCode2["Esc"] = "Escape";
+  KeyboardCode2["Enter"] = "Enter";
+  KeyboardCode2["Tab"] = "Tab";
+})(KeyboardCode || (KeyboardCode = {}));
+var defaultKeyboardCodes = {
+  start: [KeyboardCode.Space, KeyboardCode.Enter],
+  cancel: [KeyboardCode.Esc],
+  end: [KeyboardCode.Space, KeyboardCode.Enter, KeyboardCode.Tab]
+};
+var defaultKeyboardCoordinateGetter = (event, _ref) => {
+  let {
+    currentCoordinates
+  } = _ref;
+  switch (event.code) {
+    case KeyboardCode.Right:
+      return {
+        ...currentCoordinates,
+        x: currentCoordinates.x + 25
+      };
+    case KeyboardCode.Left:
+      return {
+        ...currentCoordinates,
+        x: currentCoordinates.x - 25
+      };
+    case KeyboardCode.Down:
+      return {
+        ...currentCoordinates,
+        y: currentCoordinates.y + 25
+      };
+    case KeyboardCode.Up:
+      return {
+        ...currentCoordinates,
+        y: currentCoordinates.y - 25
+      };
+  }
+  return void 0;
+};
+var KeyboardSensor = class {
+  constructor(props) {
+    this.props = void 0;
+    this.autoScrollEnabled = false;
+    this.referenceCoordinates = void 0;
+    this.listeners = void 0;
+    this.windowListeners = void 0;
+    this.props = props;
+    const {
+      event: {
+        target
+      }
+    } = props;
+    this.props = props;
+    this.listeners = new Listeners(getOwnerDocument(target));
+    this.windowListeners = new Listeners(getWindow(target));
+    this.handleKeyDown = this.handleKeyDown.bind(this);
+    this.handleCancel = this.handleCancel.bind(this);
+    this.attach();
+  }
+  attach() {
+    this.handleStart();
+    this.windowListeners.add(EventName.Resize, this.handleCancel);
+    this.windowListeners.add(EventName.VisibilityChange, this.handleCancel);
+    setTimeout(() => this.listeners.add(EventName.Keydown, this.handleKeyDown));
+  }
+  handleStart() {
+    const {
+      activeNode,
+      onStart
+    } = this.props;
+    const node = activeNode.node.current;
+    if (node) {
+      scrollIntoViewIfNeeded(node);
+    }
+    onStart(defaultCoordinates);
+  }
+  handleKeyDown(event) {
+    if (isKeyboardEvent(event)) {
+      const {
+        active,
+        context,
+        options
+      } = this.props;
+      const {
+        keyboardCodes = defaultKeyboardCodes,
+        coordinateGetter = defaultKeyboardCoordinateGetter,
+        scrollBehavior = "smooth"
+      } = options;
+      const {
+        code
+      } = event;
+      if (keyboardCodes.end.includes(code)) {
+        this.handleEnd(event);
+        return;
+      }
+      if (keyboardCodes.cancel.includes(code)) {
+        this.handleCancel(event);
+        return;
+      }
+      const {
+        collisionRect
+      } = context.current;
+      const currentCoordinates = collisionRect ? {
+        x: collisionRect.left,
+        y: collisionRect.top
+      } : defaultCoordinates;
+      if (!this.referenceCoordinates) {
+        this.referenceCoordinates = currentCoordinates;
+      }
+      const newCoordinates = coordinateGetter(event, {
+        active,
+        context: context.current,
+        currentCoordinates
+      });
+      if (newCoordinates) {
+        const coordinatesDelta = subtract(newCoordinates, currentCoordinates);
+        const scrollDelta = {
+          x: 0,
+          y: 0
+        };
+        const {
+          scrollableAncestors
+        } = context.current;
+        for (const scrollContainer of scrollableAncestors) {
+          const direction = event.code;
+          const {
+            isTop,
+            isRight,
+            isLeft,
+            isBottom,
+            maxScroll,
+            minScroll
+          } = getScrollPosition(scrollContainer);
+          const scrollElementRect = getScrollElementRect(scrollContainer);
+          const clampedCoordinates = {
+            x: Math.min(direction === KeyboardCode.Right ? scrollElementRect.right - scrollElementRect.width / 2 : scrollElementRect.right, Math.max(direction === KeyboardCode.Right ? scrollElementRect.left : scrollElementRect.left + scrollElementRect.width / 2, newCoordinates.x)),
+            y: Math.min(direction === KeyboardCode.Down ? scrollElementRect.bottom - scrollElementRect.height / 2 : scrollElementRect.bottom, Math.max(direction === KeyboardCode.Down ? scrollElementRect.top : scrollElementRect.top + scrollElementRect.height / 2, newCoordinates.y))
+          };
+          const canScrollX = direction === KeyboardCode.Right && !isRight || direction === KeyboardCode.Left && !isLeft;
+          const canScrollY = direction === KeyboardCode.Down && !isBottom || direction === KeyboardCode.Up && !isTop;
+          if (canScrollX && clampedCoordinates.x !== newCoordinates.x) {
+            const newScrollCoordinates = scrollContainer.scrollLeft + coordinatesDelta.x;
+            const canScrollToNewCoordinates = direction === KeyboardCode.Right && newScrollCoordinates <= maxScroll.x || direction === KeyboardCode.Left && newScrollCoordinates >= minScroll.x;
+            if (canScrollToNewCoordinates && !coordinatesDelta.y) {
+              scrollContainer.scrollTo({
+                left: newScrollCoordinates,
+                behavior: scrollBehavior
+              });
+              return;
+            }
+            if (canScrollToNewCoordinates) {
+              scrollDelta.x = scrollContainer.scrollLeft - newScrollCoordinates;
+            } else {
+              scrollDelta.x = direction === KeyboardCode.Right ? scrollContainer.scrollLeft - maxScroll.x : scrollContainer.scrollLeft - minScroll.x;
+            }
+            if (scrollDelta.x) {
+              scrollContainer.scrollBy({
+                left: -scrollDelta.x,
+                behavior: scrollBehavior
+              });
+            }
+            break;
+          } else if (canScrollY && clampedCoordinates.y !== newCoordinates.y) {
+            const newScrollCoordinates = scrollContainer.scrollTop + coordinatesDelta.y;
+            const canScrollToNewCoordinates = direction === KeyboardCode.Down && newScrollCoordinates <= maxScroll.y || direction === KeyboardCode.Up && newScrollCoordinates >= minScroll.y;
+            if (canScrollToNewCoordinates && !coordinatesDelta.x) {
+              scrollContainer.scrollTo({
+                top: newScrollCoordinates,
+                behavior: scrollBehavior
+              });
+              return;
+            }
+            if (canScrollToNewCoordinates) {
+              scrollDelta.y = scrollContainer.scrollTop - newScrollCoordinates;
+            } else {
+              scrollDelta.y = direction === KeyboardCode.Down ? scrollContainer.scrollTop - maxScroll.y : scrollContainer.scrollTop - minScroll.y;
+            }
+            if (scrollDelta.y) {
+              scrollContainer.scrollBy({
+                top: -scrollDelta.y,
+                behavior: scrollBehavior
+              });
+            }
+            break;
+          }
+        }
+        this.handleMove(event, add(subtract(newCoordinates, this.referenceCoordinates), scrollDelta));
+      }
+    }
+  }
+  handleMove(event, coordinates) {
+    const {
+      onMove
+    } = this.props;
+    event.preventDefault();
+    onMove(coordinates);
+  }
+  handleEnd(event) {
+    const {
+      onEnd
+    } = this.props;
+    event.preventDefault();
+    this.detach();
+    onEnd();
+  }
+  handleCancel(event) {
+    const {
+      onCancel
+    } = this.props;
+    event.preventDefault();
+    this.detach();
+    onCancel();
+  }
+  detach() {
+    this.listeners.removeAll();
+    this.windowListeners.removeAll();
+  }
+};
+KeyboardSensor.activators = [{
+  eventName: "onKeyDown",
+  handler: (event, _ref, _ref2) => {
+    let {
+      keyboardCodes = defaultKeyboardCodes,
+      onActivation
+    } = _ref;
+    let {
+      active
+    } = _ref2;
+    const {
+      code
+    } = event.nativeEvent;
+    if (keyboardCodes.start.includes(code)) {
+      const activator = active.activatorNode.current;
+      if (activator && event.target !== activator) {
+        return false;
+      }
+      event.preventDefault();
+      onActivation == null ? void 0 : onActivation({
+        event: event.nativeEvent
+      });
+      return true;
+    }
+    return false;
+  }
+}];
+function isDistanceConstraint(constraint) {
+  return Boolean(constraint && "distance" in constraint);
+}
+function isDelayConstraint(constraint) {
+  return Boolean(constraint && "delay" in constraint);
+}
+var AbstractPointerSensor = class {
+  constructor(props, events2, listenerTarget) {
+    var _getEventCoordinates;
+    if (listenerTarget === void 0) {
+      listenerTarget = getEventListenerTarget(props.event.target);
+    }
+    this.props = void 0;
+    this.events = void 0;
+    this.autoScrollEnabled = true;
+    this.document = void 0;
+    this.activated = false;
+    this.initialCoordinates = void 0;
+    this.timeoutId = null;
+    this.listeners = void 0;
+    this.documentListeners = void 0;
+    this.windowListeners = void 0;
+    this.props = props;
+    this.events = events2;
+    const {
+      event
+    } = props;
+    const {
+      target
+    } = event;
+    this.props = props;
+    this.events = events2;
+    this.document = getOwnerDocument(target);
+    this.documentListeners = new Listeners(this.document);
+    this.listeners = new Listeners(listenerTarget);
+    this.windowListeners = new Listeners(getWindow(target));
+    this.initialCoordinates = (_getEventCoordinates = getEventCoordinates(event)) != null ? _getEventCoordinates : defaultCoordinates;
+    this.handleStart = this.handleStart.bind(this);
+    this.handleMove = this.handleMove.bind(this);
+    this.handleEnd = this.handleEnd.bind(this);
+    this.handleCancel = this.handleCancel.bind(this);
+    this.handleKeydown = this.handleKeydown.bind(this);
+    this.removeTextSelection = this.removeTextSelection.bind(this);
+    this.attach();
+  }
+  attach() {
+    const {
+      events: events2,
+      props: {
+        options: {
+          activationConstraint,
+          bypassActivationConstraint
+        }
+      }
+    } = this;
+    this.listeners.add(events2.move.name, this.handleMove, {
+      passive: false
+    });
+    this.listeners.add(events2.end.name, this.handleEnd);
+    if (events2.cancel) {
+      this.listeners.add(events2.cancel.name, this.handleCancel);
+    }
+    this.windowListeners.add(EventName.Resize, this.handleCancel);
+    this.windowListeners.add(EventName.DragStart, preventDefault);
+    this.windowListeners.add(EventName.VisibilityChange, this.handleCancel);
+    this.windowListeners.add(EventName.ContextMenu, preventDefault);
+    this.documentListeners.add(EventName.Keydown, this.handleKeydown);
+    if (activationConstraint) {
+      if (bypassActivationConstraint != null && bypassActivationConstraint({
+        event: this.props.event,
+        activeNode: this.props.activeNode,
+        options: this.props.options
+      })) {
+        return this.handleStart();
+      }
+      if (isDelayConstraint(activationConstraint)) {
+        this.timeoutId = setTimeout(this.handleStart, activationConstraint.delay);
+        this.handlePending(activationConstraint);
+        return;
+      }
+      if (isDistanceConstraint(activationConstraint)) {
+        this.handlePending(activationConstraint);
+        return;
+      }
+    }
+    this.handleStart();
+  }
+  detach() {
+    this.listeners.removeAll();
+    this.windowListeners.removeAll();
+    setTimeout(this.documentListeners.removeAll, 50);
+    if (this.timeoutId !== null) {
+      clearTimeout(this.timeoutId);
+      this.timeoutId = null;
+    }
+  }
+  handlePending(constraint, offset) {
+    const {
+      active,
+      onPending
+    } = this.props;
+    onPending(active, constraint, this.initialCoordinates, offset);
+  }
+  handleStart() {
+    const {
+      initialCoordinates
+    } = this;
+    const {
+      onStart
+    } = this.props;
+    if (initialCoordinates) {
+      this.activated = true;
+      this.documentListeners.add(EventName.Click, stopPropagation, {
+        capture: true
+      });
+      this.removeTextSelection();
+      this.documentListeners.add(EventName.SelectionChange, this.removeTextSelection);
+      onStart(initialCoordinates);
+    }
+  }
+  handleMove(event) {
+    var _getEventCoordinates2;
+    const {
+      activated,
+      initialCoordinates,
+      props
+    } = this;
+    const {
+      onMove,
+      options: {
+        activationConstraint
+      }
+    } = props;
+    if (!initialCoordinates) {
+      return;
+    }
+    const coordinates = (_getEventCoordinates2 = getEventCoordinates(event)) != null ? _getEventCoordinates2 : defaultCoordinates;
+    const delta = subtract(initialCoordinates, coordinates);
+    if (!activated && activationConstraint) {
+      if (isDistanceConstraint(activationConstraint)) {
+        if (activationConstraint.tolerance != null && hasExceededDistance(delta, activationConstraint.tolerance)) {
+          return this.handleCancel();
+        }
+        if (hasExceededDistance(delta, activationConstraint.distance)) {
+          return this.handleStart();
+        }
+      }
+      if (isDelayConstraint(activationConstraint)) {
+        if (hasExceededDistance(delta, activationConstraint.tolerance)) {
+          return this.handleCancel();
+        }
+      }
+      this.handlePending(activationConstraint, delta);
+      return;
+    }
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+    onMove(coordinates);
+  }
+  handleEnd() {
+    const {
+      onAbort,
+      onEnd
+    } = this.props;
+    this.detach();
+    if (!this.activated) {
+      onAbort(this.props.active);
+    }
+    onEnd();
+  }
+  handleCancel() {
+    const {
+      onAbort,
+      onCancel
+    } = this.props;
+    this.detach();
+    if (!this.activated) {
+      onAbort(this.props.active);
+    }
+    onCancel();
+  }
+  handleKeydown(event) {
+    if (event.code === KeyboardCode.Esc) {
+      this.handleCancel();
+    }
+  }
+  removeTextSelection() {
+    var _this$document$getSel;
+    (_this$document$getSel = this.document.getSelection()) == null ? void 0 : _this$document$getSel.removeAllRanges();
+  }
+};
+var events = {
+  cancel: {
+    name: "pointercancel"
+  },
+  move: {
+    name: "pointermove"
+  },
+  end: {
+    name: "pointerup"
+  }
+};
+var PointerSensor = class extends AbstractPointerSensor {
+  constructor(props) {
+    const {
+      event
+    } = props;
+    const listenerTarget = getOwnerDocument(event.target);
+    super(props, events, listenerTarget);
+  }
+};
+PointerSensor.activators = [{
+  eventName: "onPointerDown",
+  handler: (_ref, _ref2) => {
+    let {
+      nativeEvent: event
+    } = _ref;
+    let {
+      onActivation
+    } = _ref2;
+    if (!event.isPrimary || event.button !== 0) {
+      return false;
+    }
+    onActivation == null ? void 0 : onActivation({
+      event
+    });
+    return true;
+  }
+}];
+var events$1 = {
+  move: {
+    name: "mousemove"
+  },
+  end: {
+    name: "mouseup"
+  }
+};
+var MouseButton;
+(function(MouseButton2) {
+  MouseButton2[MouseButton2["RightClick"] = 2] = "RightClick";
+})(MouseButton || (MouseButton = {}));
+var MouseSensor = class extends AbstractPointerSensor {
+  constructor(props) {
+    super(props, events$1, getOwnerDocument(props.event.target));
+  }
+};
+MouseSensor.activators = [{
+  eventName: "onMouseDown",
+  handler: (_ref, _ref2) => {
+    let {
+      nativeEvent: event
+    } = _ref;
+    let {
+      onActivation
+    } = _ref2;
+    if (event.button === MouseButton.RightClick) {
+      return false;
+    }
+    onActivation == null ? void 0 : onActivation({
+      event
+    });
+    return true;
+  }
+}];
+var events$2 = {
+  cancel: {
+    name: "touchcancel"
+  },
+  move: {
+    name: "touchmove"
+  },
+  end: {
+    name: "touchend"
+  }
+};
+var TouchSensor = class extends AbstractPointerSensor {
+  constructor(props) {
+    super(props, events$2);
+  }
+  static setup() {
+    window.addEventListener(events$2.move.name, noop2, {
+      capture: false,
+      passive: false
+    });
+    return function teardown() {
+      window.removeEventListener(events$2.move.name, noop2);
+    };
+    function noop2() {
+    }
+  }
+};
+TouchSensor.activators = [{
+  eventName: "onTouchStart",
+  handler: (_ref, _ref2) => {
+    let {
+      nativeEvent: event
+    } = _ref;
+    let {
+      onActivation
+    } = _ref2;
+    const {
+      touches
+    } = event;
+    if (touches.length > 1) {
+      return false;
+    }
+    onActivation == null ? void 0 : onActivation({
+      event
+    });
+    return true;
+  }
+}];
+var AutoScrollActivator;
+(function(AutoScrollActivator2) {
+  AutoScrollActivator2[AutoScrollActivator2["Pointer"] = 0] = "Pointer";
+  AutoScrollActivator2[AutoScrollActivator2["DraggableRect"] = 1] = "DraggableRect";
+})(AutoScrollActivator || (AutoScrollActivator = {}));
+var TraversalOrder;
+(function(TraversalOrder2) {
+  TraversalOrder2[TraversalOrder2["TreeOrder"] = 0] = "TreeOrder";
+  TraversalOrder2[TraversalOrder2["ReversedTreeOrder"] = 1] = "ReversedTreeOrder";
+})(TraversalOrder || (TraversalOrder = {}));
+function useAutoScroller(_ref) {
+  let {
+    acceleration,
+    activator = AutoScrollActivator.Pointer,
+    canScroll,
+    draggingRect,
+    enabled,
+    interval = 5,
+    order = TraversalOrder.TreeOrder,
+    pointerCoordinates,
+    scrollableAncestors,
+    scrollableAncestorRects,
+    delta,
+    threshold
+  } = _ref;
+  const scrollIntent = useScrollIntent({
+    delta,
+    disabled: !enabled
+  });
+  const [setAutoScrollInterval, clearAutoScrollInterval] = useInterval();
+  const scrollSpeed = useRef({
+    x: 0,
+    y: 0
+  });
+  const scrollDirection = useRef({
+    x: 0,
+    y: 0
+  });
+  const rect = useMemo(() => {
+    switch (activator) {
+      case AutoScrollActivator.Pointer:
+        return pointerCoordinates ? {
+          top: pointerCoordinates.y,
+          bottom: pointerCoordinates.y,
+          left: pointerCoordinates.x,
+          right: pointerCoordinates.x
+        } : null;
+      case AutoScrollActivator.DraggableRect:
+        return draggingRect;
+    }
+  }, [activator, draggingRect, pointerCoordinates]);
+  const scrollContainerRef = useRef(null);
+  const autoScroll = useCallback2(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) {
+      return;
+    }
+    const scrollLeft = scrollSpeed.current.x * scrollDirection.current.x;
+    const scrollTop = scrollSpeed.current.y * scrollDirection.current.y;
+    scrollContainer.scrollBy(scrollLeft, scrollTop);
+  }, []);
+  const sortedScrollableAncestors = useMemo(() => order === TraversalOrder.TreeOrder ? [...scrollableAncestors].reverse() : scrollableAncestors, [order, scrollableAncestors]);
+  useEffect(
+    () => {
+      if (!enabled || !scrollableAncestors.length || !rect) {
+        clearAutoScrollInterval();
+        return;
+      }
+      for (const scrollContainer of sortedScrollableAncestors) {
+        if ((canScroll == null ? void 0 : canScroll(scrollContainer)) === false) {
+          continue;
+        }
+        const index = scrollableAncestors.indexOf(scrollContainer);
+        const scrollContainerRect = scrollableAncestorRects[index];
+        if (!scrollContainerRect) {
+          continue;
+        }
+        const {
+          direction,
+          speed
+        } = getScrollDirectionAndSpeed(scrollContainer, scrollContainerRect, rect, acceleration, threshold);
+        for (const axis of ["x", "y"]) {
+          if (!scrollIntent[axis][direction[axis]]) {
+            speed[axis] = 0;
+            direction[axis] = 0;
+          }
+        }
+        if (speed.x > 0 || speed.y > 0) {
+          clearAutoScrollInterval();
+          scrollContainerRef.current = scrollContainer;
+          setAutoScrollInterval(autoScroll, interval);
+          scrollSpeed.current = speed;
+          scrollDirection.current = direction;
+          return;
+        }
+      }
+      scrollSpeed.current = {
+        x: 0,
+        y: 0
+      };
+      scrollDirection.current = {
+        x: 0,
+        y: 0
+      };
+      clearAutoScrollInterval();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      acceleration,
+      autoScroll,
+      canScroll,
+      clearAutoScrollInterval,
+      enabled,
+      interval,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      JSON.stringify(rect),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      JSON.stringify(scrollIntent),
+      setAutoScrollInterval,
+      scrollableAncestors,
+      sortedScrollableAncestors,
+      scrollableAncestorRects,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      JSON.stringify(threshold)
+    ]
+  );
+}
+var defaultScrollIntent = {
+  x: {
+    [Direction.Backward]: false,
+    [Direction.Forward]: false
+  },
+  y: {
+    [Direction.Backward]: false,
+    [Direction.Forward]: false
+  }
+};
+function useScrollIntent(_ref2) {
+  let {
+    delta,
+    disabled
+  } = _ref2;
+  const previousDelta = usePrevious(delta);
+  return useLazyMemo((previousIntent) => {
+    if (disabled || !previousDelta || !previousIntent) {
+      return defaultScrollIntent;
+    }
+    const direction = {
+      x: Math.sign(delta.x - previousDelta.x),
+      y: Math.sign(delta.y - previousDelta.y)
+    };
+    return {
+      x: {
+        [Direction.Backward]: previousIntent.x[Direction.Backward] || direction.x === -1,
+        [Direction.Forward]: previousIntent.x[Direction.Forward] || direction.x === 1
+      },
+      y: {
+        [Direction.Backward]: previousIntent.y[Direction.Backward] || direction.y === -1,
+        [Direction.Forward]: previousIntent.y[Direction.Forward] || direction.y === 1
+      }
+    };
+  }, [disabled, delta, previousDelta]);
+}
+function useCachedNode(draggableNodes, id) {
+  const draggableNode = id != null ? draggableNodes.get(id) : void 0;
+  const node = draggableNode ? draggableNode.node.current : null;
+  return useLazyMemo((cachedNode) => {
+    var _ref;
+    if (id == null) {
+      return null;
+    }
+    return (_ref = node != null ? node : cachedNode) != null ? _ref : null;
+  }, [node, id]);
+}
+function useCombineActivators(sensors, getSyntheticHandler) {
+  return useMemo(() => sensors.reduce((accumulator, sensor) => {
+    const {
+      sensor: Sensor
+    } = sensor;
+    const sensorActivators = Sensor.activators.map((activator) => ({
+      eventName: activator.eventName,
+      handler: getSyntheticHandler(activator.handler, sensor)
+    }));
+    return [...accumulator, ...sensorActivators];
+  }, []), [sensors, getSyntheticHandler]);
+}
+var MeasuringStrategy;
+(function(MeasuringStrategy2) {
+  MeasuringStrategy2[MeasuringStrategy2["Always"] = 0] = "Always";
+  MeasuringStrategy2[MeasuringStrategy2["BeforeDragging"] = 1] = "BeforeDragging";
+  MeasuringStrategy2[MeasuringStrategy2["WhileDragging"] = 2] = "WhileDragging";
+})(MeasuringStrategy || (MeasuringStrategy = {}));
+var MeasuringFrequency;
+(function(MeasuringFrequency2) {
+  MeasuringFrequency2["Optimized"] = "optimized";
+})(MeasuringFrequency || (MeasuringFrequency = {}));
+var defaultValue = /* @__PURE__ */ new Map();
+function useDroppableMeasuring(containers, _ref) {
+  let {
+    dragging,
+    dependencies,
+    config
+  } = _ref;
+  const [queue, setQueue] = useState2(null);
+  const {
+    frequency,
+    measure,
+    strategy
+  } = config;
+  const containersRef = useRef(containers);
+  const disabled = isDisabled();
+  const disabledRef = useLatestValue(disabled);
+  const measureDroppableContainers = useCallback2(function(ids) {
+    if (ids === void 0) {
+      ids = [];
+    }
+    if (disabledRef.current) {
+      return;
+    }
+    setQueue((value) => {
+      if (value === null) {
+        return ids;
+      }
+      return value.concat(ids.filter((id) => !value.includes(id)));
+    });
+  }, [disabledRef]);
+  const timeoutId = useRef(null);
+  const droppableRects = useLazyMemo((previousValue) => {
+    if (disabled && !dragging) {
+      return defaultValue;
+    }
+    if (!previousValue || previousValue === defaultValue || containersRef.current !== containers || queue != null) {
+      const map = /* @__PURE__ */ new Map();
+      for (let container of containers) {
+        if (!container) {
+          continue;
+        }
+        if (queue && queue.length > 0 && !queue.includes(container.id) && container.rect.current) {
+          map.set(container.id, container.rect.current);
+          continue;
+        }
+        const node = container.node.current;
+        const rect = node ? new Rect(measure(node), node) : null;
+        container.rect.current = rect;
+        if (rect) {
+          map.set(container.id, rect);
+        }
+      }
+      return map;
+    }
+    return previousValue;
+  }, [containers, queue, dragging, disabled, measure]);
+  useEffect(() => {
+    containersRef.current = containers;
+  }, [containers]);
+  useEffect(
+    () => {
+      if (disabled) {
+        return;
+      }
+      measureDroppableContainers();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dragging, disabled]
+  );
+  useEffect(
+    () => {
+      if (queue && queue.length > 0) {
+        setQueue(null);
+      }
+    },
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(queue)]
+  );
+  useEffect(
+    () => {
+      if (disabled || typeof frequency !== "number" || timeoutId.current !== null) {
+        return;
+      }
+      timeoutId.current = setTimeout(() => {
+        measureDroppableContainers();
+        timeoutId.current = null;
+      }, frequency);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [frequency, disabled, measureDroppableContainers, ...dependencies]
+  );
+  return {
+    droppableRects,
+    measureDroppableContainers,
+    measuringScheduled: queue != null
+  };
+  function isDisabled() {
+    switch (strategy) {
+      case MeasuringStrategy.Always:
+        return false;
+      case MeasuringStrategy.BeforeDragging:
+        return dragging;
+      default:
+        return !dragging;
+    }
+  }
+}
+function useInitialValue(value, computeFn) {
+  return useLazyMemo((previousValue) => {
+    if (!value) {
+      return null;
+    }
+    if (previousValue) {
+      return previousValue;
+    }
+    return typeof computeFn === "function" ? computeFn(value) : value;
+  }, [computeFn, value]);
+}
+function useInitialRect(node, measure) {
+  return useInitialValue(node, measure);
+}
+function useMutationObserver(_ref) {
+  let {
+    callback,
+    disabled
+  } = _ref;
+  const handleMutations = useEvent(callback);
+  const mutationObserver = useMemo(() => {
+    if (disabled || typeof window === "undefined" || typeof window.MutationObserver === "undefined") {
+      return void 0;
+    }
+    const {
+      MutationObserver
+    } = window;
+    return new MutationObserver(handleMutations);
+  }, [handleMutations, disabled]);
+  useEffect(() => {
+    return () => mutationObserver == null ? void 0 : mutationObserver.disconnect();
+  }, [mutationObserver]);
+  return mutationObserver;
+}
+function useResizeObserver(_ref) {
+  let {
+    callback,
+    disabled
+  } = _ref;
+  const handleResize = useEvent(callback);
+  const resizeObserver = useMemo(
+    () => {
+      if (disabled || typeof window === "undefined" || typeof window.ResizeObserver === "undefined") {
+        return void 0;
+      }
+      const {
+        ResizeObserver
+      } = window;
+      return new ResizeObserver(handleResize);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [disabled]
+  );
+  useEffect(() => {
+    return () => resizeObserver == null ? void 0 : resizeObserver.disconnect();
+  }, [resizeObserver]);
+  return resizeObserver;
+}
+function defaultMeasure(element) {
+  return new Rect(getClientRect(element), element);
+}
+function useRect(element, measure, fallbackRect) {
+  if (measure === void 0) {
+    measure = defaultMeasure;
+  }
+  const [rect, setRect] = useState2(null);
+  function measureRect() {
+    setRect((currentRect) => {
+      if (!element) {
+        return null;
+      }
+      if (element.isConnected === false) {
+        var _ref;
+        return (_ref = currentRect != null ? currentRect : fallbackRect) != null ? _ref : null;
+      }
+      const newRect = measure(element);
+      if (JSON.stringify(currentRect) === JSON.stringify(newRect)) {
+        return currentRect;
+      }
+      return newRect;
+    });
+  }
+  const mutationObserver = useMutationObserver({
+    callback(records) {
+      if (!element) {
+        return;
+      }
+      for (const record of records) {
+        const {
+          type,
+          target
+        } = record;
+        if (type === "childList" && target instanceof HTMLElement && target.contains(element)) {
+          measureRect();
+          break;
+        }
+      }
+    }
+  });
+  const resizeObserver = useResizeObserver({
+    callback: measureRect
+  });
+  useIsomorphicLayoutEffect(() => {
+    measureRect();
+    if (element) {
+      resizeObserver == null ? void 0 : resizeObserver.observe(element);
+      mutationObserver == null ? void 0 : mutationObserver.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    } else {
+      resizeObserver == null ? void 0 : resizeObserver.disconnect();
+      mutationObserver == null ? void 0 : mutationObserver.disconnect();
+    }
+  }, [element]);
+  return rect;
+}
+function useRectDelta(rect) {
+  const initialRect = useInitialValue(rect);
+  return getRectDelta(rect, initialRect);
+}
+var defaultValue$1 = [];
+function useScrollableAncestors(node) {
+  const previousNode = useRef(node);
+  const ancestors = useLazyMemo((previousValue) => {
+    if (!node) {
+      return defaultValue$1;
+    }
+    if (previousValue && previousValue !== defaultValue$1 && node && previousNode.current && node.parentNode === previousNode.current.parentNode) {
+      return previousValue;
+    }
+    return getScrollableAncestors(node);
+  }, [node]);
+  useEffect(() => {
+    previousNode.current = node;
+  }, [node]);
+  return ancestors;
+}
+function useScrollOffsets(elements) {
+  const [scrollCoordinates, setScrollCoordinates] = useState2(null);
+  const prevElements = useRef(elements);
+  const handleScroll = useCallback2((event) => {
+    const scrollingElement = getScrollableElement(event.target);
+    if (!scrollingElement) {
+      return;
+    }
+    setScrollCoordinates((scrollCoordinates2) => {
+      if (!scrollCoordinates2) {
+        return null;
+      }
+      scrollCoordinates2.set(scrollingElement, getScrollCoordinates(scrollingElement));
+      return new Map(scrollCoordinates2);
+    });
+  }, []);
+  useEffect(() => {
+    const previousElements = prevElements.current;
+    if (elements !== previousElements) {
+      cleanup(previousElements);
+      const entries = elements.map((element) => {
+        const scrollableElement = getScrollableElement(element);
+        if (scrollableElement) {
+          scrollableElement.addEventListener("scroll", handleScroll, {
+            passive: true
+          });
+          return [scrollableElement, getScrollCoordinates(scrollableElement)];
+        }
+        return null;
+      }).filter((entry) => entry != null);
+      setScrollCoordinates(entries.length ? new Map(entries) : null);
+      prevElements.current = elements;
+    }
+    return () => {
+      cleanup(elements);
+      cleanup(previousElements);
+    };
+    function cleanup(elements2) {
+      elements2.forEach((element) => {
+        const scrollableElement = getScrollableElement(element);
+        scrollableElement == null ? void 0 : scrollableElement.removeEventListener("scroll", handleScroll);
+      });
+    }
+  }, [handleScroll, elements]);
+  return useMemo(() => {
+    if (elements.length) {
+      return scrollCoordinates ? Array.from(scrollCoordinates.values()).reduce((acc, coordinates) => add(acc, coordinates), defaultCoordinates) : getScrollOffsets(elements);
+    }
+    return defaultCoordinates;
+  }, [elements, scrollCoordinates]);
+}
+function useScrollOffsetsDelta(scrollOffsets, dependencies) {
+  if (dependencies === void 0) {
+    dependencies = [];
+  }
+  const initialScrollOffsets = useRef(null);
+  useEffect(
+    () => {
+      initialScrollOffsets.current = null;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    dependencies
+  );
+  useEffect(() => {
+    const hasScrollOffsets = scrollOffsets !== defaultCoordinates;
+    if (hasScrollOffsets && !initialScrollOffsets.current) {
+      initialScrollOffsets.current = scrollOffsets;
+    }
+    if (!hasScrollOffsets && initialScrollOffsets.current) {
+      initialScrollOffsets.current = null;
+    }
+  }, [scrollOffsets]);
+  return initialScrollOffsets.current ? subtract(scrollOffsets, initialScrollOffsets.current) : defaultCoordinates;
+}
+function useSensorSetup(sensors) {
+  useEffect(
+    () => {
+      if (!canUseDOM) {
+        return;
+      }
+      const teardownFns = sensors.map((_ref) => {
+        let {
+          sensor
+        } = _ref;
+        return sensor.setup == null ? void 0 : sensor.setup();
+      });
+      return () => {
+        for (const teardown of teardownFns) {
+          teardown == null ? void 0 : teardown();
+        }
+      };
+    },
+    // TO-DO: Sensors length could theoretically change which would not be a valid dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    sensors.map((_ref2) => {
+      let {
+        sensor
+      } = _ref2;
+      return sensor;
+    })
+  );
+}
+function useSyntheticListeners(listeners, id) {
+  return useMemo(() => {
+    return listeners.reduce((acc, _ref) => {
+      let {
+        eventName,
+        handler
+      } = _ref;
+      acc[eventName] = (event) => {
+        handler(event, id);
+      };
+      return acc;
+    }, {});
+  }, [listeners, id]);
+}
+function useWindowRect(element) {
+  return useMemo(() => element ? getWindowClientRect(element) : null, [element]);
+}
+var defaultValue$2 = [];
+function useRects(elements, measure) {
+  if (measure === void 0) {
+    measure = getClientRect;
+  }
+  const [firstElement] = elements;
+  const windowRect = useWindowRect(firstElement ? getWindow(firstElement) : null);
+  const [rects, setRects] = useState2(defaultValue$2);
+  function measureRects() {
+    setRects(() => {
+      if (!elements.length) {
+        return defaultValue$2;
+      }
+      return elements.map((element) => isDocumentScrollingElement(element) ? windowRect : new Rect(measure(element), element));
+    });
+  }
+  const resizeObserver = useResizeObserver({
+    callback: measureRects
+  });
+  useIsomorphicLayoutEffect(() => {
+    resizeObserver == null ? void 0 : resizeObserver.disconnect();
+    measureRects();
+    elements.forEach((element) => resizeObserver == null ? void 0 : resizeObserver.observe(element));
+  }, [elements]);
+  return rects;
+}
+function getMeasurableNode(node) {
+  if (!node) {
+    return null;
+  }
+  if (node.children.length > 1) {
+    return node;
+  }
+  const firstChild = node.children[0];
+  return isHTMLElement(firstChild) ? firstChild : node;
+}
+function useDragOverlayMeasuring(_ref) {
+  let {
+    measure
+  } = _ref;
+  const [rect, setRect] = useState2(null);
+  const handleResize = useCallback2((entries) => {
+    for (const {
+      target
+    } of entries) {
+      if (isHTMLElement(target)) {
+        setRect((rect2) => {
+          const newRect = measure(target);
+          return rect2 ? {
+            ...rect2,
+            width: newRect.width,
+            height: newRect.height
+          } : newRect;
+        });
+        break;
+      }
+    }
+  }, [measure]);
+  const resizeObserver = useResizeObserver({
+    callback: handleResize
+  });
+  const handleNodeChange = useCallback2((element) => {
+    const node = getMeasurableNode(element);
+    resizeObserver == null ? void 0 : resizeObserver.disconnect();
+    if (node) {
+      resizeObserver == null ? void 0 : resizeObserver.observe(node);
+    }
+    setRect(node ? measure(node) : null);
+  }, [measure, resizeObserver]);
+  const [nodeRef, setRef] = useNodeRef(handleNodeChange);
+  return useMemo(() => ({
+    nodeRef,
+    rect,
+    setRef
+  }), [rect, nodeRef, setRef]);
+}
+var defaultSensors = [{
+  sensor: PointerSensor,
+  options: {}
+}, {
+  sensor: KeyboardSensor,
+  options: {}
+}];
+var defaultData = {
+  current: {}
+};
+var defaultMeasuringConfiguration = {
+  draggable: {
+    measure: getTransformAgnosticClientRect
+  },
+  droppable: {
+    measure: getTransformAgnosticClientRect,
+    strategy: MeasuringStrategy.WhileDragging,
+    frequency: MeasuringFrequency.Optimized
+  },
+  dragOverlay: {
+    measure: getClientRect
+  }
+};
+var DroppableContainersMap = class extends Map {
+  get(id) {
+    var _super$get;
+    return id != null ? (_super$get = super.get(id)) != null ? _super$get : void 0 : void 0;
+  }
+  toArray() {
+    return Array.from(this.values());
+  }
+  getEnabled() {
+    return this.toArray().filter((_ref) => {
+      let {
+        disabled
+      } = _ref;
+      return !disabled;
+    });
+  }
+  getNodeFor(id) {
+    var _this$get$node$curren, _this$get;
+    return (_this$get$node$curren = (_this$get = this.get(id)) == null ? void 0 : _this$get.node.current) != null ? _this$get$node$curren : void 0;
+  }
+};
+var defaultPublicContext = {
+  activatorEvent: null,
+  active: null,
+  activeNode: null,
+  activeNodeRect: null,
+  collisions: null,
+  containerNodeRect: null,
+  draggableNodes: /* @__PURE__ */ new Map(),
+  droppableRects: /* @__PURE__ */ new Map(),
+  droppableContainers: /* @__PURE__ */ new DroppableContainersMap(),
+  over: null,
+  dragOverlay: {
+    nodeRef: {
+      current: null
+    },
+    rect: null,
+    setRef: noop
+  },
+  scrollableAncestors: [],
+  scrollableAncestorRects: [],
+  measuringConfiguration: defaultMeasuringConfiguration,
+  measureDroppableContainers: noop,
+  windowRect: null,
+  measuringScheduled: false
+};
+var defaultInternalContext = {
+  activatorEvent: null,
+  activators: [],
+  active: null,
+  activeNodeRect: null,
+  ariaDescribedById: {
+    draggable: ""
+  },
+  dispatch: noop,
+  draggableNodes: /* @__PURE__ */ new Map(),
+  over: null,
+  measureDroppableContainers: noop
+};
+var InternalContext = /* @__PURE__ */ createContext(defaultInternalContext);
+var PublicContext = /* @__PURE__ */ createContext(defaultPublicContext);
+function getInitialState() {
+  return {
+    draggable: {
+      active: null,
+      initialCoordinates: {
+        x: 0,
+        y: 0
+      },
+      nodes: /* @__PURE__ */ new Map(),
+      translate: {
+        x: 0,
+        y: 0
+      }
+    },
+    droppable: {
+      containers: new DroppableContainersMap()
+    }
+  };
+}
+function reducer(state, action) {
+  switch (action.type) {
+    case Action.DragStart:
+      return {
+        ...state,
+        draggable: {
+          ...state.draggable,
+          initialCoordinates: action.initialCoordinates,
+          active: action.active
+        }
+      };
+    case Action.DragMove:
+      if (state.draggable.active == null) {
+        return state;
+      }
+      return {
+        ...state,
+        draggable: {
+          ...state.draggable,
+          translate: {
+            x: action.coordinates.x - state.draggable.initialCoordinates.x,
+            y: action.coordinates.y - state.draggable.initialCoordinates.y
+          }
+        }
+      };
+    case Action.DragEnd:
+    case Action.DragCancel:
+      return {
+        ...state,
+        draggable: {
+          ...state.draggable,
+          active: null,
+          initialCoordinates: {
+            x: 0,
+            y: 0
+          },
+          translate: {
+            x: 0,
+            y: 0
+          }
+        }
+      };
+    case Action.RegisterDroppable: {
+      const {
+        element
+      } = action;
+      const {
+        id
+      } = element;
+      const containers = new DroppableContainersMap(state.droppable.containers);
+      containers.set(id, element);
+      return {
+        ...state,
+        droppable: {
+          ...state.droppable,
+          containers
+        }
+      };
+    }
+    case Action.SetDroppableDisabled: {
+      const {
+        id,
+        key: key2,
+        disabled
+      } = action;
+      const element = state.droppable.containers.get(id);
+      if (!element || key2 !== element.key) {
+        return state;
+      }
+      const containers = new DroppableContainersMap(state.droppable.containers);
+      containers.set(id, {
+        ...element,
+        disabled
+      });
+      return {
+        ...state,
+        droppable: {
+          ...state.droppable,
+          containers
+        }
+      };
+    }
+    case Action.UnregisterDroppable: {
+      const {
+        id,
+        key: key2
+      } = action;
+      const element = state.droppable.containers.get(id);
+      if (!element || key2 !== element.key) {
+        return state;
+      }
+      const containers = new DroppableContainersMap(state.droppable.containers);
+      containers.delete(id);
+      return {
+        ...state,
+        droppable: {
+          ...state.droppable,
+          containers
+        }
+      };
+    }
+    default: {
+      return state;
+    }
+  }
+}
+function RestoreFocus(_ref) {
+  let {
+    disabled
+  } = _ref;
+  const {
+    active,
+    activatorEvent,
+    draggableNodes
+  } = useContext(InternalContext);
+  const previousActivatorEvent = usePrevious(activatorEvent);
+  const previousActiveId = usePrevious(active == null ? void 0 : active.id);
+  useEffect(() => {
+    if (disabled) {
+      return;
+    }
+    if (!activatorEvent && previousActivatorEvent && previousActiveId != null) {
+      if (!isKeyboardEvent(previousActivatorEvent)) {
+        return;
+      }
+      if (document.activeElement === previousActivatorEvent.target) {
+        return;
+      }
+      const draggableNode = draggableNodes.get(previousActiveId);
+      if (!draggableNode) {
+        return;
+      }
+      const {
+        activatorNode,
+        node
+      } = draggableNode;
+      if (!activatorNode.current && !node.current) {
+        return;
+      }
+      requestAnimationFrame(() => {
+        for (const element of [activatorNode.current, node.current]) {
+          if (!element) {
+            continue;
+          }
+          const focusableNode = findFirstFocusableNode(element);
+          if (focusableNode) {
+            focusableNode.focus();
+            break;
+          }
+        }
+      });
+    }
+  }, [activatorEvent, disabled, draggableNodes, previousActiveId, previousActivatorEvent]);
+  return null;
+}
+function applyModifiers(modifiers, _ref) {
+  let {
+    transform,
+    ...args
+  } = _ref;
+  return modifiers != null && modifiers.length ? modifiers.reduce((accumulator, modifier) => {
+    return modifier({
+      transform: accumulator,
+      ...args
+    });
+  }, transform) : transform;
+}
+function useMeasuringConfiguration(config) {
+  return useMemo(
+    () => ({
+      draggable: {
+        ...defaultMeasuringConfiguration.draggable,
+        ...config == null ? void 0 : config.draggable
+      },
+      droppable: {
+        ...defaultMeasuringConfiguration.droppable,
+        ...config == null ? void 0 : config.droppable
+      },
+      dragOverlay: {
+        ...defaultMeasuringConfiguration.dragOverlay,
+        ...config == null ? void 0 : config.dragOverlay
+      }
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [config == null ? void 0 : config.draggable, config == null ? void 0 : config.droppable, config == null ? void 0 : config.dragOverlay]
+  );
+}
+function useLayoutShiftScrollCompensation(_ref) {
+  let {
+    activeNode,
+    measure,
+    initialRect,
+    config = true
+  } = _ref;
+  const initialized = useRef(false);
+  const {
+    x,
+    y
+  } = typeof config === "boolean" ? {
+    x: config,
+    y: config
+  } : config;
+  useIsomorphicLayoutEffect(() => {
+    const disabled = !x && !y;
+    if (disabled || !activeNode) {
+      initialized.current = false;
+      return;
+    }
+    if (initialized.current || !initialRect) {
+      return;
+    }
+    const node = activeNode == null ? void 0 : activeNode.node.current;
+    if (!node || node.isConnected === false) {
+      return;
+    }
+    const rect = measure(node);
+    const rectDelta = getRectDelta(rect, initialRect);
+    if (!x) {
+      rectDelta.x = 0;
+    }
+    if (!y) {
+      rectDelta.y = 0;
+    }
+    initialized.current = true;
+    if (Math.abs(rectDelta.x) > 0 || Math.abs(rectDelta.y) > 0) {
+      const firstScrollableAncestor = getFirstScrollableAncestor(node);
+      if (firstScrollableAncestor) {
+        firstScrollableAncestor.scrollBy({
+          top: rectDelta.y,
+          left: rectDelta.x
+        });
+      }
+    }
+  }, [activeNode, x, y, initialRect, measure]);
+}
+var ActiveDraggableContext = /* @__PURE__ */ createContext({
+  ...defaultCoordinates,
+  scaleX: 1,
+  scaleY: 1
+});
+var Status;
+(function(Status2) {
+  Status2[Status2["Uninitialized"] = 0] = "Uninitialized";
+  Status2[Status2["Initializing"] = 1] = "Initializing";
+  Status2[Status2["Initialized"] = 2] = "Initialized";
+})(Status || (Status = {}));
+var DndContext = /* @__PURE__ */ memo(function DndContext2(_ref) {
+  var _sensorContext$curren, _dragOverlay$nodeRef$, _dragOverlay$rect, _over$rect;
+  let {
+    id,
+    accessibility,
+    autoScroll = true,
+    children,
+    sensors = defaultSensors,
+    collisionDetection = rectIntersection,
+    measuring,
+    modifiers,
+    ...props
+  } = _ref;
+  const store = useReducer(reducer, void 0, getInitialState);
+  const [state, dispatch] = store;
+  const [dispatchMonitorEvent, registerMonitorListener] = useDndMonitorProvider();
+  const [status, setStatus] = useState2(Status.Uninitialized);
+  const isInitialized = status === Status.Initialized;
+  const {
+    draggable: {
+      active: activeId,
+      nodes: draggableNodes,
+      translate
+    },
+    droppable: {
+      containers: droppableContainers
+    }
+  } = state;
+  const node = activeId != null ? draggableNodes.get(activeId) : null;
+  const activeRects = useRef({
+    initial: null,
+    translated: null
+  });
+  const active = useMemo(() => {
+    var _node$data;
+    return activeId != null ? {
+      id: activeId,
+      // It's possible for the active node to unmount while dragging
+      data: (_node$data = node == null ? void 0 : node.data) != null ? _node$data : defaultData,
+      rect: activeRects
+    } : null;
+  }, [activeId, node]);
+  const activeRef = useRef(null);
+  const [activeSensor, setActiveSensor] = useState2(null);
+  const [activatorEvent, setActivatorEvent] = useState2(null);
+  const latestProps = useLatestValue(props, Object.values(props));
+  const draggableDescribedById = useUniqueId("DndDescribedBy", id);
+  const enabledDroppableContainers = useMemo(() => droppableContainers.getEnabled(), [droppableContainers]);
+  const measuringConfiguration = useMeasuringConfiguration(measuring);
+  const {
+    droppableRects,
+    measureDroppableContainers,
+    measuringScheduled
+  } = useDroppableMeasuring(enabledDroppableContainers, {
+    dragging: isInitialized,
+    dependencies: [translate.x, translate.y],
+    config: measuringConfiguration.droppable
+  });
+  const activeNode = useCachedNode(draggableNodes, activeId);
+  const activationCoordinates = useMemo(() => activatorEvent ? getEventCoordinates(activatorEvent) : null, [activatorEvent]);
+  const autoScrollOptions = getAutoScrollerOptions();
+  const initialActiveNodeRect = useInitialRect(activeNode, measuringConfiguration.draggable.measure);
+  useLayoutShiftScrollCompensation({
+    activeNode: activeId != null ? draggableNodes.get(activeId) : null,
+    config: autoScrollOptions.layoutShiftCompensation,
+    initialRect: initialActiveNodeRect,
+    measure: measuringConfiguration.draggable.measure
+  });
+  const activeNodeRect = useRect(activeNode, measuringConfiguration.draggable.measure, initialActiveNodeRect);
+  const containerNodeRect = useRect(activeNode ? activeNode.parentElement : null);
+  const sensorContext = useRef({
+    activatorEvent: null,
+    active: null,
+    activeNode,
+    collisionRect: null,
+    collisions: null,
+    droppableRects,
+    draggableNodes,
+    draggingNode: null,
+    draggingNodeRect: null,
+    droppableContainers,
+    over: null,
+    scrollableAncestors: [],
+    scrollAdjustedTranslate: null
+  });
+  const overNode = droppableContainers.getNodeFor((_sensorContext$curren = sensorContext.current.over) == null ? void 0 : _sensorContext$curren.id);
+  const dragOverlay = useDragOverlayMeasuring({
+    measure: measuringConfiguration.dragOverlay.measure
+  });
+  const draggingNode = (_dragOverlay$nodeRef$ = dragOverlay.nodeRef.current) != null ? _dragOverlay$nodeRef$ : activeNode;
+  const draggingNodeRect = isInitialized ? (_dragOverlay$rect = dragOverlay.rect) != null ? _dragOverlay$rect : activeNodeRect : null;
+  const usesDragOverlay = Boolean(dragOverlay.nodeRef.current && dragOverlay.rect);
+  const nodeRectDelta = useRectDelta(usesDragOverlay ? null : activeNodeRect);
+  const windowRect = useWindowRect(draggingNode ? getWindow(draggingNode) : null);
+  const scrollableAncestors = useScrollableAncestors(isInitialized ? overNode != null ? overNode : activeNode : null);
+  const scrollableAncestorRects = useRects(scrollableAncestors);
+  const modifiedTranslate = applyModifiers(modifiers, {
+    transform: {
+      x: translate.x - nodeRectDelta.x,
+      y: translate.y - nodeRectDelta.y,
+      scaleX: 1,
+      scaleY: 1
+    },
+    activatorEvent,
+    active,
+    activeNodeRect,
+    containerNodeRect,
+    draggingNodeRect,
+    over: sensorContext.current.over,
+    overlayNodeRect: dragOverlay.rect,
+    scrollableAncestors,
+    scrollableAncestorRects,
+    windowRect
+  });
+  const pointerCoordinates = activationCoordinates ? add(activationCoordinates, translate) : null;
+  const scrollOffsets = useScrollOffsets(scrollableAncestors);
+  const scrollAdjustment = useScrollOffsetsDelta(scrollOffsets);
+  const activeNodeScrollDelta = useScrollOffsetsDelta(scrollOffsets, [activeNodeRect]);
+  const scrollAdjustedTranslate = add(modifiedTranslate, scrollAdjustment);
+  const collisionRect = draggingNodeRect ? getAdjustedRect(draggingNodeRect, modifiedTranslate) : null;
+  const collisions = active && collisionRect ? collisionDetection({
+    active,
+    collisionRect,
+    droppableRects,
+    droppableContainers: enabledDroppableContainers,
+    pointerCoordinates
+  }) : null;
+  const overId = getFirstCollision(collisions, "id");
+  const [over, setOver] = useState2(null);
+  const appliedTranslate = usesDragOverlay ? modifiedTranslate : add(modifiedTranslate, activeNodeScrollDelta);
+  const transform = adjustScale(appliedTranslate, (_over$rect = over == null ? void 0 : over.rect) != null ? _over$rect : null, activeNodeRect);
+  const activeSensorRef = useRef(null);
+  const instantiateSensor = useCallback2(
+    (event, _ref2) => {
+      let {
+        sensor: Sensor,
+        options
+      } = _ref2;
+      if (activeRef.current == null) {
+        return;
+      }
+      const activeNode2 = draggableNodes.get(activeRef.current);
+      if (!activeNode2) {
+        return;
+      }
+      const activatorEvent2 = event.nativeEvent;
+      const sensorInstance = new Sensor({
+        active: activeRef.current,
+        activeNode: activeNode2,
+        event: activatorEvent2,
+        options,
+        // Sensors need to be instantiated with refs for arguments that change over time
+        // otherwise they are frozen in time with the stale arguments
+        context: sensorContext,
+        onAbort(id2) {
+          const draggableNode = draggableNodes.get(id2);
+          if (!draggableNode) {
+            return;
+          }
+          const {
+            onDragAbort
+          } = latestProps.current;
+          const event2 = {
+            id: id2
+          };
+          onDragAbort == null ? void 0 : onDragAbort(event2);
+          dispatchMonitorEvent({
+            type: "onDragAbort",
+            event: event2
+          });
+        },
+        onPending(id2, constraint, initialCoordinates, offset) {
+          const draggableNode = draggableNodes.get(id2);
+          if (!draggableNode) {
+            return;
+          }
+          const {
+            onDragPending
+          } = latestProps.current;
+          const event2 = {
+            id: id2,
+            constraint,
+            initialCoordinates,
+            offset
+          };
+          onDragPending == null ? void 0 : onDragPending(event2);
+          dispatchMonitorEvent({
+            type: "onDragPending",
+            event: event2
+          });
+        },
+        onStart(initialCoordinates) {
+          const id2 = activeRef.current;
+          if (id2 == null) {
+            return;
+          }
+          const draggableNode = draggableNodes.get(id2);
+          if (!draggableNode) {
+            return;
+          }
+          const {
+            onDragStart
+          } = latestProps.current;
+          const event2 = {
+            activatorEvent: activatorEvent2,
+            active: {
+              id: id2,
+              data: draggableNode.data,
+              rect: activeRects
+            }
+          };
+          unstable_batchedUpdates(() => {
+            onDragStart == null ? void 0 : onDragStart(event2);
+            setStatus(Status.Initializing);
+            dispatch({
+              type: Action.DragStart,
+              initialCoordinates,
+              active: id2
+            });
+            dispatchMonitorEvent({
+              type: "onDragStart",
+              event: event2
+            });
+            setActiveSensor(activeSensorRef.current);
+            setActivatorEvent(activatorEvent2);
+          });
+        },
+        onMove(coordinates) {
+          dispatch({
+            type: Action.DragMove,
+            coordinates
+          });
+        },
+        onEnd: createHandler(Action.DragEnd),
+        onCancel: createHandler(Action.DragCancel)
+      });
+      activeSensorRef.current = sensorInstance;
+      function createHandler(type) {
+        return async function handler() {
+          const {
+            active: active2,
+            collisions: collisions2,
+            over: over2,
+            scrollAdjustedTranslate: scrollAdjustedTranslate2
+          } = sensorContext.current;
+          let event2 = null;
+          if (active2 && scrollAdjustedTranslate2) {
+            const {
+              cancelDrop
+            } = latestProps.current;
+            event2 = {
+              activatorEvent: activatorEvent2,
+              active: active2,
+              collisions: collisions2,
+              delta: scrollAdjustedTranslate2,
+              over: over2
+            };
+            if (type === Action.DragEnd && typeof cancelDrop === "function") {
+              const shouldCancel = await Promise.resolve(cancelDrop(event2));
+              if (shouldCancel) {
+                type = Action.DragCancel;
+              }
+            }
+          }
+          activeRef.current = null;
+          unstable_batchedUpdates(() => {
+            dispatch({
+              type
+            });
+            setStatus(Status.Uninitialized);
+            setOver(null);
+            setActiveSensor(null);
+            setActivatorEvent(null);
+            activeSensorRef.current = null;
+            const eventName = type === Action.DragEnd ? "onDragEnd" : "onDragCancel";
+            if (event2) {
+              const handler2 = latestProps.current[eventName];
+              handler2 == null ? void 0 : handler2(event2);
+              dispatchMonitorEvent({
+                type: eventName,
+                event: event2
+              });
+            }
+          });
+        };
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [draggableNodes]
+  );
+  const bindActivatorToSensorInstantiator = useCallback2((handler, sensor) => {
+    return (event, active2) => {
+      const nativeEvent = event.nativeEvent;
+      const activeDraggableNode = draggableNodes.get(active2);
+      if (
+        // Another sensor is already instantiating
+        activeRef.current !== null || // No active draggable
+        !activeDraggableNode || // Event has already been captured
+        nativeEvent.dndKit || nativeEvent.defaultPrevented
+      ) {
+        return;
+      }
+      const activationContext = {
+        active: activeDraggableNode
+      };
+      const shouldActivate = handler(event, sensor.options, activationContext);
+      if (shouldActivate === true) {
+        nativeEvent.dndKit = {
+          capturedBy: sensor.sensor
+        };
+        activeRef.current = active2;
+        instantiateSensor(event, sensor);
+      }
+    };
+  }, [draggableNodes, instantiateSensor]);
+  const activators = useCombineActivators(sensors, bindActivatorToSensorInstantiator);
+  useSensorSetup(sensors);
+  useIsomorphicLayoutEffect(() => {
+    if (activeNodeRect && status === Status.Initializing) {
+      setStatus(Status.Initialized);
+    }
+  }, [activeNodeRect, status]);
+  useEffect(
+    () => {
+      const {
+        onDragMove
+      } = latestProps.current;
+      const {
+        active: active2,
+        activatorEvent: activatorEvent2,
+        collisions: collisions2,
+        over: over2
+      } = sensorContext.current;
+      if (!active2 || !activatorEvent2) {
+        return;
+      }
+      const event = {
+        active: active2,
+        activatorEvent: activatorEvent2,
+        collisions: collisions2,
+        delta: {
+          x: scrollAdjustedTranslate.x,
+          y: scrollAdjustedTranslate.y
+        },
+        over: over2
+      };
+      unstable_batchedUpdates(() => {
+        onDragMove == null ? void 0 : onDragMove(event);
+        dispatchMonitorEvent({
+          type: "onDragMove",
+          event
+        });
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [scrollAdjustedTranslate.x, scrollAdjustedTranslate.y]
+  );
+  useEffect(
+    () => {
+      const {
+        active: active2,
+        activatorEvent: activatorEvent2,
+        collisions: collisions2,
+        droppableContainers: droppableContainers2,
+        scrollAdjustedTranslate: scrollAdjustedTranslate2
+      } = sensorContext.current;
+      if (!active2 || activeRef.current == null || !activatorEvent2 || !scrollAdjustedTranslate2) {
+        return;
+      }
+      const {
+        onDragOver
+      } = latestProps.current;
+      const overContainer = droppableContainers2.get(overId);
+      const over2 = overContainer && overContainer.rect.current ? {
+        id: overContainer.id,
+        rect: overContainer.rect.current,
+        data: overContainer.data,
+        disabled: overContainer.disabled
+      } : null;
+      const event = {
+        active: active2,
+        activatorEvent: activatorEvent2,
+        collisions: collisions2,
+        delta: {
+          x: scrollAdjustedTranslate2.x,
+          y: scrollAdjustedTranslate2.y
+        },
+        over: over2
+      };
+      unstable_batchedUpdates(() => {
+        setOver(over2);
+        onDragOver == null ? void 0 : onDragOver(event);
+        dispatchMonitorEvent({
+          type: "onDragOver",
+          event
+        });
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [overId]
+  );
+  useIsomorphicLayoutEffect(() => {
+    sensorContext.current = {
+      activatorEvent,
+      active,
+      activeNode,
+      collisionRect,
+      collisions,
+      droppableRects,
+      draggableNodes,
+      draggingNode,
+      draggingNodeRect,
+      droppableContainers,
+      over,
+      scrollableAncestors,
+      scrollAdjustedTranslate
+    };
+    activeRects.current = {
+      initial: draggingNodeRect,
+      translated: collisionRect
+    };
+  }, [active, activeNode, collisions, collisionRect, draggableNodes, draggingNode, draggingNodeRect, droppableRects, droppableContainers, over, scrollableAncestors, scrollAdjustedTranslate]);
+  useAutoScroller({
+    ...autoScrollOptions,
+    delta: translate,
+    draggingRect: collisionRect,
+    pointerCoordinates,
+    scrollableAncestors,
+    scrollableAncestorRects
+  });
+  const publicContext = useMemo(() => {
+    const context = {
+      active,
+      activeNode,
+      activeNodeRect,
+      activatorEvent,
+      collisions,
+      containerNodeRect,
+      dragOverlay,
+      draggableNodes,
+      droppableContainers,
+      droppableRects,
+      over,
+      measureDroppableContainers,
+      scrollableAncestors,
+      scrollableAncestorRects,
+      measuringConfiguration,
+      measuringScheduled,
+      windowRect
+    };
+    return context;
+  }, [active, activeNode, activeNodeRect, activatorEvent, collisions, containerNodeRect, dragOverlay, draggableNodes, droppableContainers, droppableRects, over, measureDroppableContainers, scrollableAncestors, scrollableAncestorRects, measuringConfiguration, measuringScheduled, windowRect]);
+  const internalContext = useMemo(() => {
+    const context = {
+      activatorEvent,
+      activators,
+      active,
+      activeNodeRect,
+      ariaDescribedById: {
+        draggable: draggableDescribedById
+      },
+      dispatch,
+      draggableNodes,
+      over,
+      measureDroppableContainers
+    };
+    return context;
+  }, [activatorEvent, activators, active, activeNodeRect, dispatch, draggableDescribedById, draggableNodes, over, measureDroppableContainers]);
+  return React2.createElement(DndMonitorContext.Provider, {
+    value: registerMonitorListener
+  }, React2.createElement(InternalContext.Provider, {
+    value: internalContext
+  }, React2.createElement(PublicContext.Provider, {
+    value: publicContext
+  }, React2.createElement(ActiveDraggableContext.Provider, {
+    value: transform
+  }, children)), React2.createElement(RestoreFocus, {
+    disabled: (accessibility == null ? void 0 : accessibility.restoreFocus) === false
+  })), React2.createElement(Accessibility, {
+    ...accessibility,
+    hiddenTextDescribedById: draggableDescribedById
+  }));
+  function getAutoScrollerOptions() {
+    const activeSensorDisablesAutoscroll = (activeSensor == null ? void 0 : activeSensor.autoScrollEnabled) === false;
+    const autoScrollGloballyDisabled = typeof autoScroll === "object" ? autoScroll.enabled === false : autoScroll === false;
+    const enabled = isInitialized && !activeSensorDisablesAutoscroll && !autoScrollGloballyDisabled;
+    if (typeof autoScroll === "object") {
+      return {
+        ...autoScroll,
+        enabled
+      };
+    }
+    return {
+      enabled
+    };
+  }
+});
+var NullContext = /* @__PURE__ */ createContext(null);
+var defaultRole = "button";
+var ID_PREFIX = "Draggable";
+function useDraggable(_ref) {
+  let {
+    id,
+    data,
+    disabled = false,
+    attributes
+  } = _ref;
+  const key2 = useUniqueId(ID_PREFIX);
+  const {
+    activators,
+    activatorEvent,
+    active,
+    activeNodeRect,
+    ariaDescribedById,
+    draggableNodes,
+    over
+  } = useContext(InternalContext);
+  const {
+    role = defaultRole,
+    roleDescription = "draggable",
+    tabIndex = 0
+  } = attributes != null ? attributes : {};
+  const isDragging = (active == null ? void 0 : active.id) === id;
+  const transform = useContext(isDragging ? ActiveDraggableContext : NullContext);
+  const [node, setNodeRef] = useNodeRef();
+  const [activatorNode, setActivatorNodeRef] = useNodeRef();
+  const listeners = useSyntheticListeners(activators, id);
+  const dataRef = useLatestValue(data);
+  useIsomorphicLayoutEffect(
+    () => {
+      draggableNodes.set(id, {
+        id,
+        key: key2,
+        node,
+        activatorNode,
+        data: dataRef
+      });
+      return () => {
+        const node2 = draggableNodes.get(id);
+        if (node2 && node2.key === key2) {
+          draggableNodes.delete(id);
+        }
+      };
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [draggableNodes, id]
+  );
+  const memoizedAttributes = useMemo(() => ({
+    role,
+    tabIndex,
+    "aria-disabled": disabled,
+    "aria-pressed": isDragging && role === defaultRole ? true : void 0,
+    "aria-roledescription": roleDescription,
+    "aria-describedby": ariaDescribedById.draggable
+  }), [disabled, role, tabIndex, isDragging, roleDescription, ariaDescribedById.draggable]);
+  return {
+    active,
+    activatorEvent,
+    activeNodeRect,
+    attributes: memoizedAttributes,
+    isDragging,
+    listeners: disabled ? void 0 : listeners,
+    node,
+    over,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform
+  };
+}
+function useDndContext() {
+  return useContext(PublicContext);
+}
+var ID_PREFIX$1 = "Droppable";
+var defaultResizeObserverConfig = {
+  timeout: 25
+};
+function useDroppable(_ref) {
+  let {
+    data,
+    disabled = false,
+    id,
+    resizeObserverConfig
+  } = _ref;
+  const key2 = useUniqueId(ID_PREFIX$1);
+  const {
+    active,
+    dispatch,
+    over,
+    measureDroppableContainers
+  } = useContext(InternalContext);
+  const previous = useRef({
+    disabled
+  });
+  const resizeObserverConnected = useRef(false);
+  const rect = useRef(null);
+  const callbackId = useRef(null);
+  const {
+    disabled: resizeObserverDisabled,
+    updateMeasurementsFor,
+    timeout: resizeObserverTimeout
+  } = {
+    ...defaultResizeObserverConfig,
+    ...resizeObserverConfig
+  };
+  const ids = useLatestValue(updateMeasurementsFor != null ? updateMeasurementsFor : id);
+  const handleResize = useCallback2(
+    () => {
+      if (!resizeObserverConnected.current) {
+        resizeObserverConnected.current = true;
+        return;
+      }
+      if (callbackId.current != null) {
+        clearTimeout(callbackId.current);
+      }
+      callbackId.current = setTimeout(() => {
+        measureDroppableContainers(Array.isArray(ids.current) ? ids.current : [ids.current]);
+        callbackId.current = null;
+      }, resizeObserverTimeout);
+    },
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+    [resizeObserverTimeout]
+  );
+  const resizeObserver = useResizeObserver({
+    callback: handleResize,
+    disabled: resizeObserverDisabled || !active
+  });
+  const handleNodeChange = useCallback2((newElement, previousElement) => {
+    if (!resizeObserver) {
+      return;
+    }
+    if (previousElement) {
+      resizeObserver.unobserve(previousElement);
+      resizeObserverConnected.current = false;
+    }
+    if (newElement) {
+      resizeObserver.observe(newElement);
+    }
+  }, [resizeObserver]);
+  const [nodeRef, setNodeRef] = useNodeRef(handleNodeChange);
+  const dataRef = useLatestValue(data);
+  useEffect(() => {
+    if (!resizeObserver || !nodeRef.current) {
+      return;
+    }
+    resizeObserver.disconnect();
+    resizeObserverConnected.current = false;
+    resizeObserver.observe(nodeRef.current);
+  }, [nodeRef, resizeObserver]);
+  useEffect(
+    () => {
+      dispatch({
+        type: Action.RegisterDroppable,
+        element: {
+          id,
+          key: key2,
+          disabled,
+          node: nodeRef,
+          rect,
+          data: dataRef
+        }
+      });
+      return () => dispatch({
+        type: Action.UnregisterDroppable,
+        key: key2,
+        id
+      });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [id]
+  );
+  useEffect(() => {
+    if (disabled !== previous.current.disabled) {
+      dispatch({
+        type: Action.SetDroppableDisabled,
+        id,
+        key: key2,
+        disabled
+      });
+      previous.current.disabled = disabled;
+    }
+  }, [id, key2, disabled, dispatch]);
+  return {
+    active,
+    rect,
+    isOver: (over == null ? void 0 : over.id) === id,
+    node: nodeRef,
+    over,
+    setNodeRef
+  };
+}
+function AnimationManager(_ref) {
+  let {
+    animation,
+    children
+  } = _ref;
+  const [clonedChildren, setClonedChildren] = useState2(null);
+  const [element, setElement] = useState2(null);
+  const previousChildren = usePrevious(children);
+  if (!children && !clonedChildren && previousChildren) {
+    setClonedChildren(previousChildren);
+  }
+  useIsomorphicLayoutEffect(() => {
+    if (!element) {
+      return;
+    }
+    const key2 = clonedChildren == null ? void 0 : clonedChildren.key;
+    const id = clonedChildren == null ? void 0 : clonedChildren.props.id;
+    if (key2 == null || id == null) {
+      setClonedChildren(null);
+      return;
+    }
+    Promise.resolve(animation(id, element)).then(() => {
+      setClonedChildren(null);
+    });
+  }, [animation, clonedChildren, element]);
+  return React2.createElement(React2.Fragment, null, children, clonedChildren ? cloneElement(clonedChildren, {
+    ref: setElement
+  }) : null);
+}
+var defaultTransform = {
+  x: 0,
+  y: 0,
+  scaleX: 1,
+  scaleY: 1
+};
+function NullifiedContextProvider(_ref) {
+  let {
+    children
+  } = _ref;
+  return React2.createElement(InternalContext.Provider, {
+    value: defaultInternalContext
+  }, React2.createElement(ActiveDraggableContext.Provider, {
+    value: defaultTransform
+  }, children));
+}
+var baseStyles = {
+  position: "fixed",
+  touchAction: "none"
+};
+var defaultTransition = (activatorEvent) => {
+  const isKeyboardActivator = isKeyboardEvent(activatorEvent);
+  return isKeyboardActivator ? "transform 250ms ease" : void 0;
+};
+var PositionedOverlay = /* @__PURE__ */ forwardRef((_ref, ref) => {
+  let {
+    as,
+    activatorEvent,
+    adjustScale: adjustScale2,
+    children,
+    className,
+    rect,
+    style,
+    transform,
+    transition = defaultTransition
+  } = _ref;
+  if (!rect) {
+    return null;
+  }
+  const scaleAdjustedTransform = adjustScale2 ? transform : {
+    ...transform,
+    scaleX: 1,
+    scaleY: 1
+  };
+  const styles = {
+    ...baseStyles,
+    width: rect.width,
+    height: rect.height,
+    top: rect.top,
+    left: rect.left,
+    transform: CSS.Transform.toString(scaleAdjustedTransform),
+    transformOrigin: adjustScale2 && activatorEvent ? getRelativeTransformOrigin(activatorEvent, rect) : void 0,
+    transition: typeof transition === "function" ? transition(activatorEvent) : transition,
+    ...style
+  };
+  return React2.createElement(as, {
+    className,
+    style: styles,
+    ref
+  }, children);
+});
+var defaultDropAnimationSideEffects = (options) => (_ref) => {
+  let {
+    active,
+    dragOverlay
+  } = _ref;
+  const originalStyles = {};
+  const {
+    styles,
+    className
+  } = options;
+  if (styles != null && styles.active) {
+    for (const [key2, value] of Object.entries(styles.active)) {
+      if (value === void 0) {
+        continue;
+      }
+      originalStyles[key2] = active.node.style.getPropertyValue(key2);
+      active.node.style.setProperty(key2, value);
+    }
+  }
+  if (styles != null && styles.dragOverlay) {
+    for (const [key2, value] of Object.entries(styles.dragOverlay)) {
+      if (value === void 0) {
+        continue;
+      }
+      dragOverlay.node.style.setProperty(key2, value);
+    }
+  }
+  if (className != null && className.active) {
+    active.node.classList.add(className.active);
+  }
+  if (className != null && className.dragOverlay) {
+    dragOverlay.node.classList.add(className.dragOverlay);
+  }
+  return function cleanup() {
+    for (const [key2, value] of Object.entries(originalStyles)) {
+      active.node.style.setProperty(key2, value);
+    }
+    if (className != null && className.active) {
+      active.node.classList.remove(className.active);
+    }
+  };
+};
+var defaultKeyframeResolver = (_ref2) => {
+  let {
+    transform: {
+      initial,
+      final
+    }
+  } = _ref2;
+  return [{
+    transform: CSS.Transform.toString(initial)
+  }, {
+    transform: CSS.Transform.toString(final)
+  }];
+};
+var defaultDropAnimationConfiguration = {
+  duration: 250,
+  easing: "ease",
+  keyframes: defaultKeyframeResolver,
+  sideEffects: /* @__PURE__ */ defaultDropAnimationSideEffects({
+    styles: {
+      active: {
+        opacity: "0"
+      }
+    }
+  })
+};
+function useDropAnimation(_ref3) {
+  let {
+    config,
+    draggableNodes,
+    droppableContainers,
+    measuringConfiguration
+  } = _ref3;
+  return useEvent((id, node) => {
+    if (config === null) {
+      return;
+    }
+    const activeDraggable = draggableNodes.get(id);
+    if (!activeDraggable) {
+      return;
+    }
+    const activeNode = activeDraggable.node.current;
+    if (!activeNode) {
+      return;
+    }
+    const measurableNode = getMeasurableNode(node);
+    if (!measurableNode) {
+      return;
+    }
+    const {
+      transform
+    } = getWindow(node).getComputedStyle(node);
+    const parsedTransform = parseTransform(transform);
+    if (!parsedTransform) {
+      return;
+    }
+    const animation = typeof config === "function" ? config : createDefaultDropAnimation(config);
+    scrollIntoViewIfNeeded(activeNode, measuringConfiguration.draggable.measure);
+    return animation({
+      active: {
+        id,
+        data: activeDraggable.data,
+        node: activeNode,
+        rect: measuringConfiguration.draggable.measure(activeNode)
+      },
+      draggableNodes,
+      dragOverlay: {
+        node,
+        rect: measuringConfiguration.dragOverlay.measure(measurableNode)
+      },
+      droppableContainers,
+      measuringConfiguration,
+      transform: parsedTransform
+    });
+  });
+}
+function createDefaultDropAnimation(options) {
+  const {
+    duration,
+    easing,
+    sideEffects,
+    keyframes
+  } = {
+    ...defaultDropAnimationConfiguration,
+    ...options
+  };
+  return (_ref4) => {
+    let {
+      active,
+      dragOverlay,
+      transform,
+      ...rest
+    } = _ref4;
+    if (!duration) {
+      return;
+    }
+    const delta = {
+      x: dragOverlay.rect.left - active.rect.left,
+      y: dragOverlay.rect.top - active.rect.top
+    };
+    const scale = {
+      scaleX: transform.scaleX !== 1 ? active.rect.width * transform.scaleX / dragOverlay.rect.width : 1,
+      scaleY: transform.scaleY !== 1 ? active.rect.height * transform.scaleY / dragOverlay.rect.height : 1
+    };
+    const finalTransform = {
+      x: transform.x - delta.x,
+      y: transform.y - delta.y,
+      ...scale
+    };
+    const animationKeyframes = keyframes({
+      ...rest,
+      active,
+      dragOverlay,
+      transform: {
+        initial: transform,
+        final: finalTransform
+      }
+    });
+    const [firstKeyframe] = animationKeyframes;
+    const lastKeyframe = animationKeyframes[animationKeyframes.length - 1];
+    if (JSON.stringify(firstKeyframe) === JSON.stringify(lastKeyframe)) {
+      return;
+    }
+    const cleanup = sideEffects == null ? void 0 : sideEffects({
+      active,
+      dragOverlay,
+      ...rest
+    });
+    const animation = dragOverlay.node.animate(animationKeyframes, {
+      duration,
+      easing,
+      fill: "forwards"
+    });
+    return new Promise((resolve) => {
+      animation.onfinish = () => {
+        cleanup == null ? void 0 : cleanup();
+        resolve();
+      };
+    });
+  };
+}
+var key = 0;
+function useKey(id) {
+  return useMemo(() => {
+    if (id == null) {
+      return;
+    }
+    key++;
+    return key;
+  }, [id]);
+}
+var DragOverlay = /* @__PURE__ */ React2.memo((_ref) => {
+  let {
+    adjustScale: adjustScale2 = false,
+    children,
+    dropAnimation: dropAnimationConfig,
+    style,
+    transition,
+    modifiers,
+    wrapperElement = "div",
+    className,
+    zIndex = 999
+  } = _ref;
+  const {
+    activatorEvent,
+    active,
+    activeNodeRect,
+    containerNodeRect,
+    draggableNodes,
+    droppableContainers,
+    dragOverlay,
+    over,
+    measuringConfiguration,
+    scrollableAncestors,
+    scrollableAncestorRects,
+    windowRect
+  } = useDndContext();
+  const transform = useContext(ActiveDraggableContext);
+  const key2 = useKey(active == null ? void 0 : active.id);
+  const modifiedTransform = applyModifiers(modifiers, {
+    activatorEvent,
+    active,
+    activeNodeRect,
+    containerNodeRect,
+    draggingNodeRect: dragOverlay.rect,
+    over,
+    overlayNodeRect: dragOverlay.rect,
+    scrollableAncestors,
+    scrollableAncestorRects,
+    transform,
+    windowRect
+  });
+  const initialRect = useInitialValue(activeNodeRect);
+  const dropAnimation = useDropAnimation({
+    config: dropAnimationConfig,
+    draggableNodes,
+    droppableContainers,
+    measuringConfiguration
+  });
+  const ref = initialRect ? dragOverlay.setRef : void 0;
+  return React2.createElement(NullifiedContextProvider, null, React2.createElement(AnimationManager, {
+    animation: dropAnimation
+  }, active && key2 ? React2.createElement(PositionedOverlay, {
+    key: key2,
+    id: active.id,
+    ref,
+    as: wrapperElement,
+    activatorEvent,
+    adjustScale: adjustScale2,
+    className,
+    transition,
+    rect: initialRect,
+    style: {
+      zIndex,
+      ...style
+    },
+    transform: modifiedTransform
+  }, children) : null));
+});
+
+// .rad-shim-dnd-kit-core.mjs
+var rad_shim_dnd_kit_core_default = void 0 ?? core_esm_exports;
+export {
+  AutoScrollActivator,
+  DndContext,
+  DragOverlay,
+  KeyboardCode,
+  KeyboardSensor,
+  MeasuringFrequency,
+  MeasuringStrategy,
+  MouseSensor,
+  PointerSensor,
+  TouchSensor,
+  TraversalOrder,
+  applyModifiers,
+  closestCenter,
+  closestCorners,
+  rad_shim_dnd_kit_core_default as default,
+  defaultAnnouncements,
+  defaultCoordinates,
+  defaultDropAnimationConfiguration as defaultDropAnimation,
+  defaultDropAnimationSideEffects,
+  defaultKeyboardCoordinateGetter,
+  defaultScreenReaderInstructions,
+  getClientRect,
+  getFirstCollision,
+  getScrollableAncestors,
+  pointerWithin,
+  rectIntersection,
+  useDndContext,
+  useDndMonitor,
+  useDraggable,
+  useDroppable,
+  useSensor,
+  useSensors
+};

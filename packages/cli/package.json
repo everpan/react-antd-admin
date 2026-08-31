@@ -8,6 +8,7 @@
 		".": "./src/index.ts",
 		"./build": "./src/build.ts",
 		"./shared-deps": "./src/shared-deps.ts",
+		"./esm-exports": "./src/esm-exports.ts",
 		"./config": "./src/config.ts",
 		"./manifest": "./src/manifest.ts",
 		"./info": "./src/info.ts"

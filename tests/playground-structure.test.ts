@@ -1,7 +1,12 @@
+import type { AppRouteRecordRaw } from "#src/router/types";
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { PROJECT_ROOT } from "./helpers/paths";
+
+import ContainerLayout from "#src/layout/container-layout";
+import { readModuleDefinition } from "../packages/cli/src/build";
+import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
+import { PLAYGROUND_DIR, PROJECT_ROOT } from "./helpers/paths";
 
 /**
  * P1：模块工程应当**只含模块**。
@@ -93,5 +98,42 @@ describe("demo 模块符合模块契约", () => {
 			const res = JSON.parse(fs.readFileSync(file, "utf-8"));
 			expect(res.menu?.demo, `${locale}.json 应包含 menu.demo`).toBeTruthy();
 		}
+	});
+});
+
+/**
+ * 回归：demo 曾把页面组件直接挂在顶层路由上。
+ *
+ * `resolveRouteLayouts` 只给「无 Component 且有 children」的路由注入布局，
+ * 叶子路由直挂 Component 会裸奔（无 header / sidebar / tabbar），
+ * 而 KeepAlive 只挂在 ContainerLayout 内，`keepAlive: true` 也随之失效——
+ * 两者都不报错，只能靠这条断言拦住。
+ */
+describe("demo 路由具备布局（回归）", () => {
+	it("顶层路由经 resolveRouteLayouts 后被注入 ContainerLayout", async () => {
+		const definition = await readModuleDefinition(
+			path.join(PLAYGROUND_MODULES, "demo", "entry.ts"),
+			PROJECT_ROOT,
+		);
+		// readModuleDefinition 的返回类型只声明了元信息字段（CLI 只需要那些），
+		// 但它实际回传的是完整的 defineModule 入参
+		const { routes } = definition as unknown as { routes: AppRouteRecordRaw[] };
+		const resolved = resolveRouteLayouts(routes);
+
+		expect(resolved.length, "demo 应至少声明一条路由").toBeGreaterThan(0);
+		expect(resolved[0]!.children?.length, "页面应由子路由承载，而非顶层路由直挂 Component").toBeGreaterThan(0);
+		expect(resolved[0]!.Component).toBe(ContainerLayout);
+	});
+});
+
+describe("playground 可独立自查类型（手册 §2）", () => {
+	it("自带 typescript 与 @types/react，并提供 typecheck 脚本", () => {
+		const pkg = JSON.parse(fs.readFileSync(path.join(PLAYGROUND, "package.json"), "utf-8"));
+
+		// 缺了这两项，工程被复制出去后便无法自查类型
+		// （原先只能靠向上查找到 root 的 node_modules 才侥幸通过）
+		expect(pkg.devDependencies?.typescript, "应声明 typescript").toBeTruthy();
+		expect(pkg.devDependencies?.["@types/react"], "应声明 @types/react").toBeTruthy();
+		expect(pkg.scripts?.typecheck, "应提供 typecheck 脚本").toBeTruthy();
 	});
 });

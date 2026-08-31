@@ -26,7 +26,9 @@ describe("build-modules 真实 import 解析元数据（P3.4 / B10）", () => {
 		const definition = await readModuleDefinition(path.join(PLAYGROUND_DIR, "modules/demo/entry.ts"), PROJECT_ROOT);
 		expect(definition.name).toBe("demo");
 		expect(definition.version).toBe("0.1.0");
-		expect(definition.peerRuntime).toBe("^0.0.0");
+		// `^0.0.0` 在 semver 下等价于「恰好 0.0.0」，宿主一升级就误判不兼容，
+		// 故声明为开放范围（宿主 runtime 尚未发版，workspace 内为 0.0.0）
+		expect(definition.peerRuntime).toBe(">=0.0.0");
 	});
 
 	it("default 导出缺 name 时报错", async () => {

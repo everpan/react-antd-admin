@@ -13,7 +13,7 @@
 
 | 维度 | 内容 |
 |------|------|
-| **S** 具体 | 框架（runtime + 宿主 shell + CLI）发布为 npm 包；新建只含 `modules/`、`modules.config.ts`、`vite.config.ts`、`package.json` 的模块工程，通过 `npm install @react-antd-admin/cli` 完成本地开发，构建产出**仅含模块 chunk** 的产物 |
+| **S** 具体 | 框架（runtime + 宿主 shell + CLI）发布为 npm 包；新建只含 `modules/`、`modules.config.ts`、`package.json` 的模块工程（无需 vite 配置），通过 `npm install @react-antd-admin/cli` 完成本地开发，构建产出**仅含模块 chunk** 的产物 |
 | **M** 可度量 | 工程内框架源码文件数 = 0；模块产物不含 react/antd/runtime 实现代码；共享依赖运行时实例数 = 1；**新模块从创建到上线 ≤ 1 个工作日**；模块产物体积与首屏时间相对现状不劣化 |
 | **A** 可达成 | 复用现有 `module-loader` 契约与 `build-modules.ts` 的 lib 构建能力，不引入 Module Federation 等重型运行时 |
 | **R** 相关 | 支撑"多团队并行交付模块、框架统一升级" |
@@ -102,11 +102,16 @@ my-admin/
 ├── modules/
 │   └── order/{entry.ts, pages/, locales/{zh-CN,en-US}.json}
 ├── modules.config.ts         # 本地模块清单 + baseUrl + 宿主地址
-├── vite.config.ts            # 一行: export default from "@react-antd-admin/cli/vite"
-└── package.json              # devDeps: cli, runtime, react, antd(仅类型)
+└── package.json              # devDeps: cli, runtime, shell, react, antd(仅类型)
 ```
 
-**工程内无 `src/`、无 `layout/`、无 `router/`、无框架配置文件。**
+**工程内无 `src/`、无 `layout/`、无 `router/`、无框架配置文件，也不需要 `vite.config.ts`。**
+
+> 修订（2026-08-30）：早期草稿此处列了 `vite.config.ts` 且写作
+> `export default from "@react-antd-admin/cli/vite"` —— 两处都不成立：
+> cli 没有 `./vite` 子路径导出，且该写法本身不是合法 ES 语法。
+> `rad build` / `rad dev` 均以编程式 `build()` 驱动（见 `packages/cli/src/build.ts`），
+> 外部工程自带 vite 配置文件反而会被加载。以 `apps/playground` 为准。
 
 ### 4.3 共享依赖契约（分两层，单一常量源）
 
@@ -662,6 +667,11 @@ Feature: 模块级权限真实生效
 | A19 | 模块 Tailwind 产物不能只含 utilities（Spike B） | 无 theme 命名空间时，引用 `var(--spacing)` / `var(--radius-lg)` 的工具类全部不生成（实测 `.gap-4` `.rounded-l-lg` `.tracking-widest` `.shadow-indigo-500` 全丢，只剩字面的 `.flex`）。故模块 CSS 必然重复输出 theme 变量 → 必须在宿主 CSS 之前注入（R16） |
 | A20 | Tailwind 会把层序声明拆开 | 源码 `@layer theme, base, antd, components, utilities;` 变成 `@layer theme{...}` + `@layer base,antd,components;` + `@layer utilities{...}`。语义保留但字面不再存在，校验要按相对位置断言 |
 | A21 | Tailwind 4 从 vite root 自动探测，已覆盖 `modules/` | 宿主产物已含只出现在 `modules/` 的 class → monorepo dogfooding 无需改 Tailwind 配置；B14 只影响不在宿主 vite root 下的外部模块工程 |
+| A22 | **`export *` 一旦经过 external 模块就退化成运行期对象** | 每个共享依赖单独打包、兄弟包 external，于是 `zustand/esm/index.mjs` 的 `export * from "zustand/vanilla"` 无法被 esbuild 静态展开，只能生成 `__reExport()`（往普通对象上 defineProperty），产物最终只剩 `export { default }`。浏览器 `import { create } from "zustand"` 随即抛 "does not provide an export named" —— 而文件存在、体积正常、构建退出码 0，是彻底的静默失败。**区分**：直接对 external 说明符写 `export *` / `export { x }` 是能被静态保留的，退化只发生在「经一个被打包的中间模块转出」时。对策：构建后用 `parseEsmExports` 复查，零具名导出则改用「Node 侧读真实导出名 + 显式转发」重建 |
+| A23 | **被打包的 CJS 依赖 `require()` 了 external 的共享包 → 浏览器加载即抛** | `use-sync-external-store` / `scheduler` / 各种 UMD 工厂内部 `require("react")`，而 react 必须 external（单例）。esbuild 只能生成 `__require("react")`，其判据是 `typeof require !== "undefined"`，浏览器无 `require` → `Dynamic require of "react" is not supported`，且这些调用全在模块初始化路径上，资产一加载整页崩（实测 7 个资产：react-dom、react-dom-client、react-i18next、pro-components、spin-delay、react-countup、dayjs/locale/zh-cn）。**把该 CJS 依赖加入共享表无效**——新资产内部照样要 `require("react")`，只是平移一层。对策：构建期注入 `require` 垫片（只导入该资产实际 require 的那几个包） |
+| A24 | **产物「看着正常」不等于能加载** | A22/A23 的共同教训：文件在、体积对、退出码 0，全都不足以证明资产可用。宿主必须做静态门禁（裸说明符能否解析 + 具名导出是否齐全 + 动态 require 是否被垫片覆盖），否则只能等用户在浏览器里逐个撞雷 |
+| A25 | **宿主与框架各自声明共享依赖 → 静默漂移到不同大版本** | shell 与 root 各写一份 range，实测漂到 cssinjs 1.x/2.x、i18next 25/26、react-i18next 16/17、@vitejs/plugin-react 5/6。而 `dist/versions.json` 由宿主生成、按 D12/C4 是外部模块工程的严格相等基准——等于**门禁把漂移后的旧版本当真相强加给下游**。宿主还与共享表脱节：预打包了 react-router / zustand 等 23 个包却从未声明，靠 pnpm 提升解析。对策：pnpm catalog 做声明层单一真相 + `tests/host-version-drift.test.ts` 断言实装版本一致 |
+| A26 | **lib 模式下 vite 不替换构建期全局，分发产物因此不自包含** | 与 R15（`process.env.NODE_ENV`）同源，同一坑还有两处：`__APP_INFO__` 只在**根** vite.config.ts define（根配置只作用于主应用构建，不会给 runtime 产物留下运行期全局）；`VITE_APP_NAMESPACE` 只存在于仓库根 `.env`（vite 只从自己的 root 加载 .env，而 runtime 在 packages/runtime 下独立构建）。结果 runtime.js 带着裸的 `__APP_INFO__` 与「取不到就抛」的守卫发布，浏览器一初始化 usePreferences 就 ReferenceError。分发产物必须自带默认值 |
 
 ---
 

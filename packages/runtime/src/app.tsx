@@ -3,7 +3,7 @@ import { theme as antdTheme, ConfigProvider } from "antd";
 import dayjs from "dayjs";
 import { Suspense, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { RouterProvider } from "react-router/dom";
+import { RouterProvider } from "react-router";
 
 import { AntdApp } from "#src/components/antd-app";
 import { JSSThemeProvider } from "#src/components/jss-theme-provider";

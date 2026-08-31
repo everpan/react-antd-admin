@@ -6,7 +6,7 @@ import i18next from "i18next";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { initReactI18next, useTranslation } from "react-i18next";
-import { Outlet, RouterProvider, createBrowserRouter, useNavigate } from "react-router/dom";
+import { Outlet, RouterProvider, createBrowserRouter, useNavigate } from "react-router";
 import { jsx, jsxs } from "react/jsx-runtime";
 //#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
@@ -39,6 +39,31 @@ import { jsx, jsxs } from "react/jsx-runtime";
 	}
 })();
 //#endregion
+//#region src/manifest.ts
+/**
+* P7.7：modules.json（cli BuiltModule[]）→ loader Manifest 的字段透传。
+*
+* 评审 F1/F2：此前裁剪成 {name, entry}，导致 enabled 过滤（US-9 下线）
+* 与 peerRuntime 校验（US-5）双双失效。清单字段必须原样透传——
+* loader 侧已有 enabled/peerRuntime/dependencies 的全部消费逻辑。
+*/
+function toLoaderManifest(list, runtimeVersion) {
+	return {
+		runtimeVersion,
+		modules: list.map((m) => ({
+			name: m.name ?? "",
+			entry: m.entry ?? "",
+			enabled: m.enabled,
+			dependencies: m.dependencies,
+			peerRuntime: m.peerRuntime
+		}))
+	};
+}
+/** 从 shell dist 的 versions.json 提取 runtime 版本（P7.6 宿主侧真源） */
+function extractRuntimeVersion(versions) {
+	return versions?.["@react-antd-admin/runtime"];
+}
+//#endregion
 //#region src/preload.ts
 /**
 * 待预载的 chunk 列表——仅非 lazy chunk 携带 sha384 integrity 进入；
@@ -70,12 +95,21 @@ function collectPreloads(modules) {
 */
 /** 模块资源允许的 origin 白名单；宿主换 CDN 时在此登记后重新构建 shell */
 var TRUSTED_ORIGINS = ["https://modules.cdn.example.com"];
-/** 判定单个资源 URL 是否可信：相对路径（同源）或命中白名单 */
+/**
+* 判定单个资源 URL 是否可信：同源相对路径或命中白名单。
+*
+* P7.1 修复：不得以「不含 ://」判同源——协议相对 URL（//host/x）、
+* 反斜杠（https:\\host\x，WHATWG 解析为跨源）、data:/blob:（违反 C6）
+* 均不含 "://"。一律经 new URL 归一化后比对 origin。
+*/
 function isTrustedUrl(url) {
 	if (!url) return true;
-	if (!url.includes("://")) return true;
+	const base = typeof location === "undefined" ? "http://shell.local" : location.origin;
 	try {
-		return TRUSTED_ORIGINS.includes(new URL(url).origin);
+		const resolved = new URL(url, base);
+		if (resolved.protocol !== "http:" && resolved.protocol !== "https:") return false;
+		if (resolved.origin === new URL(base).origin) return true;
+		return TRUSTED_ORIGINS.includes(resolved.origin);
 	} catch {
 		return false;
 	}
@@ -156,15 +190,22 @@ function Boot() {
 		(async () => {
 			try {
 				await ensureI18n();
-				const res = await fetch("./modules.json");
+				const [res, versionsRes] = await Promise.all([fetch("./modules.json"), fetch("./versions.json").catch(() => null)]);
 				if (!res.ok) throw new Error(`modules.json 加载失败：HTTP ${res.status}`);
 				const list = await res.json();
+				const runtimeVersion = versionsRes?.ok ? extractRuntimeVersion(await versionsRes.json()) : void 0;
+				if (!runtimeVersion) console.warn("[shell] 未获取到宿主 runtime 版本（versions.json 缺失），peerRuntime 校验跳过");
 				assertTrustedModules(list);
-				for (const mod of list) for (const href of mod.css ?? []) if (!document.querySelector(`link[href="${href}"]`)) {
-					const link = document.createElement("link");
-					link.rel = "stylesheet";
-					link.href = href;
-					document.head.appendChild(link);
+				for (const mod of list) {
+					if (mod.enabled === false) continue;
+					for (const href of mod.css ?? []) if (!document.querySelector(`link[href="${href}"]`)) {
+						const link = document.createElement("link");
+						link.rel = "stylesheet";
+						link.href = href;
+						const firstStyle = document.head.querySelector("link[rel=\"stylesheet\"], style");
+						if (firstStyle) document.head.insertBefore(link, firstStyle);
+						else document.head.appendChild(link);
+					}
 				}
 				for (const { href, integrity } of collectPreloads(list)) {
 					if (document.querySelector(`link[rel="modulepreload"][href="${href}"]`)) continue;
@@ -175,10 +216,7 @@ function Boot() {
 					link.crossOrigin = "anonymous";
 					document.head.appendChild(link);
 				}
-				const manifest = { modules: list.map((m) => ({
-					name: m.name ?? "",
-					entry: m.entry ?? ""
-				})) };
+				const manifest = toLoaderManifest(list, runtimeVersion);
 				await loadAll(manifest);
 				if (cancelled) return;
 				setRouter(createBrowserRouter([{

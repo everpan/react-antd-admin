@@ -4,100 +4,211 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@ant-design/cssinjs':
+      specifier: ^2.1.2
+      version: 2.1.2
+    '@ant-design/icons':
+      specifier: ^6.2.3
+      version: 6.3.2
+    '@ant-design/pro-components':
+      specifier: ^3.1.12-0
+      version: 3.1.12-0
+    '@dnd-kit/core':
+      specifier: ^6.3.1
+      version: 6.3.1
+    '@dnd-kit/sortable':
+      specifier: ^10.0.0
+      version: 10.0.0
+    '@dnd-kit/utilities':
+      specifier: ^3.2.2
+      version: 3.2.2
+    '@tanstack/react-query':
+      specifier: ^5.100.10
+      version: 5.102.8
+    '@types/react':
+      specifier: ^19.2.14
+      version: 19.2.18
+    '@types/react-dom':
+      specifier: ^19.2.3
+      version: 19.2.5
+    '@vitejs/plugin-react':
+      specifier: ^6.0.2
+      version: 6.1.0
+    ahooks:
+      specifier: ^3.9.7
+      version: 3.9.7
+    antd:
+      specifier: ^6.4.2
+      version: 6.6.1
+    antd-img-crop:
+      specifier: ^4.30.0
+      version: 4.30.0
+    clsx:
+      specifier: ^2.1.1
+      version: 2.1.1
+    dayjs:
+      specifier: ^1.11.20
+      version: 1.11.23
+    echarts:
+      specifier: ^6.0.0
+      version: 6.1.0
+    echarts-for-react:
+      specifier: ^3.0.6
+      version: 3.0.6
+    i18next:
+      specifier: ^26.2.0
+      version: 26.4.0
+    keepalive-for-react:
+      specifier: ^5.0.11
+      version: 5.0.11
+    ky:
+      specifier: ^2.0.2
+      version: 2.0.2
+    motion:
+      specifier: ^12.38.0
+      version: 12.43.0
+    nprogress:
+      specifier: ^0.2.0
+      version: 0.2.0
+    pinyin-pro:
+      specifier: ^3.28.1
+      version: 3.29.3
+    react:
+      specifier: ^19.2.6
+      version: 19.2.8
+    react-countup:
+      specifier: ^6.5.3
+      version: 6.5.3
+    react-dom:
+      specifier: ^19.2.6
+      version: 19.2.8
+    react-error-boundary:
+      specifier: ^6.1.1
+      version: 6.1.3
+    react-i18next:
+      specifier: ^17.0.8
+      version: 17.0.12
+    react-jss:
+      specifier: ^10.10.0
+      version: 10.10.0
+    react-router:
+      specifier: ^7.15.1
+      version: 7.18.2
+    simplebar-react:
+      specifier: ^3.3.2
+      version: 3.3.2
+    spin-delay:
+      specifier: ^2.0.1
+      version: 2.0.1
+    tailwind-merge:
+      specifier: ^3.6.0
+      version: 3.6.0
+    typescript:
+      specifier: ^6.0.3
+      version: 6.0.3
+    use-sync-external-store:
+      specifier: ^1.6.0
+      version: 1.6.0
+    zustand:
+      specifier: ^5.0.13
+      version: 5.0.15
+
 importers:
 
   .:
     dependencies:
       '@ant-design/icons':
-        specifier: ^6.2.3
+        specifier: 'catalog:'
         version: 6.3.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@ant-design/pro-components':
-        specifier: ^3.1.12-0
+        specifier: 'catalog:'
         version: 3.1.12-0(antd@6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@dnd-kit/core':
-        specifier: ^6.3.1
+        specifier: 'catalog:'
         version: 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@dnd-kit/sortable':
-        specifier: ^10.0.0
+        specifier: 'catalog:'
         version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       '@dnd-kit/utilities':
-        specifier: ^3.2.2
+        specifier: 'catalog:'
         version: 3.2.2(react@19.2.8)
       '@tanstack/react-query':
-        specifier: ^5.100.10
+        specifier: 'catalog:'
         version: 5.102.8(react@19.2.8)
       ahooks:
-        specifier: ^3.9.7
+        specifier: 'catalog:'
         version: 3.9.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       antd:
-        specifier: ^6.4.2
+        specifier: 'catalog:'
         version: 6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       antd-img-crop:
-        specifier: ^4.30.0
+        specifier: 'catalog:'
         version: 4.30.0(antd@6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       dayjs:
-        specifier: ^1.11.20
+        specifier: 'catalog:'
         version: 1.11.23
       echarts:
-        specifier: ^6.0.0
+        specifier: 'catalog:'
         version: 6.1.0
       echarts-for-react:
-        specifier: ^3.0.6
+        specifier: 'catalog:'
         version: 3.0.6(echarts@6.1.0)(react@19.2.8)
       i18next:
-        specifier: ^26.2.0
+        specifier: 'catalog:'
         version: 26.4.0(typescript@6.0.3)
       keepalive-for-react:
-        specifier: ^5.0.11
+        specifier: 'catalog:'
         version: 5.0.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       motion:
-        specifier: ^12.38.0
+        specifier: 'catalog:'
         version: 12.43.0(@emotion/is-prop-valid@0.7.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       nprogress:
-        specifier: ^0.2.0
+        specifier: 'catalog:'
         version: 0.2.0
       pinyin-pro:
-        specifier: ^3.28.1
+        specifier: 'catalog:'
         version: 3.29.3
       react:
-        specifier: ^19.2.6
+        specifier: 'catalog:'
         version: 19.2.8
       react-countup:
-        specifier: ^6.5.3
+        specifier: 'catalog:'
         version: 6.5.3(react@19.2.8)
       react-dom:
-        specifier: ^19.2.6
+        specifier: 'catalog:'
         version: 19.2.8(react@19.2.8)
       react-error-boundary:
-        specifier: ^6.1.1
+        specifier: 'catalog:'
         version: 6.1.3(@types/react@19.2.18)(react@19.2.8)
       react-i18next:
-        specifier: ^17.0.8
+        specifier: 'catalog:'
         version: 17.0.12(i18next@26.4.0(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
       react-jss:
-        specifier: ^10.10.0
+        specifier: 'catalog:'
         version: 10.10.0(react@19.2.8)
       react-router:
-        specifier: ^7.15.1
+        specifier: 'catalog:'
         version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       simplebar-react:
-        specifier: ^3.3.2
+        specifier: 'catalog:'
         version: 3.3.2(react@19.2.8)
       spin-delay:
-        specifier: ^2.0.1
+        specifier: 'catalog:'
         version: 2.0.1(react@19.2.8)
       tailwind-merge:
-        specifier: ^3.6.0
+        specifier: 'catalog:'
         version: 3.6.0
       zustand:
-        specifier: ^5.0.13
+        specifier: 'catalog:'
         version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
     devDependencies:
       '@ant-design/cssinjs':
-        specifier: ^2.1.2
+        specifier: 'catalog:'
         version: 2.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@antfu/eslint-config':
         specifier: ^9.0.0
@@ -151,19 +262,19 @@ importers:
         specifier: ^0.2.3
         version: 0.2.3
       '@types/react':
-        specifier: ^19.2.14
+        specifier: 'catalog:'
         version: 19.2.18
       '@types/react-dom':
-        specifier: ^19.2.3
+        specifier: 'catalog:'
         version: 19.2.5(@types/react@19.2.18)
       '@vitejs/plugin-react':
-        specifier: ^6.0.2
+        specifier: 'catalog:'
         version: 6.1.0(vite@8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
       circular-dependency-scanner:
         specifier: ^3.0.1
         version: 3.1.0
       clsx:
-        specifier: ^2.1.1
+        specifier: 'catalog:'
         version: 2.1.1
       code-inspector-plugin:
         specifier: ^1.5.1
@@ -202,11 +313,14 @@ importers:
         specifier: ^4.23.12
         version: 4.23.12
       typescript:
-        specifier: ^6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
       unplugin-icons:
         specifier: ^23.0.1
         version: 23.0.1(@svgr/core@8.1.0(supports-color@7.2.0)(typescript@6.0.3))(@vue/compiler-sfc@3.5.42)
+      use-sync-external-store:
+        specifier: 'catalog:'
+        version: 1.6.0(react@19.2.8)
       vite:
         specifier: ^8.0.13
         version: 8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
@@ -229,7 +343,7 @@ importers:
   apps/playground:
     devDependencies:
       '@ant-design/icons':
-        specifier: ^6.2.3
+        specifier: 'catalog:'
         version: 6.3.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@react-antd-admin/cli':
         specifier: workspace:*
@@ -240,21 +354,27 @@ importers:
       '@react-antd-admin/shell':
         specifier: workspace:*
         version: link:../../packages/shell
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.18
       antd:
-        specifier: ^6.4.2
+        specifier: 'catalog:'
         version: 6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react:
-        specifier: ^19.2.6
+        specifier: 'catalog:'
         version: 19.2.8
       react-dom:
-        specifier: ^19.2.6
+        specifier: 'catalog:'
         version: 19.2.8(react@19.2.8)
       react-i18next:
-        specifier: ^17.0.8
+        specifier: 'catalog:'
         version: 17.0.12(i18next@26.4.0(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
       react-router:
-        specifier: ^7.15.1
+        specifier: 'catalog:'
         version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   docs:
     devDependencies:
@@ -277,79 +397,79 @@ importers:
   packages/runtime:
     dependencies:
       '@ant-design/icons':
-        specifier: ^6.2.3
+        specifier: 'catalog:'
         version: 6.3.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@ant-design/pro-components':
-        specifier: ^3.1.12-0
+        specifier: 'catalog:'
         version: 3.1.12-0(antd@6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@dnd-kit/core':
-        specifier: ^6.3.1
+        specifier: 'catalog:'
         version: 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@dnd-kit/sortable':
-        specifier: ^10.0.0
+        specifier: 'catalog:'
         version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       '@dnd-kit/utilities':
-        specifier: ^3.2.2
+        specifier: 'catalog:'
         version: 3.2.2(react@19.2.8)
       ahooks:
-        specifier: ^3.9.7
+        specifier: 'catalog:'
         version: 3.9.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       antd:
-        specifier: ^6.4.2
+        specifier: 'catalog:'
         version: 6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       antd-img-crop:
-        specifier: ^4.30.0
+        specifier: 'catalog:'
         version: 4.30.0(antd@6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx:
-        specifier: ^2.1.1
+        specifier: 'catalog:'
         version: 2.1.1
       i18next:
-        specifier: ^26.2.0
+        specifier: 'catalog:'
         version: 26.4.0(typescript@6.0.3)
       keepalive-for-react:
-        specifier: ^5.0.11
+        specifier: 'catalog:'
         version: 5.0.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       ky:
-        specifier: ^2.0.2
+        specifier: 'catalog:'
         version: 2.0.2
       motion:
-        specifier: ^12.38.0
+        specifier: 'catalog:'
         version: 12.43.0(@emotion/is-prop-valid@0.7.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       nprogress:
-        specifier: ^0.2.0
+        specifier: 'catalog:'
         version: 0.2.0
       pinyin-pro:
-        specifier: ^3.28.1
+        specifier: 'catalog:'
         version: 3.29.3
       react:
-        specifier: ^19.2.6
+        specifier: 'catalog:'
         version: 19.2.8
       react-dom:
-        specifier: ^19.2.6
+        specifier: 'catalog:'
         version: 19.2.8(react@19.2.8)
       react-error-boundary:
-        specifier: ^6.1.1
+        specifier: 'catalog:'
         version: 6.1.3(@types/react@19.2.18)(react@19.2.8)
       react-i18next:
-        specifier: ^17.0.8
+        specifier: 'catalog:'
         version: 17.0.12(i18next@26.4.0(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
       react-jss:
-        specifier: ^10.10.0
+        specifier: 'catalog:'
         version: 10.10.0(react@19.2.8)
       react-router:
-        specifier: ^7.15.1
+        specifier: 'catalog:'
         version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       simplebar-react:
-        specifier: ^3.3.2
+        specifier: 'catalog:'
         version: 3.3.2(react@19.2.8)
       spin-delay:
-        specifier: ^2.0.1
+        specifier: 'catalog:'
         version: 2.0.1(react@19.2.8)
       tailwind-merge:
-        specifier: ^3.6.0
+        specifier: 'catalog:'
         version: 3.6.0
       zustand:
-        specifier: ^5.0.13
+        specifier: 'catalog:'
         version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
     devDependencies:
       '@iconify-json/ri':
@@ -372,47 +492,116 @@ importers:
         version: link:../runtime
     devDependencies:
       '@ant-design/cssinjs':
-        specifier: ^1.23.0
-        version: 1.24.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: 'catalog:'
+        version: 2.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@ant-design/icons':
-        specifier: ^6.2.3
+        specifier: 'catalog:'
         version: 6.3.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@ant-design/pro-components':
+        specifier: 'catalog:'
+        version: 3.1.12-0(antd@6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
+      '@dnd-kit/core':
+        specifier: 'catalog:'
+        version: 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@dnd-kit/sortable':
+        specifier: 'catalog:'
+        version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
+      '@dnd-kit/utilities':
+        specifier: 'catalog:'
+        version: 3.2.2(react@19.2.8)
       '@tanstack/react-query':
-        specifier: ^5.66.0
+        specifier: 'catalog:'
         version: 5.102.8(react@19.2.8)
       '@vitejs/plugin-react':
-        specifier: ^5.0.4
-        version: 5.2.0(supports-color@7.2.0)(vite@8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+        specifier: 'catalog:'
+        version: 6.1.0(vite@8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      ahooks:
+        specifier: 'catalog:'
+        version: 3.9.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       antd:
-        specifier: ^6.4.0
+        specifier: 'catalog:'
         version: 6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      antd-img-crop:
+        specifier: 'catalog:'
+        version: 4.30.0(antd@6.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       clsx:
-        specifier: ^2.1.1
+        specifier: 'catalog:'
         version: 2.1.1
       dayjs:
-        specifier: ^1.11.13
+        specifier: 'catalog:'
         version: 1.11.23
+      echarts:
+        specifier: 'catalog:'
+        version: 6.1.0
+      echarts-for-react:
+        specifier: 'catalog:'
+        version: 3.0.6(echarts@6.1.0)(react@19.2.8)
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       i18next:
-        specifier: ^25.2.1
-        version: 25.10.10(typescript@6.0.3)
+        specifier: 'catalog:'
+        version: 26.4.0(typescript@6.0.3)
+      keepalive-for-react:
+        specifier: 'catalog:'
+        version: 5.0.11(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      ky:
+        specifier: 'catalog:'
+        version: 2.0.2
+      motion:
+        specifier: 'catalog:'
+        version: 12.43.0(@emotion/is-prop-valid@0.7.3)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      nprogress:
+        specifier: 'catalog:'
+        version: 0.2.0
+      pinyin-pro:
+        specifier: 'catalog:'
+        version: 3.29.3
       react:
-        specifier: ^19.2.0
+        specifier: 'catalog:'
         version: 19.2.8
+      react-countup:
+        specifier: 'catalog:'
+        version: 6.5.3(react@19.2.8)
       react-dom:
-        specifier: ^19.2.0
+        specifier: 'catalog:'
         version: 19.2.8(react@19.2.8)
+      react-error-boundary:
+        specifier: 'catalog:'
+        version: 6.1.3(@types/react@19.2.18)(react@19.2.8)
       react-i18next:
-        specifier: ^16.1.1
-        version: 16.6.6(i18next@25.10.10(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
+        specifier: 'catalog:'
+        version: 17.0.12(i18next@26.4.0(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
+      react-jss:
+        specifier: 'catalog:'
+        version: 10.10.0(react@19.2.8)
+      react-router:
+        specifier: 'catalog:'
+        version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      simplebar-react:
+        specifier: 'catalog:'
+        version: 3.3.2(react@19.2.8)
+      spin-delay:
+        specifier: 'catalog:'
+        version: 2.0.1(react@19.2.8)
+      tailwind-merge:
+        specifier: 'catalog:'
+        version: 3.6.0
       tsx:
         specifier: ^4.23.12
         version: 4.23.12
       typescript:
-        specifier: ^6.0.3
+        specifier: 'catalog:'
         version: 6.0.3
+      use-sync-external-store:
+        specifier: 'catalog:'
+        version: 1.6.0(react@19.2.8)
       vite:
         specifier: ^8.0.13
         version: 8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
+      zustand:
+        specifier: 'catalog:'
+        version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
 
 packages:
 
@@ -503,12 +692,6 @@ packages:
     peerDependencies:
       react: '>=18'
       react-dom: '>=18'
-
-  '@ant-design/cssinjs@1.24.0':
-    resolution: {integrity: sha512-K4cYrJBsgvL+IoozUXYjbT6LHHNt+19a9zkvpBPxLjFHas1UpPM2A5MlhROb0BT8N8WoavM5VsP9MeSeNK/3mg==}
-    peerDependencies:
-      react: '>=16.0.0'
-      react-dom: '>=16.0.0'
 
   '@ant-design/cssinjs@2.1.2':
     resolution: {integrity: sha512-2Hy8BnCEH31xPeSLbhhB2ctCPXE2ZnASdi+KbSeS79BNbUhL9hAEe20SkUk+BR8aKTmqb6+FKFruk7w8z0VoRQ==}
@@ -714,10 +897,6 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0
 
-  '@babel/helper-plugin-utils@7.29.7':
-    resolution: {integrity: sha512-G7sHYigPY17oO5SYWnfD/0MTBwVR781S/JI643e/JhUYgVgWE/61SoW3NH9KWUKyKq5LVh3npif99Wkt6j86Jw==}
-    engines: {node: '>=6.9.0'}
-
   '@babel/helper-string-parser@7.29.7':
     resolution: {integrity: sha512-Pb5ijPrZ89GDH8223L4UP8i6QApWxs04RbPQJTeWDV0/keR2E36MeKnyr6LYmUUvqRRI+Iv87SuF1W6ErINzYw==}
     engines: {node: '>=6.9.0'}
@@ -738,18 +917,6 @@ packages:
     resolution: {integrity: sha512-E8lTAYNB1KW+FH+VGJuZM1ioAx2E6oVlvQFRrf5P8ZZmsiJXYAD9vTFV7yyEURNzgh1dFqMZuO6tUwcARbqFCA==}
     engines: {node: '>=6.0.0'}
     hasBin: true
-
-  '@babel/plugin-transform-react-jsx-self@7.29.7':
-    resolution: {integrity: sha512-TL0hMc9xzy86VD31nUiwzd5otRAcyEPcsegCxolO0PvcXuH1v0kECe/UIznYFihpkvU5wg/jk4v0TTEFfm53fw==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-
-  '@babel/plugin-transform-react-jsx-source@7.29.7':
-    resolution: {integrity: sha512-06IyK09H3wi4cGbhDBwp5gUGo0IKtnYa8tyTiephirPCK6fbobVGiXMMI5zLQ4aKEYP3wZ3ArU44o+8KMrSG/Q==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
 
   '@babel/runtime@7.29.7':
     resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
@@ -2194,9 +2361,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@rolldown/pluginutils@1.0.0-rc.3':
-    resolution: {integrity: sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q==}
-
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
@@ -2611,18 +2775,6 @@ packages:
   '@types/aria-query@5.0.4':
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
 
-  '@types/babel__core@7.20.5':
-    resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
-
-  '@types/babel__generator@7.27.0':
-    resolution: {integrity: sha512-ufFd2Xi92OAVPYsy+P4n7/U7e68fex0+Ee8gSG9KX7eo084CWiQ4sdxktvdl0bOPupXtVJPY19zk6EwWqUQ8lg==}
-
-  '@types/babel__template@7.4.4':
-    resolution: {integrity: sha512-h/NUaSyG5EyxBIp8YRxo4RMe2/qQgvyowRwVMzhYhBCONbW8PUsg4lkFMrhgZhUe5z3L3MiLDuvyJ/CaPa2A8A==}
-
-  '@types/babel__traverse@7.28.0':
-    resolution: {integrity: sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==}
-
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
 
@@ -2763,12 +2915,6 @@ packages:
 
   '@ungap/structured-clone@1.4.0':
     resolution: {integrity: sha512-1mEZtMKPM09vDmQt5y7YvmN2+DFTP7Tg0EWXdic8/C6VRnpb33e4ghisCIE3WZjsE2N8mf+QV1Zqh7ZFYLWInQ==}
-
-  '@vitejs/plugin-react@5.2.0':
-    resolution: {integrity: sha512-YmKkfhOAi3wsB1PhJq5Scj3GXMn3WvtQ/JC0xoopuHoXSdmtdStOpFrYaT1kie2YgFBcIe64ROzMYRjCrYOdYw==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    peerDependencies:
-      vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
 
   '@vitejs/plugin-react@6.1.0':
     resolution: {integrity: sha512-qd2BzUBehkov86WFhg0JkEFEYyCLG9uPCe6qWTY/kRlss9OvJrOF2UbIWT7p+8IzZHkEu0DNGHc4HSv+JdDLsw==}
@@ -3137,9 +3283,6 @@ packages:
     resolution: {integrity: sha512-ZX5bMeMmigY/3L3bLw6ZJ0helpHFsEQmvmNIFopbTwaNdE+W5XmpitpmzTrA8VZSS6Px4NNVQTrUumHFFNB2cg==}
     engines: {node: '>=22.13'}
     hasBin: true
-
-  classnames@2.5.1:
-    resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
 
   cli-boxes@3.0.0:
     resolution: {integrity: sha512-/lzGpEWL/8PfI0BmBOPRwp0c/wFNX1RdUML3jK/RcSBA9T8mZDdQpqYBKtCFTOfQbwPqWEOpjqW+Fnayc0969g==}
@@ -3993,9 +4136,6 @@ packages:
   html-entities@2.6.0:
     resolution: {integrity: sha512-kig+rMn/QOVRvr7c86gQ8lWXq+Hkv6CbAH1hLu+RG338StTpE8Z0b44SDVaqVu7HGKf27frdmUYEs9hTUX/cLQ==}
 
-  html-parse-stringify@3.1.0:
-    resolution: {integrity: sha512-E0oAXcELOtsXe+BmpJ2EZyedbldPpriV5vICzEuo6xjC/D1lDukOI7KrpfQGF2Qc4wWEy0nk3bFORS2K5ZAhFQ==}
-
   html-parse-stringify@4.0.1:
     resolution: {integrity: sha512-0zHsZJrK7S3K2aucXWL6ycoYJ/iNtIcFHC/nYQgFklPtrv5LpJctIiSCroWZWeuoXvuyFdzp6KzjJQ+OT5MfFw==}
 
@@ -4004,14 +4144,6 @@ packages:
 
   hyphenate-style-name@1.1.0:
     resolution: {integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==}
-
-  i18next@25.10.10:
-    resolution: {integrity: sha512-cqUW2Z3EkRx7NqSyywjkgCLK7KLCL6IFVFcONG7nVYIJ3ekZ1/N5jUsihHV6Bq37NfhgtczxJcxduELtjTwkuQ==}
-    peerDependencies:
-      typescript: ^5 || ^6
-    peerDependenciesMeta:
-      typescript:
-        optional: true
 
   i18next@26.4.0:
     resolution: {integrity: sha512-rsmK5bFqsD1AetSFSIa43wtNR4WpvvH4p0tLEsTxkC7QTrfdFm06nbQ95bh8Og4wwaCnUEcm9DVYL2cgxitiQg==}
@@ -4910,12 +5042,6 @@ packages:
     resolution: {integrity: sha512-Y3NoRtprEEZQD8RfxMCfS0ZTqc4e+i18OrXEXAvpM6TfC/3y+0L5rNbZiSnbBBEkDfFzbpd8o+cE8q3/anjMGA==}
     engines: {node: '>=22'}
 
-  rc-util@5.44.4:
-    resolution: {integrity: sha512-resueRJzmHG9Q6rI/DfK6Kdv9/Lfls05vzMs1Sk3M2P+3cJa+MakaZyWY8IPfehVuhPJFKrIY1IK4GqbiaiY5w==}
-    peerDependencies:
-      react: '>=16.9.0'
-      react-dom: '>=16.9.0'
-
   rc@1.2.8:
     resolution: {integrity: sha512-y3bGgqKj3QBdxLbLkomlohkvsA8gdAiUQlSBJnBhfn+BPxg4bc62d8TcBW15wavDfgexCgccckhcZvywyQYPOw==}
     hasBin: true
@@ -4957,22 +5083,6 @@ packages:
   react-fast-compare@3.2.2:
     resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
 
-  react-i18next@16.6.6:
-    resolution: {integrity: sha512-ZgL2HUoW34UKUkOV7uSQFE1CDnRPD+tCR3ywSuWH7u2iapnz86U8Bi3Vrs620qNDzCf1F47NxglCEkchCTDOHw==}
-    peerDependencies:
-      i18next: '>= 25.10.9'
-      react: '>= 16.8.0'
-      react-dom: '*'
-      react-native: '*'
-      typescript: ^5 || ^6
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-      react-native:
-        optional: true
-      typescript:
-        optional: true
-
   react-i18next@17.0.12:
     resolution: {integrity: sha512-lFWPEGkxQ6RhusdUkysFBD58VHfSSzvHBzqMgN0SvfVpdQGfwtNkStTqdy08/sJd7s807qqutgx93fRpD0DJ3Q==}
     peerDependencies:
@@ -4995,9 +5105,6 @@ packages:
   react-is@17.0.2:
     resolution: {integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==}
 
-  react-is@18.3.1:
-    resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
-
   react-is@19.2.8:
     resolution: {integrity: sha512-s5un28nYxKJw5gvUHyW5PCC28CvBqLu9r3cWgzHT4Vo/5fqqkFcdRYsGcKf50WMPpjjFZS5d76fn3YCo2njKwQ==}
 
@@ -5005,10 +5112,6 @@ packages:
     resolution: {integrity: sha512-WLiq84UYWqNBF6579/uprcIUnM1TSywYq6AIjKTTTG5ziJl9Uy+pwuvpN3apuyVwflMbD60PraeTKT7uWH9XEQ==}
     peerDependencies:
       react: '>=16.8.6'
-
-  react-refresh@0.18.0:
-    resolution: {integrity: sha512-QgT5//D3jfjJb6Gsjxv0Slpj23ip+HtOpnNgnb2S5zU3CB26G/IDPGoy4RJB42wzFE46DRsstbW6tKHoKbhAxw==}
-    engines: {node: '>=0.10.0'}
 
   react-router@7.18.2:
     resolution: {integrity: sha512-aUVMjFm3GAPTTZL7oYr5E7ETiqfQCHRLH+B+5afnICvf0r7kkK4eR6SMuwbSTJw/7t+12khT/Kahij49fqOCIg==}
@@ -5726,10 +5829,6 @@ packages:
       jsdom:
         optional: true
 
-  void-elements@3.1.0:
-    resolution: {integrity: sha512-Dhxzh5HZuiHQhbvTW9AMetFfBHDMYpo23Uo9btPXgdYP+3T5S+p+jgNy7spra+veYhBP2dCSgxR/i2Y02h5/6w==}
-    engines: {node: '>=0.10.0'}
-
   vscode-uri@3.2.0:
     resolution: {integrity: sha512-m2gXo3bn0G1kT9InzMf07fTbqMbGtyckj3bH5ktLO+1Ssv+yiATZ4dhwaQv9UZWxJh6E9IFGnQyjgWVDWVBDrg==}
 
@@ -6016,18 +6115,6 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@ant-design/cssinjs@1.24.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
-    dependencies:
-      '@babel/runtime': 7.29.7
-      '@emotion/hash': 0.8.0
-      '@emotion/unitless': 0.7.5
-      classnames: 2.5.1
-      csstype: 3.2.3
-      rc-util: 5.44.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      stylis: 4.4.0
-
   '@ant-design/cssinjs@2.1.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@babel/runtime': 7.29.7
@@ -6263,8 +6350,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@babel/helper-plugin-utils@7.29.7': {}
-
   '@babel/helper-string-parser@7.29.7': {}
 
   '@babel/helper-validator-identifier@7.29.7': {}
@@ -6279,16 +6364,6 @@ snapshots:
   '@babel/parser@7.29.8':
     dependencies:
       '@babel/types': 7.29.8
-
-  '@babel/plugin-transform-react-jsx-self@7.29.7(@babel/core@7.29.7(supports-color@7.2.0))':
-    dependencies:
-      '@babel/core': 7.29.7(supports-color@7.2.0)
-      '@babel/helper-plugin-utils': 7.29.7
-
-  '@babel/plugin-transform-react-jsx-source@7.29.7(@babel/core@7.29.7(supports-color@7.2.0))':
-    dependencies:
-      '@babel/core': 7.29.7(supports-color@7.2.0)
-      '@babel/helper-plugin-utils': 7.29.7
 
   '@babel/runtime@7.29.7': {}
 
@@ -7607,8 +7682,6 @@ snapshots:
   '@rolldown/binding-win32-x64-msvc@1.2.6':
     optional: true
 
-  '@rolldown/pluginutils@1.0.0-rc.3': {}
-
   '@rolldown/pluginutils@1.0.1': {}
 
   '@rollup/pluginutils@5.4.0(rollup@4.63.0)':
@@ -7953,27 +8026,6 @@ snapshots:
 
   '@types/aria-query@5.0.4': {}
 
-  '@types/babel__core@7.20.5':
-    dependencies:
-      '@babel/parser': 7.29.8
-      '@babel/types': 7.29.8
-      '@types/babel__generator': 7.27.0
-      '@types/babel__template': 7.4.4
-      '@types/babel__traverse': 7.28.0
-
-  '@types/babel__generator@7.27.0':
-    dependencies:
-      '@babel/types': 7.29.8
-
-  '@types/babel__template@7.4.4':
-    dependencies:
-      '@babel/parser': 7.29.8
-      '@babel/types': 7.29.8
-
-  '@types/babel__traverse@7.28.0':
-    dependencies:
-      '@babel/types': 7.29.8
-
   '@types/chai@5.2.3':
     dependencies:
       '@types/deep-eql': 4.0.2
@@ -8138,18 +8190,6 @@ snapshots:
       react: 19.2.8
 
   '@ungap/structured-clone@1.4.0': {}
-
-  '@vitejs/plugin-react@5.2.0(supports-color@7.2.0)(vite@8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
-    dependencies:
-      '@babel/core': 7.29.7(supports-color@7.2.0)
-      '@babel/plugin-transform-react-jsx-self': 7.29.7(@babel/core@7.29.7(supports-color@7.2.0))
-      '@babel/plugin-transform-react-jsx-source': 7.29.7(@babel/core@7.29.7(supports-color@7.2.0))
-      '@rolldown/pluginutils': 1.0.0-rc.3
-      '@types/babel__core': 7.20.5
-      react-refresh: 0.18.0
-      vite: 8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
-    transitivePeerDependencies:
-      - supports-color
 
   '@vitejs/plugin-react@6.1.0(vite@8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))':
     dependencies:
@@ -8579,8 +8619,6 @@ snapshots:
       node-cleanup: 2.1.2
       update-notifier: 7.3.1
       zx: 8.8.5
-
-  classnames@2.5.1: {}
 
   cli-boxes@3.0.0: {}
 
@@ -9599,21 +9637,11 @@ snapshots:
 
   html-entities@2.6.0: {}
 
-  html-parse-stringify@3.1.0:
-    dependencies:
-      void-elements: 3.1.0
-
   html-parse-stringify@4.0.1: {}
 
   html-void-elements@3.0.0: {}
 
   hyphenate-style-name@1.1.0: {}
-
-  i18next@25.10.10(typescript@6.0.3):
-    dependencies:
-      '@babel/runtime': 7.29.7
-    optionalDependencies:
-      typescript: 6.0.3
 
   i18next@26.4.0(typescript@6.0.3):
     optionalDependencies:
@@ -10653,13 +10681,6 @@ snapshots:
 
   quote-js-string@0.1.0: {}
 
-  rc-util@5.44.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
-    dependencies:
-      '@babel/runtime': 7.29.7
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-      react-is: 18.3.1
-
   rc@1.2.8:
     dependencies:
       deep-extend: 0.6.0
@@ -10701,17 +10722,6 @@ snapshots:
 
   react-fast-compare@3.2.2: {}
 
-  react-i18next@16.6.6(i18next@25.10.10(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3):
-    dependencies:
-      '@babel/runtime': 7.29.7
-      html-parse-stringify: 3.1.0
-      i18next: 25.10.10(typescript@6.0.3)
-      react: 19.2.8
-      use-sync-external-store: 1.6.0(react@19.2.8)
-    optionalDependencies:
-      react-dom: 19.2.8(react@19.2.8)
-      typescript: 6.0.3
-
   react-i18next@17.0.12(i18next@26.4.0(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3):
     dependencies:
       '@babel/runtime': 7.29.7
@@ -10726,8 +10736,6 @@ snapshots:
   react-is@16.13.1: {}
 
   react-is@17.0.2: {}
-
-  react-is@18.3.1: {}
 
   react-is@19.2.8: {}
 
@@ -10745,8 +10753,6 @@ snapshots:
       shallow-equal: 1.2.1
       theming: 3.3.0(react@19.2.8)
       tiny-warning: 1.0.3
-
-  react-refresh@0.18.0: {}
 
   react-router@7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
@@ -11450,8 +11456,6 @@ snapshots:
       happy-dom: 20.11.12
     transitivePeerDependencies:
       - msw
-
-  void-elements@3.1.0: {}
 
   vscode-uri@3.2.0: {}
 

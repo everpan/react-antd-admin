@@ -115,15 +115,29 @@ const definition = defineModule({
 	version: "1.0.0",                 // 产物目录用（build/modules/order/1.0.0/）
 	routes: [
 		{
+			// 父路由声明布局，子路由渲染页面 —— 不可把页面直接挂到顶层路由。
+			// 框架只在「无 Component 且有 children」的路由上按 handle.layout 注入布局
+			// （D9），叶子路由直挂 Component 会裸奔（无 header/sidebar/tabbar），
+			// 且 KeepAlive 只挂在 ContainerLayout 内，keepAlive 也会一起失效
 			path: "/order",
-			Component: lazy(() => import("./pages/list")),
 			handle: {
+				layout: "container",        // "container" | "parent" | "none"
 				title: "order:menu.list",   // i18next namespace 语法
 				icon: <FileTextOutlined />,
 				order: 10,                  // 菜单排序自管理（R1）
-				keepAlive: true,
-				roles: ["admin"],           // 路由级角色（渲染前 403）
 			},
+			children: [
+				{
+					index: true,
+					Component: lazy(() => import("./pages/list")),
+					handle: {
+						title: "order:menu.list",
+						icon: <FileTextOutlined />,
+						keepAlive: true,          // 缓存标记挂在叶子路由上
+						roles: ["admin"],         // 路由级角色（渲染前 403）
+					},
+				},
+			],
 		},
 	],
 	i18n: {

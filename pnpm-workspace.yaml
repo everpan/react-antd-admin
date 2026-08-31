@@ -14,3 +14,55 @@ packages:
 allowBuilds:
   esbuild: true
   simple-git-hooks: true
+
+# 共享依赖版本单一真相（设计文档 §4.3 / C4 / D12）。
+#
+# 宿主（packages/shell）把共享依赖预打包并经 importmap 提供给框架 runtime 与
+# 外部模块，它写进 dist/versions.json 的版本是外部工程必须严格相等的对齐基准。
+# 一旦宿主与框架各自声明，就会漂移且不报错——实测已漂移到 3 个大版本
+# （cssinjs 1.x/2.x、i18next 25/26、react-i18next 16/17），宿主把旧版本当成
+# "真相"强加给下游（A25）。此处用 catalog 让两侧只能取同一个值。
+#
+# 仅收录 SHARED_DEPS（packages/cli/src/shared-deps.ts）内的包 + 少数构建工具。
+# 新增共享依赖时：改 SHARED_DEPS → 在此登记 → 各处写 `catalog:`。
+# 语法注记：默认 catalog 的键是 `catalog:`；`catalogs:` 是**命名** catalog 的容器，
+# 写成 catalogs 会被 pnpm 当成命名 catalog 而报「expected an object」。
+catalog:
+  react: ^19.2.6
+  react-dom: ^19.2.6
+  react-router: ^7.15.1
+  antd: ^6.4.2
+  "@ant-design/icons": ^6.2.3
+  "@ant-design/cssinjs": ^2.1.2
+  "@ant-design/pro-components": ^3.1.12-0
+  "@tanstack/react-query": ^5.100.10
+  "@dnd-kit/core": ^6.3.1
+  "@dnd-kit/sortable": ^10.0.0
+  "@dnd-kit/utilities": ^3.2.2
+  ahooks: ^3.9.7
+  antd-img-crop: ^4.30.0
+  clsx: ^2.1.1
+  dayjs: ^1.11.20
+  echarts: ^6.0.0
+  echarts-for-react: ^3.0.6
+  i18next: ^26.2.0
+  keepalive-for-react: ^5.0.11
+  ky: ^2.0.2
+  motion: ^12.38.0
+  nprogress: ^0.2.0
+  pinyin-pro: ^3.28.1
+  react-countup: ^6.5.3
+  react-error-boundary: ^6.1.1
+  react-i18next: ^17.0.8
+  react-jss: ^10.10.0
+  simplebar-react: ^3.3.2
+  spin-delay: ^2.0.1
+  tailwind-merge: ^3.6.0
+  zustand: ^5.0.13
+  # 外部零直接引用，仅因被多个共享包内嵌而纳入共享表做产物去重（软共享）
+  use-sync-external-store: ^1.6.0
+  # 构建工具：同样发生过宿主/框架大版本分裂
+  "@vitejs/plugin-react": ^6.0.2
+  typescript: ^6.0.3
+  "@types/react": ^19.2.14
+  "@types/react-dom": ^19.2.3

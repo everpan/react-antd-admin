@@ -30,7 +30,7 @@ import {
 	Outlet,
 	RouterProvider,
 	useNavigate,
-} from "react-router/dom";
+} from "react-router";
 import { extractRuntimeVersion, toLoaderManifest } from "./manifest";
 import { collectPreloads } from "./preload";
 import { assertTrustedModules } from "./trust";

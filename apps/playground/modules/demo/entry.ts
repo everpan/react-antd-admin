@@ -17,17 +17,32 @@ export default defineModule({
 	name: "demo",
 	description: "垂直切片演示模块",
 	version: "0.1.0",
-	peerRuntime: "^0.0.0",
+	// 宿主 runtime 尚未发版（workspace 内为 0.0.0），故声明为开放范围而非
+	// `^0.0.0`——后者在 semver 下等价于「恰好 0.0.0」，宿主一升级就会误判不兼容
+	peerRuntime: ">=0.0.0",
 	routes: [
 		{
 			path: "/demo",
-			Component: DemoPage,
+			// 父路由声明 layout：框架按 handle.layout 包裹（D9），
+			// 页面由子路由渲染。缺了它页面会裸奔（无 header/sidebar/tabbar），
+			// 且 KeepAlive 挂在 ContainerLayout 内，keepAlive 也会失效
 			handle: {
+				layout: "container",
 				order: 100,
 				title: "demo:menu.demo",
 				icon: createElement(HomeOutlined),
-				keepAlive: true,
 			},
+			children: [
+				{
+					index: true,
+					Component: DemoPage,
+					handle: {
+						title: "demo:menu.demo",
+						icon: createElement(HomeOutlined),
+						keepAlive: true,
+					},
+				},
+			],
 		},
 	],
 	i18n: {

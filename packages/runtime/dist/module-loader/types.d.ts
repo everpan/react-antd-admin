@@ -56,7 +56,8 @@ export interface ModuleDefinition {
 /** 运行时模块实例 */
 export interface ModuleInstance {
     definition: ModuleDefinition;
-    status: "pending" | "loading" | "loaded" | "active" | "error";
+    /** missing-deps：声明的依赖模块缺失或加载失败，本模块未执行生命周期（US-9 禁止半加载） */
+    status: "pending" | "loading" | "loaded" | "active" | "error" | "missing-deps";
     error?: Error;
 }
 /** manifest.json 中的模块条目 */
@@ -67,8 +68,14 @@ export interface ManifestModuleEntry {
     entry: string;
     /** 是否启用 */
     enabled?: boolean;
+    /** 依赖的其他模块 name 列表（清单层冗余声明，供运维观测） */
+    dependencies?: string[];
+    /** 兼容的宿主 runtime 版本（semver 范围），P7.6 起在加载后即刻校验 */
+    peerRuntime?: string;
 }
 /** manifest.json 格式 */
 export interface Manifest {
     modules: ManifestModuleEntry[];
+    /** 宿主 runtime 实际版本（shell 侧取自 versions.json）；提供即启用 peerRuntime 校验（US-5） */
+    runtimeVersion?: string;
 }

@@ -123,14 +123,20 @@ var init_constants$3 = __esmMin((() => {
 * const { version } = getAppInfo().pkg;
 */
 function getAppInfo() {
-	return __APP_INFO__;
+	return {
+		"pkg": {
+			"name": "@react-antd-admin/runtime",
+			"version": "0.0.0",
+			"license": "MIT"
+		},
+		"lastBuildTime": "2026-08-31 00:02:35"
+	};
 }
 var init_get_app_info = __esmMin((() => {}));
 //#endregion
 //#region src/utils/get-app-namespace/index.ts
 function getAppNamespace(name) {
-	getAppInfo().pkg.version;
-	throw new Error("VITE_APP_NAMESPACE is not defined in environment variables / 环境变量中未定义 VITE_APP_NAMESPACE");
+	return `${`react-antd-admin-${getAppInfo().pkg.version || "unknown"}-prod`}-${name}`;
 }
 var init_get_app_namespace = __esmMin((() => {
 	init_get_app_info();
@@ -3430,6 +3436,24 @@ function registerSlot(moduleName, slotName, node) {
 		} };
 	});
 }
+/** 模块卸载时清理其注册的全部插槽节点 */
+function removeModuleSlots(moduleName) {
+	useSlotRegistry.setState((state) => {
+		const next = {};
+		let changed = false;
+		for (const [name, byModule] of Object.entries(state.slots)) {
+			if (!(moduleName in byModule)) {
+				next[name] = byModule;
+				continue;
+			}
+			changed = true;
+			const rest = { ...byModule };
+			delete rest[moduleName];
+			if (Object.keys(rest).length > 0) next[name] = rest;
+		}
+		return changed ? { slots: next } : state;
+	});
+}
 /** 布局组件订阅：插槽节点变化（注册/卸载）时触发重渲染 */
 function useSlotNodes(slotName) {
 	const byModule = useSlotRegistry((state) => state.slots[slotName]);
@@ -5088,6 +5112,52 @@ var init_resolve_layout = __esmMin((() => {
 	init_parent_layout();
 }));
 //#endregion
+//#region src/utils/request/scoped.ts
+/** 仅暴露安全子集：callable + HTTP verb 工厂；不给 create/extend（可绕过 hooks） */
+function createScopedRequest(moduleName, getPrefix, underlying = request) {
+	function guard(rawUrl) {
+		const prefix = getPrefix();
+		if (!prefix) throw new Error(`[module] 模块 "${moduleName}" 尚未登记 API 前缀：请先在生命周期中调用 ctx.register.apiPrefix("/your-prefix") 再发起请求。`);
+		let pathname;
+		try {
+			pathname = new URL(rawUrl, "http://scoped.local").pathname;
+		} catch {
+			pathname = rawUrl;
+		}
+		const boundary = prefix.endsWith("/") ? prefix.slice(0, -1) : prefix;
+		if (pathname !== boundary && !pathname.startsWith(`${boundary}/`)) throw new Error(`[module] 模块 "${moduleName}" 请求越界：${rawUrl} 不在其登记前缀 ${prefix} 内。请调整接口路径，或登记正确前缀（D11 安全收敛）。`);
+	}
+	/**
+	* P7.2：剥离逐请求 prefix/prefixUrl——ky 2.x 允许逐请求覆盖默认 prefix，
+	* 否则 `scoped.get("sys/x", { prefix: "https://evil.com" })` 会带着
+	* beforeRequest 注入的 Bearer token 打到任意外域（凭据外泄）。
+	*/
+	function sanitize(options) {
+		if (!options) return options;
+		const { prefix: _prefix, prefixUrl: _prefixUrl, ...rest } = options;
+		return rest;
+	}
+	const scoped = ((url, options) => {
+		guard(String(url));
+		return underlying(url, sanitize(options));
+	});
+	for (const method of [
+		"get",
+		"post",
+		"put",
+		"patch",
+		"delete",
+		"head"
+	]) scoped[method] = ((url, options) => {
+		guard(String(url));
+		return underlying[method](url, sanitize(options));
+	});
+	return scoped;
+}
+var init_scoped = __esmMin((() => {
+	init_request();
+}));
+//#endregion
 //#region src/router/utils/flatten-routes.ts
 /**
 * 将路由扁平化为一个对象，键为路由的 path，值为路由对象
@@ -5145,6 +5215,45 @@ var init_keep_alive = __esmMin((() => {
 	init_flatten_routes();
 }));
 //#endregion
+//#region src/module-loader/semver.ts
+function parse(version) {
+	const match = /^(\d+)\.(\d+)\.(\d+)/.exec(version.trim());
+	if (!match) return null;
+	return {
+		major: Number(match[1]),
+		minor: Number(match[2]),
+		patch: Number(match[3])
+	};
+}
+function cmp(a, b) {
+	return a.major - b.major || a.minor - b.minor || a.patch - b.patch;
+}
+function satisfiesComparator(v, comparator) {
+	const match = /^(>=|<=|[><^~])?(\d+\.\d+\.\d+)$/.exec(comparator.trim());
+	if (!match) return false;
+	const [, op = "", raw] = match;
+	const target = parse(raw);
+	switch (op) {
+		case "": return cmp(v, target) === 0;
+		case ">=": return cmp(v, target) >= 0;
+		case "<=": return cmp(v, target) <= 0;
+		case ">": return cmp(v, target) > 0;
+		case "<": return cmp(v, target) < 0;
+		case "^": return cmp(v, target) >= 0 && v.major === target.major;
+		case "~": return cmp(v, target) >= 0 && v.major === target.major && v.minor === target.minor;
+		default: return false;
+	}
+}
+/** version 是否满足 range（空格分隔的多个比较符为合取） */
+function satisfiesSemver(version, range) {
+	const v = parse(version);
+	if (!v) return false;
+	const trimmed = range.trim();
+	if (trimmed === "*" || trimmed === "") return true;
+	return trimmed.split(/\s+/).every((part) => satisfiesComparator(v, part));
+}
+var init_semver = __esmMin((() => {}));
+//#endregion
 //#region src/module-loader/index.ts
 function createModuleContext(definition) {
 	return {
@@ -5152,7 +5261,7 @@ function createModuleContext(definition) {
 			name: definition.name,
 			version: definition.version
 		},
-		utils: { request },
+		utils: { request: createScopedRequest(definition.name, () => registeredApiPrefixes.get(definition.name)) },
 		register: {
 			store: (name, store) => {
 				registeredStores.set(name, store);
@@ -5225,6 +5334,16 @@ async function loadAll(manifest) {
 	const definitions = /* @__PURE__ */ new Map();
 	const validEntries = [];
 	for (const { entry, definition } of loadResults) if (definition) {
+		const peerRuntime = definition.peerRuntime ?? entry.peerRuntime;
+		if (manifest.runtimeVersion && peerRuntime && !satisfiesSemver(manifest.runtimeVersion, peerRuntime)) {
+			console.error(`[module-loader] 模块 "${entry.name}" 与宿主 runtime 版本不兼容：期望 ${peerRuntime}，实际 ${manifest.runtimeVersion}。已跳过加载。修复建议：升级宿主 runtime 或按兼容范围重新构建该模块（US-5）。`);
+			modules.set(entry.name, {
+				definition,
+				status: "error",
+				error: /* @__PURE__ */ new Error(`模块 "${entry.name}" peerRuntime 不兼容：期望 ${peerRuntime}，实际 ${manifest.runtimeVersion}`)
+			});
+			continue;
+		}
 		definitions.set(entry.name, definition);
 		validEntries.push(entry);
 		modules.set(entry.name, {
@@ -5241,6 +5360,21 @@ async function loadAll(manifest) {
 		status: "error",
 		error: /* @__PURE__ */ new Error("Failed to load module entry")
 	});
+	for (let i = validEntries.length - 1; i >= 0; i--) {
+		const entry = validEntries[i];
+		const definition = definitions.get(entry.name);
+		const missing = (definition.config?.dependencies ?? entry.dependencies ?? []).filter((dep) => !definitions.has(dep));
+		if (missing.length > 0) {
+			console.error(`[module-loader] 模块 "${entry.name}" 依赖缺失：${missing.join(", ")} 未加载。已跳过该模块（不执行生命周期、不注册路由）。修复建议：先部署依赖模块，或在清单中移除该依赖（US-9）。`);
+			modules.set(entry.name, {
+				definition,
+				status: "missing-deps",
+				error: /* @__PURE__ */ new Error(`模块 "${entry.name}" 依赖缺失：${missing.join(", ")}`)
+			});
+			validEntries.splice(i, 1);
+			definitions.delete(entry.name);
+		}
+	}
 	const sortedEntries = topologicalSort(validEntries, definitions);
 	for (const entry of sortedEntries) {
 		const definition = definitions.get(entry.name);
@@ -5267,12 +5401,14 @@ function getModule(name) {
 	return modules.get(name);
 }
 function getRoutes() {
-	const { roles } = useUserStore.getState();
+	const { roles, permissions = [] } = useUserStore.getState();
 	const routes = [];
 	for (const instance of modules.values()) {
-		if (instance.status === "error") continue;
+		if (instance.status !== "loaded" && instance.status !== "active") continue;
 		const requiredRoles = instance.definition.config?.requiredRoles;
 		if (requiredRoles?.length && !requiredRoles.some((role) => roles.includes(role))) continue;
+		const requiredPermissions = instance.definition.config?.requiredPermissions;
+		if (requiredPermissions?.length && !requiredPermissions.every((perm) => permissions.includes(perm))) continue;
 		if (instance.definition.routes.length > 0) routes.push(...resolveRouteLayouts(instance.definition.routes));
 	}
 	return routes;
@@ -5284,10 +5420,23 @@ function getRegisteredApiPrefix(moduleName) {
 	return registeredApiPrefixes.get(moduleName);
 }
 /**
-* 当前已加载（非 error）模块的全部定义，供 keep-alive 聚合使用。
+* 卸载模块：执行 onDestroy 生命周期 → 清理其布局插槽（US-8）→ 移除实例。
+* 供运维下线单个模块使用，其余模块不受影响。
+*/
+async function unloadModule(name) {
+	const instance = modules.get(name);
+	if (instance) {
+		const ctx = createModuleContext(instance.definition);
+		if (instance.definition.lifecycle?.onDestroy) await instance.definition.lifecycle.onDestroy(ctx);
+	}
+	removeModuleSlots(name);
+	modules.delete(name);
+}
+/**
+* 当前已就绪（loaded/active）模块的全部定义，供 keep-alive 聚合使用。
 */
 function loadedDefinitions() {
-	return Array.from(modules.values()).filter((instance) => instance.status !== "error").map((instance) => instance.definition);
+	return Array.from(modules.values()).filter((instance) => instance.status === "loaded" || instance.status === "active").map((instance) => instance.definition);
 }
 /**
 * KeepAlive exclude key：各模块路由中 `handle.keepAlive === false` 的路径集合。
@@ -5304,8 +5453,9 @@ var modules, registeredStores, registeredApiPrefixes;
 var init_module_loader = __esmMin((() => {
 	init_resolve_layout();
 	init_user();
-	init_request();
+	init_scoped();
 	init_keep_alive();
+	init_semver();
 	init_slots();
 	modules = /* @__PURE__ */ new Map();
 	registeredStores = /* @__PURE__ */ new Map();
@@ -5609,7 +5759,7 @@ var init_common$1 = __esmMin((() => {
 		cancelAll: cancelAll$1
 	};
 })), notFoundSubTitle$1, unknownComponentTitle$1, unknownComponentSubTitle$1, pageErrorTitle$1, exception_default$1;
-var init_exception$1 = __esmMin((() => {
+var init_exception$2 = __esmMin((() => {
 	notFoundSubTitle$1 = "抱歉，您访问的页面不存在。";
 	unknownComponentTitle$1 = "未知组件";
 	unknownComponentSubTitle$1 = "抱歉，当前路由没有对应的组件，请联系开发人员。";
@@ -6040,7 +6190,7 @@ var init_common = __esmMin((() => {
 		cancelAll
 	};
 })), notFoundSubTitle, unknownComponentTitle, unknownComponentSubTitle, pageErrorTitle, exception_default;
-var init_exception = __esmMin((() => {
+var init_exception$1 = __esmMin((() => {
 	notFoundSubTitle = "Sorry, the page you visited does not exist.";
 	unknownComponentTitle = "Unknown Component";
 	unknownComponentSubTitle = "Sorry, the current route has no corresponding component, please contact the developer.";
@@ -6314,13 +6464,13 @@ function organizeLanguageFiles(files) {
 var init_helper = __esmMin((() => {
 	init_authority$1();
 	init_common$1();
-	init_exception$1();
+	init_exception$2();
 	init_form$1();
 	init_preferences$1();
 	init_widgets$1();
 	init_authority();
 	init_common();
-	init_exception();
+	init_exception$1();
 	init_form();
 	init_preferences();
 	init_widgets();
@@ -7284,6 +7434,108 @@ var init_routes = __esmMin((() => {
 //#region src/router/routes/config.ts
 var init_config = __esmMin((() => {}));
 //#endregion
+//#region src/components/exception-page/index.tsx
+var exception_page_exports = /* @__PURE__ */ __exportAll({ default: () => ExceptionPage$1 });
+function ExceptionPage$1({ status }) {
+	const navigate = useNavigate();
+	const text = STATUS_TEXT[status];
+	return /* @__PURE__ */ jsx(Result, {
+		status,
+		title: text.title,
+		subTitle: text.subTitle,
+		extra: /* @__PURE__ */ jsx(Button, {
+			type: "primary",
+			onClick: () => navigate("/"),
+			children: "返回首页"
+		})
+	});
+}
+var STATUS_TEXT;
+var init_exception_page = __esmMin((() => {
+	STATUS_TEXT = {
+		403: {
+			title: "403",
+			subTitle: "抱歉，您没有权限访问该页面。"
+		},
+		404: {
+			title: "404",
+			subTitle: "抱歉，您访问的页面不存在。"
+		},
+		500: {
+			title: "500",
+			subTitle: "抱歉，服务器出现异常，请稍后重试。"
+		}
+	};
+}));
+//#endregion
+//#region src/router/routes/core/exception.ts
+function collectPaths(routes, into) {
+	for (const route of routes) {
+		if (route.path) into.add(route.path);
+		if (route.children) collectPaths(route.children, into);
+	}
+}
+/** 目标路径未被覆盖时注入内置异常页兜底；返回新数组，不改入参 */
+function ensureBuiltinExceptionRoutes(routes) {
+	const covered = /* @__PURE__ */ new Set();
+	collectPaths(routes, covered);
+	const missing = builtinExceptionRoutes.filter((route) => !covered.has(route.path));
+	return missing.length > 0 ? [...routes, ...missing] : routes;
+}
+var ExceptionPage, builtinExceptionRoutes;
+var init_exception = __esmMin((() => {
+	init_route_path();
+	ExceptionPage = lazy(() => Promise.resolve().then(() => (init_exception_page(), exception_page_exports)));
+	builtinExceptionRoutes = [
+		{
+			path: exception403Path,
+			Component: () => createElement(ExceptionPage, { status: "403" }),
+			handle: {
+				title: "403",
+				hideInMenu: true
+			}
+		},
+		{
+			path: exception404Path,
+			Component: () => createElement(ExceptionPage, { status: "404" }),
+			handle: {
+				title: "404",
+				hideInMenu: true
+			}
+		},
+		{
+			path: exception500Path,
+			Component: () => createElement(ExceptionPage, { status: "500" }),
+			handle: {
+				title: "500",
+				hideInMenu: true
+			}
+		}
+	];
+}));
+//#endregion
+//#region src/utils/iframe-guard.ts
+/** 校验并返回可安全渲染的链接；不合规返回 null（拒绝渲染） */
+function resolveSafeIframeLink(url) {
+	if (!url) return null;
+	let parsed;
+	try {
+		parsed = new URL(url);
+	} catch {
+		return null;
+	}
+	if (parsed.protocol !== "https:") return null;
+	return IFRAME_ALLOWED_HOSTS.some((host) => parsed.host === host || parsed.host.endsWith(`.${host}`)) ? url : null;
+}
+var IFRAME_ALLOWED_HOSTS;
+var init_iframe_guard = __esmMin((() => {
+	IFRAME_ALLOWED_HOSTS = [
+		"ant.design",
+		"react.dev",
+		"condorheroblog.github.io"
+	];
+}));
+//#endregion
 //#region src/components/iframe/index.tsx
 function Iframe() {
 	const matches = useMatches();
@@ -7298,18 +7550,24 @@ function Iframe() {
 	} else if (typeof routeTitle === "string") title = routeTitle;
 	else title = "";
 	/**
-	* use this tool https://iframegenerator.top/ to generate the iframe code
+	* P6.4 / §4.8：iframe 加固——仅渲染通过守卫的链接（https + 域名
+	* 白名单），并以 sandbox 限制嵌入页能力（不给 allow-same-origin）。
 	*/
-	return iframeLink ? /* @__PURE__ */ jsx("iframe", {
-		src: iframeLink,
+	const safeLink = resolveSafeIframeLink(iframeLink ?? "");
+	if (iframeLink && !safeLink) console.error(`[iframe] 链接未通过安全校验（须 https 且域名在白名单内），已拒绝渲染：${iframeLink}`);
+	return safeLink ? /* @__PURE__ */ jsx("iframe", {
+		src: safeLink,
 		title,
 		width: "100%",
 		height: "100%",
 		loading: "lazy",
+		sandbox: "allow-scripts allow-popups",
 		className: "p-4 rounded-sm"
 	}) : null;
 }
-var init_iframe = __esmMin((() => {}));
+var init_iframe = __esmMin((() => {
+	init_iframe_guard();
+}));
 //#endregion
 //#region src/components/unknown-component/index.tsx
 var unknown_component_exports = /* @__PURE__ */ __exportAll({
@@ -7354,17 +7612,9 @@ var init_unknown_component = __esmMin((() => {
 * @en Get framework page component path by route (src/pages only; module pages are resolved elsewhere)
 */
 function getComponentPathByRoute(route) {
-	const pageModulePaths = Object.keys(pageModules);
 	const routePath = route.path ?? "/";
-	if (route.component) {
-		const srcPath = `/packages/runtime/src/pages${route.component}`;
-		if (pageModulePaths.includes(srcPath)) return srcPath;
-		return srcPath;
-	} else {
-		const srcPath = `/packages/runtime/src/pages${routePath}/index.tsx`;
-		if (pageModulePaths.includes(srcPath)) return srcPath;
-		return srcPath;
-	}
+	if (route.component) return `/packages/runtime/src/pages${route.component}`;
+	return `/packages/runtime/src/pages${routePath}/index.tsx`;
 }
 /**
 * @zh 根据后端路由配置生成前端路由
@@ -7557,7 +7807,12 @@ function AuthGuard({ children }) {
 			* @en If frontend routing is enabled
 			*/
 			if (enableFrontendAceess) routes.push(...generateRoutesByFrontend(accessRoutes, latestRoles));
-			const uniqueRoutes = removeDuplicateRoutes(routes);
+			/**
+			* P7.14 / 评审 F11：/exception/403|404|500 是守卫的硬编码跳转目标，
+			* 属框架契约——任何来源（模块/后端/前端）未覆盖时注入框架内置兜底页，
+			* 避免禁用 exception 模块后跳转落 catch-all 显示 404。
+			*/
+			const uniqueRoutes = removeDuplicateRoutes(ensureBuiltinExceptionRoutes(routes));
 			setAccessStore(uniqueRoutes);
 			/**
 			* @zh 网络请求失败，跳转到 500 页面
@@ -7737,6 +7992,7 @@ var init_auth_guard = __esmMin((() => {
 	init_extra_info();
 	init_routes();
 	init_config();
+	init_exception();
 	init_add_route_id_by_path();
 	init_generate_routes_from_backend();
 	init_generate_routes_from_frontend();
@@ -8715,7 +8971,8 @@ function getBooleanOptions(t) {
 *
 * 目前只做类型收窄，但它是模块契约的**唯一入口**：
 * - 编译期：收窄 entry.ts 的导出类型，字段名写错会直接报错
-* - 构建期：CLI 可用 tsx 真实 import 解析出 name / version，
+* - 构建期：CLI 用 esbuild bundle + 真实 import() 解析出 name / version
+*   （packages/cli/src/build.ts 的 readModuleDefinition），
 *   替代 `scripts/build-modules.ts` 里脆弱的正则（B10）
 */
 function defineModule(definition) {
@@ -8734,6 +8991,7 @@ init_iframe();
 init_use_preferences();
 init_icons();
 init_module_loader();
+init_slots();
 init_auth();
 init_user();
 init_get_app_info();
@@ -8743,4 +9001,4 @@ init_ri();
 init_menu_icons();
 init_tree();
 //#endregion
-export { AccessControl, AccessControlRoles, BasicButton, BasicContent, BasicTable, EmbeddedIcon, ExternalIcon, FormAvatarItem, FormTreeItem, Iframe, LayoutCenterIcon, LayoutLeftIcon, LayoutRightIcon, MixedNavigationIcon, OutsidePageIcon, ProfileCardIcon, RiAccountCircleLine, RiContrastFill, RiFullscreenExitLine, RiFullscreenLine, RiMailCheckLine, RiMoonIcon, RiReactjsLine, RiSunIcon, RiUserSettingsLine, ServerErrorIcon, SideNavigationIcon, TopNavigationIcon, TwoColumnNavigationIcon, accessControlCodes, defineModule, fetchAddMenuItem, fetchAddRoleItem, fetchAsyncRoutes, fetchDeleteMenuItem, fetchDeleteRoleItem, fetchLine, fetchLogin, fetchLogout, fetchMenuByRoleId, fetchMenuList, fetchPie, fetchRefreshToken, fetchRoleList, fetchRoleMenu, fetchUpdateMenuItem, fetchUpdateRoleItem, fetchUserInfo, filterTree, getAllExpandedKeys, getAppInfo, getBooleanOptions, getModule, getModules, getRegisteredApiPrefix, getRegisteredStore, getRoutes, getYesNoOptions, handleTree, loadAll, mapTree, menuIcons, permissionPrefix, traverseTreeValues, useAccess, useAuthStore, usePreferences, useUserStore };
+export { AccessControl, AccessControlRoles, BasicButton, BasicContent, BasicTable, EmbeddedIcon, ExternalIcon, FormAvatarItem, FormTreeItem, Iframe, LayoutCenterIcon, LayoutLeftIcon, LayoutRightIcon, MixedNavigationIcon, OutsidePageIcon, ProfileCardIcon, RiAccountCircleLine, RiContrastFill, RiFullscreenExitLine, RiFullscreenLine, RiMailCheckLine, RiMoonIcon, RiReactjsLine, RiSunIcon, RiUserSettingsLine, ServerErrorIcon, SideNavigationIcon, TopNavigationIcon, TwoColumnNavigationIcon, accessControlCodes, defineModule, fetchAddMenuItem, fetchAddRoleItem, fetchAsyncRoutes, fetchDeleteMenuItem, fetchDeleteRoleItem, fetchLine, fetchLogin, fetchLogout, fetchMenuByRoleId, fetchMenuList, fetchPie, fetchRefreshToken, fetchRoleList, fetchRoleMenu, fetchUpdateMenuItem, fetchUpdateRoleItem, fetchUserInfo, filterTree, getAllExpandedKeys, getAppInfo, getBooleanOptions, getModule, getModules, getRegisteredApiPrefix, getRegisteredStore, getRoutes, getYesNoOptions, handleTree, loadAll, mapTree, menuIcons, permissionPrefix, traverseTreeValues, unloadModule, useAccess, useAuthStore, usePreferences, useSlotNodes, useUserStore };

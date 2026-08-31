@@ -36,7 +36,27 @@ export const SHARED_DEPS: SharedDepEntry[] = [
 	{ specifier: "@react-antd-admin/runtime", asset: "runtime", hard: true },
 	// —— 软共享 ——
 	{ specifier: "antd", asset: "antd", hard: false },
+	{ specifier: "antd/locale/en_US", asset: "antd-locale-en_US", hard: false },
+	{ specifier: "antd/locale/zh_CN", asset: "antd-locale-zh_CN", hard: false },
+	{ specifier: "antd/es/locale/zh_CN", asset: "antd-es-locale-zh_CN", hard: false },
 	{ specifier: "@ant-design/icons", asset: "icons", hard: false },
+	/**
+	 * antd 用 `import IconContext from "@ant-design/icons/es/components/Context"`
+	 * 取图标 Context（向图标注入 prefixCls / csp）。
+	 *
+	 * 深路径默认走「父包透传」映射（SUBPATH_PARENT_REEXPORTS）指到 icons.js，
+	 * 但那条假设只对**具名**导出成立：icons.js 的 default 是整个命名空间，
+	 * 于是 `IconContext.Provider` 为 undefined，ConfigProvider 一渲染就
+	 * React #130 整页崩（A27）。这里给它独立资产，default 才是真正的 Context。
+	 *
+	 * 单例不受影响：icons.js 构建时它是共享依赖 → external → 同一份实例，
+	 * antd 注入的配置才能传达到图标（与 zustand → zustand/vanilla 同理）。
+	 */
+	{
+		specifier: "@ant-design/icons/es/components/Context",
+		asset: "icons-es-components-Context",
+		hard: false,
+	},
 	{ specifier: "@ant-design/cssinjs", asset: "cssinjs", hard: false },
 	{ specifier: "@ant-design/pro-components", asset: "pro-components", hard: false },
 	{ specifier: "i18next", asset: "i18next", hard: false },
@@ -45,8 +65,25 @@ export const SHARED_DEPS: SharedDepEntry[] = [
 	{ specifier: "zustand/middleware", asset: "zustand-middleware", hard: false },
 	{ specifier: "zustand/shallow", asset: "zustand-shallow", hard: false },
 	{ specifier: "zustand/vanilla", asset: "zustand-vanilla", hard: false },
+	{ specifier: "zustand/react", asset: "zustand-react", hard: false },
+	{ specifier: "zustand/react/shallow", asset: "zustand-react-shallow", hard: false },
+	{ specifier: "zustand/vanilla/shallow", asset: "zustand-vanilla-shallow", hard: false },
+	// react-i18next 与 pro-components 各自内嵌一份（CJS），纳入共享表后合为一份。
+	// 注意：这是**软**共享且外部模块零直接引用，纳入只为产物去重，不要求外部工程对齐
+	{ specifier: "use-sync-external-store/shim", asset: "use-sync-external-store-shim", hard: false },
 	{ specifier: "dayjs", asset: "dayjs", hard: false },
+	{ specifier: "dayjs/plugin/advancedFormat", asset: "dayjs-plugin-advancedFormat", hard: false },
+	{ specifier: "dayjs/plugin/customParseFormat", asset: "dayjs-plugin-customParseFormat", hard: false },
+	{ specifier: "dayjs/plugin/isoWeek", asset: "dayjs-plugin-isoWeek", hard: false },
+	{ specifier: "dayjs/plugin/localeData", asset: "dayjs-plugin-localeData", hard: false },
+	{ specifier: "dayjs/plugin/quarterOfYear", asset: "dayjs-plugin-quarterOfYear", hard: false },
+	{ specifier: "dayjs/plugin/relativeTime", asset: "dayjs-plugin-relativeTime", hard: false },
+	{ specifier: "dayjs/plugin/weekday", asset: "dayjs-plugin-weekday", hard: false },
+	{ specifier: "dayjs/plugin/weekOfYear", asset: "dayjs-plugin-weekOfYear", hard: false },
+	{ specifier: "dayjs/plugin/weekYear", asset: "dayjs-plugin-weekYear", hard: false },
 	{ specifier: "echarts", asset: "echarts", hard: false },
+	{ specifier: "echarts/charts", asset: "echarts-charts", hard: false },
+	{ specifier: "echarts/features.js", asset: "echarts-features", hard: false },
 	{ specifier: "echarts-for-react", asset: "echarts-for-react", hard: false },
 	{ specifier: "motion", asset: "motion", hard: false },
 	{ specifier: "motion/react", asset: "motion-react", hard: false },
@@ -58,6 +95,7 @@ export const SHARED_DEPS: SharedDepEntry[] = [
 	{ specifier: "keepalive-for-react", asset: "keepalive-for-react", hard: false },
 	{ specifier: "ky", asset: "ky", hard: false },
 	{ specifier: "nprogress", asset: "nprogress", hard: false },
+	{ specifier: "nprogress/nprogress.css", asset: "nprogress-css", hard: false },
 	{ specifier: "pinyin-pro", asset: "pinyin-pro", hard: false },
 	{ specifier: "react-error-boundary", asset: "react-error-boundary", hard: false },
 	{ specifier: "react-jss", asset: "react-jss", hard: false },
