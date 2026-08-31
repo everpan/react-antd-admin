@@ -136,7 +136,7 @@ function getAppInfo() {
 			"version": "0.0.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-08-31 20:40:37"
+		"lastBuildTime": "2026-08-31 22:15:14"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -5727,7 +5727,10 @@ function UserMenu({ ...restProps }) {
 			type: "text",
 			...restProps,
 			className: cn(restProps.className, "rounded-full px-1"),
-			children: /* @__PURE__ */ jsx(Avatar, { src: avatar })
+			children: /* @__PURE__ */ jsx(Avatar, {
+				src: avatar || void 0,
+				icon: /* @__PURE__ */ jsx(UserOutlined, {})
+			})
 		})
 	});
 }

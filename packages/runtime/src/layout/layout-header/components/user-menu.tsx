@@ -1,6 +1,6 @@
 import type { ButtonProps, MenuProps } from "antd";
 
-import { LogoutOutlined } from "@ant-design/icons";
+import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import { useKeyPress } from "ahooks";
 import { Avatar, Dropdown } from "antd";
 import { useMemo } from "react";
@@ -67,7 +67,10 @@ export function UserMenu({ ...restProps }: ButtonProps) {
 				{...restProps}
 				className={cn(restProps.className, "rounded-full px-1")}
 			>
-				<Avatar src={avatar} />
+				{/* 空串转 undefined + 默认人形图标：antd 对 src="" 渲染 <img src="">
+				导致头像空白，无 src 时默认又只渲染空 span（host 免登录链
+				userStore.avatar 恒为初始 ""，layout e2e I2 暴露） */}
+				<Avatar src={avatar || undefined} icon={<UserOutlined />} />
 			</BasicButton>
 		</Dropdown>
 	);

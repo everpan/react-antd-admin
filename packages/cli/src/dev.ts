@@ -147,6 +147,15 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 			return;
 		}
 
+		// shell dist 内的静态文件兜底（favicon 等）：App 链由 vite public/
+		// 提供，宿主链此前 404（layout e2e I3 暴露）。放 SPA fallback 之前，
+		// 且仅服务真实存在的文件，不影响 SPA 路由
+		const shellFilePath = resolve(shellDist, rel.slice(1));
+		if (rel !== "/" && existsSync(shellFilePath) && statSync(shellFilePath).isFile()) {
+			sendFile(res, shellFilePath);
+			return;
+		}
+
 		// SPA history fallback：宿主用 createBrowserRouter，深链接/刷新直达
 		// /demo/detail 等路由路径必须回落宿主 HTML（对齐 vite dev 的 spa 行为），
 		// 否则浏览器级 e2e M3 深链接用例直接 HTTP 404（layout e2e 审查发现）

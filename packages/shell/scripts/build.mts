@@ -14,12 +14,11 @@
 
 import { execSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { parse, resolve } from "node:path";
 import process from "node:process";
-import { createRequire } from "node:module";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { generateImportmap, generateShellEntries, isSharedDep, SHARED_DEPS } from "@react-antd-admin/cli/shared-deps";
 import {
 	collectDynamicRequires,
 	collectExportGaps,
@@ -28,8 +27,9 @@ import {
 	parseDynamicRequires,
 	parseEsmExports,
 } from "@react-antd-admin/cli/esm-exports";
-import { build as esbuild } from "esbuild";
+import { generateImportmap, generateShellEntries, isSharedDep, SHARED_DEPS } from "@react-antd-admin/cli/shared-deps";
 import react from "@vitejs/plugin-react";
+import { build as esbuild } from "esbuild";
 import { build } from "vite";
 
 import { defaultTrustedOrigins, generateCsp, generateNonce } from "../src/csp";
@@ -73,7 +73,7 @@ const REACT_CJS_PKGS = new Set<string>([
 	"react/jsx-dev-runtime",
 ]);
 
-const VALID_ID = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+const VALID_ID = /^[A-Z_$][\w$]*$/i;
 
 /**
  * 「是共享依赖 且 不是本包」→ external，交给 importmap 解析（单例，D5）。
@@ -139,7 +139,7 @@ function requireShimBanner(specifiers: string[]): string {
 		`var __rad_require = {\n${entries}\n};`,
 		"var require = function (id) {",
 		"  if (Object.prototype.hasOwnProperty.call(__rad_require, id)) return __rad_require[id];",
-		'  throw new Error("Dynamic require of " + JSON.stringify(id) + " is not supported（该说明符未在共享表内登记）");',
+		"  throw new Error(\"Dynamic require of \" + JSON.stringify(id) + \" is not supported（该说明符未在共享表内登记）\");",
 		"};",
 	].join("\n");
 }
@@ -199,9 +199,11 @@ async function resolveExportNames(pkg: string): Promise<string[] | null> {
  */
 function explicitForwardingShim(pkg: string, names: string[]): string {
 	const src = JSON.stringify(pkg);
-	return `import * as __m from ${src};\n`
-		+ names.map(n => `export const ${n} = __m[${JSON.stringify(n)}];`).join("\n") + "\n"
-		+ `export default (__m.default ?? __m);\n`;
+	return [
+		`import * as __m from ${src};\n`,
+		...names.map(n => `export const ${n} = __m[${JSON.stringify(n)}];\n`),
+		"export default (__m.default ?? __m);\n",
+	].join("");
 }
 
 /**
@@ -213,9 +215,11 @@ function explicitForwardingShim(pkg: string, names: string[]): string {
  */
 function starShim(pkg: string): string {
 	const src = JSON.stringify(pkg);
-	return `import * as __ns from ${src};\n`
-		+ `export * from ${src};\n`
-		+ `export default (__ns.default ?? __ns);\n`;
+	return [
+		`import * as __ns from ${src};\n`,
+		`export * from ${src};\n`,
+		"export default (__ns.default ?? __ns);\n",
+	].join("");
 }
 
 /**
@@ -229,13 +233,15 @@ async function buildCssEntry(entry: { name: string, pkg: string }) {
 	const require = createRequire(import.meta.url);
 	const cssPath = require.resolve(entry.pkg);
 	const css = readFileSync(cssPath, "utf-8");
-	const shim = `const __css = ${JSON.stringify(css)};\n`
-		+ `if (!document.querySelector('style[data-rad-css=${JSON.stringify(entry.pkg)}]')) {\n`
-		+ `  const __s = document.createElement("style");\n`
-		+ `  __s.setAttribute("data-rad-css", ${JSON.stringify(entry.pkg)});\n`
-		+ `  __s.textContent = __css;\n`
-		+ `  document.head.appendChild(__s);\n`
-		+ `}\n`;
+	const shim = [
+		`const __css = ${JSON.stringify(css)};\n`,
+		`if (!document.querySelector('style[data-rad-css=${JSON.stringify(entry.pkg)}]')) {\n`,
+		"  const __s = document.createElement(\"style\");\n",
+		`  __s.setAttribute("data-rad-css", ${JSON.stringify(entry.pkg)});\n`,
+		"  __s.textContent = __css;\n",
+		"  document.head.appendChild(__s);\n",
+		"}\n",
+	].join("");
 	writeFileSync(resolve(assetsDir, `${entry.name}.js`), shim);
 }
 
@@ -316,7 +322,7 @@ const BARE_IMPORT_RE = /\bimport\s*\(\s*["']([^"']+)["']\s*\)|\bfrom\s+["']([^"'
 
 /** 自动生成的子路径资产名统一加 rad- 前缀，避免与 SHARED_DEPS 显式资产名冲突 */
 function subpathAssetName(spec: string): string {
-	return `rad-${spec.replace(/[^a-zA-Z0-9]+/g, "-")}`;
+	return `rad-${spec.replace(/[^a-z0-9]+/gi, "-")}`;
 }
 
 /** 为单个非父包透传的子路径构建独立 ESM（或 CSS）共享资产 */
@@ -360,12 +366,10 @@ async function autoGenerateSubpathAssets(base: Record<string, string>): Promise<
 			if (!file.endsWith(".js"))
 				continue;
 			const src = readFileSync(resolve(assetsDir, file), "utf-8");
-			let mm: RegExpExecArray | null;
 			BARE_IMPORT_RE.lastIndex = 0;
-			while ((mm = BARE_IMPORT_RE.exec(src))) {
+			for (let mm = BARE_IMPORT_RE.exec(src); mm; mm = BARE_IMPORT_RE.exec(src)) {
 				const spec = mm[1] ?? mm[2] ?? mm[3];
-				if (!spec || spec.startsWith(".") || spec.startsWith("/") || spec.startsWith("data:")
-					|| map[spec])
+				if (!spec || [".", "/", "data:"].some(p => spec.startsWith(p)) || map[spec])
 					continue;
 				// 最长匹配（含子路径）的父共享依赖
 				const parent = [...SHARED_DEPS]
@@ -440,9 +444,9 @@ function assertSharedExportsComplete(): void {
 	const unresolved = collectUnresolvedSpecifiers(distDir);
 	if (unresolved.length) {
 		throw new Error(
-			`[shell] 存在 importmap 未覆盖的裸说明符（${unresolved.length} 处）——浏览器中会抛 "Failed to resolve module specifier"：\n`
-			+ unresolved.map(g => `  · ${g.file} → "${g.specifier}"`).join("\n")
-			+ "\n修复：在 SHARED_DEPS 增补该深路径条目（importmap 无前缀通配，深路径须单独成条）。",
+			`[shell] 存在 importmap 未覆盖的裸说明符（${unresolved.length} 处）——浏览器中会抛 "Failed to resolve module specifier"：\n${
+				unresolved.map(g => `  · ${g.file} → "${g.specifier}"`).join("\n")
+			}\n修复：在 SHARED_DEPS 增补该深路径条目（importmap 无前缀通配，深路径须单独成条）。`,
 		);
 	}
 
@@ -450,9 +454,9 @@ function assertSharedExportsComplete(): void {
 	const requireHits = collectDynamicRequires(distDir);
 	if (requireHits.length) {
 		throw new Error(
-			`[shell] 共享资产存在未被垫片覆盖的动态 require（${requireHits.length} 处）——浏览器中会抛 "Dynamic require of ... is not supported"：\n`
-			+ requireHits.map(h => `  · ${h.file} 动态 require "${h.specifier}"（${h.url}）`).join("\n")
-			+ "\n修复：确认本文件的 repairDynamicRequires 已覆盖该资产；若说明符不在共享表内，请登记或改为静态 import。",
+			`[shell] 共享资产存在未被垫片覆盖的动态 require（${requireHits.length} 处）——浏览器中会抛 "Dynamic require of ... is not supported"：\n${
+				requireHits.map(h => `  · ${h.file} 动态 require "${h.specifier}"（${h.url}）`).join("\n")
+			}\n修复：确认本文件的 repairDynamicRequires 已覆盖该资产；若说明符不在共享表内，请登记或改为静态 import。`,
 		);
 	}
 
@@ -520,6 +524,12 @@ async function main() {
 	await buildHost();
 	assertSharedExportsComplete();
 	writeVersionsJson();
+
+	// favicon：App 链由根 index.html + public/favicon.ico 提供，宿主链此前
+	// 整链缺失（layout e2e I3 暴露）。与根 public 同源拷贝，保持两链一致
+	const faviconSrc = resolve(shellDir, "../../public/favicon.ico");
+	if (existsSync(faviconSrc))
+		copyFileSync(faviconSrc, resolve(distDir, "favicon.ico"));
 
 	console.log("[shell] 完成 →", distDir);
 }
