@@ -9,8 +9,8 @@ import { AntDesignOutlined, ApartmentOutlined, AppstoreOutlined, ArrowDownOutlin
 import { Avatar, Badge, Breadcrumb, Button, Checkbox, Col, ColorPicker, ConfigProvider, Divider, Drawer, Dropdown, Empty, FloatButton, Form, Grid, Input, InputNumber, List, Menu, Modal, Popover, Result, Row, Select, Slider, Space, Spin, Switch, Tabs, Tooltip, Tree, Typography, Upload, Watermark, message, theme } from "antd";
 import { Fragment as Fragment$1, jsx, jsxs } from "react/jsx-runtime";
 import i18next from "i18next";
-import { useCountDown, useDebounceFn, useFullscreen, useKeyPress, useLocalStorageState, useResponsive, useSize, useToggle } from "ahooks";
 import { ThemeProvider, createUseStyles } from "react-jss";
+import { useCountDown, useDebounceFn, useFullscreen, useKeyPress, useLocalStorageState, useResponsive, useSize, useToggle } from "ahooks";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useSpinDelay } from "spin-delay";
@@ -129,7 +129,7 @@ function getAppInfo() {
 			"version": "0.0.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-08-31 14:56:53"
+		"lastBuildTime": "2026-08-31 16:25:49"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -356,6 +356,63 @@ function useCurrentRoute() {
 }
 var init_use_current_route = __esmMin((() => {}));
 //#endregion
+//#region src/router/utils/add-route-id-by-path.ts
+/**
+* 为路由对象添加一个唯一的 ID，替代路由自动生成的 id，该 ID 默认为路由的路径（path）
+* {
+*   path: '/dashboard',
+* }
+*
+* 转化后
+*
+* {
+*   path: '/dashboard',
+*   id: '/dashboard',
+* }
+*/
+function addRouteIdByPath(routes, parentId = "") {
+	return routes.map((route) => {
+		const newRoute = {
+			...route,
+			id: route.index ? `${parentId}/` : route.path
+		};
+		if (newRoute.children && newRoute.children.length > 0) newRoute.children = addRouteIdByPath(newRoute.children, route.path);
+		return newRoute;
+	});
+}
+var init_add_route_id_by_path = __esmMin((() => {}));
+//#endregion
+//#region src/components/jss-theme-provider/index.tsx
+/**
+* JSSThemeProvider 组件
+*
+* @zh JSSThemeProvider 组件，用于将 Ant Design 的 token 和全局主题状态传递给子组件
+* @en JSSThemeProvider component, used to pass Ant Design tokens and global theme state to child components
+*
+* @param {JSSThemeProviderProps} props 组件属性
+* @returns {JSX.Element} 返回的JSX元素
+*/
+function JSSThemeProvider({ children }) {
+	const prefixCls = use(ConfigProvider.ConfigContext).getPrefixCls();
+	const { token } = useToken();
+	const { theme, isDark, isLight } = usePreferences();
+	return /* @__PURE__ */ jsx(ThemeProvider, {
+		theme: {
+			token,
+			theme,
+			isDark,
+			isLight,
+			prefixCls
+		},
+		children
+	});
+}
+var useToken;
+var init_jss_theme_provider = __esmMin((() => {
+	init_use_preferences();
+	({useToken} = theme);
+}));
+//#endregion
 //#region src/hooks/use-device-type/index.ts
 /**
 * 判断当前设备类型（移动设备、iPad、PC 等）
@@ -522,37 +579,6 @@ var init_use_layout_style = __esmMin((() => {
 	init_use_css_var();
 	init_constants$2();
 	init_dom();
-}));
-//#endregion
-//#region src/components/jss-theme-provider/index.tsx
-/**
-* JSSThemeProvider 组件
-*
-* @zh JSSThemeProvider 组件，用于将 Ant Design 的 token 和全局主题状态传递给子组件
-* @en JSSThemeProvider component, used to pass Ant Design tokens and global theme state to child components
-*
-* @param {JSSThemeProviderProps} props 组件属性
-* @returns {JSX.Element} 返回的JSX元素
-*/
-function JSSThemeProvider({ children }) {
-	const prefixCls = use(ConfigProvider.ConfigContext).getPrefixCls();
-	const { token } = useToken();
-	const { theme, isDark, isLight } = usePreferences();
-	return /* @__PURE__ */ jsx(ThemeProvider, {
-		theme: {
-			token,
-			theme,
-			isDark,
-			isLight,
-			prefixCls
-		},
-		children
-	});
-}
-var useToken;
-var init_jss_theme_provider = __esmMin((() => {
-	init_use_preferences();
-	({useToken} = theme);
 }));
 //#endregion
 //#region src/store/tabs.ts
@@ -5076,9 +5102,9 @@ function ContainerLayout() {
 }
 var useBreakpoint;
 var init_container_layout = __esmMin((() => {
+	init_jss_theme_provider();
 	init_use_device_type();
 	init_use_layout_style();
-	init_jss_theme_provider();
 	init_preferences$3();
 	init_tabs();
 	init_cn();
@@ -5455,7 +5481,7 @@ function getRoutes() {
 		if (requiredPermissions?.length && !requiredPermissions.every((perm) => permissions.includes(perm))) continue;
 		if (instance.definition.routes.length > 0) routes.push(...resolveRouteLayouts(instance.definition.routes));
 	}
-	return routes;
+	return addRouteIdByPath(routes);
 }
 function getRegisteredStore(name) {
 	return registeredStores.get(name);
@@ -5495,6 +5521,7 @@ function getAllRoutePathKeys() {
 }
 var modules, registeredStores, registeredApiPrefixes;
 var init_module_loader = __esmMin((() => {
+	init_add_route_id_by_path();
 	init_resolve_layout();
 	init_access();
 	init_user();
@@ -6626,32 +6653,6 @@ function ascending(arr) {
 	});
 }
 var init_ascending = __esmMin((() => {}));
-//#endregion
-//#region src/router/utils/add-route-id-by-path.ts
-/**
-* 为路由对象添加一个唯一的 ID，替代路由自动生成的 id，该 ID 默认为路由的路径（path）
-* {
-*   path: '/dashboard',
-* }
-*
-* 转化后
-*
-* {
-*   path: '/dashboard',
-*   id: '/dashboard',
-* }
-*/
-function addRouteIdByPath(routes, parentId = "") {
-	return routes.map((route) => {
-		const newRoute = {
-			...route,
-			id: route.index ? `${parentId}/` : route.path
-		};
-		if (newRoute.children && newRoute.children.length > 0) newRoute.children = addRouteIdByPath(newRoute.children, route.path);
-		return newRoute;
-	});
-}
-var init_add_route_id_by_path = __esmMin((() => {}));
 //#endregion
 //#region src/router/utils/merge-route-modules.tsx
 function mergeRouteModules(...routes) {

@@ -2,6 +2,7 @@ import { HomeOutlined } from "@ant-design/icons";
 import { defineModule } from "@react-antd-admin/runtime";
 import { createElement } from "react";
 
+import DemoDetailPage from "./pages/detail";
 import DemoPage from "./pages/index";
 
 /**
@@ -39,6 +40,14 @@ export default defineModule({
 					handle: {
 						title: "demo:menu.demo",
 						icon: createElement(HomeOutlined),
+						keepAlive: true,
+					},
+				},
+				{
+					path: "detail",
+					Component: DemoDetailPage,
+					handle: {
+						title: "demo:menu.detail",
 						keepAlive: true,
 					},
 				},

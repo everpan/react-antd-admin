@@ -10,7 +10,7 @@ test.describe("menu-consistency", () => {
 	// M1：每个菜单项可点击、URL 变化、内容区非空；数据全来自运行时 DOM
 	test("M1: 全部菜单项可达且内容非空", async ({ page }) => {
 		await expandAllSubmenus(page);
-		const items = page.locator(".ant-menu .ant-menu-item");
+		const items = page.locator(".ant-menu-root .ant-menu-item");
 		const count = await items.count();
 		expect(count).toBeGreaterThan(0);
 		for (let i = 0; i < count; i++) {
@@ -27,10 +27,10 @@ test.describe("menu-consistency", () => {
 	// M2：菜单项点击后，对应项高亮（当前路由 ↔ 菜单选中态一致）
 	test("M2: 当前路由对应菜单项高亮", async ({ page }) => {
 		await expandAllSubmenus(page);
-		const items = page.locator(".ant-menu .ant-menu-item");
+		const items = page.locator(".ant-menu-root .ant-menu-item");
 		for (let i = 0, count = await items.count(); i < count; i++) {
 			await items.nth(i).click();
-			await expect(page.locator(".ant-menu .ant-menu-item-selected")).toHaveCount(1);
+			await expect(page.locator(".ant-menu-root .ant-menu-item-selected")).toHaveCount(1);
 		}
 	});
 });
