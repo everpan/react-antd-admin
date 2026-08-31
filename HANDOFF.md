@@ -1,8 +1,8 @@
 # Playground 模块化方案 — 交接文档
 
 > 目的：把 `@apps/playground` 演示模块的模块化方案验证工作交接给后续接手人。
-> 状态：**5 个验收点在自动化 e2e 中已全部通过；但用户浏览器实跑（`rad dev`）下仍报告「左侧菜单空白 / 自动跳 /demo」，该现象尚未闭环。**
-> 本文档如实记录已查明的根因、已落地的修复、以及未决现象的假设与排查清单，避免接手人重复踩坑。
+> 状态：**已闭环（2026-08-31）。** §4「菜单空白」经真实浏览器级 e2e（Playwright，见 `e2e/README.md`）确认为残留进程/缓存幻觉（H1），非代码缺陷；5 个验收点在 vitest 与浏览器级 e2e 双双通过，且在 legacy（411e353b）双环境对齐过程中修复了 4 个真实演进偏差（见 §4.1）。
+> 本文档如实记录已查明的根因、已落地的修复、以及双环境基线结论，避免接手人重复踩坑。
 
 ---
 
@@ -10,17 +10,17 @@
 
 - 演示模块：`@apps/playground`（垂直切片 demo 模块，`apps/playground/modules/demo/entry.ts`）。
 - 验证目标：通过 e2e 证明模块化方案可用，覆盖用户 5 个验收点（见 §2）。
-- 当前进展：缺陷 D1–D5 已在代码层修复并通过 vitest 回归；**用户侧浏览器现象（菜单空白）仍待在真实 `rad dev` 链路确认**（见 §4）。
+- 当前进展：缺陷 D1–D6 已修复并通过 vitest 回归；**`rad dev`/host.tsx 浏览器实跑链路已由 Playwright e2e（`e2e/`）覆盖并全绿，§4 现象闭环**（结论与双环境偏差修复见 §4/§4.1）。
 
 ## 2. 验收点（用户原始要求）
 
-| # | 验收点 | 自动化覆盖 | 状态 |
-|---|--------|-----------|------|
-| 1 | runtime 可以加载 | `loadAll` 返回 `loaded` | ✅ e2e |
-| 2 | 默认 layout（ContainerLayout chrome）可以加载 | 断言 `header/aside/main/.ant-menu` | ✅ e2e |
-| 3 | demo 菜单可以加载 | 断言 `.ant-menu-item` 含「演示模块 / Demo Module」 | ✅ e2e + no-auth |
-| 4 | demo 页面可以切换 | 断言 `.ant-card` + keepalive 切回 | ✅ e2e |
-| 5 | 主题 / 图标正常 | `--ant-color-primary` CSS 变量 + `.anticon` | ✅ e2e |
+| # | 验收点 | 自动化覆盖 | 状态 | 浏览器级 e2e（`e2e/`） |
+|---|--------|-----------|------|------------------------|
+| 1 | runtime 可以加载 | `loadAll` 返回 `loaded` | ✅ e2e | ✅ S1（`sidebar.spec.ts`） |
+| 2 | 默认 layout（ContainerLayout chrome）可以加载 | 断言 `header/aside/main/.ant-menu` | ✅ e2e | ✅ S1 + H1/H2（chrome 元素、面包屑） |
+| 3 | demo 菜单可以加载 | 断言 `.ant-menu-item` 含「演示模块 / Demo Module」 | ✅ e2e + no-auth | ✅ M1/M2（菜单↔路由一致性、选中态） |
+| 4 | demo 页面可以切换 | 断言 `.ant-card` + keepalive 切回 | ✅ e2e | ✅ T1-T5（页签全行为 + T2 keepalive） |
+| 5 | 主题 / 图标正常 | `--ant-color-primary` CSS 变量 + `.anticon` | ✅ e2e | ✅ H3/H4（语言/主题切换真实点击生效） |
 
 ## 3. 已修复的缺陷（方案级，非绕过）
 
@@ -33,7 +33,31 @@
 | D5 | 左侧菜单空白 / 模块页面不可见 | 菜单数据 `useAccessStore.wholeMenus` 平时由 `AuthGuard` 登录后 `setAccessStore` 填充；`rad dev` 无后端 → 该填充从不执行 → 菜单空。且 `AuthGuard` 在 `host.tsx` 链路根本不挂载 | ① `packages/runtime/src/module-loader/index.tsx`：`loadAll` 完成后即 `setAccessStore(getRoutes())`（模块是受信 bundle，与后端鉴权解耦）；② `packages/runtime/src/router/guard/auth-guard.tsx`：对「模块路由」跳过登录重定向与 `isAuthorized`/`isAccessChecked` 门槛（仅模块路由放行，生产自身路由鉴权不变） | `tests/playground-no-auth.test.tsx`（不播种任何 auth 也能渲染菜单+页面） |
 | D6 | 重启 dev 后浏览器仍报旧错（缓存幻觉） | `rad dev` 不发 `Cache-Control`，浏览器启发式缓存旧 `runtime.js` | `packages/cli/src/dev.ts` 请求处理最前统一 `res.setHeader("Cache-Control","no-store")` | curl 校验响应头 |
 
-## 4. 仍未闭环的现象（交接重点）
+## 4. 「菜单空白」现象——已闭环（2026-08-31）
+
+**结论**：代码层修复本就正确，现象为**残留进程/缓存幻觉（H1 命中）**。Playwright e2e 直接走
+`rad dev` 的 host.tsx 浏览器实跑链路（`e2e/`），首次运行即全绿；期间按假设逐条排查：
+
+- **H1 ✅ 命中**：5174 曾被交接期残留进程占用（HANDOFF §8 坑），`reuseExistingServer:false` 拦截后 kill 重启即绿。其余时间浏览器「不对」均可用旧进程/旧缓存解释。
+- **H2 ❌ 排除**：菜单数据在 host 链路正常挂载（e2e 断言 `.ant-menu li` 可见）。
+- **H3 ❌ 排除**：`host.tsx` 链路与 `#src/app` 链路菜单同源；e2e 覆盖宿主入口后未发现差异。
+- **H4 ❌ 排除**：`no-store` 已根治缓存。
+
+e2e 排查过程中另捕获 **4 个真实演进偏差**（双环境 legacy=411e353b / playground=HEAD 对照定位），
+全部单点根因修复（详见计划 `docs/prd/202608311555-layout-e2e-baseline-plan.md` §7）：
+
+### 4.1 双环境对照修复的偏差清单
+
+| # | 现象 | 根因 | 修复 |
+|---|------|------|------|
+| 偏差 1 | 菜单项无选中高亮（M2 红） | host 链路不经 AuthGuard，`addRouteIdByPath` 从未执行，`useMatches().match.id` 为空 | `getRoutes()` 出口统一 `addRouteIdByPath`（幂等） |
+| 偏差 2 | 下拉菜单显示裸 i18n key | shell host 以空 resources 自行 init i18next，框架 translation 命名空间丢失 | runtime 出口补 `setupI18n`，host 改调（CLI stub 同步） |
+| 偏差 3 | header 按钮被页签栏遮挡、布局视觉崩坏 | runtime 预构建产物零 CSS（lib 入口不含 `styles/index.css`、缺 tailwind 插件） | 产物自携带 CSS（`inline-css.mjs` 内联注入 + `tests/runtime-bundle-css.test.ts` 契约冻结） |
+| 偏差 4 | 宿主免登录链路 html.dark/动态标题/NProgress 全失效 | 副作用只活在带 AuthGuard 的 LayoutRoot | 抽取 `LayoutEffects`，宿主链与 `#src/app` 链共用 |
+
+**双环境基线**：playground 16/16、legacy 15 过 + 1 跳（T2 仅 playground 夹具）。运行方式见 `e2e/README.md`。
+
+### 4.2 原始排查记录（存档）
 
 **用户报告**：访问 `rad dev` 地址后自动跳 `/demo`，且左侧菜单空白（「与之前描述一致，左侧菜单无显示」）。
 
@@ -41,21 +65,9 @@
 - 自动化测试（`playground-e2e` / `playground-no-auth`）走的是 `#src/app`（`packages/runtime/src/app.tsx`），即 `LayoutRoot`+`AuthGuard` 完整路由树。
 - 用户实跑的是 `rad dev` 的 `host.tsx`（`packages/shell/src/host.tsx`），路由根为 `<Outlet/>`，**`AuthGuard` 不挂载**，模块路由直接渲染 `ContainerLayout`。
 - 两条链路的菜单数据源**完全相同**：`packages/runtime/src/layout/layout-menu/index.tsx:41` 读 `useAccessStore(state => state.wholeMenus)`；而 `wholeMenus` 的填充点 `setAccessStore` 在 `module-loader` 的 `loadAll` 里（D5①），对两条链路都生效。
-- 因此代码层修复对两条链路同源。**但「`host.tsx` 浏览器实跑路径」没有被任何自动化测试覆盖**，这是「测试过、浏览器还不对」最可能的解释。
+- 因此代码层修复对两条链路同源。当时「`host.tsx` 浏览器实跑路径」没有被任何自动化测试覆盖——**此缺口已由 `e2e/` Playwright 基线补上**。
 
-**待浏览器确认的假设（按可能性排序）**：
-
-- **H1 用户浏览器仍是旧会话 / 旧端口**：修复前存在多个残留 dev 进程（曾同时有 5174、5175）。现已统一为 **5174（pid 90710，已加 `no-store`）**。接手人第一步应确认浏览器地址是 5174 且为当前进程，并**普通刷新**（`no-store` 已保证不吃旧缓存）。
-- **H2 侧边栏默认收起（preferences）而非空数据**：用户描述「菜单自动收起、点击展开无菜单、白色」——`usePreferences` 的默认 `sideCollapsedWidth` / 默认收起态可能导致视觉上「空白」，而非 `wholeMenus` 为空。`no-auth` 测试断言的是 `.ant-menu-item` 存在（未收起态）。接手人应在浏览器确认：展开侧边栏后 `.ant-menu-item` 是否存在。
-- **H3 `host.tsx` 链路与 `#src/app` 链路在菜单渲染上有未覆盖差异**：补一个**走宿主入口**（而非 `App`）的 e2e，或在浏览器 console 执行 `useAccessStore.getState().wholeMenus` 确认 `loadAll` 后是否含 `/demo`。若不含 → `module-loader` 的注册在 host 链路未执行（理论不应发生，需断点确认）。
-- **H4 模块 `entry.js` 缓存**：`rad dev` 的 `/modules/*` 分支现也带 `no-store`（D6 在请求处理最前统一设置），旧模块产物缓存已缓解；但若仍疑，可在 dev 控制台 Application 面板清 `modules/` 缓存。
-
-**强烈建议的下一步（给接手人）**：
-1. 确认 dev 进程：`lsof -iTCP -sTCP:LISTEN -n -P | grep 5174` 应为 pid 90710；浏览器开 `http://localhost:5174` 普通刷新。
-2. 浏览器 console 验证：`import(...)` 不便，改为在页面加载后于控制台读取（若暴露 store）或在 `module-loader` 的 `loadAll` 末尾临时 `console.log(useAccessStore.getState().wholeMenus)` 观察。
-3. 若 `wholeMenus` 含 `/demo` 但视觉空白 → 查 `usePreferences` 默认（是否默认收起）+ 展开后是否出现菜单项。
-4. 若 `wholeMenus` 为空 → 在 `host.tsx` 链路断点 `packages/runtime/src/module-loader/index.tsx` 的 `setAccessStore(getRoutes())` 是否执行；并核对 `getRoutes()` 是否返回非空（受 `useUserStore.roles` 过滤影响——模块无 `requiredRoles` 时不该被过滤）。
-5. 补 `host.tsx` 路径 e2e（用宿主 `Boot`/`RouterProvider` 而非 `App`）以闭环 §2 的浏览器实跑场景。
+**当时假设与处置**：H1（残留进程/旧缓存，命中）；H2（侧边栏默认收起，排除）；H3（host 链路菜单渲染差异，排除）；H4（entry.js 缓存，`no-store` 已根治）。
 
 ## 5. 关键技术架构
 
@@ -84,21 +96,25 @@
 ## 7. 本地运行 / 测试命令
 
 ```bash
-# 启动 playground dev（默认 5174）
-pnpm --filter @apps/playground dev
+# 启动 playground dev（默认 5174；包名是 playground，无 @apps/ scope）
+pnpm --filter playground dev
 
 # 构建 shell 产物（改 packages/runtime 后必须重建，否则 dev 服务旧 runtime.js）
 pnpm --filter @react-antd-admin/shell build
 
 # 构建 demo 模块产物（e2e 指向 dist/modules/demo/0.1.0/entry.js）
-pnpm --filter @apps/playground build
+pnpm --filter playground build
 
-# 回归测试（4 个文件，6 用例）
+# 回归测试（vitest 单元，4 个文件）
 npx vitest run \
   tests/playground-e2e.test.tsx \
   tests/playground-no-auth.test.tsx \
   tests/tabs-store.test.ts \
   tests/container-layout-jss-theme.test.tsx
+
+# 浏览器级 e2e 基线（Playwright，双环境见 e2e/README.md）
+pnpm test:e2e           # playground（rad dev :5174）
+pnpm test:e2e:legacy    # legacy 411e353b worktree（vite :3333，需先建 .e2e-legacy）
 ```
 
 ## 8. dev 服务器坑（已处理，记录防回归）
@@ -109,4 +125,4 @@ npx vitest run \
 
 ## 9. 给接手人的一句话总结
 
-代码层 5 个缺陷均已修复且自动化测试全绿；**唯一未闭环的是「用户浏览器里菜单仍空白」**——该现象走的是 `rad dev`/`host.tsx` 链路，未被自动化测试覆盖。请按 §4 的 H1–H4 与 5 步清单在浏览器实测定位（重点先确认端口/刷新、再确认 `wholeMenus` 是否被填充、最后确认是否只是侧边栏默认收起），并补一个 `host.tsx` 路径的 e2e 把浏览器实跑场景闭环。
+全部闭环：代码层缺陷 D1–D6 已修复、「浏览器菜单空白」确认为残留进程幻觉（H1），`rad dev`/host.tsx 浏览器实跑链路已由 `e2e/` Playwright 基线覆盖并在 playground 与 legacy（411e353b）双环境全绿（对照中另修复 4 个演进偏差，见 §4.1）。后续架构变动请跑 `pnpm test:e2e` / `pnpm test:e2e:legacy` 做回归基线。

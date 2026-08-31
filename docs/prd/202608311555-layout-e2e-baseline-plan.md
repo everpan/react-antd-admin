@@ -581,20 +581,20 @@ test.describe("footer", () => {
 **Interfaces:**
 - Consumes: 全部 spec（Task 2-6）；`enterApp` 的 legacy 登录分支（Task 1）
 
-- [ ] **Step 1: 建 worktree 并装依赖**
+- [x] **Step 1: 建 worktree 并装依赖**
 
 ```bash
 git worktree add .e2e-legacy 411e353b
 pnpm --dir .e2e-legacy install
 ```
 
-- [ ] **Step 2: 跑 legacy 全套**
+- [x] **Step 2: 跑 legacy 全套**
 
 ```bash
 pnpm test:e2e:legacy
 ```
 
-- [ ] **Step 3: 处理失败，逐条分类**（写进 §7 执行日志）：
+- [x] **Step 3: 处理失败，逐条分类**（写进 §7 执行日志）：
 
 | 分类 | 含义 | 动作 |
 |------|------|------|
@@ -602,7 +602,7 @@ pnpm test:e2e:legacy
 | 真偏差 | legacy 绿 / playground 红，或反之 | 按设计 §5：修 playground 侧至双绿；除非证明 legacy 行为本身是 bug，则修 legacy 行为定义并更新 spec |
 | legacy 环境自身问题 | worktree 依赖/端口 | 修环境，不改 spec |
 
-- [ ] **Step 4: 双环境全绿后回归 vitest，Commit**
+- [x] **Step 4: 双环境全绿后回归 vitest，Commit**
 
 ```bash
 pnpm test:e2e && pnpm test:e2e:legacy
@@ -623,9 +623,9 @@ git add -A && git commit -m "test(e2e): legacy(411e353b) 双环境基线贯通�
 - Create: `e2e/README.md`（运行方式、环境矩阵、数据驱动约定）
 - Modify: 本计划（§7 执行日志收尾段：总耗时、遗留问题）
 
-- [ ] **Step 1: 写 `e2e/README.md`**（内容：双环境命令、`.e2e-legacy` 建法、spec 零 import 约定、菜单数据驱动原则）
-- [ ] **Step 2: 更新 `HANDOFF.md`** §4 结论与 §2 验收表（补「浏览器级 e2e」列）
-- [ ] **Step 3: Commit** `docs(e2e): e2e README 与 HANDOFF 闭环回写`
+- [x] **Step 1: 写 `e2e/README.md`**（内容：双环境命令、`.e2e-legacy` 建法、spec 零 import 约定、菜单数据驱动原则）
+- [x] **Step 2: 更新 `HANDOFF.md`** §4 结论与 §2 验收表（补「浏览器级 e2e」列）
+- [x] **Step 3: Commit** `docs(e2e): e2e README 与 HANDOFF 闭环回写`
 
 ### Task 9: 审查
 
@@ -644,5 +644,5 @@ git add -A && git commit -m "test(e2e): legacy(411e353b) 双环境基线贯通�
 - [x] Phase 1 小结：骨架一次成型；`pnpm add` 把全部 devDeps 迁入 catalog 触发 yaml/sort-keys，已排序修复（反常规：pnpm 11 的 catalog 迁移副作用）。S1 首跑即暴露 HANDOFF §8 坑——5174 被 pid 90710（交接期残留进程）占用，`reuseExistingServer:false` 正确拦截；kill 后**真实浏览器一次通过**，证实「菜单空白」是残留进程/缓存幻觉（H1），非代码缺陷，HANDOFF §4 闭环。耗时约 25 分钟（含 chromium 下载与构建）。
 - [x] Phase 2 小结：M1/M2 一次成型，但 **M2 首跑红，捕获演进偏差 1（真缺陷）**——host.tsx 链路（rad dev）路由无 `id`，菜单选中态依赖 `useMatches().match.id`，`addRouteIdByPath` 只在 auth-guard 里做，宿主链不经守卫 → 菜单永远无高亮。修复取单点根因：`getRoutes()` 出口统一 `addRouteIdByPath`（幂等，auth-guard 双重应用无害），并加单元回归断言 `getRoutes()[0]?.id === "/demo"`。S1/M1 因 demo 模块新增 detail 子路由使 `/demo` 变 submenu，`.ant-menu` 同时匹配根菜单与弹层 → 全部收敛为 `.ant-menu-root`（反常规：antd Menu 嵌套时类选择器有歧义）。S2-S3 揭示实现与常规 antd 布局不同（与业界不符类）：侧栏是自绘 `<aside>`（无 `.ant-layout-sider-collapsed` 类），折叠态 = aside 宽度收缩 + 菜单 `ant-menu-inline-collapsed`；PC 折叠触发器在侧栏底部 SiderTrigger，header 内折叠按钮仅移动端渲染——spec 按实现校准。demo 模块补 `/demo/detail`（keepAlive + 受控 Input）供 T2。playground 6/6 绿（5.0s）。耗时约 45 分钟。
 - [x] Phase 3 小结：**本阶段价值最高——e2e 连续揪出三个真缺陷（偏差 2/3/4）**。T1-T5 首轮暴露两个夹具层事实：index 子路由在父路由有其他子路由时不再渲染为独立菜单项（菜单叶子=详情/关于，断言全部改为数据驱动探测）；home 页签 closable:false 无关闭钮（T3-T5 据此设计）。T2 keepalive 用例否决了计划中的 page.goto 方案（整页刷新摧毁缓存必假红），改为全程客户端导航+页签标题定位。T5 首红牵出**偏差 2**：shell host 以空 resources 自行 init i18next，框架 translation 命名空间全丢（tabbar 菜单裸奔成 key）——修复：runtime 出口补 setupI18n、CLI stub 同步、host 改调 runtime 初始化。H3/H4 首红牵出**偏差 3（最严重）**：几何探测发现 header 操作按钮 y=59 落在页签栏带区（y56-109）被页签 remove 按钮拦截，截图证实整链视觉崩坏——根因是 runtime 预构建产物零样式（lib 入口不含 styles/index.css 且缺 tailwind 插件），修复为产物自携带 CSS（34KB 内联注入 + 契约测试冻结）。H4 再牵出**偏差 4**：html.dark/动态标题/NProgress 副作用只活在 LayoutRoot（带 AuthGuard），宿主免登录链路全部失效——抽取 LayoutEffects 双链共用。playground 16/16 绿，布局视觉复核对齐设计。反常规记录：①e2e 语义断言（visible/count）对 CSS 缺失完全免疫，S1 冒烟「绿」不代表布局对——几何/视觉断言（boundingBox、elementFromPoint、截图）是必要补充；②ThemeButton 用 onPointerDown 而非 onClick。耗时约 100 分钟。
-- [ ] Phase 4 小结（待填）
+- [x] Phase 4 小结：legacy 接入顺带修了 4 个 spec 侧环境缺陷，全程未改产品代码。①worktree webServer 三连坑：playwright 的 webServer cwd 是 config 目录（命令需 ../）、worktree 的 .git 是文件致 simple-git-hooks prepare 必失败、pnpm 11 run 前自动 install（verify-deps-before-run）拖死启动——命令统一 `--config.verify-deps-before-run=false`；②**全量假红根因**：登录页是懒加载 chunk，`load` 事件时表单未挂载，`count()>0` 判断恒 0 从未点击（曾以「点了但导航失败」误诊，绕了远路）——改 waitFor 等表单；③**手风琴模式**（legacy preferences.accordion 默认开，同层互斥、祖先保留）宣判 expandAllSubmenus 全量展开在该环境不可能成立：M1/M2 改深度优先逐组访问、tabbar 只挂载首组；「当前路由所在组自动展开、点击反而收起」吃掉三轮绿红反复，isOpen 守卫三处统一；④legacy closeOthers 在 openTabs.size===2 时禁用 → T3/T4/T5 改按导航数点击。legacy 假菜单含无组件路由（/route-nest/menu2）空白属数据特性，M1 以 allowBlankRoutes 区分。期间 38.8 分钟超长跑与 15 连假红均定位到上述根因后消除。**双环境全绿：playground 16/16（9.8s）、legacy 15 过 + 1 跳（T2 仅 playground 夹具）（1.3min）**。耗时约 130 分钟。
 - [ ] Phase 5 总结（待填）
