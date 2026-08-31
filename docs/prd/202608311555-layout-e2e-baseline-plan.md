@@ -44,14 +44,14 @@
 **Interfaces:**
 - Produces: `getEnv(): { name: "playground" | "legacy"; baseURL: string; needsAuth: boolean; homePath: string }`（`e2e/fixtures/env.ts`）；`enterApp(page: Page): Promise<void>`（`e2e/fixtures/enter-app.ts`，完成 goto + 按需登录 + 等 header 可见）；`expandAllSubmenus(page: Page): Promise<void>`（`e2e/fixtures/menu.ts`，展开全部 collapsed submenu 使所有 `.ant-menu-item` 挂载——antd 收起态不渲染子项，凡按索引遍历菜单项的 spec 必须先调它）。后续所有 spec 只经这三个入口交互。
 
-- [ ] **Step 1: 安装依赖与浏览器**
+- [x] **Step 1: 安装依赖与浏览器**
 
 ```bash
 pnpm add -D -w @playwright/test
 pnpm exec playwright install chromium
 ```
 
-- [ ] **Step 2: 写 `e2e/playwright.config.ts`**
+- [x] **Step 2: 写 `e2e/playwright.config.ts`**
 
 ```ts
 import process from "node:process";
@@ -96,7 +96,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 3: 写 `e2e/fixtures/env.ts` 与 `e2e/fixtures/enter-app.ts`**
+- [x] **Step 3: 写 `e2e/fixtures/env.ts` 与 `e2e/fixtures/enter-app.ts`**
 
 ```ts
 // e2e/fixtures/env.ts
@@ -152,7 +152,7 @@ export async function expandAllSubmenus(page: Page): Promise<void> {
 }
 ```
 
-- [ ] **Step 4: 更新 `package.json` scripts 与 `.gitignore`**
+- [x] **Step 4: 更新 `package.json` scripts 与 `.gitignore`**
 
 ```json
 "test:e2e": "playwright test --config e2e/playwright.config.ts",
@@ -168,13 +168,13 @@ e2e/test-results/
 e2e/playwright-report/
 ```
 
-- [ ] **Step 5: 构建 shell 与 playground 产物（rad dev 前置）**
+- [x] **Step 5: 构建 shell 与 playground 产物（rad dev 前置）**
 
 ```bash
 pnpm --filter @react-antd-admin/shell build && pnpm --filter playground build
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add package.json pnpm-lock.yaml .gitignore e2e/
@@ -189,7 +189,7 @@ git commit -m "test(e2e): Playwright 骨架与双环境适配器"
 **Interfaces:**
 - Consumes: `enterApp`（Task 1）
 
-- [ ] **Step 1: 写冒烟用例（先跑，预期暴露 HANDOFF §4 白屏）**
+- [x] **Step 1: 写冒烟用例（先跑，预期暴露 HANDOFF §4 白屏）**
 
 ```ts
 // e2e/layout/sidebar.spec.ts
@@ -212,7 +212,7 @@ test.describe("sidebar", () => {
 });
 ```
 
-- [ ] **Step 2: 运行，观察结果**
+- [x] **Step 2: 运行，观察结果**
 
 ```bash
 pnpm test:e2e
@@ -222,7 +222,7 @@ Expected 两种结局：
 - **PASS** → 说明 D5 修复在真实浏览器生效，HANDOFF §4 闭环（H1/H2 类环境幻觉），直接进 Step 4。
 - **FAIL（菜单为空或跳转异常）** → 进 Step 3 修复。
 
-- [ ] **Step 3:（条件步骤，仅 FAIL 时）定位并修复菜单空白**
+- [x] **Step 3:（条件步骤，仅 FAIL 时）定位并修复菜单空白**
 
 按 HANDOFF §4 排查清单执行，顺序：
 1. `pnpm test:e2e -- --headed`（或 `pnpm test:e2e:ui`）肉眼确认现象；
@@ -230,7 +230,7 @@ Expected 两种结局：
 3. 若 `wholeMenus` 为空 → 修 `module-loader`/`resolve-layout` 链路；若 `wholeMenus` 含 `/demo` 但视觉空白 → 查 `usePreferences` 默认收起态（H2）与 `LayoutSidebar` 渲染条件；
 4. 修复后必须回归：`npx vitest run tests/playground-e2e.test.tsx tests/playground-no-auth.test.tsx` 全绿，再跑 `pnpm test:e2e` 至 PASS。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add e2e/layout/sidebar.spec.ts
@@ -641,7 +641,7 @@ git add -A && git commit -m "test(e2e): legacy(411e353b) 双环境基线贯通�
 
 > 每 Phase 结束追加一段：状态、关键过程、耗时。
 
-- [ ] Phase 1 小结（待填）
+- [x] Phase 1 小结：骨架一次成型；`pnpm add` 把全部 devDeps 迁入 catalog 触发 yaml/sort-keys，已排序修复（反常规：pnpm 11 的 catalog 迁移副作用）。S1 首跑即暴露 HANDOFF §8 坑——5174 被 pid 90710（交接期残留进程）占用，`reuseExistingServer:false` 正确拦截；kill 后**真实浏览器一次通过**，证实「菜单空白」是残留进程/缓存幻觉（H1），非代码缺陷，HANDOFF §4 闭环。耗时约 25 分钟（含 chromium 下载与构建）。
 - [ ] Phase 2 小结（待填）
 - [ ] Phase 3 小结（待填）
 - [ ] Phase 4 小结（待填）
