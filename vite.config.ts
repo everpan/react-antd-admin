@@ -58,13 +58,15 @@ export default defineConfig({
 			},
 		}),
 		// 类型检查器在 vitest 下交由编辑器/CI 负责，避免拖慢测试且误报
-		...(process.env.VITEST ? [] : [
-			checker({
-				typescript: true,
-				terminal: false,
-				enableBuild: false,
-			}),
-		]),
+		...(process.env.VITEST
+			? []
+			: [
+				checker({
+					typescript: true,
+					terminal: false,
+					enableBuild: false,
+				}),
+			]),
 		/**
 		 * 点击页面 DOM 打开 IDE 并将光标自动定位到源代码位置
 		 *
@@ -77,12 +79,14 @@ export default defineConfig({
 		 * 与 vitest 的 oxc 转换不兼容（属性名被篡改导致 PARSE_ERROR），
 		 * 且测试不需要「点击定位源码」能力。
 		 */
-		...(process.env.VITEST ? [] : [
-			codeInspectorPlugin({
-				bundler: "vite",
-				// hideConsole: true,
-			}),
-		]),
+		...(process.env.VITEST
+			? []
+			: [
+				codeInspectorPlugin({
+					bundler: "vite",
+					// hideConsole: true,
+				}),
+			]),
 
 		/**
 		 * 按需加载图标
@@ -135,13 +139,20 @@ export default defineConfig({
 	test: {
 		globals: true,
 		environment: "happy-dom",
+		// 单元测试只在 tests/：避免 vitest 误收 e2e/layout/*.spec.ts
+		// （Playwright spec 会被 vitest 当测试文件加载而报错）
+		include: ["tests/**/*.{test,spec}.?(c|m)[jt]s?(x)"],
 		setupFiles: ["./packages/runtime/src/setupTests.ts"],
 		// pro-components 是 CJS（"type":"module" 却用 exports.x），vitest 的模块
 		// 求值器会按 ESM 直读而报 "exports is not defined"。这里把它指向「已构建」
 		// 的 shell 资产 pro-components.js（esbuild 已做 CJS→ESM 互操作，是干净的
 		// ESM）——仅测试生效，不影响应用构建；生产构建本就使用此资产。
-		deps: {
-			inline: [/@ant-design\/pro-components/],
+		// vitest 4：deps.inline 已迁移至 server.deps.inline（旧位置类型报错，
+		// layout e2e 审查发现）
+		server: {
+			deps: {
+				inline: [/@ant-design\/pro-components/],
+			},
 		},
 	},
 	server: {

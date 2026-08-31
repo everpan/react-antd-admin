@@ -61,14 +61,18 @@ function Boot() {
 		let cancelled = false;
 		(async () => {
 			try {
-				await ensureI18n();
+				ensureI18n(); // setupI18n 为同步初始化，无需等待
 
 				// 模块清单与宿主版本矩阵并行拉取（versions.json 提供
 				// peerRuntime 校验所需的宿主 runtime 版本，P7.6；404 容忍——
-				// 拿不到则跳过版本校验并告警，不阻断启动）
+				// 拿不到则跳过版本校验并告警，不阻断启动）。
+				// 必须基于 BASE_URL 取绝对路径：相对 "./" 在深链接（如
+				// /demo/detail 直接刷新）下会解析成 /demo/modules.json → 404
+				// （layout e2e M3 深链接用例暴露）
+				const base = import.meta.env.BASE_URL ?? "/";
 				const [res, versionsRes] = await Promise.all([
-					fetch("./modules.json"),
-					fetch("./versions.json").catch(() => null),
+					fetch(`${base}modules.json`),
+					fetch(`${base}versions.json`).catch(() => null),
 				]);
 				if (!res.ok)
 					throw new Error(`modules.json 加载失败：HTTP ${res.status}`);

@@ -2,7 +2,6 @@ import { StyleProvider } from "@ant-design/cssinjs";
 import { theme as antdTheme, ConfigProvider } from "antd";
 import dayjs from "dayjs";
 import { Suspense, useCallback, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 import { RouterProvider } from "react-router";
 
 import { AntdApp } from "#src/components/antd-app";
@@ -17,7 +16,6 @@ import { customAntdDarkTheme, customAntdLightTheme } from "./styles/theme/antd/a
 import "dayjs/locale/zh-cn";
 
 export default function App() {
-	const { i18n } = useTranslation();
 	const {
 		language,
 		isDark,
@@ -55,14 +53,6 @@ export default function App() {
 			dayjs.locale("zh-cn");
 		}
 	}, [language]);
-
-	/**
-	 * react-i18next internationalization
-	 * @link https://www.i18next.com/overview/api#changelanguage
-	 */
-	useEffect(() => {
-		i18n.changeLanguage(language);
-	}, [language, i18n.changeLanguage]);
 
 	/**
 	 * Change theme when the system theme changes

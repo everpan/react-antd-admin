@@ -10,7 +10,7 @@ test.describe("header", () => {
 	// （折叠触发器在 PC 端位于侧栏底部 SiderTrigger，header 内仅移动端渲染——见 S2-S3 校准）
 	test("H1: header 基本元素", async ({ page }) => {
 		const header = page.locator("header");
-		await expect(header.locator("button").filter({ hasNotText: "" })).not.toHaveCount(0);
+		await expect(header.locator("button").first()).toBeVisible(); // 操作区按钮
 		await expect(header.locator("button:has(.anticon-translation)")).toBeVisible(); // 语言切换
 		await expect(header.locator(".ant-avatar")).toBeVisible(); // 用户菜单
 	});

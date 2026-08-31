@@ -10,7 +10,6 @@ import { exception403Path, exception404Path, exception500Path, loginPath } from 
 import { accessRoutes, whiteRouteNames } from "#src/router/routes";
 import { isSendRoutingRequest } from "#src/router/routes/config";
 import { ensureBuiltinExceptionRoutes } from "#src/router/routes/core/exception";
-import { addRouteIdByPath } from "#src/router/utils/add-route-id-by-path";
 import { generateRoutesFromBackend } from "#src/router/utils/generate-routes-from-backend";
 import { generateRoutesByFrontend } from "#src/router/utils/generate-routes-from-frontend";
 import { useAccessStore } from "#src/store/access";
@@ -114,7 +113,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 			 * Modules are loaded once at app bootstrap (index.tsx, P5.5/O5); the guard
 			 * only consumes already-registered routes and never touches the manifest.
 			 */
-			const moduleRoutes = addRouteIdByPath(getModuleRoutes());
+			const moduleRoutes = getModuleRoutes(); // id 已在 getRoutes() 出口统一补齐（偏差 1）
 			if (moduleRoutes.length > 0) {
 				routes.push(...moduleRoutes);
 			}
@@ -212,7 +211,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
 		 * rad dev）。模块是受信 bundle，无需等待后端 userInfo。已注册则跳过，
 		 * 避免每次路由变更重复合并。生产自身路由仍由下方登录分支拉取。
 		 */
-		const moduleRoutes = addRouteIdByPath(getModuleRoutes());
+		const moduleRoutes = getModuleRoutes(); // id 已在 getRoutes() 出口统一补齐（偏差 1）
 		if (moduleRoutes.length > 0) {
 			const existing = useAccessStore.getState().routeList;
 			const alreadyRegistered = moduleRoutes.every(m => existing.some(r => r.path === m.path));

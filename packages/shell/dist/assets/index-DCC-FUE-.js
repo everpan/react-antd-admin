@@ -146,8 +146,9 @@ function Boot() {
 		let cancelled = false;
 		(async () => {
 			try {
-				await ensureI18n();
-				const [res, versionsRes] = await Promise.all([fetch("./modules.json"), fetch("./versions.json").catch(() => null)]);
+				ensureI18n();
+				const base = "/";
+				const [res, versionsRes] = await Promise.all([fetch(`${base}modules.json`), fetch(`${base}versions.json`).catch(() => null)]);
 				if (!res.ok) throw new Error(`modules.json 加载失败：HTTP ${res.status}`);
 				const list = await res.json();
 				const runtimeVersion = versionsRes?.ok ? extractRuntimeVersion(await versionsRes.json()) : void 0;

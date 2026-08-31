@@ -92,6 +92,9 @@ export default defineConfig({
 		// 偏差 3：单入口 lib 构建，CSS 统一产出 runtime.css（随后由
 		// scripts/inline-css.mjs 内联回 runtime.js）
 		cssCodeSplit: false,
+		// 注意：0 = 任何 url() 资产（字体/图片）都会成为 dist 外部文件，
+		// 内联后的 CSS 引用 ./assets/* 在 importmap 宿主中无法解析——当前
+		// 产物无外部 url() 引用（契约测试守护），若未来引入资产需改高内联限
 		assetsInlineLimit: 0,
 		lib: {
 			entry: path.join(DIR, "src/index.ts"),

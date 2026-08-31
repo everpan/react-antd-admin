@@ -55,7 +55,21 @@ e2e 排查过程中另捕获 **4 个真实演进偏差**（双环境 legacy=411e
 | 偏差 3 | header 按钮被页签栏遮挡、布局视觉崩坏 | runtime 预构建产物零 CSS（lib 入口不含 `styles/index.css`、缺 tailwind 插件） | 产物自携带 CSS（`inline-css.mjs` 内联注入 + `tests/runtime-bundle-css.test.ts` 契约冻结） |
 | 偏差 4 | 宿主免登录链路 html.dark/动态标题/NProgress 全失效 | 副作用只活在带 AuthGuard 的 LayoutRoot | 抽取 `LayoutEffects`，宿主链与 `#src/app` 链共用 |
 
-**双环境基线**：playground 16/16、legacy 15 过 + 1 跳（T2 仅 playground 夹具）。运行方式见 `e2e/README.md`。
+**双环境基线**：playground 17/17、legacy 16 过 + 1 跳（T2 仅 playground 夹具）。运行方式见 `e2e/README.md`。
+
+### 4.3 审查期补充修复（Task 9 code review）
+
+- **host 深链接 404（真缺陷）**：`host.tsx` 以相对路径 `fetch("./modules.json")`，
+  深链接 `/demo/detail` 刷新时解析为 `/demo/modules.json` → 404，宿主启动失败。
+  改为基于 `import.meta.env.BASE_URL` 的绝对路径；`rad dev` 同时补 SPA history
+  fallback（`Accept: text/html` 判定，对齐 vite dev）。由新增 M3 深链接用例暴露。
+- **host 链语言偏好回退（真缺陷）**：持久化语言 → `i18n.changeLanguage` 同步原是
+  App 链专属，宿主刷新后语言回退 zh-CN。已抽入 `LayoutEffects` 双链共用。
+- **过期契约测试修正**：`tests/cli-build.test.ts` 的 P1「多 chunk」断言与 P7.x 的
+  单文件模块决策（`codeSplitting:false`，见 `packages/cli/src/build.ts`）冲突，
+  反转为「单文件 + 无相对 chunk 引用」。
+- **已知边界**（详见 `e2e/README.md`）：host 链 antd 暗色算法/地域包尚未与偏好同源，
+  基线 H3/H4 绿只覆盖断言部分，属后续工作。
 
 ### 4.2 原始排查记录（存档）
 

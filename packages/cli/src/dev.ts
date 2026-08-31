@@ -147,6 +147,15 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 			return;
 		}
 
+		// SPA history fallback：宿主用 createBrowserRouter，深链接/刷新直达
+		// /demo/detail 等路由路径必须回落宿主 HTML（对齐 vite dev 的 spa 行为），
+		// 否则浏览器级 e2e M3 深链接用例直接 HTTP 404（layout e2e 审查发现）
+		if (!extname(rel) && (req.headers.accept ?? "").includes("text/html")) {
+			res.writeHead(200, { "content-type": MIME[".html"] });
+			res.end(readFileSync(resolve(shellDist, "index.html")));
+			return;
+		}
+
 		res.writeHead(404, { "content-type": "text/plain" });
 		res.end(`404 Not Found: ${rel}`);
 	});

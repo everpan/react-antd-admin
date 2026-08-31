@@ -11,7 +11,7 @@ import { PROJECT_ROOT } from "./helpers/paths";
  *
  * 核心验证三件事：
  *   1. 共享依赖被 external，产物里只剩裸说明符（设计文档 D2）
- *   2. code splitting 保留，不需要内联成单文件（D6）
+ *   2. 单文件产物：无相对 chunk 引用（P7.x 契约，取代 P1/D6 的 code splitting）
  *   3. modules.json 的 integrity 正确，可供宿主做 L2 完整性校验（D7）
  */
 
@@ -81,21 +81,21 @@ describe("rad build 产出模块 chunk", () => {
 		}
 	});
 
-	it("保留 code splitting：存在独立 chunk 且以相对路径引用", () => {
-		expect(jsFiles().length, "应产出多个 chunk 而非单文件").toBeGreaterThan(1);
+	// 契约变更（P7.x）：模块产物为**单文件**（rolldownOptions.output.codeSplitting:
+	// false，见 packages/cli/src/build.ts）——拆分 chunk 在非 HTTP 加载上下文无法
+	// 经 import.meta.url 解析，且 lazy chunk 逃逸 L2 完整性保护；单文件整包受
+	// modulepreload+integrity 覆盖。本用例由 P1 的「多 chunk + 相对路径引用」
+	// 反转为「单文件 + 无相对 chunk 引用」（layout e2e 审查期发现契约过期）。
+	it("单文件产物：仅 entry.js 且无相对 chunk 引用", () => {
+		expect(jsFiles(), "模块产物应为单文件 entry.js").toEqual(["entry.js"]);
 
 		const entry = fs.readFileSync(path.join(MODULE_DIR, "entry.js"), "utf-8");
-		// 静态 `from "./x.js"` 与动态 `import("./x.js")` 都要覆盖——
-		// 模块路由普遍是 lazy() 的，产物里多见动态形式
+		// 动态 import（lazy 页面、i18n）必须被内联，不得产出运行时相对 chunk 引用
 		const relativeImports = [
 			...entry.matchAll(/from\s*["'](\.[^"']+)["']/g),
 			...entry.matchAll(/import\(\s*["'](\.[^"']+)["']\s*\)/g),
 		].map(m => m[1]);
-		expect(relativeImports.length, "entry 应以相对路径引用 chunk").toBeGreaterThan(0);
-
-		for (const rel of relativeImports) {
-			expect(fs.existsSync(path.join(MODULE_DIR, rel)), `被引用的 chunk 应存在：${rel}`).toBe(true);
-		}
+		expect(relativeImports, "产物不应引用相对 chunk").toEqual([]);
 	});
 
 	it("产物中不出现 blob: 或 data: 形式的 import", () => {

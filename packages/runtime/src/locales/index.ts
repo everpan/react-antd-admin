@@ -47,6 +47,11 @@ export const i18nInitOptions: InitOptions = {
 export const i18n = i18next.use(initReactI18next);
 
 export function setupI18n() {
+	// 幂等守卫：出口是冻结契约，宿主可能重复调用；重复 init 会把语言重置
+	// 回 zh-CN 并叠加 languageChanged 监听器
+	if (i18next.isInitialized) {
+		return;
+	}
 	i18n.init(i18nInitOptions);
 	/**
 	 * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/lang

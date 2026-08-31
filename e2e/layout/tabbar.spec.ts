@@ -21,24 +21,28 @@ async function openMenuItems(page: Page, indexes: number[]): Promise<number> {
 }
 
 /**
- * 经菜单连续导航直至凑满 wanted 次导航，返回打开后的页签数。
+ * 经菜单连续导航直至凑满 wanted 次导航，返回打开后的页签数与最后一次
+ * 导航到的菜单项文案（激活页签异步落账的等待基准）。
  * legacy 首叶子项常为当前页（/home，不导航），固定索引会少开页签，
  * 使「关闭其它」在 openTabs.size===2 时被禁用（legacy 语义）——按导航数点击两环境一致。
  */
-async function navigateTimes(page: Page, wanted: number): Promise<number> {
+async function navigateTimes(page: Page, wanted: number): Promise<{ count: number, lastText: string }> {
 	const items = page.locator(".ant-menu-root .ant-menu-item");
 	const total = await items.count();
 	const before = await page.locator(".ant-tabs-tab").count();
 	let opened = 0;
+	let lastText = "";
 	for (let i = 0; i < total && opened < wanted; i++) {
 		const urlBefore = page.url();
 		await items.nth(i).click();
 		// 点击当前路由对应项时 use-menu 早退不导航（1s 内 URL 未变视为未新增页签）
 		const navigated = await page.waitForURL(url => url.toString() !== urlBefore, { timeout: 1000 }).then(() => true).catch(() => false);
-		if (navigated)
+		if (navigated) {
 			opened++;
+			lastText = (await items.nth(i).textContent())?.trim() ?? "";
+		}
 	}
-	return before + opened;
+	return { count: before + opened, lastText };
 }
 
 test.describe("tabbar", () => {
@@ -86,7 +90,7 @@ test.describe("tabbar", () => {
 
 	// T3：关闭非激活页签，激活态不变（末次点击使最后叶子项激活，nth(1) 必为非激活且非 home（home closable:false 无关闭钮））
 	test("T3: 关闭非激活页签", async ({ page }) => {
-		const countBefore = await navigateTimes(page, 2);
+		const { count: countBefore } = await navigateTimes(page, 2);
 		test.skip(countBefore < 3, "可打开页签不足三个");
 		const tabs = page.locator(".ant-tabs-tab");
 		await tabs.nth(1).locator(".ant-tabs-tab-remove").click();
@@ -96,7 +100,7 @@ test.describe("tabbar", () => {
 
 	// T4：关闭激活页签后仍有唯一激活页签（落到剩余页签）
 	test("T4: 关闭激活页签", async ({ page }) => {
-		const countBefore = await navigateTimes(page, 2);
+		const { count: countBefore } = await navigateTimes(page, 2);
 		test.skip(countBefore < 3, "可打开页签不足三个");
 		const tabs = page.locator(".ant-tabs-tab");
 		await tabs.nth(countBefore - 1).locator(".ant-tabs-tab-remove").click();
@@ -106,11 +110,13 @@ test.describe("tabbar", () => {
 
 	// T5：「关闭其它」后仅剩 home（closable:false 恒保留）+ 当前激活页签
 	test("T5: 关闭其它页签", async ({ page }) => {
-		await navigateTimes(page, 2);
-		// 等激活页签追上最后一次导航（activeKey 经 useEffect 异步落账）
-		const lastText = (await page.locator(".ant-tabs-tab-active").textContent())?.trim() ?? "";
+		const { lastText } = await navigateTimes(page, 2);
+		// 等激活页签追上最后一次导航（activeKey 经 useEffect 异步落账；
+		// 基准必须是「最后导航到的菜单项文案」，读当前激活页签会和落账赛跑）
 		await expect(page.locator(".ant-tabs-tab-active")).toHaveText(lastText);
-		await page.locator("button:has(.anticon-down)").first().click(); // TabOptions 下拉（tabbar 右侧更多按钮）
+		// TabOptions 下拉：锚定在「含 .ant-tabs 的最内层容器」内，避免误中 main 内容区的箭头按钮
+		const tabbarArea = page.locator("div:has(.ant-tabs)").last();
+		await tabbarArea.locator("button:has(.anticon-down)").first().click();
 		await page.locator(".ant-dropdown-menu-item", { hasText: /关闭其它标签页|Close Other Tabs/i }).click();
 		await expect(page.locator(".ant-tabs-tab")).toHaveCount(2);
 		await expect(page.locator(".ant-tabs-tab-active")).toHaveCount(1);

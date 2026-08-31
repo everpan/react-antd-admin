@@ -19,11 +19,21 @@ import { toggleHtmlClass } from "#src/utils/toggle-html-class";
  */
 export function LayoutEffects() {
 	const matches = useMatches();
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const location = useLocation();
 	const { language, isDark, enableDynamicTitle } = usePreferences();
 	const isLogin = useAuthStore(state => Boolean(state.token));
 	const isAuthorized = useUserStore(state => Boolean(state.id));
+
+	/**
+	 * 持久化语言偏好 → i18next 同步。原为 App 链专属（app.tsx），host 链缺失
+	 * 导致刷新后语言回退 zh-CN（layout e2e 审查发现），抽到双链共用。
+	 */
+	useEffect(() => {
+		if (i18n.language !== language) {
+			i18n.changeLanguage(language);
+		}
+	}, [language, i18n]);
 
 	/* document title */
 	useEffect(() => {

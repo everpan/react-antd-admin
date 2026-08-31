@@ -15,8 +15,10 @@ const cssPath = path.join(dist, "runtime.css");
 const jsPath = path.join(dist, "runtime.js");
 
 if (!existsSync(cssPath)) {
-	console.warn("[inline-css] dist/runtime.css 不存在，跳过（构建未产出 CSS？）");
-	process.exit(0);
+	// 产物自携带样式是冻结契约（tests/runtime-bundle-css.test.ts），CSS 缺失
+	// 意味着样式链路断裂，必须响亮失败而不是静默产出裸 JS
+	console.error("[inline-css] dist/runtime.css 不存在：产物必须自携带样式（偏差 3 契约），构建中止");
+	process.exit(1);
 }
 
 const css = readFileSync(cssPath, "utf-8");

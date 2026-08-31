@@ -46,3 +46,14 @@ prepare 必失败，因此 legacy webServer 命令带 `--config.verify-deps-befo
 - legacy `/route-nest/menu2` 无组件路由 → main 空白，属 fake 菜单数据特性（M1 以
   `allowBlankRoutes` 跳过非空断言）。
 - legacy 首个 `/home` 页签 `closable:false` 常驻，页签计数断言按「起始数+实际导航数」计算。
+- legacy 假菜单含指向不存在路由的演示项 → 落到内置 `/exception/404` 兜底页（M3 过滤）。
+
+## 已知覆盖边界（基线绿 ≠ 完全对等）
+
+- **host 链 antd 主题/地域不完全同源**：shell 的 `ConfigProvider` 固定
+  `defaultAlgorithm` 且未传 locale——`html.dark`（H4 断言的）已同源，但 antd 组件
+  自身的暗色算法与语言包在宿主链仍不随偏好。H3/H4 绿只保证断言的那部分行为。
+- **语言偏好同步**（原 host 链缺失，审查期修复入 LayoutEffects）只覆盖 i18next 与
+  `html[lang]`；dayjs/antd locale 同步仍在 App 链。
+- **rad dev 的 SPA history fallback** 按 `Accept: text/html` 判定（对齐 vite dev），
+  非 HTML 请求（fetch API）仍按 404 处理——这是特性不是缺陷。

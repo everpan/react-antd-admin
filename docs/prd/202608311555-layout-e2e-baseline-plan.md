@@ -403,7 +403,7 @@ git commit -m "test(e2e): S2-S5 侧栏行为；demo 模块补 detail 页供 keep
 **Interfaces:**
 - Consumes: `enterApp`；demo 模块 `/demo` 与 `/demo/detail`（Task 4 产出，detail 页 `Input[placeholder="detail-input"]`）
 
-- [ ] **Step 1: 写用例**
+- [x] **Step 1: 写用例**
 
 ```ts
 // e2e/layout/tabbar.spec.ts
@@ -474,8 +474,8 @@ test.describe("tabbar", () => {
 });
 ```
 
-- [ ] **Step 2: 运行至 PASS**；T5 的下拉入口选择器若失配，用 `--ui` 模式看运行时 DOM 调整（两处布局对 tabbar 操作区的 DOM 可能不同，以实际为准）
-- [ ] **Step 3: Commit** `test(e2e): T1-T5 页签行为与 keepalive 等价性`
+- [x] **Step 2: 运行至 PASS**；T5 的下拉入口选择器若失配，用 `--ui` 模式看运行时 DOM 调整（两处布局对 tabbar 操作区的 DOM 可能不同，以实际为准）
+- [x] **Step 3: Commit** `test(e2e): T1-T5 页签行为与 keepalive 等价性`
 
 ### Task 6: H1-H4 header + F1 footer
 
@@ -486,7 +486,7 @@ test.describe("tabbar", () => {
 **Interfaces:**
 - Consumes: `enterApp`
 
-- [ ] **Step 1: header 用例**
+- [x] **Step 1: header 用例**
 
 ```ts
 // e2e/layout/header.spec.ts
@@ -533,7 +533,7 @@ test.describe("header", () => {
 });
 ```
 
-- [ ] **Step 2: footer 用例（绑定偏好存储，不依赖设置面板 UI）**
+- [x] **Step 2: footer 用例（绑定偏好存储，不依赖设置面板 UI）**
 
 ```ts
 // e2e/layout/footer.spec.ts
@@ -564,8 +564,8 @@ test.describe("footer", () => {
 });
 ```
 
-- [ ] **Step 3: 运行至 PASS**；H3/H4 的按钮选择器按运行时 DOM 校准（语言/主题按钮图标名两环境可能不同）
-- [ ] **Step 4: Commit** `test(e2e): H1-H4 header 与 F1 footer`
+- [x] **Step 3: 运行至 PASS**；H3/H4 的按钮选择器按运行时 DOM 校准（语言/主题按钮图标名两环境可能不同）
+- [x] **Step 4: Commit** `test(e2e): H1-H4 header 与 F1 footer`
 
 **Phase 3 收尾：** §7 追加小结（keepalive 等价性结论、选择器校准点、耗时），勾选 Task 5-6。
 
@@ -629,9 +629,9 @@ git add -A && git commit -m "test(e2e): legacy(411e353b) 双环境基线贯通�
 
 ### Task 9: 审查
 
-- [ ] **Step 1:** 调 `superpowers:requesting-code-review`（或 code-review 技能）对分支全量 diff 审查：spec 零 import 约束、选择器脆弱点、等待策略
-- [ ] **Step 2:** 按审查意见修复并回归双环境
-- [ ] **Step 3:** Commit `refactor(e2e): 审查意见修复`
+- [x] **Step 1:** 调 `superpowers:requesting-code-review`（或 code-review 技能）对分支全量 diff 审查：spec 零 import 约束、选择器脆弱点、等待策略
+- [x] **Step 2:** 按审查意见修复并回归双环境
+- [x] **Step 3:** Commit `refactor(e2e): 审查意见修复`
 
 **Phase 5 收尾：** §7 追加总结段（本阶段关键过程与总耗时），勾选 Task 8-9。
 
@@ -645,4 +645,4 @@ git add -A && git commit -m "test(e2e): legacy(411e353b) 双环境基线贯通�
 - [x] Phase 2 小结：M1/M2 一次成型，但 **M2 首跑红，捕获演进偏差 1（真缺陷）**——host.tsx 链路（rad dev）路由无 `id`，菜单选中态依赖 `useMatches().match.id`，`addRouteIdByPath` 只在 auth-guard 里做，宿主链不经守卫 → 菜单永远无高亮。修复取单点根因：`getRoutes()` 出口统一 `addRouteIdByPath`（幂等，auth-guard 双重应用无害），并加单元回归断言 `getRoutes()[0]?.id === "/demo"`。S1/M1 因 demo 模块新增 detail 子路由使 `/demo` 变 submenu，`.ant-menu` 同时匹配根菜单与弹层 → 全部收敛为 `.ant-menu-root`（反常规：antd Menu 嵌套时类选择器有歧义）。S2-S3 揭示实现与常规 antd 布局不同（与业界不符类）：侧栏是自绘 `<aside>`（无 `.ant-layout-sider-collapsed` 类），折叠态 = aside 宽度收缩 + 菜单 `ant-menu-inline-collapsed`；PC 折叠触发器在侧栏底部 SiderTrigger，header 内折叠按钮仅移动端渲染——spec 按实现校准。demo 模块补 `/demo/detail`（keepAlive + 受控 Input）供 T2。playground 6/6 绿（5.0s）。耗时约 45 分钟。
 - [x] Phase 3 小结：**本阶段价值最高——e2e 连续揪出三个真缺陷（偏差 2/3/4）**。T1-T5 首轮暴露两个夹具层事实：index 子路由在父路由有其他子路由时不再渲染为独立菜单项（菜单叶子=详情/关于，断言全部改为数据驱动探测）；home 页签 closable:false 无关闭钮（T3-T5 据此设计）。T2 keepalive 用例否决了计划中的 page.goto 方案（整页刷新摧毁缓存必假红），改为全程客户端导航+页签标题定位。T5 首红牵出**偏差 2**：shell host 以空 resources 自行 init i18next，框架 translation 命名空间全丢（tabbar 菜单裸奔成 key）——修复：runtime 出口补 setupI18n、CLI stub 同步、host 改调 runtime 初始化。H3/H4 首红牵出**偏差 3（最严重）**：几何探测发现 header 操作按钮 y=59 落在页签栏带区（y56-109）被页签 remove 按钮拦截，截图证实整链视觉崩坏——根因是 runtime 预构建产物零样式（lib 入口不含 styles/index.css 且缺 tailwind 插件），修复为产物自携带 CSS（34KB 内联注入 + 契约测试冻结）。H4 再牵出**偏差 4**：html.dark/动态标题/NProgress 副作用只活在 LayoutRoot（带 AuthGuard），宿主免登录链路全部失效——抽取 LayoutEffects 双链共用。playground 16/16 绿，布局视觉复核对齐设计。反常规记录：①e2e 语义断言（visible/count）对 CSS 缺失完全免疫，S1 冒烟「绿」不代表布局对——几何/视觉断言（boundingBox、elementFromPoint、截图）是必要补充；②ThemeButton 用 onPointerDown 而非 onClick。耗时约 100 分钟。
 - [x] Phase 4 小结：legacy 接入顺带修了 4 个 spec 侧环境缺陷，全程未改产品代码。①worktree webServer 三连坑：playwright 的 webServer cwd 是 config 目录（命令需 ../）、worktree 的 .git 是文件致 simple-git-hooks prepare 必失败、pnpm 11 run 前自动 install（verify-deps-before-run）拖死启动——命令统一 `--config.verify-deps-before-run=false`；②**全量假红根因**：登录页是懒加载 chunk，`load` 事件时表单未挂载，`count()>0` 判断恒 0 从未点击（曾以「点了但导航失败」误诊，绕了远路）——改 waitFor 等表单；③**手风琴模式**（legacy preferences.accordion 默认开，同层互斥、祖先保留）宣判 expandAllSubmenus 全量展开在该环境不可能成立：M1/M2 改深度优先逐组访问、tabbar 只挂载首组；「当前路由所在组自动展开、点击反而收起」吃掉三轮绿红反复，isOpen 守卫三处统一；④legacy closeOthers 在 openTabs.size===2 时禁用 → T3/T4/T5 改按导航数点击。legacy 假菜单含无组件路由（/route-nest/menu2）空白属数据特性，M1 以 allowBlankRoutes 区分。期间 38.8 分钟超长跑与 15 连假红均定位到上述根因后消除。**双环境全绿：playground 16/16（9.8s）、legacy 15 过 + 1 跳（T2 仅 playground 夹具）（1.3min）**。耗时约 130 分钟。
-- [ ] Phase 5 总结（待填）
+- [x] Phase 5 总结：**文档回写（Task 8）**：`e2e/README.md`（双环境命令、worktree 建法、六条 spec 约定、环境噪音）；HANDOFF 头部状态/§1/§2（补浏览器级 e2e 列）/§4（闭环结论 + 偏差 1-4 清单 + 假设存档）/§7（修正 playground 包名、补 e2e 命令）/§9 重写。**审查（Task 9）**：subagent 首次因默认模型 400 失败，换显式 sonnet 成功；结论「With fixes」——无 Critical，硬约束①-⑥逐条验证通过，夹具（手风琴感知 DFS）获评出色。按意见修复：**Important 2 项**——①设计矩阵 M2 的「直接 URL 访问」路径缺覆盖 → 新增 **M3 深链接用例**，连带揪出两个真产品缺陷并根因修复：host 相对路径 `fetch("./modules.json")` 在深链接下 404（改 BASE_URL 绝对路径）+ rad dev 无 SPA history fallback（按 Accept: text/html 补齐，对齐 vite dev）；②host 链语言偏好不同源（刷新回退 zh-CN）→ 语言同步抽入 LayoutEffects 双链共用。**Minor 9 项**：setupI18n 幂等守卫、host 去 await、auth-guard 两处冗余 addRouteIdByPath 移除（id 单一所有权在 getRoutes 出口）、inline-css 缺 CSS 改响亮失败、assetsInlineLimit:0 风险注释、header H1 空 filter 无效断言移除、tabbar T5 下拉按钮限定页签区、tsconfig include 补 e2e、`test.deps.inline` → `test.server.deps.inline` 修复**先前已存在**的 `pnpm typecheck` 报错（现全绿且 typecheck 覆盖 e2e）。附带发现并修正：vitest 误收 e2e spec（include 收敛 tests/）；**`tests/cli-build.test.ts`「多 chunk」契约已过期**——P7.x 已刻意决策单文件模块（build.ts codeSplitting:false 注释详尽），契约反转更新（审查者「分支门禁漏跑全量单测」的提醒成立，该回归在分支上存在了 6 个提交）。双绿回归：playground 17/17（12s）、legacy 16 过 + 1 跳（2.2min）、vitest 45 文件 233 用例全绿、typecheck 全绿。M3 两环境调试沉淀断言语义：叶子路由 item 恰 1、组落地页（index 子路由）submenu 恰 1、兜底页不属不变量。已知边界（记录于 e2e/README.md）：host 链 antd 暗色算法/地域包未与偏好同源，属后续工作。Phase 5 耗时约 100 分钟；**全计划累计约 445 分钟**。
