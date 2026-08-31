@@ -15,6 +15,10 @@ import { vitePluginFakeServer } from "vite-plugin-fake-server";
 import svgrPlugin from "vite-plugin-svgr";
 
 import { author, dependencies, license, name, version } from "./package.json";
+// App 链生产形态与模块同源共享依赖（方案 A，见 docs/prd/202608312359-app-chain-importmap-plan.md）：
+// 共享表内说明符一律 external，经注入的 importmap（scripts/inject-importmap.mts）
+// 解析到 shell 已验证的单例资产（react/antd/runtime 单例，D5/D12）。
+import { isSharedDep } from "./packages/cli/src/shared-deps";
 
 const __APP_INFO__ = {
 	// P6.5 执行中发现：devDependencies 全清单被打进产物等于向攻击者公开
@@ -177,19 +181,22 @@ export default defineConfig({
 		// Adjust chunk size warning limit (default 500 kB).
 		chunkSizeWarningLimit: 2000,
 		rolldownOptions: {
+			// 共享依赖不进主应用产物，运行时经 importmap 命中 shell 资产——与
+			// 模块产物同一份实例（单例）。
+			external: (id: string) => isSharedDep(id),
+			// runtime 源出口（index.ts，与 lib 构建同一入口）作为第二入口，
+			// preserveEntrySignatures 保住完整导出面：模块经 importmap import
+			// "@react-antd-admin/runtime" 必须命中宿主正在用的这一份实例
+			// （shell 的 runtime.js 无 App bootstrap，不能借用）——importmap 键
+			// 由 scripts/inject-importmap.mts 指向该 entry chunk。
+			input: {
+				index: path.resolve("index.html"),
+				runtime: path.resolve("packages/runtime/src/index.ts"),
+			},
+			preserveEntrySignatures: "exports-only",
 			output: {
 				codeSplitting: {
 					groups: [
-						{
-							name: "react",
-							// ["react", "react-dom", "react-router"]
-							test: /node_modules[\\/]react/,
-						},
-						{
-							name: "antd",
-							// ["antd", "@ant-design/icons"]
-							test: /node_modules[\\/](antd|@ant-design[\\/]icons)/,
-						},
 						{
 							name: "faker",
 							// ["@faker-js/faker"]

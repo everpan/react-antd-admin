@@ -21,7 +21,7 @@
 	},
 	"scripts": {
 		"dev": "vite --host",
-		"build": "NODE_OPTIONS=--max-old-space-size=8192 vite build && tsx scripts/build-modules.ts",
+		"build": "NODE_OPTIONS=--max-old-space-size=8192 vite build && tsx scripts/build-modules.ts && tsx scripts/inject-importmap.ts",
 		"build:framework": "vite build",
 		"build:modules": "tsx scripts/build-modules.ts",
 		"create:module": "tsx scripts/create-module.ts",

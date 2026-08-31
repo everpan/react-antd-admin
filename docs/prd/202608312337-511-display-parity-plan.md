@@ -37,6 +37,10 @@ importmap 方向拍板并修复后转常规防护。P1-P3 进常规双环境矩�
 
 ## 遗留决策（待拍板）
 
+> **已拍板并落地（2026-09-01）**：方案 A，见
+> `docs/prd/202608312359-app-chain-importmap-plan.md`——prod-smoke 已由
+> known-red 转绿（exit 0）。
+
 App 链生产形态修复方向：
 - **A. 复用 shell importmap（推荐）**：vite build 共享依赖 external + 拷 shell assets +
   注入 importmap + 导出完整性门禁；与模块 100% 同源单例，复用已验证基建。
