@@ -590,13 +590,13 @@ importers:
         version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
     devDependencies:
       '@iconify-json/ri':
-        specifier: ^1.2.10
+        specifier: 'catalog:'
         version: 1.2.10
       '@iconify/tools':
-        specifier: ^5.0.11
+        specifier: 'catalog:'
         version: 5.0.14
       unplugin-icons:
-        specifier: ^23.0.1
+        specifier: 'catalog:'
         version: 23.0.1(@svgr/core@8.1.0(supports-color@7.2.0)(typescript@6.0.3))(@vue/compiler-sfc@3.5.42)
 
   packages/shell:
