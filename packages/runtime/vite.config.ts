@@ -1,6 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { cleanupSVG, isEmptyColor, parseColors, runSVGO, SVG } from "@iconify/tools";
+import tailwindcss from "@tailwindcss/vite";
 import dayjs from "dayjs";
 import { FileSystemIconLoader } from "unplugin-icons/loaders";
 import Icons from "unplugin-icons/vite";
@@ -34,6 +35,11 @@ export default defineConfig({
 		},
 	},
 	plugins: [
+		// 偏差 3（layout e2e 暴露）：lib 构建必须自带 tailwind 管线，否则
+		// index.tsx 的 `import "./styles/index.css"` 被静默丢弃，宿主链路
+		// （shell/外部模块工程）没有布局工具类。产物 CSS 由 scripts/inline-css.mjs
+		// 内联回 runtime.js（style 注入），保证 import 即得完整样式。
+		tailwindcss(),
 		// P3.1：出口新增 icons，`~icons/*` 为裸说明符，必须构建期内联，
 		// 否则会成为外部导入（宿主 importmap 无法提供）。配置与根
 		// vite.config.ts 的 Icons 块保持一致（P4 SHARED_DEPS 时收敛为共享）。
@@ -83,6 +89,10 @@ export default defineConfig({
 		emptyOutDir: true,
 		sourcemap: false,
 		minify: false,
+		// 偏差 3：单入口 lib 构建，CSS 统一产出 runtime.css（随后由
+		// scripts/inline-css.mjs 内联回 runtime.js）
+		cssCodeSplit: false,
+		assetsInlineLimit: 0,
 		lib: {
 			entry: path.join(DIR, "src/index.ts"),
 			formats: ["es"],

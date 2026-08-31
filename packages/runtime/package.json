@@ -19,7 +19,7 @@
 		"dist"
 	],
 	"scripts": {
-		"build": "vite build && tsc -p tsconfig.dts.json && node scripts/rewrite-dts-specifiers.mjs"
+		"build": "vite build && tsc -p tsconfig.dts.json && node scripts/rewrite-dts-specifiers.mjs && node scripts/inline-css.mjs"
 	},
 	"peerDependencies": {
 		"@ant-design/icons": "catalog:",
@@ -49,9 +49,9 @@
 		"zustand": "catalog:"
 	},
 	"devDependencies": {
-		"@iconify-json/ri": "^1.2.10",
-		"@iconify/tools": "^5.0.11",
-		"unplugin-icons": "^23.0.1"
+		"@iconify-json/ri": "catalog:",
+		"@iconify/tools": "catalog:",
+		"unplugin-icons": "catalog:"
 	},
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org/",

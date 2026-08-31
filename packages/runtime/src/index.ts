@@ -11,6 +11,12 @@
  */
 
 // api
+// 产物自携带样式（偏差 3，layout e2e 暴露）：框架 chrome（布局/菜单/页签）
+// 的 tailwind 工具类与 base/animation/keep-alive 样式随公共出口分发。
+// 此前只被 app 引导入口 index.tsx 引用，预构建产物零样式，宿主链路视觉崩坏。
+// 构建后由 scripts/inline-css.mjs 内联回 runtime.js（importmap 链路无 CSS 模块概念）。
+import "./styles/index.css";
+
 export * from "./api/home";
 export * from "./api/system/menu";
 export * from "./api/system/role";
@@ -33,6 +39,8 @@ export * from "./hooks/use-access";
 export { usePreferences } from "./hooks/use-preferences";
 // 图标（unplugin-icons 构建期内联；包装导出保证声明零泄漏）
 export * from "./icons";
+// 全局副作用（标题/暗色类/NProgress，不含守卫）——宿主链路与 LayoutRoot 共用（偏差 4）
+export { LayoutEffects } from "./layout/layout-effects";
 // i18n 初始化（宿主链路必需：shell 曾以空 resources 自行 init，导致框架
 // translation 命名空间（preferences/common 等）丢失——e2e 基线偏差 2）
 export { setupI18n } from "./locales";

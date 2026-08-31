@@ -18,7 +18,12 @@
 
 import type { HostModule } from "./preload";
 import { StyleProvider } from "@ant-design/cssinjs";
-import { getRoutes, loadAll, setupI18n } from "@react-antd-admin/runtime";
+import {
+	getRoutes,
+	LayoutEffects,
+	loadAll,
+	setupI18n,
+} from "@react-antd-admin/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App as AntdApp, ConfigProvider, theme } from "antd";
 import { useEffect, useState } from "react";
@@ -129,7 +134,15 @@ function Boot() {
 						// ContainerLayout 提供；宿主不叠加自己的 Layout chrome，
 						// 避免「宿主侧栏 + 模块侧栏」双层嵌套（布局混乱）。
 							path: "/",
-							element: <Outlet />,
+							// 全局副作用与 <Outlet /> 并列挂载：LayoutEffects 不含
+							// AuthGuard（宿主免登录），但暗色类/动态标题/NProgress
+							// 必须与 App 链路同源（偏差 4）
+							element: (
+								<>
+									<LayoutEffects />
+									<Outlet />
+								</>
+							),
 							// 落地 `/` 时跳到首个模块路由，确保模块 ContainerLayout 立即渲染
 							// （否则根 Outlet 无匹配子路由会空白）。等同全量 App 的
 							// `/` → VITE_BASE_HOME_PATH 重定向语义。

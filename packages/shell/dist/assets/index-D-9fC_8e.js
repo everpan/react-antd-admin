@@ -1,11 +1,11 @@
 import { StyleProvider } from "@ant-design/cssinjs";
-import { getRoutes, loadAll, setupI18n } from "@react-antd-admin/runtime";
+import { LayoutEffects, getRoutes, loadAll, setupI18n } from "@react-antd-admin/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App, ConfigProvider, theme } from "antd";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Navigate, Outlet, RouterProvider, createBrowserRouter } from "react-router";
-import { jsx, jsxs } from "react/jsx-runtime";
+import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 //#region \0vite/modulepreload-polyfill.js
 (function polyfill() {
 	const relList = document.createElement("link").relList;
@@ -178,7 +178,7 @@ function Boot() {
 				if (cancelled) return;
 				setRouter(createBrowserRouter([{
 					path: "/",
-					element: /* @__PURE__ */ jsx(Outlet, {}),
+					element: /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(LayoutEffects, {}), /* @__PURE__ */ jsx(Outlet, {})] }),
 					children: [{
 						index: true,
 						element: /* @__PURE__ */ jsx(Navigate, {

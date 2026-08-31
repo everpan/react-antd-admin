@@ -24,10 +24,11 @@ test.describe("sidebar", () => {
 		const trigger = page.locator("aside button:has(.anticon-menu-fold), aside button:has(.anticon-menu-unfold)");
 		await trigger.first().click();
 		await expect(menu).toHaveClass(/ant-menu-inline-collapsed/);
-		const widthCollapsed = await sider.evaluate(el => el.getBoundingClientRect().width);
-		expect(widthCollapsed).toBeLessThan(widthBefore);
+		// 宽度经 transition 过渡（~300ms），轮询至收敛，避免读到过渡中间值
+		await expect.poll(async () => sider.evaluate(el => el.getBoundingClientRect().width), { timeout: 3000 }).toBeLessThan(widthBefore);
 		await trigger.first().click();
 		await expect(menu).not.toHaveClass(/ant-menu-inline-collapsed/);
+		await expect.poll(async () => sider.evaluate(el => el.getBoundingClientRect().width), { timeout: 3000 }).toBe(widthBefore);
 	});
 
 	// S4：当前路由对应菜单项高亮、父级 submenu 展开
