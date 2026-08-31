@@ -240,13 +240,13 @@ pnpm build      # = rad build
 产物：
 
 ```
-build/modules/order/1.0.0/
+dist/modules/order/1.0.0/
 ├── entry.js              # 入口 chunk
 ├── chunk-*.js            # 动态 import 拆出的 chunk（标 lazy）
 ├── *.css                 # 样式产物
 └── …
 
-build/modules.json         # BuiltModule[]（含每 chunk sha384 完整性）
+dist/modules.json          # BuiltModule[]（含每 chunk sha384 完整性）
 ```
 
 `modules.json` 条目（`BuiltModule`）：
@@ -257,6 +257,9 @@ build/modules.json         # BuiltModule[]（含每 chunk sha384 完整性）
 	version: "1.0.0",
 	enabled: true,
 	dependencies: ["system"],
+	// 声明了 config.peerRuntime 时才出现；loader 据此按 semver 校验宿主
+	// runtime 版本（P7.6），不匹配标记 error 并显式报错
+	peerRuntime: ">=1.0.0 <2.0.0",
 	entry: "/modules/order/1.0.0/entry.js",
 	integrity: "sha384-…",        // entry 完整性
 	css: ["/modules/order/1.0.0/style.css"],
@@ -350,9 +353,9 @@ P7.12 起在 `getRoutes()` 真实过滤）。`ModuleDefinition` 另有
 ### 7.3 常用出口
 
 `defineModule` / `getRoutes` / `getModules` / `loadAll` / `unloadModule` /
-`getRegisteredStore` / `getRegisteredApiPrefix` / `useSlotNodes` 等——
-完整清单以 `@react-antd-admin/runtime` 的 d.ts 为准（出口已冻结，
-drift-prevention 测试锁定，P3）。
+`getRegisteredStore` / `getRegisteredApiPrefix` / `getAppInfo` /
+`useSlotNodes` 等——完整清单以 `@react-antd-admin/runtime` 的 d.ts 为准
+（出口已冻结，drift-prevention 测试锁定，P3）。
 
 ## 8. 红线与门禁
 
