@@ -52,3 +52,8 @@ TODO.md
 
 # rad CLI 临时构建产物（读取模块定义时生成的临时 bundle）
 .rad-tmp-*
+
+# e2e
+.e2e-legacy/
+e2e/test-results/
+e2e/playwright-report/

@@ -22,7 +22,7 @@
 
 ## 已知事实（探索结论，直接可用）
 
-- **playground 环境**：`pnpm --filter @apps/playground dev` = `rad dev 5174`；免登录（D5②）；菜单仅 demo 模块（当前 1 项 `/demo`）；dev 前需先构建：`pnpm --filter @react-antd-admin/shell build && pnpm --filter @apps/playground build`。
+- **playground 环境**：`pnpm --filter playground dev` = `rad dev 5174`（**注意：包名是 `playground`，非 HANDOFF 所写的 `@apps/playground`**——HANDOFF §7 命令已过时）；免登录（D5②）；菜单仅 demo 模块（当前 1 项 `/demo`）；dev 前需先构建：`pnpm --filter @react-antd-admin/shell build && pnpm --filter playground build`。
 - **legacy 环境**：worktree 检出 411e353b 至 `.e2e-legacy/`；`pnpm dev` = vite :3333（vite.config 内 `port: 3333`）；fake 登录预填 `admin / 123456789admin`（`src/pages/login/components/password-login.tsx` 的 `FORM_INITIAL_VALUES`），点提交即过；登录后跳 `/home`。
 - **DOM 锚点**：antd Sider 收起态类 `.ant-layout-sider-collapsed`；菜单选中 `.ant-menu-item-selected`；submenu `.ant-menu-submenu`；页签 `.ant-tabs-tab` / 激活 `.ant-tabs-tab-active` / 关闭钮 `.ant-tabs-tab-remove`；页脚为语义 `<footer>`；折叠触发器为 header 内带 `.anticon-menu-fold`/`.anticon-menu-unfold` 图标的 button；偏好里页脚开关字段名 `enableFooter`。
 - **demo 页面现状**：仅一张 `Card+Tag`，无状态组件 → T2（keepalive）需先在 demo 模块加第二页（Task 4 内完成）。
@@ -63,7 +63,7 @@ const TARGETS = {
 	playground: {
 		baseURL: "http://localhost:5174",
 		webServer: {
-			command: "pnpm --filter @apps/playground dev",
+			command: "pnpm --filter playground dev",
 			url: "http://localhost:5174",
 			// rad dev 端口被占会顺延（HANDOFF §8 坑），不复用、撞车即报错
 			reuseExistingServer: false,
@@ -171,7 +171,7 @@ e2e/playwright-report/
 - [ ] **Step 5: 构建 shell 与 playground 产物（rad dev 前置）**
 
 ```bash
-pnpm --filter @react-antd-admin/shell build && pnpm --filter @apps/playground build
+pnpm --filter @react-antd-admin/shell build && pnpm --filter playground build
 ```
 
 - [ ] **Step 6: Commit**
@@ -379,7 +379,7 @@ export default function DemoDetailPage() {
 },
 ```
 
-locales 两个 json 各加 `menu.detail` 与 `page.detail`。重建：`pnpm --filter @apps/playground build`。
+locales 两个 json 各加 `menu.detail` 与 `page.detail`。重建：`pnpm --filter playground build`。
 
 - [ ] **Step 4: 全套 e2e 跑绿后 Commit**
 

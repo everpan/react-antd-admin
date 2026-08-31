@@ -28,41 +28,79 @@ allowBuilds:
 # 语法注记：默认 catalog 的键是 `catalog:`；`catalogs:` 是**命名** catalog 的容器，
 # 写成 catalogs 会被 pnpm 当成命名 catalog 而报「expected an object」。
 catalog:
-  react: ^19.2.6
-  react-dom: ^19.2.6
-  react-router: ^7.15.1
-  antd: ^6.4.2
-  "@ant-design/icons": ^6.2.3
-  "@ant-design/cssinjs": ^2.1.2
-  "@ant-design/pro-components": ^3.1.12-0
-  "@tanstack/react-query": ^5.100.10
-  "@dnd-kit/core": ^6.3.1
-  "@dnd-kit/sortable": ^10.0.0
-  "@dnd-kit/utilities": ^3.2.2
+  '@ant-design/cssinjs': ^2.1.2
+  '@ant-design/icons': ^6.2.3
+  '@ant-design/pro-components': ^3.1.12-0
+  '@antfu/eslint-config': ^9.0.0
+  '@commitlint/cli': ^21.0.1
+  '@commitlint/config-conventional': ^21.0.1
+  '@dnd-kit/core': ^6.3.1
+  '@dnd-kit/sortable': ^10.0.0
+  '@dnd-kit/utilities': ^3.2.2
+  '@eslint-react/eslint-plugin': ^5.7.9
+  '@eslint/config-inspector': ^3.0.2
+  '@faker-js/faker': ^10.4.0
+  '@iconify-json/ri': ^1.2.10
+  '@iconify/tools': ^5.0.11
+  '@playwright/test': ^1.62.1
+  '@svgr/plugin-jsx': ^8.1.0
+  '@svgr/plugin-svgo': ^8.1.0
+  '@tailwindcss/vite': ^4.3.0
+  '@tanstack/react-query': ^5.100.10
+  '@tanstack/react-query-devtools': ^5.100.10
+  '@testing-library/jest-dom': ^6.9.1
+  '@testing-library/react': ^16.3.2
+  '@testing-library/user-event': ^14.6.1
+  '@types/node': ^25.8.0
+  '@types/nprogress': ^0.2.3
+  '@types/react': ^19.2.14
+  '@types/react-dom': ^19.2.3
+  # 构建工具：同样发生过宿主/框架大版本分裂
+  '@vitejs/plugin-react': ^6.0.2
   ahooks: ^3.9.7
+  antd: ^6.4.2
   antd-img-crop: ^4.30.0
+  circular-dependency-scanner: ^3.0.1
   clsx: ^2.1.1
+  code-inspector-plugin: ^1.5.1
   dayjs: ^1.11.20
   echarts: ^6.0.0
   echarts-for-react: ^3.0.6
+  esbuild: ^0.28.2
+  eslint: ^10.4.0
+  eslint-plugin-react-hooks: ^7.1.1
+  eslint-plugin-react-refresh: ^0.5.2
+  globals: ^17.6.0
+  happy-dom: ^20.9.0
   i18next: ^26.2.0
   keepalive-for-react: ^5.0.11
   ky: ^2.0.2
+  lint-staged: ^17.0.4
   motion: ^12.38.0
   nprogress: ^0.2.0
   pinyin-pro: ^3.28.1
+  react: ^19.2.6
   react-countup: ^6.5.3
+  react-dom: ^19.2.6
   react-error-boundary: ^6.1.1
   react-i18next: ^17.0.8
   react-jss: ^10.10.0
+  react-router: ^7.15.1
+  simple-git-hooks: ^2.13.1
   simplebar-react: ^3.3.2
   spin-delay: ^2.0.1
   tailwind-merge: ^3.6.0
-  zustand: ^5.0.13
+  tailwindcss: ^4.3.0
+  taze: ^19.12.0
+  tsx: ^4.23.12
+  typescript: ^6.0.3
+  unplugin-icons: ^23.0.1
   # 外部零直接引用，仅因被多个共享包内嵌而纳入共享表做产物去重（软共享）
   use-sync-external-store: ^1.6.0
-  # 构建工具：同样发生过宿主/框架大版本分裂
-  "@vitejs/plugin-react": ^6.0.2
-  typescript: ^6.0.3
-  "@types/react": ^19.2.14
-  "@types/react-dom": ^19.2.3
+  vite: ^8.0.13
+  vite-bundle-visualizer: ^1.2.1
+  vite-plugin-checker: ^0.13.0
+  vite-plugin-fake-server: ^2.2.4
+  vite-plugin-svgr: ^5.2.0
+  vitest: ^4.1.6
+  zustand: ^5.0.13
