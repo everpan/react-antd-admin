@@ -136,7 +136,7 @@ function getAppInfo() {
 			"version": "0.0.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-08-31 22:15:14"
+		"lastBuildTime": "2026-08-31 22:37:31"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -8421,20 +8421,24 @@ var init_static_antd = __esmMin((() => {
 /**
 * 处理错误响应
 *
+* 错误体不保证是 JSON（rad dev 404 纯文本、网关 502 HTML 都是常态），
+* 故对齐 ky 自家的 text-first 模式：先取文本再显式 JSON.parse，
+* 解析不出对象就静默回退状态文本——非 JSON 不再当异常刷 console.error。
+* 经 clone 读取，保持原 body 对下游（ky .json() 链）可读。
+*
 * @param response 响应对象
 * @returns 响应对象
 */
 async function handleErrorResponse(response) {
+	const text = await response.clone().text().catch(() => "");
+	let data;
 	try {
-		const data = await response.json();
-		if (isObject(data)) {
-			const json = data;
-			message$1.error(json.errorMsg || json.message || response.statusText);
-		} else message$1.error(response.statusText);
-	} catch (e) {
-		console.error("Error parsing JSON:", e);
-		message$1.error(response.statusText);
-	}
+		data = JSON.parse(text);
+	} catch {}
+	if (isObject(data)) {
+		const json = data;
+		message$1.error(json.errorMsg || json.message || response.statusText);
+	} else message$1.error(response.statusText);
 	return response;
 }
 var init_error_response = __esmMin((() => {
