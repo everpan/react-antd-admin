@@ -1,4 +1,4 @@
-import { HomeOutlined } from "@ant-design/icons";
+import { FileTextOutlined, HomeOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { defineModule } from "@react-antd-admin/runtime";
 import { createElement } from "react";
 
@@ -49,6 +49,7 @@ export default defineModule({
 					Component: DemoDetailPage,
 					handle: {
 						title: "demo:menu.detail",
+						icon: createElement(FileTextOutlined),
 						keepAlive: true,
 					},
 				},
@@ -57,6 +58,7 @@ export default defineModule({
 					Component: DemoAboutPage,
 					handle: {
 						title: "demo:menu.about",
+						icon: createElement(InfoCircleOutlined),
 					},
 				},
 			],

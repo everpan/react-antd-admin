@@ -208,6 +208,7 @@ function Boot() {
 }
 var rootElement = document.getElementById("root");
 if (rootElement) createRoot(rootElement).render(/* @__PURE__ */ jsx(StyleProvider, {
+	layer: true,
 	hashPriority: "high",
 	children: /* @__PURE__ */ jsx(ConfigProvider, {
 		theme: { algorithm: theme.defaultAlgorithm },

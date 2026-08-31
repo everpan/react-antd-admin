@@ -185,7 +185,7 @@ function Boot() {
 const rootElement = document.getElementById("root");
 if (rootElement) {
 	createRoot(rootElement).render(
-		<StyleProvider hashPriority="high">
+		<StyleProvider layer hashPriority="high">
 			<ConfigProvider theme={{ algorithm: theme.defaultAlgorithm }}>
 				<AntdApp>
 					<QueryClientProvider client={queryClient}>
