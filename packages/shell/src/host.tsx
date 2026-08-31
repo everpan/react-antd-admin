@@ -18,13 +18,11 @@
 
 import type { HostModule } from "./preload";
 import { StyleProvider } from "@ant-design/cssinjs";
-import { getRoutes, loadAll } from "@react-antd-admin/runtime";
+import { getRoutes, loadAll, setupI18n } from "@react-antd-admin/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App as AntdApp, ConfigProvider, theme } from "antd";
-import i18next from "i18next";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { initReactI18next } from "react-i18next";
 
 import {
 	createBrowserRouter,
@@ -38,14 +36,16 @@ import { assertTrustedModules } from "./trust";
 
 const queryClient = new QueryClient();
 
-async function ensureI18n() {
-	if (i18next.isInitialized)
-		return;
-	await i18next.use(initReactI18next).init({
-		lng: "zh-CN",
-		fallbackLng: "en-US",
-		resources: {},
-	});
+// i18n 由 runtime 的 setupI18n 统一初始化：装载框架 translation 命名空间
+// （preferences/common 等）。此前这里以空 resources 自行 init，框架级文案
+// 全部裸奔成 key（e2e 基线偏差 2）。模块命名空间仍由 loadAll 合并。
+let i18nReady = false;
+
+function ensureI18n() {
+	if (!i18nReady) {
+		setupI18n();
+		i18nReady = true;
+	}
 }
 
 function Boot() {

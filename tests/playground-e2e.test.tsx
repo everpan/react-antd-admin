@@ -153,7 +153,8 @@ describe("playground e2e", () => {
 			// 回归：getRoutes() 必须自带按 path 生成的 id——菜单选中态（LayoutMenu
 			// getSelectedKeys）依赖 useMatches 的 match.id；host.tsx 链路不经
 			// auth-guard 的 addRouteIdByPath，缺 id 时菜单无高亮（e2e M2 暴露）
-			expect(getRoutes()[0]?.id).toBe("/demo");
+			// id 是 react-router 运行时属性，AppRouteRecordRaw 声明面未含，故收窄断言
+			expect((getRoutes()[0] as unknown as { id?: string }).id).toBe("/demo");
 
 			// 播种“已登录用户”三个 store：AuthGuard 门控 + 模块路由经
 			// useAccessStore.setAccessStore() → router.patchRoutes 注入。
@@ -203,8 +204,10 @@ describe("playground e2e", () => {
 			// 3) demo 菜单可以加载：侧边栏出现 demo 菜单项。
 			//    以路由 key（data-menu-id 含 /demo）为主、文本案兜底（翻译前 key 或中英文案），
 			//    避免因 i18n 时序导致只匹配不到翻译后文本。失败时打印全部菜单项便于定位。
+			//    demo 模块自补 detail/about 子路由后 /demo 变 submenu，index 子路由不再
+			//    渲染为独立叶子项（e2e T1 校准的同一事实），故匹配面含 submenu 标题。
 			await waitFor(() => {
-				const items = Array.from(document.querySelectorAll(".ant-menu-item"));
+				const items = Array.from(document.querySelectorAll(".ant-menu-item, .ant-menu-submenu-title"));
 				const el = items.find((n) => {
 					const txt = n.textContent ?? "";
 					const id = n.getAttribute("data-menu-id") ?? "";

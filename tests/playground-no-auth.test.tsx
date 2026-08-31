@@ -167,9 +167,10 @@ describe("playground 无后端鉴权", () => {
 				expect(document.querySelector(".ant-menu"), "默认布局应包含 antd 菜单").toBeTruthy();
 			}, { timeout: 15000 });
 
-			// 菜单项应出现（wholeMenus 已含 /demo）
+			// 菜单项应出现（wholeMenus 已含 /demo）。/demo 自补子路由后变 submenu，
+			// index 子路由不再渲染为独立叶子项，匹配面含 submenu 标题（同 e2e T1 校准）
 			await waitFor(() => {
-				const items = Array.from(document.querySelectorAll(".ant-menu-item"));
+				const items = Array.from(document.querySelectorAll(".ant-menu-item, .ant-menu-submenu-title"));
 				const el = items.find((n) => {
 					const txt = n.textContent ?? "";
 					const id = n.getAttribute("data-menu-id") ?? "";

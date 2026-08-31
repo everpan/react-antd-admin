@@ -54,6 +54,8 @@ export const fetchDeleteMenuItem = _fn;
 // hooks 与权限常量
 export const useAccess = _fn;
 export const usePreferences = _fn;
+// i18n 初始化（宿主链路消费）
+export const setupI18n = _fn;
 export const accessControlCodes = _obj;
 export const AccessControlRoles = _obj;
 export const permissionPrefix = "permission:button";

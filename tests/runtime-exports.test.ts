@@ -99,6 +99,10 @@ describe("runtime 主入口出口白名单 (P3.1)", () => {
 		expect(Runtime.AccessControlRoles).toBeDefined();
 	});
 
+	it("i18n：宿主链路初始化（e2e 偏差 2 修复——shell 曾以空 resources 自行 init，框架 translation 命名空间丢失）", () => {
+		expect(Runtime.setupI18n).toBeTypeOf("function");
+	});
+
 	it("store：user / auth", () => {
 		expect(Runtime.useUserStore).toBeTypeOf("function");
 		expect(Runtime.useAuthStore).toBeTypeOf("function");

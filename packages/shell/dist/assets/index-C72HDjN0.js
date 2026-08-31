@@ -1,11 +1,9 @@
 import { StyleProvider } from "@ant-design/cssinjs";
-import { getRoutes, loadAll } from "@react-antd-admin/runtime";
+import { getRoutes, loadAll, setupI18n } from "@react-antd-admin/runtime";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { App, ConfigProvider, theme } from "antd";
-import i18next from "i18next";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { initReactI18next } from "react-i18next";
 import { Navigate, Outlet, RouterProvider, createBrowserRouter } from "react-router";
 import { jsx, jsxs } from "react/jsx-runtime";
 //#region \0vite/modulepreload-polyfill.js
@@ -134,13 +132,12 @@ ${offenders.join("\n")}\n修复建议：该来源不在宿主内置白名单中�
 //#endregion
 //#region src/host.tsx
 var queryClient = new QueryClient();
-async function ensureI18n() {
-	if (i18next.isInitialized) return;
-	await i18next.use(initReactI18next).init({
-		lng: "zh-CN",
-		fallbackLng: "en-US",
-		resources: {}
-	});
+var i18nReady = false;
+function ensureI18n() {
+	if (!i18nReady) {
+		setupI18n();
+		i18nReady = true;
+	}
 }
 function Boot() {
 	const [router, setRouter] = useState(null);

@@ -129,7 +129,7 @@ function getAppInfo() {
 			"version": "0.0.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-08-31 16:25:49"
+		"lastBuildTime": "2026-08-31 17:02:56"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -6562,11 +6562,32 @@ function $t(path) {
 	return path;
 }
 var init_t = __esmMin((() => {}));
+//#endregion
+//#region src/locales/index.ts
+function setupI18n() {
+	i18n.init(i18nInitOptions);
+	/**
+	* @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/lang
+	*/
+	i18next.on("languageChanged", (lng) => {
+		document.documentElement.lang = lng;
+	});
+}
+var i18nResources, i18nInitOptions, i18n;
 var init_locales = __esmMin((() => {
 	init_helper();
 	init_t();
-	getZhCnLang(), getEnUsLang();
-	i18next.use(initReactI18next);
+	i18nResources = {
+		"zh-CN": { translation: getZhCnLang() },
+		"en-US": { translation: getEnUsLang() }
+	};
+	i18nInitOptions = {
+		lng: "zh-CN",
+		resources: i18nResources,
+		saveMissing: false,
+		missingKeyHandler: async (languages, namespace, translationKey) => {}
+	};
+	i18n = i18next.use(initReactI18next);
 }));
 //#endregion
 //#region src/pages/privacy-policy/index.tsx
@@ -9058,6 +9079,7 @@ init_user$1();
 init_basic_button();
 init_iframe();
 init_use_preferences();
+init_locales();
 init_icons();
 init_module_loader();
 init_slots();
@@ -9070,4 +9092,4 @@ init_ri();
 init_menu_icons();
 init_tree();
 //#endregion
-export { AccessControl, AccessControlRoles, BasicButton, BasicContent, BasicTable, EmbeddedIcon, ExternalIcon, FormAvatarItem, FormTreeItem, Iframe, LayoutCenterIcon, LayoutLeftIcon, LayoutRightIcon, MixedNavigationIcon, OutsidePageIcon, ProfileCardIcon, RiAccountCircleLine, RiContrastFill, RiFullscreenExitLine, RiFullscreenLine, RiMailCheckLine, RiMoonIcon, RiReactjsLine, RiSunIcon, RiUserSettingsLine, ServerErrorIcon, SideNavigationIcon, TopNavigationIcon, TwoColumnNavigationIcon, accessControlCodes, defineModule, fetchAddMenuItem, fetchAddRoleItem, fetchAsyncRoutes, fetchDeleteMenuItem, fetchDeleteRoleItem, fetchLine, fetchLogin, fetchLogout, fetchMenuByRoleId, fetchMenuList, fetchPie, fetchRefreshToken, fetchRoleList, fetchRoleMenu, fetchUpdateMenuItem, fetchUpdateRoleItem, fetchUserInfo, filterTree, getAllExpandedKeys, getAppInfo, getBooleanOptions, getModule, getModules, getRegisteredApiPrefix, getRegisteredStore, getRoutes, getYesNoOptions, handleTree, loadAll, mapTree, menuIcons, permissionPrefix, traverseTreeValues, unloadModule, useAccess, useAuthStore, usePreferences, useSlotNodes, useUserStore };
+export { AccessControl, AccessControlRoles, BasicButton, BasicContent, BasicTable, EmbeddedIcon, ExternalIcon, FormAvatarItem, FormTreeItem, Iframe, LayoutCenterIcon, LayoutLeftIcon, LayoutRightIcon, MixedNavigationIcon, OutsidePageIcon, ProfileCardIcon, RiAccountCircleLine, RiContrastFill, RiFullscreenExitLine, RiFullscreenLine, RiMailCheckLine, RiMoonIcon, RiReactjsLine, RiSunIcon, RiUserSettingsLine, ServerErrorIcon, SideNavigationIcon, TopNavigationIcon, TwoColumnNavigationIcon, accessControlCodes, defineModule, fetchAddMenuItem, fetchAddRoleItem, fetchAsyncRoutes, fetchDeleteMenuItem, fetchDeleteRoleItem, fetchLine, fetchLogin, fetchLogout, fetchMenuByRoleId, fetchMenuList, fetchPie, fetchRefreshToken, fetchRoleList, fetchRoleMenu, fetchUpdateMenuItem, fetchUpdateRoleItem, fetchUserInfo, filterTree, getAllExpandedKeys, getAppInfo, getBooleanOptions, getModule, getModules, getRegisteredApiPrefix, getRegisteredStore, getRoutes, getYesNoOptions, handleTree, loadAll, mapTree, menuIcons, permissionPrefix, setupI18n, traverseTreeValues, unloadModule, useAccess, useAuthStore, usePreferences, useSlotNodes, useUserStore };

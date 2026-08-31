@@ -23,6 +23,7 @@ export { Iframe } from "./components/iframe";
 export * from "./constants/options";
 export * from "./hooks/use-access";
 export { usePreferences } from "./hooks/use-preferences";
+export { setupI18n } from "./locales";
 export * from "./icons";
 export { getModule, getModules, getRegisteredApiPrefix, getRegisteredStore, getRoutes, loadAll, unloadModule, } from "./module-loader";
 export { defineModule } from "./module-loader/define-module";
