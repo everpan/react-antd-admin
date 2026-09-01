@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { initProject } from "../../packages/cli/src/init";
+import { readOjPort, readOjServerField } from "../../packages/cli/src/oj-config";
 
 /**
  * 设计 §3：`ram init` 产物契约（TDD）。
@@ -21,19 +22,20 @@ describe("initProject", () => {
 		const dest = path.join(tmpRoot(), "demo-proj");
 		await initProject(dest, { yes: true });
 
-		// 后端
-		const config = fs.readFileSync(path.join(dest, "api/config.yaml"), "utf-8");
-		expect(config).toContain("host: \"127.0.0.1\"");
-		expect(config).toContain("port: 9778");
-		expect(config).toContain("base: \"/api\"");
-		expect(config).toContain("public_key_path: \"./config/public.pem\"");
-		expect(config).toContain("certificate_path: \"./config/cert.jws\"");
-		expect(config).toContain("auth:");
-		expect(config).not.toContain("__JWT_SECRET__");
+		// 后端（语义断言：模板可能被 lint 重排格式，键值契约不变）
+		const config = path.join(dest, "api/config.yaml");
+		expect(readOjServerField(config, "host")).toBe("127.0.0.1");
+		expect(readOjPort(config)).toBe(9778);
+		expect(readOjServerField(config, "base")).toBe("/api");
+		expect(readOjServerField(config, "public_key_path")).toBe("./config/public.pem");
+		expect(readOjServerField(config, "certificate_path")).toBe("./config/cert.jws");
+		const configText = fs.readFileSync(config, "utf-8");
+		expect(configText).toContain("auth:");
+		expect(configText).not.toContain("__JWT_SECRET__");
 		// oj 已弃用根 seed.sql：users 表种子放模块级（实现期发现，见偏差记录）
 		expect(fs.existsSync(path.join(dest, "api/src/web/seed.sql"))).toBe(true);
 		expect(fs.existsSync(path.join(dest, "api/src/web/manifest.yaml"))).toBe(true);
-		expect(fs.readFileSync(path.join(dest, "api/src/web/manifest.yaml"), "utf-8")).toContain("name: \"web\"");
+		expect(fs.readFileSync(path.join(dest, "api/src/web/manifest.yaml"), "utf-8")).toMatch(/^name:\s*web/m);
 
 		// 证书三件套（现场签发）
 		for (const name of ["private.pem", "public.pem", "cert.jws"])

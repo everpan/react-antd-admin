@@ -1,5 +1,6 @@
 import type { Plugin as EsbuildPlugin } from "esbuild";
 import type { Plugin } from "vite";
+import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -8,6 +9,7 @@ import { pathToFileURL } from "node:url";
 import { build as esbuild } from "esbuild";
 import { build } from "vite";
 import { loadModulesConfig, resolveModuleEntry } from "./config";
+import { resolveLayout } from "./layout";
 import { isSharedDep, SHARED_DEPS } from "./shared-deps";
 import { checkSharedVersions, resolveShellDist } from "./versions";
 
@@ -314,16 +316,65 @@ function assertResolvableSpecifiers(
 }
 
 /**
+ * 构建后端（api/src 存在时编排 `bin/oj build`，D8）。
+ *
+ * 绝不在此处跑 migrate：oj build 本身零磁盘副作用，`ram build` 保持零 DB
+ * 副作用（CI/无 DB 环境可跑）；迁移由 preview 在起服务前应用（设计 §6）。
+ * 无后端源码返回 false（纯前端工程跳过）。
+ */
+export async function buildBackend(projectRoot: string): Promise<boolean> {
+	const apiSrc = path.join(projectRoot, "api/src");
+	if (!fs.existsSync(apiSrc))
+		return false;
+
+	const oj = path.join(projectRoot, "bin/oj");
+	if (!fs.existsSync(oj)) {
+		throw new Error(
+			`[ram] 找到 api/src 但缺少 ${oj}。\n`
+			+ "请重跑 ram init 幂等补缺（不会覆盖 config 与用户代码）。",
+		);
+	}
+	const apiDist = path.join(projectRoot, "api/dist");
+	console.log("[ram] oj build（后端）…");
+	execFileSync(oj, ["build", "-d", apiSrc, "-o", apiDist], { stdio: "inherit" });
+	return true;
+}
+
+/**
+ * 全站合并（仅 `ram build` 调用，设计 §5）：清场后拷 shell dist 全量，
+ * 再由模块构建写入 modules.json 与 modules/。清场防旧哈希资产无限累积
+ * （shell 每次重构建生成新哈希文件名）；devServer 热重建路径不合并——
+ * dev 的 / 与 /assets/* 直接服务 shell dist，合并产物无人消费。
+ */
+function mergeShellSite(projectRoot: string, distDir: string): void {
+	const shellDist = resolveShellDist(projectRoot);
+	fs.rmSync(distDir, { recursive: true, force: true });
+	fs.mkdirSync(path.dirname(distDir), { recursive: true });
+	fs.cpSync(shellDist, distDir, { recursive: true });
+	console.log(`[ram] 已合并宿主站点 → ${distDir}`);
+}
+
+/**
  * 构建模块工程。
  *
- * 产出：
- *   dist/modules/<name>/<version>/{entry.js, chunk-*.js, *.css}
- *   dist/modules.json
+ * 产出（目录随布局：新布局 modules/dist，旧布局 dist/）：
+ *   <dist>/modules/<name>/<version>/{entry.js, chunk-*.js, *.css}
+ *   <dist>/modules.json
+ *
+ * opts.mergeSite 仅 `ram build` 传 true：清场 + 拷 shell dist 全量；
+ * devServer 热重建默认 false，只写模块产物。
  */
-export async function buildModules(projectRoot: string): Promise<BuiltModule[]> {
+export async function buildModules(
+	projectRoot: string,
+	opts: { mergeSite?: boolean } = {},
+): Promise<BuiltModule[]> {
 	const config = await loadModulesConfig(projectRoot);
-	const outDir = path.join(projectRoot, "dist");
+	const layout = resolveLayout(projectRoot);
+	const outDir = layout.distDir;
 	const baseUrl = config.baseUrl ?? "";
+
+	if (opts.mergeSite)
+		mergeShellSite(projectRoot, outDir);
 
 	// P4.5 / C4 / D12：构建前先过版本矩阵门禁，版本漂移直接拒绝
 	checkSharedVersions(projectRoot, resolveShellDist(projectRoot));

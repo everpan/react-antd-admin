@@ -1,5 +1,5 @@
 import process from "node:process";
-import { buildModules } from "./build";
+import { buildBackend, buildModules } from "./build";
 import { devServer } from "./dev";
 import { mergeManifests, printInfo } from "./info";
 import { initProject } from "./init";
@@ -23,7 +23,9 @@ async function main() {
 
 	switch (command) {
 		case "build":
-			await buildModules(projectRoot);
+			// 设计 §5：后端 oj build（零 DB 副作用）→ 前端全站合并（仅 build 清场合并）
+			await buildBackend(projectRoot);
+			await buildModules(projectRoot, { mergeSite: true });
 			break;
 		case "init":
 			await initProject(process.argv[3] ?? "", { yes: process.argv.includes("--yes") });
