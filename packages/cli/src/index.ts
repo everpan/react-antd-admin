@@ -2,6 +2,7 @@ import process from "node:process";
 import { buildModules } from "./build";
 import { devServer } from "./dev";
 import { mergeManifests, printInfo } from "./info";
+import { initProject } from "./init";
 
 const [command] = process.argv.slice(2);
 
@@ -23,6 +24,9 @@ async function main() {
 	switch (command) {
 		case "build":
 			await buildModules(projectRoot);
+			break;
+		case "init":
+			await initProject(process.argv[3] ?? "", { yes: process.argv.includes("--yes") });
 			break;
 		case "dev": {
 			const portArg = Number(process.argv[3]);

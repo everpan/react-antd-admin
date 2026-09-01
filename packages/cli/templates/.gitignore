@@ -1,0 +1,9 @@
+node_modules/
+bin/
+.ram-tmp-*
+api/db.sqlite
+api/db.sqlite-shm
+api/db.sqlite-wal
+api/logs/
+api/dist/
+modules/dist/
