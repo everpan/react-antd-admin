@@ -28,7 +28,7 @@ ram dev 将开始开发模式
 
 ## 构建
 
-raw build 当分别将 src 中的源码构建到同级 dist 目录下，借助与vite工具
+ram build 当分别将 src 中的源码构建到同级 dist 目录下，借助与vite工具
 
 ## 预览
 
