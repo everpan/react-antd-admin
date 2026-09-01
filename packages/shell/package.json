@@ -1,7 +1,7 @@
 {
 	"name": "@react-antd-module/shell",
 	"type": "module",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "预构建宿主站点（dist + importmap），由 ram dev / ram build 使用",
 	"license": "MIT",
 	"publishConfig": {
