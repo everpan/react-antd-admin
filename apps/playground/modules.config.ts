@@ -53,7 +53,7 @@ export default {
 		},
 		{
 			name: "demo",
-			entry: "./modules/demo/entry.ts",
+			entry: "./modules/src/demo/entry.ts",
 			enabled: true,
 		},
 	],

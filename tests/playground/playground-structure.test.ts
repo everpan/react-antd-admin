@@ -29,11 +29,17 @@ function collectFiles(dir: string): string[] {
 }
 
 describe("模块工程只含模块", () => {
-	it("playground 存在且具备最小工程结构", () => {
+	it("playground 存在且具备最小工程结构（uni-dev 新布局）", () => {
 		for (const file of ["package.json", "modules.config.ts"]) {
 			expect(fs.existsSync(path.join(PLAYGROUND, file)), `应存在 ${file}`).toBe(true);
 		}
 		expect(fs.existsSync(PLAYGROUND_MODULES), "应存在 modules/").toBe(true);
+		// D11 一次性迁移：modules/src/ 源码目录存在，legacy 的 modules/<name>/ 直挂不存在
+		expect(fs.existsSync(path.join(PLAYGROUND_MODULES, "src")), "应存在 modules/src/（新布局）").toBe(true);
+		expect(
+			fs.existsSync(path.join(PLAYGROUND_MODULES, "demo")),
+			"legacy 布局 modules/demo/ 应已删除（D11 迁移）",
+		).toBe(false);
 	});
 
 	it("playground 内不含框架源码目录", () => {
@@ -72,7 +78,7 @@ describe("模块工程只含模块", () => {
 });
 
 describe("demo 模块符合模块契约", () => {
-	const entryPath = path.join(PLAYGROUND_MODULES, "demo", "entry.ts");
+	const entryPath = path.join(PLAYGROUND_MODULES, "src", "demo", "entry.ts");
 
 	it("entry.ts 使用 defineModule 声明", () => {
 		const content = fs.readFileSync(entryPath, "utf-8");
@@ -90,7 +96,7 @@ describe("demo 模块符合模块契约", () => {
 	});
 
 	it("i18n 资源文件齐全且 menu key 与模块 namespace 一致", () => {
-		const localesDir = path.join(PLAYGROUND_MODULES, "demo", "locales");
+		const localesDir = path.join(PLAYGROUND_MODULES, "src", "demo", "locales");
 		for (const locale of ["zh-CN", "en-US"]) {
 			const file = path.join(localesDir, `${locale}.json`);
 			expect(fs.existsSync(file), `应存在 ${locale}.json`).toBe(true);
@@ -112,7 +118,7 @@ describe("demo 模块符合模块契约", () => {
 describe("demo 路由具备布局（回归）", () => {
 	it("顶层路由经 resolveRouteLayouts 后被注入 ContainerLayout", async () => {
 		const definition = await readModuleDefinition(
-			path.join(PLAYGROUND_MODULES, "demo", "entry.ts"),
+			path.join(PLAYGROUND_MODULES, "src", "demo", "entry.ts"),
 			PROJECT_ROOT,
 		);
 		// readModuleDefinition 的返回类型只声明了元信息字段（CLI 只需要那些），
