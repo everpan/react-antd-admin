@@ -269,10 +269,10 @@ var st = ct;
 var Ir = le;
 
 // .ram-shim-keepalive-for-react.mjs
-var rad_shim_keepalive_for_react_default = void 0 ?? dist_exports;
+var ram_shim_keepalive_for_react_default = void 0 ?? dist_exports;
 export {
   je as KeepAlive,
-  rad_shim_keepalive_for_react_default as default,
+  ram_shim_keepalive_for_react_default as default,
   We as useEffectOnActive,
   ot as useEffectOnCreate,
   b as useKeepAliveContext,

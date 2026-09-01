@@ -2567,7 +2567,7 @@ var _experimental = {
 };
 
 // .ram-shim-cssinjs.mjs
-var rad_shim_cssinjs_default = void 0 ?? es_exports;
+var ram_shim_cssinjs_default = void 0 ?? es_exports;
 export {
   Keyframes_default as Keyframes,
   NaNLinter_default as NaNLinter,
@@ -2578,7 +2578,7 @@ export {
   autoPrefix_default as autoPrefixTransformer,
   createCache,
   createTheme,
-  rad_shim_cssinjs_default as default,
+  ram_shim_cssinjs_default as default,
   extractStyle,
   calc_default as genCalc,
   getComputedToken,

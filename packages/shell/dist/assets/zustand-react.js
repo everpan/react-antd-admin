@@ -31,9 +31,9 @@ var createImpl = (createState) => {
 var create = ((createState) => createState ? createImpl(createState) : createImpl);
 
 // .ram-shim-zustand-react.mjs
-var rad_shim_zustand_react_default = void 0 ?? react_exports;
+var ram_shim_zustand_react_default = void 0 ?? react_exports;
 export {
   create,
-  rad_shim_zustand_react_default as default,
+  ram_shim_zustand_react_default as default,
   useStore
 };

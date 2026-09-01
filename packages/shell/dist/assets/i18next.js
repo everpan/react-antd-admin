@@ -2300,11 +2300,11 @@ var loadNamespaces = instance.loadNamespaces;
 var loadLanguages = instance.loadLanguages;
 
 // .ram-shim-i18next.mjs
-var rad_shim_i18next_default = instance ?? i18next_exports;
+var ram_shim_i18next_default = instance ?? i18next_exports;
 export {
   changeLanguage,
   createInstance,
-  rad_shim_i18next_default as default,
+  ram_shim_i18next_default as default,
   dir,
   exists,
   getFixedT,

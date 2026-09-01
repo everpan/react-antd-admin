@@ -14,7 +14,7 @@ var IconContext = /* @__PURE__ */ createContext({});
 var Context_default = IconContext;
 
 // .ram-shim-icons-es-components-Context.mjs
-var rad_shim_icons_es_components_Context_default = Context_default ?? Context_exports;
+var ram_shim_icons_es_components_Context_default = Context_default ?? Context_exports;
 export {
-  rad_shim_icons_es_components_Context_default as default
+  ram_shim_icons_es_components_Context_default as default
 };

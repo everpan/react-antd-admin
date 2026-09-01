@@ -130,11 +130,11 @@ function w(r, e) {
 }
 
 // .ram-shim-react-error-boundary.mjs
-var rad_shim_react_error_boundary_default = void 0 ?? react_error_boundary_exports;
+var ram_shim_react_error_boundary_default = void 0 ?? react_error_boundary_exports;
 export {
   m as ErrorBoundary,
   h as ErrorBoundaryContext,
-  rad_shim_react_error_boundary_default as default,
+  ram_shim_react_error_boundary_default as default,
   S as getErrorMessage,
   k as useErrorBoundary,
   w as withErrorBoundary

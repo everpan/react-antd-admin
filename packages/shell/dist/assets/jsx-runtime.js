@@ -75,10 +75,10 @@ var __m = __toESM(require_jsx_runtime(), 1);
 var Fragment2 = __m["Fragment"];
 var jsx2 = __m["jsx"];
 var jsxs2 = __m["jsxs"];
-var rad_shim_jsx_runtime_default = __m.default ?? __m;
+var ram_shim_jsx_runtime_default = __m.default ?? __m;
 export {
   Fragment2 as Fragment,
-  rad_shim_jsx_runtime_default as default,
+  ram_shim_jsx_runtime_default as default,
   jsx2 as jsx,
   jsxs2 as jsxs
 };

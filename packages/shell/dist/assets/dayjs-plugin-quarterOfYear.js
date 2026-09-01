@@ -65,13 +65,13 @@ var require_quarterOfYear = __commonJS({
 });
 
 // .ram-shim-dayjs-plugin-quarterOfYear.mjs
-var rad_shim_dayjs_plugin_quarterOfYear_exports = {};
-__export(rad_shim_dayjs_plugin_quarterOfYear_exports, {
-  default: () => rad_shim_dayjs_plugin_quarterOfYear_default
+var ram_shim_dayjs_plugin_quarterOfYear_exports = {};
+__export(ram_shim_dayjs_plugin_quarterOfYear_exports, {
+  default: () => ram_shim_dayjs_plugin_quarterOfYear_default
 });
 var __ns = __toESM(require_quarterOfYear(), 1);
-__reExport(rad_shim_dayjs_plugin_quarterOfYear_exports, __toESM(require_quarterOfYear(), 1));
-var rad_shim_dayjs_plugin_quarterOfYear_default = __ns.default ?? __ns;
+__reExport(ram_shim_dayjs_plugin_quarterOfYear_exports, __toESM(require_quarterOfYear(), 1));
+var ram_shim_dayjs_plugin_quarterOfYear_default = __ns.default ?? __ns;
 export {
-  rad_shim_dayjs_plugin_quarterOfYear_default as default
+  ram_shim_dayjs_plugin_quarterOfYear_default as default
 };

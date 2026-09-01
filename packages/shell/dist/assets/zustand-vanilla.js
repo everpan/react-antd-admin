@@ -33,8 +33,8 @@ var createStoreImpl = (createState) => {
 var createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
 
 // .ram-shim-zustand-vanilla.mjs
-var rad_shim_zustand_vanilla_default = void 0 ?? vanilla_exports;
+var ram_shim_zustand_vanilla_default = void 0 ?? vanilla_exports;
 export {
   createStore,
-  rad_shim_zustand_vanilla_default as default
+  ram_shim_zustand_vanilla_default as default
 };

@@ -82823,7 +82823,7 @@ use(installLegacyGridContainLabel);
 use(installScatterJitter);
 
 // .ram-shim-echarts.mjs
-var rad_shim_echarts_default = void 0 ?? echarts_exports2;
+var ram_shim_echarts_default = void 0 ?? echarts_exports2;
 export {
   Axis_default as Axis,
   Chart_default as ChartView,
@@ -82836,7 +82836,7 @@ export {
   color_exports as color,
   connect,
   dataTool,
-  rad_shim_echarts_default as default,
+  ram_shim_echarts_default as default,
   dependencies,
   disConnect,
   disconnect,

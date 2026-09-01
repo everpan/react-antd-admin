@@ -64,8 +64,8 @@ function shallow(valueA, valueB) {
 }
 
 // .ram-shim-zustand-vanilla-shallow.mjs
-var rad_shim_zustand_vanilla_shallow_default = void 0 ?? shallow_exports;
+var ram_shim_zustand_vanilla_shallow_default = void 0 ?? shallow_exports;
 export {
-  rad_shim_zustand_vanilla_shallow_default as default,
+  ram_shim_zustand_vanilla_shallow_default as default,
   shallow
 };

@@ -296,15 +296,15 @@ var require_nprogress = __commonJS({
 });
 
 // .ram-shim-nprogress.mjs
-var rad_shim_nprogress_exports = {};
-__export(rad_shim_nprogress_exports, {
-  default: () => rad_shim_nprogress_default
+var ram_shim_nprogress_exports = {};
+__export(ram_shim_nprogress_exports, {
+  default: () => ram_shim_nprogress_default
 });
 var __ns = __toESM(require_nprogress(), 1);
-__reExport(rad_shim_nprogress_exports, __toESM(require_nprogress(), 1));
-var rad_shim_nprogress_default = __ns.default ?? __ns;
+__reExport(ram_shim_nprogress_exports, __toESM(require_nprogress(), 1));
+var ram_shim_nprogress_default = __ns.default ?? __ns;
 export {
-  rad_shim_nprogress_default as default
+  ram_shim_nprogress_default as default
 };
 /*! Bundled license information:
 

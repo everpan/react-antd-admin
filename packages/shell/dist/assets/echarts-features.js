@@ -24028,14 +24028,14 @@ function installScatterJitter(registers) {
 }
 
 // .ram-shim-echarts-features.mjs
-var rad_shim_echarts_features_default = void 0 ?? features_exports;
+var ram_shim_echarts_features_default = void 0 ?? features_exports;
 export {
   installAxisBreak as AxisBreak,
   installLabelLayout as LabelLayout,
   installLegacyGridContainLabel as LegacyGridContainLabel,
   installScatterJitter as ScatterJitter,
   installUniversalTransition as UniversalTransition,
-  rad_shim_echarts_features_default as default
+  ram_shim_echarts_features_default as default
 };
 /*! Bundled license information:
 

@@ -500,11 +500,11 @@ function ssrSafe(config, isSSR = typeof window === "undefined") {
 }
 
 // .ram-shim-zustand-middleware.mjs
-var rad_shim_zustand_middleware_default = void 0 ?? middleware_exports;
+var ram_shim_zustand_middleware_default = void 0 ?? middleware_exports;
 export {
   combine,
   createJSONStorage,
-  rad_shim_zustand_middleware_default as default,
+  ram_shim_zustand_middleware_default as default,
   devtools,
   persist,
   redux,

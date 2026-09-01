@@ -86,13 +86,13 @@ var require_advancedFormat = __commonJS({
 });
 
 // .ram-shim-dayjs-plugin-advancedFormat.mjs
-var rad_shim_dayjs_plugin_advancedFormat_exports = {};
-__export(rad_shim_dayjs_plugin_advancedFormat_exports, {
-  default: () => rad_shim_dayjs_plugin_advancedFormat_default
+var ram_shim_dayjs_plugin_advancedFormat_exports = {};
+__export(ram_shim_dayjs_plugin_advancedFormat_exports, {
+  default: () => ram_shim_dayjs_plugin_advancedFormat_default
 });
 var __ns = __toESM(require_advancedFormat(), 1);
-__reExport(rad_shim_dayjs_plugin_advancedFormat_exports, __toESM(require_advancedFormat(), 1));
-var rad_shim_dayjs_plugin_advancedFormat_default = __ns.default ?? __ns;
+__reExport(ram_shim_dayjs_plugin_advancedFormat_exports, __toESM(require_advancedFormat(), 1));
+var ram_shim_dayjs_plugin_advancedFormat_default = __ns.default ?? __ns;
 export {
-  rad_shim_dayjs_plugin_advancedFormat_default as default
+  ram_shim_dayjs_plugin_advancedFormat_default as default
 };

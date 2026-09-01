@@ -367,13 +367,13 @@ var require_zh_CN7 = __commonJS({
 });
 
 // .ram-shim-antd-locale-zh_CN.mjs
-var rad_shim_antd_locale_zh_CN_exports = {};
-__export(rad_shim_antd_locale_zh_CN_exports, {
-  default: () => rad_shim_antd_locale_zh_CN_default
+var ram_shim_antd_locale_zh_CN_exports = {};
+__export(ram_shim_antd_locale_zh_CN_exports, {
+  default: () => ram_shim_antd_locale_zh_CN_default
 });
 var __ns = __toESM(require_zh_CN7(), 1);
-__reExport(rad_shim_antd_locale_zh_CN_exports, __toESM(require_zh_CN7(), 1));
-var rad_shim_antd_locale_zh_CN_default = __ns.default ?? __ns;
+__reExport(ram_shim_antd_locale_zh_CN_exports, __toESM(require_zh_CN7(), 1));
+var ram_shim_antd_locale_zh_CN_default = __ns.default ?? __ns;
 export {
-  rad_shim_antd_locale_zh_CN_default as default
+  ram_shim_antd_locale_zh_CN_default as default
 };

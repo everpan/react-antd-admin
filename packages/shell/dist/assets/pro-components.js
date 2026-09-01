@@ -44356,7 +44356,7 @@ var version2 = {
 };
 
 // .ram-shim-pro-components.mjs
-var rad_shim_pro_components_default = void 0 ?? es_exports;
+var ram_shim_pro_components_default = void 0 ?? es_exports;
 export {
   BaseProList,
   SchemaForm_default as BetaSchemaForm,
@@ -44514,7 +44514,7 @@ export {
   dateArrayFormatter,
   dateFormatterMap,
   deDEIntl,
-  rad_shim_pro_components_default as default,
+  ram_shim_pro_components_default as default,
   defaultRenderText,
   editableRowByKey,
   enGBIntl,

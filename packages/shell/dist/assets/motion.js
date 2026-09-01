@@ -9641,7 +9641,7 @@ function distance2D(a, b) {
 }
 
 // .ram-shim-motion.mjs
-var rad_shim_motion_default = void 0 ?? es_exports;
+var ram_shim_motion_default = void 0 ?? es_exports;
 export {
   AsyncMotionValueAnimation,
   DOMKeyframesResolver,
@@ -9755,7 +9755,7 @@ export {
   createScopedAnimate,
   cubicBezier,
   cubicBezierAsString,
-  rad_shim_motion_default as default,
+  ram_shim_motion_default as default,
   defaultEasing,
   defaultOffset,
   defaultTransformValue,

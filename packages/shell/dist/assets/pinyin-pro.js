@@ -25153,7 +25153,7 @@ function segment(word, options) {
 }
 
 // .ram-shim-pinyin-pro.mjs
-var rad_shim_pinyin_pro_default = void 0 ?? esm_exports;
+var ram_shim_pinyin_pro_default = void 0 ?? esm_exports;
 export {
   OutputFormat,
   addDict,
@@ -25161,7 +25161,7 @@ export {
   clearCustomDict,
   convert,
   customPinyin,
-  rad_shim_pinyin_pro_default as default,
+  ram_shim_pinyin_pro_default as default,
   getFinalParts,
   getInitialAndFinal,
   getNumOfTone,

@@ -13200,7 +13200,7 @@ var motion2 = motion;
 var m2 = m;
 
 // .ram-shim-motion-react.mjs
-var rad_shim_motion_react_default = void 0 ?? react_exports;
+var ram_shim_motion_react_default = void 0 ?? react_exports;
 export {
   AnimatePresence,
   AnimateSharedLayout,
@@ -13335,7 +13335,7 @@ export {
   createScopedAnimate,
   cubicBezier,
   cubicBezierAsString,
-  rad_shim_motion_react_default as default,
+  ram_shim_motion_react_default as default,
   defaultEasing,
   defaultOffset,
   defaultTransformValue,

@@ -4048,7 +4048,7 @@ var jsx = create3();
 var react_jss_esm_default = createWithStyles;
 
 // .ram-shim-react-jss.mjs
-var rad_shim_react_jss_default = react_jss_esm_default ?? react_jss_esm_exports;
+var ram_shim_react_jss_default = react_jss_esm_default ?? react_jss_esm_exports;
 export {
   JssContext,
   JssProvider,
@@ -4058,7 +4058,7 @@ export {
   create3 as createJsx,
   createTheming,
   createUseStyles,
-  rad_shim_react_jss_default as default,
+  ram_shim_react_jss_default as default,
   defaultJss2 as jss,
   jsx,
   configureStyled as styled,

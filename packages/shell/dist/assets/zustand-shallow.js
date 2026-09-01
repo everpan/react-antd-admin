@@ -14,9 +14,9 @@ import { shallow } from "zustand/vanilla/shallow";
 import { useShallow } from "zustand/react/shallow";
 
 // .ram-shim-zustand-shallow.mjs
-var rad_shim_zustand_shallow_default = void 0 ?? shallow_exports;
+var ram_shim_zustand_shallow_default = void 0 ?? shallow_exports;
 export {
-  rad_shim_zustand_shallow_default as default,
+  ram_shim_zustand_shallow_default as default,
   shallow,
   useShallow
 };

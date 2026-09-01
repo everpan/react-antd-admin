@@ -699,12 +699,12 @@ function isAfter(a, b) {
 }
 
 // .ram-shim-dnd-kit-sortable.mjs
-var rad_shim_dnd_kit_sortable_default = void 0 ?? sortable_esm_exports;
+var ram_shim_dnd_kit_sortable_default = void 0 ?? sortable_esm_exports;
 export {
   SortableContext,
   arrayMove,
   arraySwap,
-  rad_shim_dnd_kit_sortable_default as default,
+  ram_shim_dnd_kit_sortable_default as default,
   defaultAnimateLayoutChanges,
   defaultNewIndexGetter,
   hasSortableData,

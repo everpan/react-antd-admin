@@ -527,7 +527,7 @@ var useState2 = __m["useState"];
 var useSyncExternalStore2 = __m["useSyncExternalStore"];
 var useTransition2 = __m["useTransition"];
 var version2 = __m["version"];
-var rad_shim_react_default = __m.default ?? __m;
+var ram_shim_react_default = __m.default ?? __m;
 export {
   Activity2 as Activity,
   Children2 as Children,
@@ -547,7 +547,7 @@ export {
   createContext2 as createContext,
   createElement2 as createElement,
   createRef2 as createRef,
-  rad_shim_react_default as default,
+  ram_shim_react_default as default,
   forwardRef2 as forwardRef,
   isValidElement2 as isValidElement,
   lazy2 as lazy,

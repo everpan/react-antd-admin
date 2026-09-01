@@ -54,10 +54,10 @@ var require_jsx_dev_runtime = __commonJS({
 var __m = __toESM(require_jsx_dev_runtime(), 1);
 var Fragment2 = __m["Fragment"];
 var jsxDEV2 = __m["jsxDEV"];
-var rad_shim_jsx_dev_runtime_default = __m.default ?? __m;
+var ram_shim_jsx_dev_runtime_default = __m.default ?? __m;
 export {
   Fragment2 as Fragment,
-  rad_shim_jsx_dev_runtime_default as default,
+  ram_shim_jsx_dev_runtime_default as default,
   jsxDEV2 as jsxDEV
 };
 /*! Bundled license information:

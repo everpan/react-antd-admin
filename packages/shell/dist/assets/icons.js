@@ -34105,7 +34105,7 @@ function create(options = {}) {
 var IconProvider = Context_default.Provider;
 
 // .ram-shim-icons.mjs
-var rad_shim_icons_default = Icon_default ?? es_exports;
+var ram_shim_icons_default = Icon_default ?? es_exports;
 export {
   AccountBookFilled_default as AccountBookFilled,
   AccountBookOutlined_default as AccountBookOutlined,
@@ -34955,7 +34955,7 @@ export {
   ZoomInOutlined_default as ZoomInOutlined,
   ZoomOutOutlined_default as ZoomOutOutlined,
   create as createFromIconfontCN,
-  rad_shim_icons_default as default,
+  ram_shim_icons_default as default,
   getTwoToneColor,
   setTwoToneColor
 };

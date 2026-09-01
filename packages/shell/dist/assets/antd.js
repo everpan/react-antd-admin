@@ -106778,7 +106778,7 @@ if (false) {
 }
 
 // .ram-shim-antd.mjs
-var rad_shim_antd_default = void 0 ?? es_exports;
+var ram_shim_antd_default = void 0 ?? es_exports;
 export {
   affix_default as Affix,
   alert_default as Alert,
@@ -106852,7 +106852,7 @@ export {
   typography_default as Typography,
   upload_default as Upload,
   watermark_default as Watermark,
-  rad_shim_antd_default as default,
+  ram_shim_antd_default as default,
   message_default as message,
   notification_default2 as notification,
   theme_default3 as theme,

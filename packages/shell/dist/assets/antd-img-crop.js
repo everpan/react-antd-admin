@@ -1471,9 +1471,9 @@ var ImgCrop = forwardRef((props, cropperRef) => {
 });
 
 // .ram-shim-antd-img-crop.mjs
-var rad_shim_antd_img_crop_default = ImgCrop ?? antd_img_crop_esm_exports;
+var ram_shim_antd_img_crop_default = ImgCrop ?? antd_img_crop_esm_exports;
 export {
-  rad_shim_antd_img_crop_default as default
+  ram_shim_antd_img_crop_default as default
 };
 /*! Bundled license information:
 

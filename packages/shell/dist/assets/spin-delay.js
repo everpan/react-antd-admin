@@ -103,9 +103,9 @@ var require_dist = __commonJS({
 var __m = __toESM(require_dist(), 1);
 var defaultOptions2 = __m["defaultOptions"];
 var useSpinDelay2 = __m["useSpinDelay"];
-var rad_shim_spin_delay_default = __m.default ?? __m;
+var ram_shim_spin_delay_default = __m.default ?? __m;
 export {
-  rad_shim_spin_delay_default as default,
+  ram_shim_spin_delay_default as default,
   defaultOptions2 as defaultOptions,
   useSpinDelay2 as useSpinDelay
 };

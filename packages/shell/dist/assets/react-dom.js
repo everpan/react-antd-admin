@@ -233,11 +233,11 @@ var unstable_batchedUpdates2 = __m["unstable_batchedUpdates"];
 var useFormState2 = __m["useFormState"];
 var useFormStatus2 = __m["useFormStatus"];
 var version2 = __m["version"];
-var rad_shim_react_dom_default = __m.default ?? __m;
+var ram_shim_react_dom_default = __m.default ?? __m;
 export {
   __DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE2 as __DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE,
   createPortal2 as createPortal,
-  rad_shim_react_dom_default as default,
+  ram_shim_react_dom_default as default,
   flushSync2 as flushSync,
   preconnect2 as preconnect,
   prefetchDNS2 as prefetchDNS,

@@ -6811,12 +6811,12 @@ function useTheme(options) {
 }
 
 // .ram-shim-ahooks.mjs
-var rad_shim_ahooks_default = void 0 ?? es_exports;
+var ram_shim_ahooks_default = void 0 ?? es_exports;
 export {
   clearCache,
   configResponsive,
   createUpdateEffect,
-  rad_shim_ahooks_default as default,
+  ram_shim_ahooks_default as default,
   useAntdTable_default as useAntdTable,
   useAsyncEffect_default as useAsyncEffect,
   useBoolean,

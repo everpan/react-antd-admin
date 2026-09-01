@@ -3350,10 +3350,10 @@ var extendTailwindMerge = (configExtension, ...createConfig) => typeof configExt
 var twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
 
 // .ram-shim-tailwind-merge.mjs
-var rad_shim_tailwind_merge_default = void 0 ?? bundle_mjs_exports;
+var ram_shim_tailwind_merge_default = void 0 ?? bundle_mjs_exports;
 export {
   createTailwindMerge,
-  rad_shim_tailwind_merge_default as default,
+  ram_shim_tailwind_merge_default as default,
   extendTailwindMerge,
   fromTheme,
   getDefaultConfig,

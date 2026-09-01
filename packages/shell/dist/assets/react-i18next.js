@@ -1742,7 +1742,7 @@ var plural = () => "";
 var selectOrdinal = () => "";
 
 // .ram-shim-react-i18next.mjs
-var rad_shim_react_i18next_default = void 0 ?? es_exports;
+var ram_shim_react_i18next_default = void 0 ?? es_exports;
 export {
   I18nContext,
   I18nextProvider,
@@ -1753,7 +1753,7 @@ export {
   Translation,
   composeInitialProps,
   date,
-  rad_shim_react_i18next_default as default,
+  ram_shim_react_i18next_default as default,
   getDefaults,
   getI18n,
   getInitialProps,

@@ -1404,7 +1404,7 @@ var ky = createInstance();
 var distribution_default = ky;
 
 // .ram-shim-ky.mjs
-var rad_shim_ky_default = distribution_default ?? distribution_exports;
+var ram_shim_ky_default = distribution_default ?? distribution_exports;
 export {
   ForceRetryError,
   HTTPError,
@@ -1412,7 +1412,7 @@ export {
   NetworkError,
   SchemaValidationError,
   TimeoutError,
-  rad_shim_ky_default as default,
+  ram_shim_ky_default as default,
   isForceRetryError,
   isHTTPError,
   isKyError,

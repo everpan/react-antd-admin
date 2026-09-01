@@ -80,13 +80,13 @@ var require_relativeTime = __commonJS({
 });
 
 // .ram-shim-dayjs-plugin-relativeTime.mjs
-var rad_shim_dayjs_plugin_relativeTime_exports = {};
-__export(rad_shim_dayjs_plugin_relativeTime_exports, {
-  default: () => rad_shim_dayjs_plugin_relativeTime_default
+var ram_shim_dayjs_plugin_relativeTime_exports = {};
+__export(ram_shim_dayjs_plugin_relativeTime_exports, {
+  default: () => ram_shim_dayjs_plugin_relativeTime_default
 });
 var __ns = __toESM(require_relativeTime(), 1);
-__reExport(rad_shim_dayjs_plugin_relativeTime_exports, __toESM(require_relativeTime(), 1));
-var rad_shim_dayjs_plugin_relativeTime_default = __ns.default ?? __ns;
+__reExport(ram_shim_dayjs_plugin_relativeTime_exports, __toESM(require_relativeTime(), 1));
+var ram_shim_dayjs_plugin_relativeTime_default = __ns.default ?? __ns;
 export {
-  rad_shim_dayjs_plugin_relativeTime_default as default
+  ram_shim_dayjs_plugin_relativeTime_default as default
 };

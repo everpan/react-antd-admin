@@ -23,10 +23,10 @@ import * as react_star from "zustand/react";
 var create2 = esm_exports["create"];
 var createStore2 = esm_exports["createStore"];
 var useStore2 = esm_exports["useStore"];
-var rad_shim_zustand_default = esm_exports.default ?? esm_exports;
+var ram_shim_zustand_default = esm_exports.default ?? esm_exports;
 export {
   create2 as create,
   createStore2 as createStore,
-  rad_shim_zustand_default as default,
+  ram_shim_zustand_default as default,
   useStore2 as useStore
 };

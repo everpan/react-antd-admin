@@ -68,14 +68,14 @@ var require_zh_cn = __commonJS({
   }
 });
 
-// .ram-shim-rad-dayjs-locale-zh-cn.mjs
-var rad_shim_rad_dayjs_locale_zh_cn_exports = {};
-__export(rad_shim_rad_dayjs_locale_zh_cn_exports, {
-  default: () => rad_shim_rad_dayjs_locale_zh_cn_default
+// .ram-shim-ram-dayjs-locale-zh-cn.mjs
+var ram_shim_ram_dayjs_locale_zh_cn_exports = {};
+__export(ram_shim_ram_dayjs_locale_zh_cn_exports, {
+  default: () => ram_shim_ram_dayjs_locale_zh_cn_default
 });
 var __ns = __toESM(require_zh_cn(), 1);
-__reExport(rad_shim_rad_dayjs_locale_zh_cn_exports, __toESM(require_zh_cn(), 1));
-var rad_shim_rad_dayjs_locale_zh_cn_default = __ns.default ?? __ns;
+__reExport(ram_shim_ram_dayjs_locale_zh_cn_exports, __toESM(require_zh_cn(), 1));
+var ram_shim_ram_dayjs_locale_zh_cn_default = __ns.default ?? __ns;
 export {
-  rad_shim_rad_dayjs_locale_zh_cn_default as default
+  ram_shim_ram_dayjs_locale_zh_cn_default as default
 };

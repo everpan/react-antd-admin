@@ -58513,7 +58513,7 @@ function install27(registers) {
 }
 
 // .ram-shim-echarts-charts.mjs
-var rad_shim_echarts_charts_default = void 0 ?? charts_exports;
+var ram_shim_echarts_charts_default = void 0 ?? charts_exports;
 export {
   install2 as BarChart,
   install19 as BoxplotChart,
@@ -58538,7 +58538,7 @@ export {
   install25 as ThemeRiverChart,
   install10 as TreeChart,
   install11 as TreemapChart,
-  rad_shim_echarts_charts_default as default
+  ram_shim_echarts_charts_default as default
 };
 /*! Bundled license information:
 

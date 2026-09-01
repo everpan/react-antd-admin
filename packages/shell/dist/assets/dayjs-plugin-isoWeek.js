@@ -65,13 +65,13 @@ var require_isoWeek = __commonJS({
 });
 
 // .ram-shim-dayjs-plugin-isoWeek.mjs
-var rad_shim_dayjs_plugin_isoWeek_exports = {};
-__export(rad_shim_dayjs_plugin_isoWeek_exports, {
-  default: () => rad_shim_dayjs_plugin_isoWeek_default
+var ram_shim_dayjs_plugin_isoWeek_exports = {};
+__export(ram_shim_dayjs_plugin_isoWeek_exports, {
+  default: () => ram_shim_dayjs_plugin_isoWeek_default
 });
 var __ns = __toESM(require_isoWeek(), 1);
-__reExport(rad_shim_dayjs_plugin_isoWeek_exports, __toESM(require_isoWeek(), 1));
-var rad_shim_dayjs_plugin_isoWeek_default = __ns.default ?? __ns;
+__reExport(ram_shim_dayjs_plugin_isoWeek_exports, __toESM(require_isoWeek(), 1));
+var ram_shim_dayjs_plugin_isoWeek_default = __ns.default ?? __ns;
 export {
-  rad_shim_dayjs_plugin_isoWeek_default as default
+  ram_shim_dayjs_plugin_isoWeek_default as default
 };
