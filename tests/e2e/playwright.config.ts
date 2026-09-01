@@ -17,10 +17,10 @@ const TARGETS = {
 	legacy: {
 		baseURL: "http://localhost:3333",
 		webServer: {
-			// playwright webServer 的 cwd 是 config 所在目录（e2e/），故用 ../。
+			// playwright webServer 的 cwd 是 config 所在目录（tests/e2e/），故用 ../../。
 			// 禁用 verify-deps：worktree 的 .git 是文件，simple-git-hooks prepare
 			// 必失败，pnpm 11 run 前的自动 install 会拖死/中止 dev 启动
-			command: "pnpm --config.verify-deps-before-run=false --dir ../.e2e-legacy dev -- --strictPort",
+			command: "pnpm --config.verify-deps-before-run=false --dir ../../.e2e-legacy dev -- --strictPort",
 			url: "http://localhost:3333",
 			reuseExistingServer: false,
 			timeout: 120_000,

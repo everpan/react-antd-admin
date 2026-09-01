@@ -55,5 +55,6 @@ TODO.md
 
 # e2e
 .e2e-legacy/
+tests/e2e/test-results/
+tests/e2e/playwright-report/
 test-results/
-e2e/playwright-report/

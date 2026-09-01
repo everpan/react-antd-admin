@@ -61,30 +61,43 @@ test.describe("tabbar", () => {
 		await expect(page.locator(".ant-tabs-tab-active")).toHaveCount(1);
 	});
 
-	// T2：keepalive——detail 页输入态经菜单切走、页签切回后保留
-	// （验证 KeepAlive 挂在 ContainerLayout 的行为等价性；全程客户端导航，page.goto 会整页刷新摧毁缓存必假红）
-	// 注册期条件跳过：用 test.skip 会先跑 beforeEach（legacy 无谓登录一整轮）
+	// 展开子菜单直至 /demo/detail 菜单项可见（不写死所在分组/顺序，
+	// 夹具顺序或默认展开组变动均自适应）。返回该 leaf locator。
+	async function ensureDetailMenuItem(page: Page) {
+		const detail = page.locator(".ant-menu-item[data-menu-id$=\"/demo/detail\"]");
+		if (await detail.first().isVisible().catch(() => false))
+			return detail;
+		const subs = page.locator(".ant-menu-root > li.ant-menu-submenu");
+		const n = await subs.count();
+		for (let i = 0; i < n; i++) {
+			const sub = subs.nth(i);
+			const open = await sub.evaluate(el => el.classList.contains("ant-menu-submenu-open"));
+			if (!open) {
+				await sub.locator("> .ant-menu-submenu-title").click();
+				await page.waitForTimeout(250); // 展开动画 + 子项挂载
+			}
+			if (await detail.first().isVisible().catch(() => false))
+				return detail;
+		}
+		return detail;
+	}
+
+	// T2：keepalive——detail 页输入态经菜单切走、再切回后保留
+	// （验证 KeepAlive 挂在 ContainerLayout 的行为；全程客户端导航，
+	// page.goto 整页刷新会摧毁缓存必假红，故「切回」也走菜单客户端导航）
 	const t2 = getEnv().name === "playground" ? test : test.skip;
 	t2("T2: 页签切换 keepalive 状态保留", async ({ page }) => {
-		// 探测含 detail-input 的菜单项（不写死位置，夹具顺序变动自动适应）
-		const items = page.locator(".ant-menu-root .ant-menu-item");
-		const count = await items.count();
-		let detailIndex = -1;
-		for (let i = 0; i < count; i++) {
-			await items.nth(i).click();
-			const found = await page.getByPlaceholder("detail-input").waitFor({ state: "visible", timeout: 2000 }).then(() => true).catch(() => false);
-			if (found) {
-				detailIndex = i;
-				break;
-			}
-		}
-		test.skip(detailIndex < 0, "夹具中无 detail-input 页面");
-		const detailText = (await items.nth(detailIndex).textContent()) ?? "";
+		const detail = await ensureDetailMenuItem(page);
+		test.skip((await detail.count()) === 0, "菜单中无 /demo/detail 页面");
+		await detail.first().click();
+		await expect(page.getByPlaceholder("detail-input")).toBeVisible();
 		await page.getByPlaceholder("detail-input").fill("keepalive-check");
-		// 经菜单切到任一其它页（客户端导航，KeepAlive 缓存不被摧毁）
-		await items.nth(detailIndex === 0 ? 1 : 0).click();
-		// 页签标题 = 菜单项文案（同一 i18n key），据其定位 detail 页签
-		await page.locator(".ant-tabs-tab", { hasText: detailText }).click();
+		// 经菜单切到同组 about（客户端导航，KeepAlive 缓存不被摧毁）
+		const about = page.locator(".ant-menu-item[data-menu-id$=\"/demo/about\"]");
+		await about.first().click();
+		await expect(page.getByPlaceholder("detail-input")).toHaveCount(0);
+		// 再经菜单切回 detail（客户端导航，命中 KeepAlive 缓存）
+		await detail.first().click();
 		await expect(page.getByPlaceholder("detail-input")).toHaveValue("keepalive-check");
 	});
 

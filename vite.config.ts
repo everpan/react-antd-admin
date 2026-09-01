@@ -143,9 +143,29 @@ export default defineConfig({
 	test: {
 		globals: true,
 		environment: "happy-dom",
-		// 单元测试只在 tests/：避免 vitest 误收 e2e/layout/*.spec.ts
-		// （Playwright spec 会被 vitest 当测试文件加载而报错）
+		// 单元测试只在 tests/（不含 tests/e2e）：避免 vitest 误收
+		// tests/e2e/layout/*.spec.ts（Playwright spec 会被 vitest 当测试文件加载而报错）
 		include: ["tests/**/*.{test,spec}.?(c|m)[jt]s?(x)"],
+		exclude: [
+			"**/node_modules/**",
+			"**/dist/**",
+			".idea",
+			".git",
+			".cache",
+			"**/.temp/**",
+			"**/.turbo/**",
+			"**/coverage/**",
+			"**/.next/**",
+			"**/.nuxt/**",
+			"**/.output/**",
+			"**/.svelte-kit/**",
+			"**/.vercel/**",
+			"**/.vitest/**",
+			"**/build/**",
+			"**/.docusaurus/**",
+			"**/.astro/**",
+			"tests/e2e/**",
+		],
 		setupFiles: ["./packages/runtime/src/setupTests.ts"],
 		// pro-components 是 CJS（"type":"module" 却用 exports.x），vitest 的模块
 		// 求值器会按 ESM 直读而报 "exports is not defined"。这里把它指向「已构建」
