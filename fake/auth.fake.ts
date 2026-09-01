@@ -5,7 +5,7 @@ import { resultSuccess } from "./utils";
 
 export default defineFakeRoute([
 	{
-		url: "/login",
+		url: "/auth/login",
 		timeout: 0,
 		method: "post",
 		// statusCode: 401,
@@ -28,17 +28,17 @@ export default defineFakeRoute([
 		},
 	},
 	{
-		url: "/logout",
+		url: "/auth/logout",
 		timeout: 1000,
 		method: "post",
 		response: () => resultSuccess({}),
 	},
 	{
-		url: "/refresh-token",
+		url: "/auth/refresh",
 		timeout: 1000,
 		method: "post",
 		response: ({ body }) => {
-			if (body.refreshToken === ADMIN_REFRESH_TOKEN) {
+			if (body.refresh_token === ADMIN_REFRESH_TOKEN) {
 				return resultSuccess({ token: ADMIN_TOKEN, refreshToken: ADMIN_REFRESH_TOKEN });
 			}
 			return resultSuccess({ token: COMMON_TOKEN, refreshToken: COMMON_REFRESH_TOKEN });

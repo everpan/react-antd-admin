@@ -218,7 +218,7 @@ const routeNestRouter = {
 
 export default defineFakeRoute([
 	{
-		url: "/get-async-routes",
+		url: "/web/get-async-routes",
 		timeout: 1000,
 		method: "get",
 		response: ({ headers }) => {

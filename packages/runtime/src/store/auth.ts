@@ -39,7 +39,7 @@ export const useAuthStore = create<AuthState & AuthAction>()(
 			 * 1. 退出登录
 			 */
 
-			await fetchLogout();
+			await fetchLogout({ refreshToken: get().refreshToken });
 			/**
 			 * 2. 清空 token 等其他信息
 			 */
