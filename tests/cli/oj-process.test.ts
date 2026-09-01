@@ -93,6 +93,15 @@ describe("startOj 子进程编排", () => {
 		expect(fs.existsSync(stopped)).toBe(true);
 	});
 
+	it("extraArgs 透传（preview 的 --app-path 场景）", async () => {
+		const { root, configPath } = makeFixture("healthy");
+		const proc = startOj(configPath, "/api", path.join(root, "api/src"), { intervalMs: 20, timeoutMs: 3000 }, ["--app-path", "/tmp/site"]);
+		await proc.ready;
+		const args = JSON.parse(fs.readFileSync(path.join(root, "oj-args.json"), "utf-8")) as string[];
+		expect(args.slice(-2)).toEqual(["--app-path", "/tmp/site"]);
+		await proc.stop();
+	});
+
 	it("秒退 → ready 拒绝且 stderr 尾部在错误信息里", async () => {
 		const { root, configPath } = makeFixture("exit");
 		process.env.STUB_OJ_MODE = "exit";

@@ -33,6 +33,7 @@ export function startOj(
 	base: string,
 	apiSrcPath: string,
 	poll: StartOjPoll = {},
+	extraArgs: string[] = [],
 ): OjProcess {
 	const port = readOjPort(configPath);
 	// 约定：config 在 <project>/api/config.yaml，vendor 二进制在 <project>/bin/oj
@@ -40,7 +41,7 @@ export function startOj(
 	const healthUrl = `http://127.0.0.1:${port}${base}/health`;
 
 	let stderrTail = "";
-	const child = spawn(binPath, ["server", "-c", configPath, "-b", base, "--api-path", apiSrcPath], {
+	const child = spawn(binPath, ["server", "-c", configPath, "-b", base, "--api-path", apiSrcPath, ...extraArgs], {
 		stdio: ["ignore", "pipe", "pipe"],
 	});
 	child.stdout?.on("data", (chunk: Buffer) => {

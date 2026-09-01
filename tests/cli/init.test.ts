@@ -32,8 +32,10 @@ describe("initProject", () => {
 		const configText = fs.readFileSync(config, "utf-8");
 		expect(configText).toContain("auth:");
 		expect(configText).not.toContain("__JWT_SECRET__");
-		// oj 已弃用根 seed.sql：users 表种子放模块级（实现期发现，见偏差记录）
+		// oj 已弃用根 seed.sql：users 表种子放模块级（实现期发现，见偏差记录）；
+		// DDL 归 migrations（S006 seed 纪律：seed 只放数据，oj build 检查）
 		expect(fs.existsSync(path.join(dest, "api/src/web/seed.sql"))).toBe(true);
+		expect(fs.existsSync(path.join(dest, "api/src/web/migrations/0001__create_users.sql"))).toBe(true);
 		expect(fs.existsSync(path.join(dest, "api/src/web/manifest.yaml"))).toBe(true);
 		expect(fs.readFileSync(path.join(dest, "api/src/web/manifest.yaml"), "utf-8")).toMatch(/^name:\s*web/m);
 

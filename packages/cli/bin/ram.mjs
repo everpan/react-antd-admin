@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execFileSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
@@ -13,5 +13,17 @@ const ENTRY = path.join(DIR, "../src/index.ts");
 // 模块定义读取时，`@react-antd-module/runtime` 由 esbuild 虚拟模块插件指向只读占位，
 // 因此不会真正加载含 svg 的框架运行时（设计文档 B10 / §4.3）。
 const tsx = import.meta.resolve("tsx");
-const args = ["--import", tsx, ENTRY, ...process.argv.slice(2)];
-execFileSync(process.execPath, args, { stdio: "inherit" });
+
+// spawn + 信号转发而非 execFileSync：`kill <pid>` / 进程管理器只信号外层，
+// 不转发会留下孤儿内层进程（连带 ram dev/preview 起的 oj）。终端 Ctrl-C
+// 发进程组信号本就不会孤儿化，这里是双保险。
+const child = spawn(process.execPath, ["--import", tsx, ENTRY, ...process.argv.slice(2)], {
+	stdio: "inherit",
+});
+process.on("SIGINT", () => child.kill("SIGINT"));
+process.on("SIGTERM", () => child.kill("SIGTERM"));
+child.on("exit", (code, signal) => {
+	process.exitCode = signal ? null : code;
+	if (signal)
+		process.kill(process.pid, signal);
+});
