@@ -155,10 +155,10 @@ function getAppInfo() {
 	return {
 		"pkg": {
 			"name": "@react-antd-module/runtime",
-			"version": "0.0.0",
+			"version": "0.1.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-09-01 17:22:47"
+		"lastBuildTime": "2026-09-01 18:15:41"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));

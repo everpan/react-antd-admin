@@ -1,0 +1,5 @@
+# pnpm v11 起构建审批只读 pnpm-workspace.yaml（package.json 的 pnpm 字段
+# 已废弃）。缺了本项，esbuild 的 postinstall 会被默认拦截，之后所有 pnpm
+# 命令报 ERR_PNPM_IGNORED_BUILDS（0.1.0 发布实测）。
+allowBuilds:
+  esbuild: true

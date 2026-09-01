@@ -90,10 +90,21 @@ export async function initProject(destDir: string, opts: InitOptions = {}): Prom
 		report.skipped.push(".claude/skills/oj-api-dev（bin/devkit 缺失，跳过）");
 	}
 
-	// 5) package.json（版本钉死，见 generatePackageJson）
+	// 5) package.json：不存在则生成；已存在则合并补缺（scripts/devDeps/pnpm
+	// 只补缺失键，既有内容永不覆盖——0.1.0 发布实测：用户常先建最小
+	// package.json 装 cli，整体跳过会让 pnpm dev 无脚本可用）
 	const pkgPath = path.join(destDir, "package.json");
 	if (fs.existsSync(pkgPath)) {
-		report.skipped.push("package.json");
+		const before = fs.readFileSync(pkgPath, "utf-8");
+		const merged = mergePackageJson(JSON.parse(before), generatePackageJson(cliRoot, destDir, projectName));
+		const after = `${JSON.stringify(merged, null, "\t")}\n`;
+		if (after !== before) {
+			fs.writeFileSync(pkgPath, after);
+			report.created.push("package.json（合并补缺）");
+		}
+		else {
+			report.skipped.push("package.json");
+		}
 	}
 	else {
 		fs.writeFileSync(
@@ -102,6 +113,11 @@ export async function initProject(destDir: string, opts: InitOptions = {}): Prom
 		);
 		report.created.push("package.json");
 	}
+
+	// 5b) pnpm-workspace.yaml：模板对全新工程已落盘；pnpm v11 会在首次
+	// install 时自动生成该文件（含 esbuild 审批占位行），copyTemplates
+	// 的「已存在即跳过」会把审批挡在门外（0.1.0 发布实测）——必须合并
+	ensureAllowBuilds(destDir, report);
 
 	console.log(`[ram] init 完成：${destDir}`);
 	console.log(`[ram]   新增 ${report.created.length} 项，跳过（已存在）${report.skipped.length} 项`);
@@ -150,31 +166,72 @@ function copyIfAbsent(src: string, dest: string, report: InitReport): void {
 }
 
 /**
+ * 确保 pnpm-workspace.yaml 的 allowBuilds 含 `esbuild: true`。
+ *  - pnpm v11 自动生成的占位行（"set this to true or false"）→ 填 true
+ *  - 有 allowBuilds 段无 esbuild 行 → 段内追加
+ *  - 无 allowBuilds 段 → 文末追加整段
+ *  - 显式 `esbuild: false` → 用户的选择，尊重不动
+ */
+function ensureAllowBuilds(destDir: string, report: InitReport): void {
+	const yamlPath = path.join(destDir, "pnpm-workspace.yaml");
+	let content = fs.readFileSync(yamlPath, "utf-8");
+	if (/^\s+esbuild:\s*(?:true|false)\s*$/m.test(content)) {
+		if (/^\s+esbuild:\s*true\s*$/m.test(content))
+			report.skipped.push("pnpm-workspace.yaml（allowBuilds 已含 esbuild）");
+		else
+			report.skipped.push("pnpm-workspace.yaml（esbuild: false 为用户显式选择，不动）");
+		return;
+	}
+	if (/^\s+esbuild:\s*set this to true or false\s*$/m.test(content)) {
+		content = content.replace(/^(\s+)esbuild:\s*set this to true or false\s*$/m, "$1esbuild: true");
+	}
+	else if (/^allowBuilds:\s*$/m.test(content)) {
+		content = content.replace(/^allowBuilds:\s*$/m, "allowBuilds:\n  esbuild: true");
+	}
+	else {
+		content = `${content.replace(/\s*$/, "")}\nallowBuilds:\n  esbuild: true\n`;
+	}
+	fs.writeFileSync(yamlPath, content);
+	report.created.push("pnpm-workspace.yaml（合并 esbuild 构建审批）");
+}
+
+/**
  * 依赖版本钉死（审阅记录二 F5）：workspace 协议与 catalog 协议在外部工程
  * 不可解析，@react-antd-module 系未发版前外部 init 不可用——cli/runtime/shell
  * 取真实安装版本，共享依赖取宿主 versions.json（版本矩阵真源），缺项回退
  * "*" 并告警。
  */
-/** init 场景的 shell dist 定位：目标工程 node_modules 优先，monorepo 内回退 workspace */
-function resolveShellDistFor(destDir: string, cliRoot: string): string {
+/**
+ * 钉版数据源：目标工程 node_modules 的 shell dist → monorepo 兄弟目录 →
+ * cli 内置 vendor/host-versions.json（发布包形态，prepack 时同步）。
+ * 0.1.0 发布实测：外部工程 init 时尚未 install，前两个候选都 miss，
+ * 直接 throw 让 init 不可用——内置矩阵是发布包的兜底真源。
+ */
+export function resolveVersionMatrix(cliRoot: string, destDir: string): { matrix: Record<string, string>, shellVersion: string } {
 	const candidates = [
 		path.join(destDir, "node_modules/@react-antd-module/shell/dist"),
 		path.join(cliRoot, "..", "shell/dist"),
 	];
 	for (const candidate of candidates) {
-		if (fs.existsSync(candidate))
-			return candidate;
+		if (fs.existsSync(candidate)) {
+			const shellPkg = JSON.parse(fs.readFileSync(path.join(candidate, "..", "package.json"), "utf-8"));
+			return { matrix: readHostVersions(candidate), shellVersion: shellPkg.version };
+		}
 	}
-	throw new Error(
-		"找不到 @react-antd-module/shell 的预构建产物（dist）。\n"
-		+ "请先构建宿主：pnpm --filter @react-antd-module/shell build",
-	);
+	const bundled = JSON.parse(fs.readFileSync(path.join(cliRoot, "vendor/host-versions.json"), "utf-8"));
+	return { matrix: bundled.matrix, shellVersion: bundled.shellVersion };
+}
+
+/** 合并补缺：scripts/devDependencies 只补缺失键，既有内容不动 */
+function mergePackageJson(existing: Record<string, any>, generated: Record<string, any>): Record<string, any> {
+	const merged = { ...existing };
+	merged.scripts = { ...generated.scripts, ...existing.scripts };
+	merged.devDependencies = { ...generated.devDependencies, ...existing.devDependencies };
+	return merged;
 }
 
 function generatePackageJson(cliRoot: string, destDir: string, projectName: string) {
-	const shellDist = resolveShellDistFor(destDir, cliRoot);
-	const hostVersions = readHostVersions(shellDist);
-	const shellPkg = JSON.parse(fs.readFileSync(path.join(shellDist, "..", "package.json"), "utf-8"));
+	const { matrix: hostVersions, shellVersion } = resolveVersionMatrix(cliRoot, destDir);
 	const cliPkg = JSON.parse(fs.readFileSync(path.join(cliRoot, "package.json"), "utf-8"));
 
 	const pin = (name: string): string => {
@@ -188,7 +245,7 @@ function generatePackageJson(cliRoot: string, destDir: string, projectName: stri
 	const devDeps: Record<string, string> = {
 		"@react-antd-module/cli": cliPkg.version,
 		"@react-antd-module/runtime": pin("@react-antd-module/runtime"),
-		"@react-antd-module/shell": shellPkg.version,
+		"@react-antd-module/shell": shellVersion,
 		"@ant-design/icons": pin("@ant-design/icons"),
 		"@types/react": pin("@types/react"),
 		"antd": pin("antd"),

@@ -2,8 +2,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { initProject } from "../../packages/cli/src/init";
+import { initProject, resolveVersionMatrix } from "../../packages/cli/src/init";
 import { readOjPort, readOjServerField } from "../../packages/cli/src/oj-config";
+import { PROJECT_ROOT } from "../helpers/paths";
 
 /**
  * 设计 §3：`ram init` 产物契约（TDD）。
@@ -86,5 +87,95 @@ describe("initProject", () => {
 
 		expect(fs.readFileSync(configPath, "utf-8")).toBe(tampered); // 永不覆盖
 		expect(fs.readFileSync(path.join(dest, "user-file.txt"), "utf-8")).toBe("keep");
+	});
+
+	it("发布实测 bug1：已有最小 package.json → 合并补缺，既有键永不覆盖", async () => {
+		const dest = path.join(tmpRoot(), "proj");
+		fs.mkdirSync(dest, { recursive: true });
+		fs.writeFileSync(path.join(dest, "package.json"), JSON.stringify({
+			name: "my-app",
+			scripts: { dev: "custom-dev" },
+			dependencies: { "@react-antd-module/cli": "^0.1.0" },
+		}, null, 2));
+
+		await initProject(dest, { yes: true });
+
+		const pkg = JSON.parse(fs.readFileSync(path.join(dest, "package.json"), "utf-8"));
+		expect(pkg.name).toBe("my-app"); // 既有字段不动
+		expect(pkg.scripts.dev).toBe("custom-dev"); // 既有 script 不覆盖
+		expect(pkg.scripts.build).toContain("ram build"); // 缺的补上
+		expect(pkg.scripts.preview).toContain("ram preview");
+		expect(pkg.dependencies["@react-antd-module/cli"]).toBe("^0.1.0"); // 既有依赖不动
+		expect(pkg.devDependencies["@react-antd-module/runtime"]).toBeTruthy();
+		expect(pkg.devDependencies["@react-antd-module/shell"]).toBeTruthy();
+		// pnpm v11 构建审批只读 pnpm-workspace.yaml 的 allowBuilds 映射
+		expect(fs.readFileSync(path.join(dest, "pnpm-workspace.yaml"), "utf-8")).toMatch(/^\s+esbuild:\s*true$/m);
+	});
+
+	it("pnpm-workspace.yaml 已存在 → 合并 esbuild 审批，其它键保留", async () => {
+		const dest = path.join(tmpRoot(), "proj");
+		fs.mkdirSync(dest, { recursive: true });
+		// pnpm v11 首次 install 自动生成的形态：占位行 + 策略段
+		fs.writeFileSync(path.join(dest, "pnpm-workspace.yaml"), [
+			"allowBuilds:",
+			"  esbuild: set this to true or false",
+			"minimumReleaseAgeExclude:",
+			"  - \"@react-antd-module/cli@0.1.0\"",
+			"",
+		].join("\n"));
+
+		await initProject(dest, { yes: true });
+
+		const yaml = fs.readFileSync(path.join(dest, "pnpm-workspace.yaml"), "utf-8");
+		expect(yaml).toMatch(/^\s+esbuild:\s*true$/m); // 占位被填成 true
+		expect(yaml).toContain("minimumReleaseAgeExclude"); // 既有段保留
+		expect(yaml).toContain("@react-antd-module/cli@0.1.0");
+	});
+
+	it("pnpm-workspace.yaml 无 allowBuilds 段 → 追加；显式 false → 尊重不动", async () => {
+		const destA = path.join(tmpRoot(), "proj-a");
+		fs.mkdirSync(destA, { recursive: true });
+		fs.writeFileSync(path.join(destA, "pnpm-workspace.yaml"), "packages: []\n");
+		await initProject(destA, { yes: true });
+		expect(fs.readFileSync(path.join(destA, "pnpm-workspace.yaml"), "utf-8")).toMatch(/allowBuilds:\n\s+esbuild:\s*true/);
+
+		const destB = path.join(tmpRoot(), "proj-b");
+		fs.mkdirSync(destB, { recursive: true });
+		fs.writeFileSync(path.join(destB, "pnpm-workspace.yaml"), "allowBuilds:\n  esbuild: false\n");
+		await initProject(destB, { yes: true });
+		expect(fs.readFileSync(path.join(destB, "pnpm-workspace.yaml"), "utf-8")).toContain("esbuild: false"); // 用户显式选择不动
+	});
+
+	it("发布实测 bug2：shell dist 不可达 → 回退 cli 内置矩阵钉版（发布包形态）", () => {
+		// 伪造「发布包」cliRoot：无 ../shell/dist 兄弟目录，只有 package.json + vendor
+		const fakeCli = path.join(tmpRoot(), "cli");
+		fs.mkdirSync(path.join(fakeCli, "vendor"), { recursive: true });
+		fs.writeFileSync(path.join(fakeCli, "package.json"), JSON.stringify({ name: "@react-antd-module/cli", version: "9.9.9" }));
+		fs.writeFileSync(path.join(fakeCli, "vendor/host-versions.json"), JSON.stringify({
+			shellVersion: "0.1.0",
+			matrix: { "react": "19.2.0", "antd": "6.0.0", "@react-antd-module/runtime": "0.1.0" },
+		}));
+
+		const { matrix, shellVersion } = resolveVersionMatrix(fakeCli, path.join(tmpRoot(), "dest"));
+		expect(matrix.react).toBe("19.2.0");
+		expect(matrix["@react-antd-module/runtime"]).toBe("0.1.0");
+		expect(shellVersion).toBe("0.1.0"); // 锁步：shell 钉到内置矩阵记录的版本
+	});
+
+	it("cli 内置版本矩阵真实存在且含核心项（发布内容物契约）", () => {
+		const bundled = JSON.parse(fs.readFileSync(
+			path.join(PROJECT_ROOT, "packages/cli/vendor/host-versions.json"),
+			"utf-8",
+		));
+		expect(bundled.shellVersion).toBeTruthy();
+		for (const key of ["react", "antd", "react-router", "@react-antd-module/runtime"])
+			expect(bundled.matrix[key]).toBeTruthy();
+	});
+
+	it("全新工程落 pnpm-workspace.yaml（pnpm v11 esbuild 构建审批）", async () => {
+		const dest = path.join(tmpRoot(), "demo-proj");
+		await initProject(dest, { yes: true });
+		const yaml = fs.readFileSync(path.join(dest, "pnpm-workspace.yaml"), "utf-8");
+		expect(yaml).toMatch(/allowBuilds:\n\s+esbuild:\s*true/);
 	});
 });

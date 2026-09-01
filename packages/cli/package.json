@@ -22,6 +22,9 @@
 		"templates",
 		"vendor"
 	],
+	"scripts": {
+		"prepack": "node scripts/sync-host-versions.mjs"
+	},
 	"dependencies": {
 		"esbuild": "catalog:",
 		"tsx": "catalog:",
