@@ -1,23 +1,17 @@
+import path from "node:path";
 import process from "node:process";
+import { parseInitArgs } from "./args";
 import { buildBackend, buildModules } from "./build";
 import { devServer } from "./dev";
 import { mergeManifests, printInfo } from "./info";
 import { initProject } from "./init";
 import { previewServer } from "./preview";
+import { usageText } from "./usage";
 
 const [command] = process.argv.slice(2);
 
 function usage(): never {
-	console.log(`@react-antd-module/cli
-
-用法:
-  ram init [--yes]  前后端一体化工程脚手架（幂等补缺）
-  ram dev [port]    启动开发服务器（/api 反代 oj + 模块重建 + SSE 刷新）
-  ram build         构建后端（oj build）与模块产物（含全站合并）
-  ram preview       生产形态预览（migrate → oj server + 静态兜底）
-  ram info          输出版本矩阵与模块清单（报障用，US-7）
-  ram merge <out.json> <in1.json> [in2.json ...]  合并多团队清单（R12）
-`);
+	console.log(usageText());
 	process.exit(command ? 1 : 0);
 }
 
@@ -30,9 +24,11 @@ async function main() {
 			await buildBackend(projectRoot);
 			await buildModules(projectRoot, { mergeSite: true });
 			break;
-		case "init":
-			await initProject(process.argv[3] ?? "", { yes: process.argv.includes("--yes") });
+		case "init": {
+			const { dest, yes } = parseInitArgs(process.argv.slice(3));
+			await initProject(dest ? path.resolve(dest) : projectRoot, { yes });
 			break;
+		}
 		case "preview": {
 			const previewPortArg = Number(process.argv[3]);
 			const previewPort = Number.isFinite(previewPortArg) && previewPortArg > 0 ? previewPortArg : undefined;

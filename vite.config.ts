@@ -145,6 +145,7 @@ export default defineConfig({
 		environment: "happy-dom",
 		// 单元测试只在 tests/（不含 tests/e2e）：避免 vitest 误收
 		// tests/e2e/layout/*.spec.ts（Playwright spec 会被 vitest 当测试文件加载而报错）
+		// uni-dev 真二进制冒烟放 tests/integration/（*.test.ts，CI 跳过）
 		include: ["tests/**/*.{test,spec}.?(c|m)[jt]s?(x)"],
 		exclude: [
 			"**/node_modules/**",
