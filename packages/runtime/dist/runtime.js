@@ -74,27 +74,49 @@ var AUTH_HEADER, LANG_HEADER, REFRESH_TOKEN_PATH;
 var init_constants$4 = __esmMin((() => {
 	AUTH_HEADER = "Authorization";
 	LANG_HEADER = "X-Lang";
-	REFRESH_TOKEN_PATH = "refresh-token";
+	REFRESH_TOKEN_PATH = "auth/refresh";
 }));
 //#endregion
 //#region src/api/user/types.ts
 var init_types = __esmMin((() => {}));
 //#endregion
 //#region src/api/user/index.ts
-function fetchLogin(data) {
-	return request.post("login", { json: data }).json();
+/** oj 原生信封 → ApiResponse；已带 result 的旧信封（fake）原样透传 */
+function normalize(raw) {
+	if (raw && typeof raw === "object" && "result" in raw) return raw;
+	const oj = raw;
+	const ok = (oj.code ?? 0) === 0;
+	return {
+		code: ok ? 200 : oj.code,
+		result: oj.data,
+		message: oj.msg ?? "",
+		success: ok
+	};
 }
-function fetchLogout() {
-	return request.post("logout").json();
+/** 认证载荷字段兼容：oj snake_case（access_token）与 fake camelCase（token）双读 */
+function mapAuth(res) {
+	return {
+		...res,
+		result: {
+			token: res.result?.token ?? res.result?.access_token ?? "",
+			refreshToken: res.result?.refreshToken ?? res.result?.refresh_token ?? ""
+		}
+	};
+}
+function fetchLogin(data) {
+	return request.post("auth/login", { json: data }).json().then(normalize).then(mapAuth);
+}
+function fetchLogout(data) {
+	return request.post("auth/logout", { json: { refresh_token: data?.refreshToken ?? "" } }).json();
 }
 function fetchAsyncRoutes() {
-	return request.get("get-async-routes").json();
+	return request.get("web/get-async-routes").json().then((raw) => normalize(raw));
 }
 function fetchUserInfo() {
-	return request.get("user-info").json();
+	return request.get("web/user-info").json().then((raw) => normalize(raw));
 }
 function fetchRefreshToken(data) {
-	return request.post(REFRESH_TOKEN_PATH, { json: data }).json();
+	return request.post(REFRESH_TOKEN_PATH, { json: { refresh_token: data.refreshToken } }).json().then(normalize).then(mapAuth);
 }
 var init_user$1 = __esmMin((() => {
 	init_request();
@@ -136,7 +158,7 @@ function getAppInfo() {
 			"version": "0.0.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-09-01 02:30:15"
+		"lastBuildTime": "2026-09-01 17:26:48"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -2987,7 +3009,7 @@ function PasswordLogin() {
 			const redirect = searchParams.get("redirect");
 			if (redirect) navigate(`/${redirect.slice(1)}`);
 			else navigate("/home");
-		}).finally(() => {
+		}).catch(() => {}).finally(() => {
 			messageLoadingApi?.destroy();
 			setTimeout(() => {
 				window.$message?.destroy();
@@ -8370,6 +8392,13 @@ var init_access = __esmMin((() => {
 	}));
 }));
 //#endregion
+//#region src/utils/static-antd/index.ts
+var message$1, resetFns;
+var init_static_antd = __esmMin((() => {
+	message$1 = message;
+	({...resetFns} = Modal);
+}));
+//#endregion
 //#region src/store/auth.ts
 var initialState, useAuthStore;
 var init_auth = __esmMin((() => {
@@ -8378,6 +8407,7 @@ var init_auth = __esmMin((() => {
 	init_tabs();
 	init_user();
 	init_get_app_namespace();
+	init_static_antd();
 	initialState = {
 		token: "",
 		refreshToken: ""
@@ -8385,13 +8415,18 @@ var init_auth = __esmMin((() => {
 	useAuthStore = create()(persist((set, get) => ({
 		...initialState,
 		login: async (loginPayload) => {
-			set({ ...(await fetchLogin(loginPayload)).result });
+			const response = await fetchLogin(loginPayload);
+			if (response.success === false) {
+				message$1.error(response.message || "登录失败");
+				throw new Error(response.message || "登录失败");
+			}
+			set({ ...response.result });
 		},
 		logout: async () => {
 			/**
 			* 1. 退出登录
 			*/
-			await fetchLogout();
+			await fetchLogout({ refreshToken: get().refreshToken });
 			/**
 			* 2. 清空 token 等其他信息
 			*/
@@ -8422,13 +8457,6 @@ var init_auth = __esmMin((() => {
 			*/
 		}
 	}), { name: getAppNamespace("access-token") }));
-}));
-//#endregion
-//#region src/utils/static-antd/index.ts
-var message$1, resetFns;
-var init_static_antd = __esmMin((() => {
-	message$1 = message;
-	({...resetFns} = Modal);
 }));
 //#endregion
 //#region src/utils/request/error-response.ts
@@ -8633,7 +8661,7 @@ var init_request = __esmMin((() => {
 				if (!options.ignoreLoading) globalProgress.done();
 				if (!response.ok) {
 					if (response.status === 401) {
-						if ([`/refresh-token`].some((url) => request.url.endsWith(url))) {
+						if ([`/auth/refresh`].some((url) => request.url.endsWith(url))) {
 							goLogin();
 							return response;
 						}
