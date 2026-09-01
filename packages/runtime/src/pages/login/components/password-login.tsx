@@ -46,6 +46,9 @@ export function PasswordLogin() {
 			else {
 				navigate(import.meta.env.VITE_BASE_HOME_PATH);
 			}
+		}).catch(() => {
+			// 失败提示已由更内层给出（HTTP 错误走 request 层 toast；
+			// oj 信封级失败走 auth store toast，F12）——这里只吞 rejection
 		}).finally(() => {
 			messageLoadingApi?.destroy();
 			// Prevent multiple requests from being made by clicking the login button

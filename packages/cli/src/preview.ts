@@ -20,7 +20,7 @@ import { proxyApi } from "./dev-proxy";
 import { resolveLayout } from "./layout";
 import { startOj } from "./oj";
 import { readOjServerField } from "./oj-config";
-import { createStaticHandler, listenOnFreePort } from "./static-handler";
+import { createStaticHandler, decodeReqPath, listenOnFreePort } from "./static-handler";
 
 const DEFAULT_PORT = 4173;
 
@@ -64,15 +64,29 @@ export async function previewServer(projectRoot: string, opts: PreviewOptions = 
 		startOj(cfg, b, apiPath, undefined, extraArgs));
 	const extraArgs = opts.ojStatic ? ["--app-path", siteDir] : [];
 	const oj = starter(configPath, base, apiDist, extraArgs);
-	await oj.ready;
-	console.log(`[ram] oj 后端已就绪（release/js）：/api → http://127.0.0.1:${oj.port}`);
+	try {
+		await oj.ready;
+	}
+	catch (error) {
+		// F3：ready 拒绝必须先回收子进程，否则 oj 孤儿化继续占端口
+		await oj.stop().catch(() => {});
+		throw error;
+	}
+	console.log(`[ram] oj 后端已就绪（release/js）：${base} → http://127.0.0.1:${oj.port}`);
 
 	const ojTarget = `http://127.0.0.1:${oj.port}`;
 	const serveStatic = createStaticHandler({ roots: [siteDir], reload: null, noStore: false });
 
 	const server = http.createServer((req, res) => {
-		const rel = normalize(decodeURIComponent((req.url ?? "/").split("?")[0])).replace(/^(\.\.[/\\])+/, "");
-		if (rel.startsWith("/api/")) {
+		const urlPath = decodeReqPath(req.url ?? "/");
+		if (urlPath === null) {
+			res.writeHead(400, { "content-type": "text/plain" });
+			res.end("400 Bad Request: malformed URL encoding");
+			return;
+		}
+		const rel = normalize(urlPath).replace(/^(\.\.[/\\])+/, "");
+		// 反代前缀跟随 config 的 server.base（F2）
+		if (rel.startsWith(`${base}/`)) {
 			void proxyApi(ojTarget)(req, res);
 			return;
 		}
@@ -94,7 +108,7 @@ export async function previewServer(projectRoot: string, opts: PreviewOptions = 
 	if (opts.ojStatic)
 		console.log(`[ram] --oj-static：oj 已挂静态直出 http://127.0.0.1:${oj.port}（history 深链接 404 为已知限制；ram 本口仍提供 SPA 兜底 + /api 反代）`);
 	else
-		console.log("[ram] 静态兜底：ram（SPA 回退）+ /api 反代 oj");
+		console.log(`[ram] 静态兜底：ram（SPA 回退）+ ${base} 反代 oj`);
 
 	return server;
 }

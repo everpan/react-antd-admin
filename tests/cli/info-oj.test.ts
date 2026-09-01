@@ -104,4 +104,22 @@ describe("ram info 后端段（桩注入）", () => {
 			fs.rmSync(root, { recursive: true, force: true });
 		}
 	});
+
+	it("f4：bin/oj 存在但 config.yaml 缺失 → 默认真实现不崩溃，证书行无法探测", async () => {
+		const root = fs.mkdtempSync(path.join(path.dirname(PROJECT_ROOT), ".tmp-info-fx-"));
+		try {
+			fs.mkdirSync(path.join(root, "bin"), { recursive: true });
+			fs.writeFileSync(path.join(root, "bin/oj"), "not-executable");
+
+			// 不注入桩：走 realOjObservability，ojHealth 内部读 config 会 ENOENT——
+			// 同步 throw 不得穿透 .catch 让 ram info 崩掉
+			await expect(printInfo(root)).resolves.toBeUndefined();
+
+			const out = logs.join("\n");
+			expect(out).toMatch(/无法探测/);
+		}
+		finally {
+			fs.rmSync(root, { recursive: true, force: true });
+		}
+	});
 });

@@ -34,10 +34,36 @@ export interface ReloadChannel {
 export interface StaticHandlerOptions {
 	/** 静态解析根（按序第一个命中）：dev=[模块产物 dist, shell dist]，preview=[合并站点目录] */
 	roots: string[]
+	/**
+	 * 宿主内容专用根（可选）：`/`、`/index.html`、SPA 回落及一切非模块空间
+	 * 路径只从这里读。dev 必须传 [shellDist]——`ram build` 的合并残留
+	 * （index.html/assets/versions.json 拷贝）留在 localDist，多根解析会让
+	 * 陈旧拷贝反向遮蔽 shell dist（集中审阅 F11）。preview 不传（单根即合并站点）。
+	 */
+	hostRoots?: string[]
 	/** SSE 刷新通道；null = 生产形态（无端点、无注入） */
 	reload: ReloadChannel | null
 	/** dev true：开发态禁缓存；preview false */
 	noStore: boolean
+}
+
+/** 模块空间路径：/modules.json 与 /modules/*（模块产物，localDist 优先） */
+function isModulePath(rel: string): boolean {
+	return rel === "/modules.json" || rel.startsWith("/modules/");
+}
+
+/**
+ * 解码请求路径；畸形百分号编码（如 /%ZZ）decodeURIComponent 抛 URIError，
+ * 在 http 请求回调里会穿透成 uncaughtException 崩掉整个进程——返回 null，
+ * 由调用方回 400（集中审阅 F1）。
+ */
+export function decodeReqPath(url: string): string | null {
+	try {
+		return decodeURIComponent(url.split("?")[0]);
+	}
+	catch {
+		return null;
+	}
 }
 
 /** CSP `script-src 'self' + nonce` 不给内联脚本发 nonce → 刷新逻辑必须外链 */
@@ -54,7 +80,9 @@ export function createStaticHandler(opts: StaticHandlerOptions): (req: http.Inco
 		res.end(readFileSync(filePath));
 	};
 	const resolveFile = (rel: string): string | null => {
-		for (const root of opts.roots) {
+		// 模块空间走 roots（dev 里 localDist 优先）；宿主内容归 hostRoots
+		const roots = opts.hostRoots && !isModulePath(rel) ? opts.hostRoots : opts.roots;
+		for (const root of roots) {
 			const filePath = resolve(root, rel.replace(/^\//, ""));
 			if (existsSync(filePath) && statSync(filePath).isFile())
 				return filePath;
@@ -62,8 +90,7 @@ export function createStaticHandler(opts: StaticHandlerOptions): (req: http.Inco
 		return null;
 	};
 	const serveHtml = (res: http.ServerResponse) => {
-		// index.html 同样多根解析：dev 的宿主 HTML 在 shell dist（roots 尾部），
-		// preview 的在合并站点目录（roots[0]）
+		// index.html 是宿主内容：dev 在 hostRoots（shell dist），preview 在合并站点目录
 		const htmlPath = resolveFile("index.html");
 		if (!htmlPath) {
 			res.writeHead(500, { "content-type": "text/plain" });
@@ -82,7 +109,12 @@ export function createStaticHandler(opts: StaticHandlerOptions): (req: http.Inco
 			res.setHeader("Cache-Control", "no-store");
 		}
 
-		const urlPath = decodeURIComponent((req.url ?? "/").split("?")[0]);
+		const urlPath = decodeReqPath(req.url ?? "/");
+		if (urlPath === null) {
+			res.writeHead(400, { "content-type": "text/plain" });
+			res.end("400 Bad Request: malformed URL encoding");
+			return;
+		}
 		const rel = normalize(urlPath).replace(/^(\.\.[/\\])+/, "");
 
 		if (opts.reload) {

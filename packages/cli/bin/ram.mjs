@@ -23,7 +23,15 @@ const child = spawn(process.execPath, ["--import", tsx, ENTRY, ...process.argv.s
 process.on("SIGINT", () => child.kill("SIGINT"));
 process.on("SIGTERM", () => child.kill("SIGTERM"));
 child.on("exit", (code, signal) => {
-	process.exitCode = signal ? null : code;
-	if (signal)
+	if (signal) {
+		// 内层被信号杀死：摘掉自家转发 handler 再以同信号自杀——否则 handler
+		// 吞掉信号，事件循环排空后进程以退出码 0 收场，调用方（脚本/CI）
+		// 无法区分「正常退出」与「被杀」（集中审阅 F5）
+		process.removeAllListeners("SIGINT");
+		process.removeAllListeners("SIGTERM");
 		process.kill(process.pid, signal);
+	}
+	else {
+		process.exitCode = code;
+	}
 });

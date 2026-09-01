@@ -4,7 +4,7 @@
  * 职责单一：spawn `oj server`、健康轮询、stdout/stderr 透传（[oj] 前缀）、
  * 退出回收。不关心 who 调它（dev 直接用，preview 在 migrate 后用）。
  *
- * 健康判据：GET {base}/health 200（oj 内置匿名健康端点）。
+ * 健康判据：GET {base}/health 状态码 <400（oj 内置匿名健康端点；2xx/3xx 均视为就绪）。
  * 秒退：ready 拒绝，错误信息带 stderr 尾部（证书缺失等常见错因可直接读出）。
  */
 

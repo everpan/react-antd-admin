@@ -75,9 +75,16 @@ export function realOjObservability(projectRoot: string): OjObservability {
 	return {
 		ojVersion: () => (fs.existsSync(ojBin) ? probeOjVersion(ojBin) : null),
 		ojHealth: () => {
-			const port = readOjServerField(configPath, "port");
-			const base = readOjServerField(configPath, "base") ?? "/api";
-			return port ? probeOjHealth(base, Number(port)) : Promise.resolve(null);
+			// F4：readOjServerField 是同步读文件，config 缺失时同步 throw 会
+			// 穿透调用方的 .catch（throw 发生在 Promise 构造之前）——必须就地兜住
+			try {
+				const port = readOjServerField(configPath, "port");
+				const base = readOjServerField(configPath, "base") ?? "/api";
+				return port ? probeOjHealth(base, Number(port)) : Promise.resolve(null);
+			}
+			catch {
+				return Promise.resolve(null);
+			}
 		},
 	};
 }
@@ -111,7 +118,7 @@ export async function printInfo(projectRoot: string, oj: OjObservability = realO
 		.map(([spec, version]) => `  ${spec}: ${version}`)
 		.join("\n");
 
-	// ---- 后端（oj）观测段：默认桩不可探测，index.ts 未注入真实现时跳过 ----
+	// ---- 后端（oj）观测段：工程有 config.yaml 或 bin/oj 才展示；观测不可达仅降级不失败 ----
 	let backendBlock = "";
 	const configPath = path.join(projectRoot, "api/config.yaml");
 	const ojBin = path.join(projectRoot, "bin/oj");

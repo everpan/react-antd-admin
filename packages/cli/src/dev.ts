@@ -30,7 +30,7 @@ import { createReloadHub, proxyApi, sseScript } from "./dev-proxy";
 import { resolveLayout } from "./layout";
 import { startOj } from "./oj";
 import { readOjServerField } from "./oj-config";
-import { createStaticHandler, listenOnFreePort } from "./static-handler";
+import { createStaticHandler, decodeReqPath, listenOnFreePort } from "./static-handler";
 
 const DEFAULT_PORT = 5174;
 
@@ -78,32 +78,49 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 	const configPath = resolve(projectRoot, "api/config.yaml");
 	let oj: OjProcess | undefined;
 	let ojTarget: string | undefined;
+	// 反代前缀跟随 config 的 server.base（F2：改 base 后硬编码 /api 会静默失效）
+	let apiBase = "/api";
 	if (!opts.frontendOnly && existsSync(configPath)) {
-		const base = readOjServerField(configPath, "base") ?? "/api";
+		apiBase = readOjServerField(configPath, "base") ?? "/api";
 		const starter = opts.ojStarter ?? ((cfg: string, b: string, apiSrc: string) => startOj(cfg, b, apiSrc));
-		oj = starter(configPath, base, resolve(projectRoot, "api/src"));
-		await oj.ready; // 失败人话报错（stderr 尾部），fail-fast
+		oj = starter(configPath, apiBase, resolve(projectRoot, "api/src"));
+		try {
+			await oj.ready; // 失败人话报错（stderr 尾部），fail-fast
+		}
+		catch (error) {
+			// F3：ready 拒绝必须先回收子进程，否则 oj 孤儿化继续占端口
+			await oj.stop().catch(() => {});
+			throw error;
+		}
 		ojTarget = `http://127.0.0.1:${oj.port}`;
 	}
 
 	const hub = createReloadHub();
 
 	// 3) 静态半边（dev：模块产物优先，shell dist 兜底；no-store；注入刷新通道）
+	// hostRoots 钉死 shell dist：ram build 的合并残留不得反向遮蔽宿主（F11）
 	const serveStatic = createStaticHandler({
 		roots: [localDist, shellDist],
+		hostRoots: [shellDist],
 		reload: { script: sseScript(), handler: hub.handler },
 		noStore: true,
 	});
 
 	const server = http.createServer((req, res) => {
-		// /api：全栈形态反代 oj；纯前端形态走工程 mock（历史行为不变）
-		if ((req.url ?? "/").startsWith("/api/")) {
+		const urlPath = decodeReqPath(req.url ?? "/");
+		if (urlPath === null) {
+			res.writeHead(400, { "content-type": "text/plain" });
+			res.end("400 Bad Request: malformed URL encoding");
+			return;
+		}
+		// API 前缀跟随 config 的 server.base：全栈形态反代 oj；纯前端形态走工程 mock（历史行为不变）
+		if (urlPath.startsWith(`${apiBase}/`)) {
 			if (ojTarget) {
 				void proxyApi(ojTarget)(req, res);
 				return;
 			}
-			const apiRel = normalizeReq(req.url ?? "/");
-			const route = matchMockRoute(mocks, req.method ?? "get", apiRel.slice("/api".length));
+			const apiRel = urlPath.replace(/^(\.\.[/\\])+/, "");
+			const route = matchMockRoute(mocks, req.method ?? "get", apiRel.slice(apiBase.length));
 			if (!route) {
 				res.writeHead(404, { "content-type": "application/json; charset=utf-8" });
 				res.end(JSON.stringify({ code: 404, message: `No mock for ${req.method} ${apiRel}` }));
@@ -151,7 +168,7 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 	console.log(`\n[ram] 开发服务器已启动：http://localhost:${actualPort}`);
 
 	if (ojTarget)
-		console.log(`[ram] oj 后端已就绪：/api → ${ojTarget}（api.ts 保存即热更）`);
+		console.log(`[ram] oj 后端已就绪：${apiBase} → ${ojTarget}（api.ts 保存即热更）`);
 	else
 		console.log("[ram] 纯前端形态（无 api/config.yaml）：/api 由 mock/ 提供");
 
@@ -190,10 +207,4 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 	}
 
 	return server;
-}
-
-/** 从请求 URL 取 decode + 防穿越的路径部分 */
-function normalizeReq(url: string): string {
-	const raw = decodeURIComponent(url.split("?")[0]);
-	return raw.replace(/^(\.\.[/\\])+/, "");
 }

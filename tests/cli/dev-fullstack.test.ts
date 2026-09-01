@@ -20,7 +20,7 @@ import { devServer } from "../../packages/cli/src/dev";
 
 const FIXTURE_ROOT = path.join(process.cwd(), ".tmp-dev-fx");
 
-function makeFixture(kind: "fullstack" | "frontend"): { root: string, port: number } {
+function makeFixture(kind: "fullstack" | "frontend", base = "/api"): { root: string, port: number } {
 	fs.mkdirSync(FIXTURE_ROOT, { recursive: true });
 	const root = fs.mkdtempSync(path.join(FIXTURE_ROOT, `dev-${kind}-`));
 	const port = 21000 + Math.floor(Math.random() * 20000);
@@ -39,7 +39,7 @@ function makeFixture(kind: "fullstack" | "frontend"): { root: string, port: numb
 	].join("\n"));
 	if (kind === "fullstack") {
 		fs.mkdirSync(path.join(root, "api/src"), { recursive: true });
-		fs.writeFileSync(path.join(root, "api/config.yaml"), `server:\n  host: 127.0.0.1\n  port: ${port}\n  base: /api\n`);
+		fs.writeFileSync(path.join(root, "api/config.yaml"), `server:\n  host: 127.0.0.1\n  port: ${port}\n  base: ${base}\n`);
 	}
 	return { root, port };
 }
@@ -69,7 +69,7 @@ function get(port: number, reqPath: string, headers: http.OutgoingHttpHeaders = 
 }
 
 /** 桩 oj：真监听的 http server + 可注入 starter */
-function stubOjUpstream() {
+function stubOjUpstream(expectedBase = "/api") {
 	const seen: string[] = [];
 	let stopped = false;
 	const server = http.createServer((_req, res) => {
@@ -86,7 +86,7 @@ function stubOjUpstream() {
 		starter: (upPort: number, configPath: string) => (cfg: string, base: string, apiSrc: string): OjProcess => {
 			expect(path.isAbsolute(cfg)).toBe(true);
 			expect(cfg).toBe(configPath);
-			expect(base).toBe("/api");
+			expect(base).toBe(expectedBase);
 			expect(path.isAbsolute(apiSrc)).toBe(true);
 			return {
 				port: upPort,
@@ -228,4 +228,66 @@ describe("devServer 全栈接线", () => {
 		sseReq.destroy(); // SSE 连接不断开则 server.close 永不回调
 		await stopServer(server);
 	}, 15000);
+
+	it("f2：反代前缀跟随 config.yaml 的 server.base（非 /api 时 /api/* 不再进 oj）", async () => {
+		const { root, port } = makeFixture("fullstack", "/apiv2");
+		const configPath = path.join(root, "api/config.yaml");
+		const up = stubOjUpstream("/apiv2");
+		const upPort = await listenOn(up.server);
+
+		const server = await devServer(root, {
+			port,
+			shellDist: path.join(root, "shell-dist"),
+			buildModulesFn: async () => {},
+			ojStarter: up.starter(upPort, configPath),
+		});
+		const devPort = (server.address() as AddressInfo).port;
+
+		const proxied = await get(devPort, "/apiv2/web/hello");
+		expect(JSON.parse(proxied.text)).toMatchObject({ from: "oj" });
+
+		const offBase = await get(devPort, "/api/hello");
+		expect(offBase.status).toBe(404); // 旧前缀不再反代，落静态 404
+
+		expect(up.seen).toEqual(["/apiv2/web/hello"]);
+
+		await stopServer(server);
+		up.server.close();
+	});
+
+	it("f3：oj.ready 拒绝（health 超时/启动即退）→ 回收 oj 子进程后再抛错", async () => {
+		const { root, port } = makeFixture("fullstack");
+		let stopped = false;
+		await expect(devServer(root, {
+			port,
+			shellDist: path.join(root, "shell-dist"),
+			buildModulesFn: async () => {},
+			ojStarter: () => ({
+				port: 1,
+				ready: Promise.reject(new Error("health 轮询超时")),
+				stop: async () => {
+					stopped = true;
+				},
+			}),
+		})).rejects.toThrowError(/health 轮询超时/);
+		expect(stopped).toBe(true); // 不回收则 oj 孤儿化继续占 9778
+	});
+
+	it("f1：畸形 URL（%ZZ）→ 400，进程不崩、后续请求正常", async () => {
+		const { root, port } = makeFixture("frontend");
+		const server = await devServer(root, {
+			port,
+			shellDist: path.join(root, "shell-dist"),
+			buildModulesFn: async () => {},
+		});
+		const devPort = (server.address() as AddressInfo).port;
+
+		const bad = await get(devPort, "/api/%ZZ");
+		expect(bad.status).toBe(400);
+
+		const ok = await get(devPort, "/api/hello");
+		expect(ok.status).toBe(200); // 进程存活，mock 仍工作
+
+		await stopServer(server);
+	});
 });

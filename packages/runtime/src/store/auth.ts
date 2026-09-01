@@ -8,6 +8,7 @@ import { useTabsStore } from "#src/store/tabs";
 
 import { useUserStore } from "#src/store/user";
 import { getAppNamespace } from "#src/utils/get-app-namespace";
+import { message } from "#src/utils/static-antd";
 
 const initialState = {
 	token: "",
@@ -29,6 +30,12 @@ export const useAuthStore = create<AuthState & AuthAction>()(
 
 		login: async (loginPayload) => {
 			const response = await fetchLogin(loginPayload);
+			// oj 业务失败是 HTTP 200 + success:false（D10 契约）：不检查会把
+			// mapAuth 兜底的空 token 写库，UI 还走「登录成功」分支（集中审阅 F12）
+			if (response.success === false) {
+				message.error(response.message || "登录失败");
+				throw new Error(response.message || "登录失败");
+			}
 			set({
 				...response.result,
 			});

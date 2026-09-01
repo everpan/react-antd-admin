@@ -20,7 +20,7 @@ import { previewServer } from "../../packages/cli/src/preview";
 const FIXTURE_ROOT = path.join(process.cwd(), ".tmp-preview-fx");
 
 /** 四查齐全的最小夹具（内容为桩，只求 existsSync 通过） */
-function makeFixture(): { root: string, configPath: string, siteDir: string, apiDist: string, port: number } {
+function makeFixture(base = "/api"): { root: string, configPath: string, siteDir: string, apiDist: string, port: number } {
 	fs.mkdirSync(FIXTURE_ROOT, { recursive: true });
 	const root = fs.mkdtempSync(path.join(FIXTURE_ROOT, "preview-"));
 	const port = 23000 + Math.floor(Math.random() * 20000);
@@ -29,7 +29,7 @@ function makeFixture(): { root: string, configPath: string, siteDir: string, api
 	fs.chmodSync(path.join(root, "bin/oj"), 0o755);
 	fs.mkdirSync(path.join(root, "api/dist"), { recursive: true });
 	fs.writeFileSync(path.join(root, "api/dist/manifests.yaml"), "modules: []\n");
-	fs.writeFileSync(path.join(root, "api/config.yaml"), `server:\n  host: 127.0.0.1\n  port: ${port}\n  base: /api\n`);
+	fs.writeFileSync(path.join(root, "api/config.yaml"), `server:\n  host: 127.0.0.1\n  port: ${port}\n  base: ${base}\n`);
 	// 新布局标记（modules/src 存在 → distDir = modules/dist）
 	fs.mkdirSync(path.join(root, "modules/src"), { recursive: true });
 	const siteDir = path.join(root, "modules/dist");
@@ -192,5 +192,67 @@ describe("previewServer ram 静态层", () => {
 
 		await new Promise<void>(resolve => server.close(() => resolve()));
 		up.server.close();
+	});
+
+	it("f2：反代前缀跟随 config.yaml 的 server.base", async () => {
+		const { root, siteDir, port } = makeFixture("/apiv2");
+		const up = stubOjUpstream();
+		const upPort = await listenOn(up.server);
+
+		const server = await previewServer(root, {
+			port, // 不复用默认 4173：前序用例的监听socket可能仍在排空，复用会被 ECONNRESET
+			siteDir,
+			execOj: () => {},
+			ojStarter: () => ({ port: upPort, ready: Promise.resolve(), stop: async () => {} }),
+		});
+		const devPort = (server.address() as AddressInfo).port;
+
+		const proxied = await get(devPort, "/apiv2/web/hello");
+		expect(JSON.parse(proxied.text)).toMatchObject({ from: "oj" });
+
+		const offBase = await get(devPort, "/api/web/hello");
+		expect(offBase.status).toBe(404);
+
+		expect(up.seen).toEqual(["/apiv2/web/hello"]);
+
+		await new Promise<void>(resolve => server.close(() => resolve()));
+		up.server.close();
+	});
+
+	it("f1：畸形 URL（%ZZ）→ 400，进程不崩", async () => {
+		const { root, siteDir, port } = makeFixture();
+		const server = await previewServer(root, {
+			port,
+			siteDir,
+			execOj: () => {},
+			ojStarter: () => ({ port: 1, ready: Promise.resolve(), stop: async () => {} }),
+		});
+		const devPort = (server.address() as AddressInfo).port;
+
+		const bad = await get(devPort, "/%ZZ");
+		expect(bad.status).toBe(400);
+
+		const ok = await get(devPort, "/");
+		expect(ok.status).toBe(200);
+
+		await new Promise<void>(resolve => server.close(() => resolve()));
+	});
+});
+
+describe("previewServer oj 生命周期", () => {
+	it("f3：oj.ready 拒绝 → 回收 oj 子进程后再抛错", async () => {
+		const { root } = makeFixture();
+		let stopped = false;
+		await expect(previewServer(root, {
+			execOj: () => {},
+			ojStarter: () => ({
+				port: 1,
+				ready: Promise.reject(new Error("health 轮询超时")),
+				stop: async () => {
+					stopped = true;
+				},
+			}),
+		})).rejects.toThrowError(/health 轮询超时/);
+		expect(stopped).toBe(true);
 	});
 });
