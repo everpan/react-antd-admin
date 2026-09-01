@@ -157,6 +157,109 @@ const dynamicImportStubPlugin: EsbuildPlugin = {
 	},
 };
 
+/**
+ * 元数据读取封闭性（P3 验收发现）：裸导入全部桩化，`ram init` 产出的外部工程
+ * 尚未安装依赖（@react-antd-module/* 未发布），真实 import() 会
+ * ERR_MODULE_NOT_FOUND；读元数据只需要 defineModule 入参，共享依赖执行与否无关。
+ *
+ * - 值统一为「自引用可调用代理」：任意属性链访问/调用都安全（JSX 元素在
+ *   模块顶层求值等形态）。
+ * - 从 modulesSrc 源码扫出的具名导入经 ownKeys/getOwnPropertyDescriptor 陷阱
+ *   静态暴露——esbuild 对 CJS 桩做 __toESM 属性拷贝（走这两把陷阱），仅 get
+ *   陷阱拷不出名字，顶层 `React.createElement` 会直接崩（验收实测）。
+ * - `#` 开头的工程子路径导入不桩化，走默认解析。
+ */
+/**
+ * 扫描 modulesSrc 下全部源码，收集「裸说明符 → 具名导入列表」。
+ * 只为给桩模块提供可静态暴露的名字（供 esbuild __toESM 拷贝），不求精确：
+ * 解析不到的形状（多行、注释包裹等）只会让该名字未被种子，运行时落到 get
+ * 陷阱兜底；扫到未使用的名字也无害。
+ */
+function collectBareImportedNames(...roots: string[]): Map<string, string[]> {
+	const found = new Map<string, Set<string>>();
+	const record = (spec: string, clause: string) => {
+		if (spec.startsWith(".") || spec.startsWith("/") || spec.startsWith("#"))
+			return;
+		const set = found.get(spec) ?? new Set<string>();
+		for (const raw of clause.split(",")) {
+			const name = raw.trim().replace(/^type\s+/, "").split(/\s+as\s+/)[0].trim();
+			if (name && /^[\w$]+$/.test(name))
+				set.add(name);
+		}
+		set.add("default");
+		found.set(spec, set);
+	};
+	const walk = (dir: string) => {
+		let entries: fs.Dirent[];
+		try {
+			entries = fs.readdirSync(dir, { withFileTypes: true });
+		}
+		catch {
+			return;
+		}
+		for (const entry of entries) {
+			const filePath = path.join(dir, entry.name);
+			if (entry.isDirectory()) {
+				walk(filePath);
+				continue;
+			}
+			if (!/\.(?:ts|tsx|js|jsx|mjs)$/.test(entry.name))
+				continue;
+			const source = fs.readFileSync(filePath, "utf-8");
+			for (const m of source.matchAll(/(?:import|export)\s+(?:type\s+)?\{([^}]*)\}\s*(?:from\s*)?["']([^"']+)["']/g))
+				record(m[2], m[1]);
+			for (const m of source.matchAll(/import\s+(\w+)\s*(?:,\s*\{([^}]*)\}\s*)?from\s*["']([^"']+)["']/g)) {
+				if (m[1] && m[3])
+					record(m[3], m[1]);
+				if (m[2] && m[3])
+					record(m[3], m[2]);
+			}
+			// namespace / default 导入的属性访问（`React.lazy` / `ns.foo()`）：
+			// 名字从成员访问推断，否则 __toESM 拷贝后这些名字不存在（playground 实测）
+			const bindings = new Map<string, string>();
+			for (const m of source.matchAll(/import\s+(?:\*\s+as\s+)?(\w+)\s+from\s*["']([^"']+)["']/g)) {
+				if (m[1] && m[2] && !m[2].startsWith(".") && !m[2].startsWith("#"))
+					bindings.set(m[1], m[2]);
+			}
+			for (const [binding, spec] of bindings) {
+				for (const m of source.matchAll(new RegExp(`\\b${binding}\\.(\\w+)`, "g"))) {
+					const set = found.get(spec) ?? new Set<string>();
+					set.add(m[1]);
+					found.set(spec, set);
+				}
+			}
+		}
+	};
+	for (const root of roots)
+		walk(root);
+	return new Map([...found].map(([spec, set]) => [spec, [...set]]));
+}
+
+/** 每次元数据读取一个实例：modulesSrc 扫描出的「裸说明符 → 具名导入列表」 */
+function makeBareImportStubPlugin(namesBySpec: Map<string, string[]>): EsbuildPlugin {
+	return {
+		name: "ram-bare-import-stub",
+		setup(b) {
+			b.onResolve({ filter: /^[^./#]/ }, args => ({ path: args.path, namespace: "ram-bare-stub" }));
+			b.onLoad({ filter: /.*/, namespace: "ram-bare-stub" }, (args) => {
+				const names = namesBySpec.get(args.path) ?? [];
+				return {
+					contents: [
+						"const value = new Proxy(function () {}, { get: () => value, apply: () => undefined });",
+						`const names = ${JSON.stringify(names)};`,
+						"module.exports = new Proxy({}, {",
+						"\tget: () => value,",
+						"\tgetOwnPropertyDescriptor: (_t, p) => names.includes(p) ? { enumerable: true, configurable: true, get: () => value } : undefined,",
+						"\townKeys: () => names,",
+						"});",
+					].join("\n"),
+					loader: "js",
+				};
+			});
+		},
+	};
+}
+
 /** modules.json 中的 chunk 条目 */
 export interface ChunkEntry {
 	url: string
@@ -198,6 +301,9 @@ export async function readModuleDefinition(entryFile: string, projectRoot: strin
 	// （react / antd …）在 import() 时无法从 /tmp 解析到 node_modules。
 	const outDir = fs.mkdtempSync(path.join(projectRoot, ".ram-tmp-"));
 	try {
+		// entry 可能登记在 modulesSrc 之外（playground 登记仓库级模块），
+		// entry 所在目录同样入扫，保证其相对导入图的具名导入都被种子
+		const bareNames = collectBareImportedNames(resolveLayout(projectRoot).modulesSrc, path.dirname(entryFile));
 		await esbuild({
 			entryPoints: [entryFile],
 			// 固定输出名 entry.js：esbuild 默认取 entry 文件 basename，
@@ -207,7 +313,7 @@ export async function readModuleDefinition(entryFile: string, projectRoot: strin
 			format: "esm",
 			platform: "node",
 			packages: "external",
-			plugins: [runtimeStubPlugin, dynamicImportStubPlugin],
+			plugins: [runtimeStubPlugin, dynamicImportStubPlugin, makeBareImportStubPlugin(bareNames)],
 			outdir: outDir,
 			jsx: "automatic",
 			loader: { ".ts": "ts", ".tsx": "tsx", ".json": "json" },

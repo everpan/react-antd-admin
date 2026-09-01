@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import { startOj } from "../../packages/cli/src/oj";
 
 /**
@@ -52,6 +52,10 @@ function makeFixture(mode: "healthy" | "exit" | "silent"): { root: string, confi
 	fs.chmodSync(path.join(binDir, "oj"), 0o755);
 	return { root, configPath, port };
 }
+
+afterAll(() => {
+	fs.rmSync(FIXTURE_ROOT, { recursive: true, force: true });
+});
 
 describe("startOj 子进程编排", () => {
 	it("健康路径：spawn 参数 server/-c/-b/--api-path 全按契约，ready resolve，stop() 回收", async () => {

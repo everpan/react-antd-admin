@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { buildBackend, buildModules } from "../../packages/cli/src/build";
+import { buildBackend, buildModules, readModuleDefinition } from "../../packages/cli/src/build";
 import { PROJECT_ROOT } from "../helpers/paths";
 
 /**
@@ -46,6 +46,29 @@ function makeStubOj(root: string): string {
 	fs.writeFileSync(path.join(root, "api/src/web/manifest.yaml"), "name: \"web\"\nversion: \"0.1.0\"\n");
 	return stub;
 }
+
+describe("readModuleDefinition 元数据读取封闭性（外部工程未装依赖也可读）", () => {
+	it("entry 顶层 import 的未安装包被桩化：具名导入（含 JSX 顶层求值）不触达 node_modules", async () => {
+		const root = makeFixture("new");
+		// 模拟真实模板形态：顶层具名导入 + JSX 元素在模块顶层求值（createElement）
+		fs.writeFileSync(path.join(root, "modules/src/entry.ts"), [
+			"import React from \"react\";",
+			"import * as ReactDOM from \"react-dom\";",
+			"import { Button } from \"antd\";",
+			"import { defineModule } from \"@react-antd-module/runtime\";",
+			"import { missing } from \"no-such-pkg-xyz\";",
+			"export default defineModule({",
+			"  name: \"fx\",",
+			"  description: \"fixture\",",
+			"  version: \"0.1.0\",",
+			"  routes: [{ path: \"/x\", element: React.createElement(Button) }, { path: \"/y\", element: missing && null }, { path: \"/z\", element: ReactDOM.createRoot(\"x\") }],",
+			"});",
+			"",
+		].join("\n"));
+		const def = await readModuleDefinition(path.join(root, "modules/src/entry.ts"), root);
+		expect(def.name).toBe("fx");
+	});
+});
 
 describe("buildModules 布局感知", () => {
 	it("新布局产物落 modules/dist", async () => {

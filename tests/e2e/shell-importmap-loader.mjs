@@ -8,11 +8,12 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import process from "node:process";
 import { pathToFileURL } from "node:url";
 
 const SHELL_DIST = path.resolve(process.env.SHELL_DIST_DIR ?? "packages/shell/dist");
 const html = fs.readFileSync(path.join(SHELL_DIST, "index.html"), "utf8");
-const m = html.match(/<script type="importmap"[^>]*>([\s\S]*?)<\/script>/s);
+const m = html.match(/<script type="importmap"[^>]*>([\s\S]*?)<\/script>/);
 if (!m)
 	throw new Error(`${SHELL_DIST}/index.html 缺少 importmap`);
 const importmap = JSON.parse(m[1]).imports;

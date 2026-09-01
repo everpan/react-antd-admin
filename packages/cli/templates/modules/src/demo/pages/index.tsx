@@ -13,10 +13,12 @@ export default function DemoPage() {
 	const [hello, setHello] = useState<string>("");
 
 	useEffect(() => {
-		fetch("/api/web/hello", { headers: { Authorization: `Bearer ${token}` } })
+		const controller = new AbortController();
+		fetch("/api/web/hello", { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
 			.then(res => res.json())
 			.then((body: { data?: { message?: string } }) => setHello(body?.data?.message ?? ""))
 			.catch(() => setHello(""));
+		return () => controller.abort();
 	}, [token]);
 
 	return (

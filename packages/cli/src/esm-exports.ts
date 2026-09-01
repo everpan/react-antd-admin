@@ -19,7 +19,7 @@
  * 借此把「字符串字面量里恰好写了 import」这类误报压到最低。
  */
 
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 /** 一个 ESM 文件的导出面 */
@@ -65,7 +65,7 @@ function exportedNamesFromClause(clause: string): string[] {
 		.split(",")
 		.map(part => part.trim())
 		.filter(Boolean)
-		.map(part => {
+		.map((part) => {
 			const as = part.split(/\s+as\s+/);
 			return (as[as.length - 1] ?? part).trim();
 		})
@@ -94,7 +94,7 @@ export function parseEsmExports(source: string): EsmExports {
 
 	// 收集全部 export 子句（本地导出块 + 再导出），具名与 default 两种判定共用
 	const clauses: string[] = [];
-	for (const m of source.matchAll(/^export\s*\{([^}]*)\}(?:\s*from\s*["'][^"']+["'])?\s*;?\s*$/gm)) {
+	for (const m of source.matchAll(/^export\s*\{([^}]*)\}(?:\s*from\s*["'][^"']+["'])?\s*(?:;\s*)?$/gm)) {
 		clauses.push(m[1] ?? "");
 	}
 
@@ -108,15 +108,16 @@ export function parseEsmExports(source: string): EsmExports {
 		names.add(m[1]!);
 	}
 
+	// default 有两副面孔：声明式 `export default …`，或子句里的 `x as default`
+	// （esbuild 产出的正是后者，形如 `rad_shim_xxx_default as default`）
+	const hasDefaultClause = clauses.some(clause => clause
+		.split(",")
+		.map(part => part.trim())
+		.some(part => /\bas\s+default$/.test(part)));
+
 	return {
 		names,
-		// default 有两副面孔：声明式 `export default …`，或子句里的 `x as default`
-		// （esbuild 产出的正是后者，形如 `rad_shim_xxx_default as default`）
-		hasDefault: /^export\s+default\b/m.test(source)
-			|| clauses.some(clause => clause
-				.split(",")
-				.map(part => part.trim())
-				.some(part => /\bas\s+default$/.test(part))),
+		hasDefault: /^export\s+default\b/m.test(source) || hasDefaultClause,
 		hasStarReexport: /^export\s*\*/m.test(source),
 	};
 }
@@ -160,7 +161,7 @@ export function parseEsmImports(source: string): EsmImport[] {
 	// default 导入：`import X from "x"`（X 非 { 、非 *）
 	// 不能假定它一定可用——只有 default 的包若 shim 没兜住，浏览器同样是
 	// "does not provide an export named 'default'"
-	for (const m of source.matchAll(/^import\s+(?!\{|\*)([A-Za-z_$][\w$]*)\s+from\s*["']([^"']+)["']/gm)) {
+	for (const m of source.matchAll(/^import\s+([A-Za-z_$][\w$]*)\s+from\s*["']([^"']+)["']/gm)) {
 		slot(m[2]!).needsDefault = true;
 	}
 
@@ -240,7 +241,7 @@ export function collectDynamicRequires(distDir: string): DynamicRequireHit[] {
 export function parseBareSpecifiers(source: string): string[] {
 	const found = new Set<string>();
 	// 行首锚定，规避字符串字面量里的假阳性（P3.5 教训）
-	const pattern = /^import\s*\(\s*["']([^"']+)["']\s*\)|^(?:import|export)\s+[^;]*?from\s*["']([^"']+)["']|^import\s+["']([^"']+)["']/gm;
+	const pattern = /^import\s*\(\s*["']([^"']+)["']\s*\)|^(?:import|export)\s[^;]*?from\s*["']([^"']+)["']|^import\s+["']([^"']+)["']/gm;
 	for (const m of source.matchAll(pattern)) {
 		const spec = m[1] ?? m[2] ?? m[3];
 		if (!spec || spec.startsWith(".") || spec.startsWith("/") || spec.startsWith("data:") || spec.startsWith("http"))

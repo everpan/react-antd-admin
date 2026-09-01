@@ -33,7 +33,7 @@ async function main() {
 		case "dev": {
 			const portArg = Number(process.argv[3]);
 			const port = Number.isFinite(portArg) && portArg > 0 ? portArg : 5174;
-			await devServer(projectRoot, port);
+			await devServer(projectRoot, { port });
 			break;
 		}
 		case "info":
