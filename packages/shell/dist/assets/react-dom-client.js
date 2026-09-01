@@ -12096,7 +12096,7 @@ var require_client = __commonJS({
   }
 });
 
-// .rad-shim-react-dom-client.mjs
+// .ram-shim-react-dom-client.mjs
 var __m = __toESM(require_client(), 1);
 var createRoot2 = __m["createRoot"];
 var hydrateRoot2 = __m["hydrateRoot"];

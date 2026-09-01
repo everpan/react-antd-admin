@@ -25,7 +25,7 @@ function clsx() {
 }
 var clsx_default = clsx;
 
-// .rad-shim-clsx.mjs
+// .ram-shim-clsx.mjs
 var rad_shim_clsx_default = clsx_default ?? clsx_exports;
 export {
   clsx,

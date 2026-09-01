@@ -1403,7 +1403,7 @@ var createInstance = (defaults) => {
 var ky = createInstance();
 var distribution_default = ky;
 
-// .rad-shim-ky.mjs
+// .ram-shim-ky.mjs
 var rad_shim_ky_default = distribution_default ?? distribution_exports;
 export {
   ForceRetryError,

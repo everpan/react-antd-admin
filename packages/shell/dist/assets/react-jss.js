@@ -4047,7 +4047,7 @@ var create3 = function create4(css3) {
 var jsx = create3();
 var react_jss_esm_default = createWithStyles;
 
-// .rad-shim-react-jss.mjs
+// .ram-shim-react-jss.mjs
 var rad_shim_react_jss_default = react_jss_esm_default ?? react_jss_esm_exports;
 export {
   JssContext,

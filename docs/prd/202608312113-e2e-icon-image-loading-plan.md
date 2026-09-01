@@ -8,8 +8,8 @@
 
 | # | 现象 | 根因 | 对照样板（正常链路） |
 |---|------|------|----------------------|
-| R1 | 右上角头像空白灰圈 | `store/user.ts` 初始 `avatar: ""`，`user-menu.tsx` 的 `<Avatar src={avatar}/>` 收到空字符串 → antd 6 判定 `src !== undefined` 走 img 分支渲染 `<img src="">` → 加载失败空白。App 链登录后 userInfo 填值无感；host 免登录链（playground/rad dev）恒空 | App 链登录态（legacy fake userInfo 返回 avatar URL） |
-| R2 | 浏览器 tab 无图标 | `packages/shell/index.html` 模板无 `<link rel="icon">`；shell dist 与 `rad dev` 均无 favicon.ico | 根 `index.html:6` 引用 `/favicon.ico` + `public/favicon.ico`（App 链正常） |
+| R1 | 右上角头像空白灰圈 | `store/user.ts` 初始 `avatar: ""`，`user-menu.tsx` 的 `<Avatar src={avatar}/>` 收到空字符串 → antd 6 判定 `src !== undefined` 走 img 分支渲染 `<img src="">` → 加载失败空白。App 链登录后 userInfo 填值无感；host 免登录链（playground/ram dev）恒空 | App 链登录态（legacy fake userInfo 返回 avatar URL） |
+| R2 | 浏览器 tab 无图标 | `packages/shell/index.html` 模板无 `<link rel="icon">`；shell dist 与 `ram dev` 均无 favicon.ico | 根 `index.html:6` 引用 `/favicon.ico` + `public/favicon.ico`（App 链正常） |
 
 ## 修复方案（单点根因）
 

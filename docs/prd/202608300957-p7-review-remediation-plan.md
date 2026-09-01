@@ -20,11 +20,11 @@
 | P7.8 | module-loader 新增 `status: "missing-deps"`：依赖缺失跳过生命周期与路由注册 | F3 | US-9 依赖缺失场景测试通过 | ✅ 完成 |
 | P7.9 | 构建期卡口：模块产物裸说明符必须 ⊆ importmap 键集合（深路径报错；尾斜杠前缀键经评估不改 importmap，见执行小结） | F4 | `dayjs/plugin/utc` 用例构建期即报错 | ✅ 完成（assertResolvableSpecifiers 构建期报错 + C8 告警） |
 | P7.10 | shell 取消 private + publishConfig；build-modules.ts 失败 exit(1) | F5/F8 | shell pack 可行；构建失败退出码非 0 | ✅ 完成（翻转 P6.6 决策，测试已注记） |
-| P7.11 | CLI 新增 `rad info`；create-module 包降级决策（D-P7-1），文档矛盾消除 | F6 | rad info 输出可用 | ✅ 完成（rad info + US-1 改述 playground 拷贝） |
+| P7.11 | CLI 新增 `ram info`；create-module 包降级决策（D-P7-1），文档矛盾消除 | F6 | ram info 输出可用 | ✅ 完成（ram info + US-1 改述 playground 拷贝） |
 | P7.12 | runtime 入口补导出 unloadModule/useSlotNodes；requiredPermissions 实现 | F7 + 次要项 | 出口全部可 import；requiredPermissions 有过滤测试 | ✅ 完成 |
 | P7.13 | create-module 模板重写为现行契约；修 hasI18n=n ENOENT；加模板快照测试 | F9/F10 | 向导两种选择均产出可构建模块 | ✅ 完成（tests/create-module-template.test.ts） |
 | P7.14 | 框架内置 /exception/403\|404\|500 core 路由兜底，exception 模块降级为可选覆盖 | F11 | 禁用 exception 模块后 403/500 跳转正常 | ✅ 完成（ensureBuiltinExceptionRoutes + 测试） |
-| P7.15 | 契约断言层：CLAUDE.md 架构路径改写；lazy chunk 构建期提示；模块 CSS insertBefore；`rad merge` 接线；死分支与过时注释清理；深路径版本比对取包名 | F2/P2-P5 + 次要项 | 全部落地 | ✅ 完成（含 prod manifest.json 消费链路 P5） |
+| P7.15 | 契约断言层：CLAUDE.md 架构路径改写；lazy chunk 构建期提示；模块 CSS insertBefore；`ram merge` 接线；死分支与过时注释清理；深路径版本比对取包名 | F2/P2-P5 + 次要项 | 全部落地 | ✅ 完成（含 prod manifest.json 消费链路 P5） |
 | P7.16 | 文档回写：设计文档 §4.7/US-6、手册同步 P7 行为变化、交接手册补 P7 章节、本计划回填 | 报告§改进意见 | 文档与实现一致 | ✅ 完成 |
 
 ## 关键 BDD 验收场景
@@ -91,7 +91,7 @@ Feature: 依赖缺失不半加载（P7.8）
 1. **评审先于整改**：先把 41 条原始发现去重为 36 项、逐项置信度打分（22×75 / 10×50-60 / 40 / 20），
    报告归档后才规划任务——避免「边改边发现」导致的范围失控。
 2. **根因归一**：9/22 确认问题同根——「文档承诺了但实现漂移」（peerRuntime、requiredPermissions、
-   rad info/merge、深路径报错均只存在于纸面）。整改主线因此是**给每条承诺补测试卡口**，
+   ram info/merge、深路径报错均只存在于纸面）。整改主线因此是**给每条承诺补测试卡口**，
    而非逐条打补丁。
 3. **TDD 落地**：每个修复先有失败用例（shell-trust 绕过组、scoped-request 绕过组、
    p7-module-contracts 20 例、iframe-whitelist-consistency 等），再实现到绿。
@@ -103,7 +103,7 @@ Feature: 依赖缺失不半加载（P7.8）
   不存在的文件——收益不抵复杂度。最终只做「构建期卡口」半边：`assertResolvableSpecifiers`
   对产物真实 import 分析，深路径裸说明符构建期报错。判据「构建期即提示」达成，前缀键不做。
 - **P7.10 翻转历史决策**：P6.6 曾有意将 shell 设为 `private: true` 并写入测试；但 §4.1
-  的外部工程链路（rad dev/build 从 node_modules 取 shell dist）要求 shell 可发布。
+  的外部工程链路（ram dev/build 从 node_modules 取 shell dist）要求 shell 可发布。
   两处冲突以「shell 可发布」为准，原测试改注记说明翻转原因。评审报告编号 F5。
 - **P7.14 实现方式微调**：内置异常页组件用 antd Result + createElement（`.ts` 而非 `.tsx`），
   规避 react-refresh/only-export-components 规则对「同文件导出路由数组 + 组件」的限制。

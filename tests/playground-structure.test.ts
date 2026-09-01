@@ -4,9 +4,9 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import ContainerLayout from "#src/layout/container-layout";
-import { readModuleDefinition } from "../packages/cli/src/build";
 import { resolveRouteLayouts } from "#src/router/utils/resolve-layout";
-import { PLAYGROUND_DIR, PROJECT_ROOT } from "./helpers/paths";
+import { readModuleDefinition } from "../packages/cli/src/build";
+import { PROJECT_ROOT } from "./helpers/paths";
 
 /**
  * P1：模块工程应当**只含模块**。
@@ -53,7 +53,7 @@ describe("模块工程只含模块", () => {
 
 		expect(
 			offenders,
-			`以下文件引入了框架内部路径（应改为 @react-antd-admin/runtime）：${offenders.join(", ")}`,
+			`以下文件引入了框架内部路径（应改为 @react-antd-module/runtime）：${offenders.join(", ")}`,
 		).toEqual([]);
 	});
 
@@ -64,7 +64,7 @@ describe("模块工程只含模块", () => {
 
 		// 共享依赖由宿主 importmap 提供，模块只在构建期用它们做类型检查（设计文档 C4）
 		expect(runtimeDeps, "共享依赖不得出现在 dependencies，只能是 devDependencies").toEqual([]);
-		expect(allDeps, "模块工程应依赖 @react-antd-admin/runtime").toContain("@react-antd-admin/runtime");
+		expect(allDeps, "模块工程应依赖 @react-antd-module/runtime").toContain("@react-antd-module/runtime");
 
 		const frameworkInternal = allDeps.filter((d: string) => d.startsWith("#"));
 		expect(frameworkInternal, "不应依赖框架内部路径").toEqual([]);
@@ -77,8 +77,8 @@ describe("demo 模块符合模块契约", () => {
 	it("entry.ts 使用 defineModule 声明", () => {
 		const content = fs.readFileSync(entryPath, "utf-8");
 		expect(content, "应使用 defineModule").toMatch(/defineModule\s*\(/);
-		expect(content, "defineModule 应从 @react-antd-admin/runtime 导入").toMatch(
-			/from\s*["']@react-antd-admin\/runtime["']/,
+		expect(content, "defineModule 应从 @react-antd-module/runtime 导入").toMatch(
+			/from\s*["']@react-antd-module\/runtime["']/,
 		);
 	});
 

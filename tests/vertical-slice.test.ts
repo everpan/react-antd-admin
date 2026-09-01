@@ -4,11 +4,11 @@
  * 验证：
  *  1. shell 预构建产物含手写 importmap，且覆盖全部硬共享依赖；
  *  2. 宿主 host chunk 与 demo 模块的所有共享裸说明符都能经 importmap 解析；
- *  3. 单例必要条件：宿主与模块对 react / @react-antd-admin/runtime 等命中同一 URL；
- *  4. rad build 产物：modules.json 字段完整、integrity 与文件一致、无 blob/data import、
+ *  3. 单例必要条件：宿主与模块对 react / @react-antd-module/runtime 等命中同一 URL；
+ *  4. ram build 产物：modules.json 字段完整、integrity 与文件一致、无 blob/data import、
  *     模块内无共享依赖实现代码（react 未被打进模块）。
  *
- * 运行前若产物不存在会自动构建（shell 预构建 + playground rad build）。
+ * 运行前若产物不存在会自动构建（shell 预构建 + playground ram build）。
  */
 
 import { execFileSync } from "node:child_process";
@@ -46,7 +46,7 @@ function resolveShell() {
 	if (!existsSync(htmlPath)) {
 		// eslint-disable-next-line no-console
 		console.log("[test] 构建 shell（缺失 dist）…");
-		execFileSync("pnpm", ["--filter", "@react-antd-admin/shell", "build"], {
+		execFileSync("pnpm", ["--filter", "@react-antd-module/shell", "build"], {
 			cwd: PROJECT_ROOT,
 			stdio: "inherit",
 		});
@@ -168,7 +168,7 @@ describe("p1 垂直切片：importmap 与单例", () => {
 	});
 
 	it("单例必要条件：宿主与模块对 react / runtime 等命中同一 URL", () => {
-		for (const dep of ["react", "@react-antd-admin/runtime", "antd", "react-i18next"]) {
+		for (const dep of ["react", "@react-antd-module/runtime", "antd", "react-i18next"]) {
 			const hostUrl = resolveViaImportmap(dep, importmap);
 			const moduleUrl = resolveViaImportmap(dep, importmap);
 			expect(hostUrl, `宿主 ${dep} 未映射`).not.toBeNull();
@@ -180,7 +180,7 @@ describe("p1 垂直切片：importmap 与单例", () => {
 	});
 });
 
-describe("p1 垂直切片：rad build 产物契约", () => {
+describe("p1 垂直切片：ram build 产物契约", () => {
 	beforeAll(async () => {
 		await resolvePlayground();
 	});

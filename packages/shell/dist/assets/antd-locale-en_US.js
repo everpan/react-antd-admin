@@ -361,7 +361,7 @@ var require_en_US7 = __commonJS({
   }
 });
 
-// .rad-shim-antd-locale-en_US.mjs
+// .ram-shim-antd-locale-en_US.mjs
 var rad_shim_antd_locale_en_US_exports = {};
 __export(rad_shim_antd_locale_en_US_exports, {
   default: () => rad_shim_antd_locale_en_US_default

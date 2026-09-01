@@ -106777,7 +106777,7 @@ if (false) {
   false ? warning_default2(majorVersion >= 18, "version", `antd v6 no longer supports React versions below 18. Please upgrade to React 18 or higher.`) : void 0;
 }
 
-// .rad-shim-antd.mjs
+// .ram-shim-antd.mjs
 var rad_shim_antd_default = void 0 ?? es_exports;
 export {
   affix_default as Affix,

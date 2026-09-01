@@ -24027,7 +24027,7 @@ function installScatterJitter(registers) {
   registers.registerLayout(registers.PRIORITY.VISUAL.POST_CHART_LAYOUT, jitterLayout());
 }
 
-// .rad-shim-echarts-features.mjs
+// .ram-shim-echarts-features.mjs
 var rad_shim_echarts_features_default = void 0 ?? features_exports;
 export {
   installAxisBreak as AxisBreak,

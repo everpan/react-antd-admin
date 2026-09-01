@@ -1741,7 +1741,7 @@ var select = () => "";
 var plural = () => "";
 var selectOrdinal = () => "";
 
-// .rad-shim-react-i18next.mjs
+// .ram-shim-react-i18next.mjs
 var rad_shim_react_i18next_default = void 0 ?? es_exports;
 export {
   I18nContext,

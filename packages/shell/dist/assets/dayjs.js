@@ -313,7 +313,7 @@ var require_dayjs_min = __commonJS({
   }
 });
 
-// .rad-shim-dayjs.mjs
+// .ram-shim-dayjs.mjs
 var rad_shim_dayjs_exports = {};
 __export(rad_shim_dayjs_exports, {
   default: () => rad_shim_dayjs_default

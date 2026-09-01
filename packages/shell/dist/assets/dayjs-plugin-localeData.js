@@ -113,7 +113,7 @@ var require_localeData = __commonJS({
   }
 });
 
-// .rad-shim-dayjs-plugin-localeData.mjs
+// .ram-shim-dayjs-plugin-localeData.mjs
 var rad_shim_dayjs_plugin_localeData_exports = {};
 __export(rad_shim_dayjs_plugin_localeData_exports, {
   default: () => rad_shim_dayjs_plugin_localeData_default

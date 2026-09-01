@@ -63,7 +63,7 @@ function shallow(valueA, valueB) {
   );
 }
 
-// .rad-shim-zustand-vanilla-shallow.mjs
+// .ram-shim-zustand-vanilla-shallow.mjs
 var rad_shim_zustand_vanilla_shallow_default = void 0 ?? shallow_exports;
 export {
   rad_shim_zustand_vanilla_shallow_default as default,

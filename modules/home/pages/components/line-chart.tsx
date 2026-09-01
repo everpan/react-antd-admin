@@ -1,5 +1,5 @@
 import type { EChartsOption } from "echarts";
-import { fetchLine } from "@react-antd-admin/runtime";
+import { fetchLine } from "@react-antd-module/runtime";
 import { Card, Radio } from "antd";
 import ReactECharts from "echarts-for-react";
 import { useEffect, useState } from "react";

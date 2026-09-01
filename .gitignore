@@ -50,8 +50,8 @@ yarn.lock
 analyzer
 TODO.md
 
-# rad CLI 临时构建产物（读取模块定义时生成的临时 bundle）
-.rad-tmp-*
+# ram CLI 临时构建产物（读取模块定义时生成的临时 bundle）
+.ram-tmp-*
 
 # e2e
 .e2e-legacy/

@@ -82822,7 +82822,7 @@ use(installAxisBreak);
 use(installLegacyGridContainLabel);
 use(installScatterJitter);
 
-// .rad-shim-echarts.mjs
+// .ram-shim-echarts.mjs
 var rad_shim_echarts_default = void 0 ?? echarts_exports2;
 export {
   Axis_default as Axis,

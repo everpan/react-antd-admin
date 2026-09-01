@@ -34104,7 +34104,7 @@ function create(options = {}) {
 // ../../node_modules/.pnpm/@ant-design+icons@6.3.2_react-dom@19.2.8_react@19.2.8__react@19.2.8/node_modules/@ant-design/icons/es/index.js
 var IconProvider = Context_default.Provider;
 
-// .rad-shim-icons.mjs
+// .ram-shim-icons.mjs
 var rad_shim_icons_default = Icon_default ?? es_exports;
 export {
   AccountBookFilled_default as AccountBookFilled,

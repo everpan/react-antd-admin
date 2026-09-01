@@ -70,7 +70,7 @@ var require_jsx_runtime = __commonJS({
   }
 });
 
-// .rad-shim-jsx-runtime.mjs
+// .ram-shim-jsx-runtime.mjs
 var __m = __toESM(require_jsx_runtime(), 1);
 var Fragment2 = __m["Fragment"];
 var jsx2 = __m["jsx"];

@@ -1,11 +1,11 @@
-import type { RoleItemType, TreeDataNodeWithId } from "@react-antd-admin/runtime";
+import type { RoleItemType, TreeDataNodeWithId } from "@react-antd-module/runtime";
 import {
 	DrawerForm,
 	ProFormRadio,
 	ProFormText,
 	ProFormTextArea,
 } from "@ant-design/pro-components";
-import { fetchAddRoleItem, fetchUpdateRoleItem, FormTreeItem } from "@react-antd-admin/runtime";
+import { fetchAddRoleItem, fetchUpdateRoleItem, FormTreeItem } from "@react-antd-module/runtime";
 import { useMutation } from "@tanstack/react-query";
 
 import { Form } from "antd";

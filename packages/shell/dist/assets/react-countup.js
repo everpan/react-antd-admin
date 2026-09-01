@@ -515,7 +515,7 @@ var require_build = __commonJS({
   }
 });
 
-// .rad-shim-react-countup.mjs
+// .ram-shim-react-countup.mjs
 var __m = __toESM(require_build(), 1);
 var useCountUp2 = __m["useCountUp"];
 var rad_shim_react_countup_default = __m.default ?? __m;

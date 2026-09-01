@@ -9899,7 +9899,7 @@ function getRSCStream() {
   return rscStream;
 }
 
-// .rad-shim-react-router-dom.mjs
+// .ram-shim-react-router-dom.mjs
 var rad_shim_react_router_dom_default = void 0 ?? dom_export_exports;
 export {
   HydratedRouter,

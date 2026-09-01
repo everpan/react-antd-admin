@@ -10,7 +10,7 @@
 | 2 | 菜单图标缺失（仅首项有） | 配置使然 | `apps/playground/modules/demo/entry.ts` 子路由（detail/about）未声明 `handle.icon`；父路由 icon 正常渲染 |
 | 3 | 头像为 UserIcon 人形兜底（非照片） | **已修复** | shell host 免登录设计（无 AuthGuard），`useUserStore` 恒空 → avatar 空兜底。修复：host.tsx 播种演示用户（与 App 链 fake 数据一致：Admin/照片 URL/roles），保持两链显示同构 |
 | 4 | 菜单仅 demo 模块 3 项 | 设计使然 | `modules.config.ts` 仅登记 demo 模块（外部模块工程模拟） |
-| 5 | `/api/notifications` 404 | 已知噪音 | rad dev 无 fake API；通知组件已有 `Array.isArray` 守卫不崩（E2E_VERIFICATION.md 缺陷 4） |
+| 5 | `/api/notifications` 404 | 已知噪音 | ram dev 无 fake API；通知组件已有 `Array.isArray` 守卫不崩（E2E_VERIFICATION.md 缺陷 4） |
 
 ## 修复设计
 
@@ -25,7 +25,7 @@
 ## 任务清单
 
 - [x] T1 五病状取证定因（CDP 命中规则/layer 归属/变量值对照）
-- [x] T2 host.tsx 加 layer + 重建 shell + rad dev 探针复验（38px → 14px）
+- [x] T2 host.tsx 加 layer + 重建 shell + ram dev 探针复验（38px → 14px）
 - [x] T3 demo 模块子路由补 icon
 - [x] T4 e2e 双环境回归 + lint
 - [x] T5 文档回填 + 提交
@@ -40,7 +40,7 @@ playground 宿主形态 UNLAYERED**。变量探针（.text-sm 生效于新元素
 是打破「特异性」常规推理的关键一步。
 
 **修复验证**：`<StyleProvider layer hashPriority="high">`（host.tsx 一词改动）+
-重建 shell → rad dev 复验：H1 38px→**14px**（宽度 121px 与 main dev 同值）、
+重建 shell → ram dev 复验：H1 38px→**14px**（宽度 121px 与 main dev 同值）、
 菜单图标 1→3（demo 子路由补 icon）、布局截图与 App 链形态肉眼同构。
 追加：host.tsx 播种演示用户 → playground 头像照片显示（差异项 3 闭环）。
 

@@ -99,7 +99,7 @@ var require_dist = __commonJS({
   }
 });
 
-// .rad-shim-spin-delay.mjs
+// .ram-shim-spin-delay.mjs
 var __m = __toESM(require_dist(), 1);
 var defaultOptions2 = __m["defaultOptions"];
 var useSpinDelay2 = __m["useSpinDelay"];

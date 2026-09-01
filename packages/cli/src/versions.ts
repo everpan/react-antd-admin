@@ -20,15 +20,15 @@ export function readHostVersions(shellDist: string): Record<string, string> {
 
 /** 定位 shell 预构建产物：npm 依赖优先，monorepo dogfooding 回退 workspace */
 export function resolveShellDist(projectRoot: string): string {
-	const fromNodeModules = path.join(projectRoot, "node_modules/@react-antd-admin/shell/dist");
+	const fromNodeModules = path.join(projectRoot, "node_modules/@react-antd-module/shell/dist");
 	if (fs.existsSync(fromNodeModules))
 		return fromNodeModules;
 	const fromWorkspace = path.join(projectRoot, "../../packages/shell/dist");
 	if (fs.existsSync(fromWorkspace))
 		return fromWorkspace;
 	throw new Error(
-		"找不到 @react-antd-admin/shell 的预构建产物（dist）。\n"
-		+ "请先构建宿主：pnpm --filter @react-antd-admin/shell build",
+		"找不到 @react-antd-module/shell 的预构建产物（dist）。\n"
+		+ "请先构建宿主：pnpm --filter @react-antd-module/shell build",
 	);
 }
 
@@ -91,7 +91,7 @@ export function checkSharedVersions(projectRoot: string, shellDist: string): voi
 
 	if (errors.length > 0) {
 		throw new Error(
-			`[rad] 版本矩阵门禁（C4/D12）校验失败：\n${errors.join("\n")}\n`
+			`[ram] 版本矩阵门禁（C4/D12）校验失败：\n${errors.join("\n")}\n`
 			+ "设计文档：docs/prd/202608291025-framework-npm-package-design.md §4.3",
 		);
 	}

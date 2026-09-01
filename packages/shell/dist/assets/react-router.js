@@ -14432,7 +14432,7 @@ function getHydrationData({
   return hydrationData;
 }
 
-// .rad-shim-react-router.mjs
+// .ram-shim-react-router.mjs
 var rad_shim_react_router_default = void 0 ?? development_exports;
 export {
   Await,

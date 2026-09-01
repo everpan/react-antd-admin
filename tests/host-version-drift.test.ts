@@ -42,7 +42,7 @@ describe("宿主与框架共享依赖版本一致（A25）", () => {
 
 		for (const dep of SHARED_DEPS) {
 			const pkgName = packageNameOf(dep.specifier);
-			if (pkgName.startsWith("@react-antd-admin"))
+			if (pkgName.startsWith("@react-antd-module"))
 				continue;
 
 			const shellVersion = installedVersion(SHELL_DIR, dep.specifier);
@@ -59,7 +59,7 @@ describe("宿主与框架共享依赖版本一致（A25）", () => {
 
 		expect(
 			drifted,
-			`宿主与框架的共享依赖版本已漂移——宿主会把自己的版本写进 versions.json 当基准：\n`
+			"宿主与框架的共享依赖版本已漂移——宿主会把自己的版本写进 versions.json 当基准：\n"
 			+ `${drifted.join("\n")}\n`
 			+ "修复：在 pnpm-workspace.yaml 的 catalogs 登记该包，两侧 package.json 改用 catalog:，然后 pnpm install。",
 		).toEqual([]);
@@ -71,7 +71,7 @@ describe("宿主与框架共享依赖版本一致（A25）", () => {
 
 		const undeclared = SHARED_DEPS
 			.map(dep => packageNameOf(dep.specifier))
-			.filter(name => !name.startsWith("@react-antd-admin"))
+			.filter(name => !name.startsWith("@react-antd-module"))
 			.filter((name, i, all) => all.indexOf(name) === i)
 			.filter(name => !(name in declared));
 
@@ -94,8 +94,8 @@ describe("宿主与框架共享依赖版本一致（A25）", () => {
 			const pkg = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, rel), "utf-8"));
 			const all = { ...pkg.dependencies, ...pkg.devDependencies, ...pkg.peerDependencies };
 			for (const dep of SHARED_DEPS) {
-				// @react-antd-admin/* 是本仓 workspace 包，必须用 workspace:*，不进 catalog
-				if (packageNameOf(dep.specifier).startsWith("@react-antd-admin"))
+				// @react-antd-module/* 是本仓 workspace 包，必须用 workspace:*，不进 catalog
+				if (packageNameOf(dep.specifier).startsWith("@react-antd-module"))
 					continue;
 				const range = all[dep.specifier];
 				if (range && range !== "catalog:")

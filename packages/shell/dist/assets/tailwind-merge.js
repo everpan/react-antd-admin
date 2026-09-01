@@ -3349,7 +3349,7 @@ var mergeArrayProperties = (baseObject, mergeObject, key) => {
 var extendTailwindMerge = (configExtension, ...createConfig) => typeof configExtension === "function" ? createTailwindMerge(getDefaultConfig, configExtension, ...createConfig) : createTailwindMerge(() => mergeConfigs(getDefaultConfig(), configExtension), ...createConfig);
 var twMerge = /* @__PURE__ */ createTailwindMerge(getDefaultConfig);
 
-// .rad-shim-tailwind-merge.mjs
+// .ram-shim-tailwind-merge.mjs
 var rad_shim_tailwind_merge_default = void 0 ?? bundle_mjs_exports;
 export {
   createTailwindMerge,

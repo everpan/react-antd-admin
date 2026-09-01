@@ -1,5 +1,5 @@
 {
-	"name": "@react-antd-admin/cli",
+	"name": "@react-antd-module/cli",
 	"type": "module",
 	"version": "0.0.0",
 	"description": "React Antd Admin 模块工程命令行工具",
@@ -14,16 +14,16 @@
 		"./info": "./src/info.ts"
 	},
 	"bin": {
-		"rad": "./bin/rad.mjs"
+		"ram": "./bin/ram.mjs"
 	},
 	"files": [
 		"bin",
 		"src"
 	],
 	"dependencies": {
-		"esbuild": "^0.28.2",
-		"tsx": "^4.23.12",
-		"vite": "^8.0.13"
+		"esbuild": "catalog:",
+		"tsx": "catalog:",
+		"vite": "catalog:"
 	},
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org/",

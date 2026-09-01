@@ -37,7 +37,7 @@ export default defineConfig({
 		alias: [
 			{ find: "#src", replacement: path.resolve("packages/runtime/src") },
 			// monorepo 内将包名直指 runtime 源码，模块工程与宿主同源编译（P3.2）
-			{ find: "@react-antd-admin/runtime", replacement: path.resolve("packages/runtime/src/index.ts") },
+			{ find: "@react-antd-module/runtime", replacement: path.resolve("packages/runtime/src/index.ts") },
 			{ find: "#modules", replacement: path.resolve("modules") },
 			// 见上方 test.deps：让 pro-components 走「已构建」的干净 ESM 资产
 			{ find: /^@ant-design\/pro-.*$/, replacement: path.resolve("packages/shell/dist/assets/pro-components.js") },
@@ -186,7 +186,7 @@ export default defineConfig({
 			external: (id: string) => isSharedDep(id),
 			// runtime 源出口（index.ts，与 lib 构建同一入口）作为第二入口，
 			// preserveEntrySignatures 保住完整导出面：模块经 importmap import
-			// "@react-antd-admin/runtime" 必须命中宿主正在用的这一份实例
+			// "@react-antd-module/runtime" 必须命中宿主正在用的这一份实例
 			// （shell 的 runtime.js 无 App bootstrap，不能借用）——importmap 键
 			// 由 scripts/inject-importmap.mts 指向该 entry chunk。
 			input: {

@@ -134,14 +134,14 @@ pnpm preview
 
 清单托管为同源静态文件且**不实施签名**（O3 已定：同组织不同团队，签名收益不抵成本）。信任根退化为「CI 单一出口 + 清单与产物分目录分发布凭据 + moduleOrigins 来源白名单 + L2 完整性 + CSP」。**接受残余风险：能写清单目录的凭据等同于可注入任意模块代码**——请确保清单目录仅 CI 可写。
 
-### 发布 checklist（@react-antd-admin/runtime / cli）
+### 发布 checklist（@react-antd-module/runtime / cli）
 
 - 安装走 `.npmrc` 镜像加速；**发布**经各包 `publishConfig.registry` 锁定官方源，防误发
 - npm 账号开启 **2FA**（账号设置，一次性）
-- 发布命令统一：`pnpm --filter @react-antd-admin/<pkg> publish --provenance --access public`
+- 发布命令统一：`pnpm --filter @react-antd-module/<pkg> publish --provenance --access public`
 - CI 安装统一 `pnpm install --frozen-lockfile`，lockfile 变更必须过评审
 - 定期 `npm audit signatures` 校验依赖签名链
-- 防 typosquat：外部团队安装时核对 scope `@react-antd-admin/*` 拼写（官方源唯一发布方）
+- 防 typosquat：外部团队安装时核对 scope `@react-antd-module/*` 拼写（官方源唯一发布方）
 
 ## Credits
 

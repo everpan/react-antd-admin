@@ -21,7 +21,7 @@ function readPkg(name: string) {
  */
 describe("供应链加固（P6.6）", () => {
 	// P7.10 决策翻转：P6.6 曾定「shell 保持 private 以 dist 交付」，但外部工程的
-	// rad dev/build 依赖 node_modules/@react-antd-admin/shell/dist（resolveShellDist），
+	// ram dev/build 依赖 node_modules/@react-antd-module/shell/dist（resolveShellDist），
 	// 不发布则 US-1/US-2 第一步即失败（评审 F5）——回到 §4.1 的发布形态
 	it.each(["runtime", "cli", "shell"])("%s 包 publishConfig 锁定官方 registry 且公开访问", (name) => {
 		const pkg = readPkg(name);

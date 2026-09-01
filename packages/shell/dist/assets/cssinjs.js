@@ -2566,7 +2566,7 @@ var _experimental = {
   supportModernCSS: () => supportWhere() && supportLogicProps()
 };
 
-// .rad-shim-cssinjs.mjs
+// .ram-shim-cssinjs.mjs
 var rad_shim_cssinjs_default = void 0 ?? es_exports;
 export {
   Keyframes_default as Keyframes,

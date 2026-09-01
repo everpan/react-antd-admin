@@ -14,8 +14,8 @@ pnpm dev
 pnpm build
 
 # 2) 「外部模块工程」链路（本项目改造的目标形态）
-pnpm --filter @react-antd-admin/shell build     # 先出预构建宿主
-cd apps/playground && pnpm dev                   # 等价于 rad dev
+pnpm --filter @react-antd-module/shell build     # 先出预构建宿主
+cd apps/playground && pnpm dev                   # 等价于 ram dev
 
 # 3) 校验
 pnpm test          # vitest，当前 68 例全绿（P2.7 新增 9 例）
@@ -46,9 +46,9 @@ pnpm lint
 
 | 包 | 形态 | 职责 |
 |---|---|---|
-| `@react-antd-admin/runtime` | 库（`dist/runtime.js`） | 框架运行时，模块工程唯一 import 的入口 |
-| `@react-antd-admin/shell` | **预构建站点**（`dist/index.html + assets/*`） | 宿主：加载模块、渲染容器、通过 importmap 提供共享依赖 |
-| `@react-antd-admin/cli` | 命令行（`rad`） | `rad dev` 起开发服务器、`rad build` 出模块产物 |
+| `@react-antd-module/runtime` | 库（`dist/runtime.js`） | 框架运行时，模块工程唯一 import 的入口 |
+| `@react-antd-module/shell` | **预构建站点**（`dist/index.html + assets/*`） | 宿主：加载模块、渲染容器、通过 importmap 提供共享依赖 |
+| `@react-antd-module/cli` | 命令行（`ram`） | `ram dev` 起开发服务器、`ram build` 出模块产物 |
 
 外部工程长这样（参考 `apps/playground/`）：
 
@@ -59,7 +59,7 @@ my-modules/
 └── package.json                # 三个框架包放 devDependencies
 ```
 
-`rad build` 只产出模块 chunk + `modules.json`；宿主已预先部署，**模块可独立上线而宿主不重建**（D1）。
+`ram build` 只产出模块 chunk + `modules.json`；宿主已预先部署，**模块可独立上线而宿主不重建**（D1）。
 
 ### 可度量的验收目标（来自设计文档 §1）
 
@@ -91,7 +91,7 @@ my-modules/
 
 被否决的方案是「20+ 依赖全部硬共享」——那会把软依赖也冻结成契约，宿主无法独立升级。
 
-- **硬共享**（破坏即崩溃）：`react`、`react-dom`、`react-dom/client`、`react/jsx-runtime`、`react/jsx-dev-runtime`、`react-router`、`react-router/dom`、`@tanstack/react-query`、`@react-antd-admin/runtime`
+- **硬共享**（破坏即崩溃）：`react`、`react-dom`、`react-dom/client`、`react/jsx-runtime`、`react/jsx-dev-runtime`、`react-router`、`react-router/dom`、`@tanstack/react-query`、`@react-antd-module/runtime`
 - **软共享**（允许版本漂移）：`antd`、`@ant-design/icons`、`@ant-design/cssinjs`、`i18next`、`react-i18next`、`dayjs`、`clsx` 等
 
 **血的教训（B11/B12）**：设计初稿里 importmap 12 项、`SHARED_EXTERNALS` 20+ 项，两边都漏了 `@tanstack/react-query`。而 `modules/system/pages/role/index.tsx` 用了 `useQuery`，Provider 由宿主提供 —— 模块自带副本就会脱离 context 抛 "No QueryClient set"。
@@ -118,7 +118,7 @@ my-modules/
 
 ### 2.5 完整性档位直接上 L2，不做 L0/L1
 
-安全与架构一致判定：L1 只保护入口 chunk，改子 chunk 即可注入任意代码，防护价值 ≈ 0，却要付 CORS 成本。所以默认 L2：所有已声明 chunk 走 `modulepreload + integrity`（D7）。`rad build` 已经在给每个 chunk 算 `sha384` 并写入 `modules.json`，懒加载 chunk 标 `lazy: true`。
+安全与架构一致判定：L1 只保护入口 chunk，改子 chunk 即可注入任意代码，防护价值 ≈ 0，却要付 CORS 成本。所以默认 L2：所有已声明 chunk 走 `modulepreload + integrity`（D7）。`ram build` 已经在给每个 chunk 算 `sha384` 并写入 `modules.json`，懒加载 chunk 标 `lazy: true`。
 
 ### 2.6 信任根：不做签名，靠分目录 + 白名单
 
@@ -151,7 +151,7 @@ my-modules/
 | P0 | Monorepo 骨架（`src/` → `packages/runtime/src/`）+ Spike A/B | ✅ |
 | Spike A | antd / react-router / react-query 单入口 ESM + importmap 验证 | ✅ Go |
 | Spike B | 外部模块 Tailwind 产出与注入验证 | ✅ Go |
-| P1 | 垂直切片：`rad build` / `rad dev` / shell importmap / playground | ✅ |
+| P1 | 垂直切片：`ram build` / `ram dev` / shell importmap / playground | ✅ |
 | **P2** | **依赖反转与语义迁移** | ✅ **全部完成（2.1–2.8）** |
 | P3 | Runtime 出口收敛与冻结 | ✅（`feature/pkg-p3-runtime-api`） |
 | P4 | Shell 与共享表治理 | ✅（`feature/pkg-p4-shell`） |
@@ -197,7 +197,7 @@ my-modules/
 | P0 Monorepo 骨架 | `pnpm dev/build/test/typecheck/lint` 行为与迁移前一致；`src`→`packages/runtime/src` | ✅ 通过 | `26cc3d7` 之前 |
 | Spike A | antd / react-router / react-query 单入口 ESM + importmap 验证通过 | ✅ | — |
 | Spike B | 外部模块 Tailwind 产物与注入验证通过 | ✅ | — |
-| P1 垂直切片 | `tests/vertical-slice.test.ts` + `tests/cli-build.test.ts` 通过；`rad build/dev` HTTP 冒烟 200 | ✅ | `db2d05f` 之前 |
+| P1 垂直切片 | `tests/vertical-slice.test.ts` + `tests/cli-build.test.ts` 通过；`ram build/dev` HTTP 冒烟 200 | ✅ | `db2d05f` 之前 |
 | P2.1 KeepAlive 上移 | `tests/keep-alive.test.ts` 通过；缓存 key 与 `activeCacheKey` 对齐；切路由 chrome 不消失 | ✅ | `26cc3d7` |
 | P2.2 `handle.layout` 契约 | `tests/resolve-layout.test.ts` 通过；未声明路由默认 `container`，行为不变 | ✅ | `87bd842` |
 | P2.3 内置兜底页 | `tests/framework-fallback.test.ts` 5 例通过；runtime 源码全量无 `#modules/exception`；full vitest 57；`tsc --noEmit` 0；完整 `vite build` 通过 | ✅ | `db2d05f` |
@@ -228,7 +228,7 @@ my-modules/
 | `require-trusted-types-for` CSP 未启用 | antd6 cssinjs 大量 innerHTML 注入，直接加会全站崩，需配套 trusted-types policy |
 | CI 版本回归（宿主升级 → 已发布模块） | 随首轮真实发布补进发布流程 |
 | `frame-src` 与 `TRUSTED_ORIGINS` 占位值 | 当前为设计示例域，部署时按业务域替换并重建 shell |
-| 真 HMR（vite middleware dev server） | `rad dev` 现为构建 + watch + 手动刷新；P4/P5 偏差记录延续 |
+| 真 HMR（vite middleware dev server） | `ram dev` 现为构建 + watch + 手动刷新；P4/P5 偏差记录延续 |
 
 ---
 
@@ -249,12 +249,12 @@ my-modules/
 打通「外部工程只写模块」的最小闭环：
 
 - `apps/playground/` 模拟外部工程，只有 `modules/demo/` + `modules.config.ts` + `package.json`
-  （计划文档 1.1 里还列了 `vite.config.ts`，实测**不需要** —— 构建完全由 `rad build` 驱动，外部工程无需自备 vite 配置）
-- `packages/cli`：`rad build`（lib 模式多 chunk + `modules.json` + sha384）、`rad dev`（宿主代理 + watch 重建）
+  （计划文档 1.1 里还列了 `vite.config.ts`，实测**不需要** —— 构建完全由 `ram build` 驱动，外部工程无需自备 vite 配置）
+- `packages/cli`：`ram build`（lib 模式多 chunk + `modules.json` + sha384）、`ram dev`（宿主代理 + watch 重建）
 - `packages/shell`：15 个共享依赖各自打成单入口 ESM，加上从 runtime 拷来的 `runtime.js`，共 **16 条 importmap 映射** + 宿主应用
 - 基线文档 `runtime-api-usage.md`：playground 实际只用到 `defineModule` + `BasicContent`
 
-验收：`tests/vertical-slice.test.ts` + `tests/cli-build.test.ts` 断言产物不含共享依赖实现代码、无 blob import、`modules.json` 字段完整；`rad dev` HTTP 冒烟 200。
+验收：`tests/vertical-slice.test.ts` + `tests/cli-build.test.ts` 断言产物不含共享依赖实现代码、无 blob import、`modules.json` 字段完整；`ram dev` HTTP 冒烟 200。
 
 > ⚠️ **纠正一处文档错误**：P1 计划里 1.4 的验收写的是「`__REACT_INSTANCE_COUNT__ === 1`」。**React 19 的 dev build 并不暴露这个全局**（已在 `node_modules/react/cjs/react.development.js` 中 grep 确认）。它只是「单例」这个意图的绰号。真实可执行的验证方法见 `singleton-verification.md`：① 同一 URL import 两次比较引用同一性；② React DevTools 的多副本告警；③ 可选地由宿主自己维护一个 dev-only 计数器。
 
@@ -274,7 +274,7 @@ my-modules/
 
 ### P3：Runtime 出口收敛与冻结
 
-基于 `runtime-api-usage.md` 定出口白名单；把模块里的 `#src/*` 说明符改成 `@react-antd-admin/runtime`；图标契约统一为 `ReactNode`（现在是混合契约，部分模块仍传字符串，B6）；出 d.ts 并取消 `private: true`。
+基于 `runtime-api-usage.md` 定出口白名单；把模块里的 `#src/*` 说明符改成 `@react-antd-module/runtime`；图标契约统一为 `ReactNode`（现在是混合契约，部分模块仍传字符串，B6）；出 d.ts 并取消 `private: true`。
 
 工作量随进度漂移，动手前重新量一次：
 
@@ -290,7 +290,7 @@ grep -rlE  '"#src/' modules/ | wc -l                         # 涉及文件数�
 
 ### P4：Shell 与共享表治理
 
-importmap 自动生成（不再手写）、dev 体验三件套（`jsx-dev-runtime` 映射 / react-refresh preamble / sourcemap）、`rad info` 版本矩阵、版本严格相等校验（D12）。
+importmap 自动生成（不再手写）、dev 体验三件套（`jsx-dev-runtime` 映射 / react-refresh preamble / sourcemap）、`ram info` 版本矩阵、版本严格相等校验（D12）。
 
 **D12 为什么必须严格相等而非 semver 范围**：类型来自 `node_modules`，实现来自 shell 的 `dist`。两者可以差 N 个 minor，结果类型全绿而运行期炸。
 
@@ -310,11 +310,11 @@ importmap 自动生成（不再手写）、dev 体验三件套（`jsx-dev-runtim
 
 对 P0–P6 全貌做了一次独立 code review（5 个并行评审维度 + 逐项置信度打分），确认 36 项问题，归档于 `docs/prd/202608300957-review-report-framework-npm-package.md`；整改计划与逐项判据在 `docs/prd/202608300957-p7-review-remediation-plan.md`（16 个任务全部完成）。
 
-核心结论：**22/22 确认问题中 9 项的根因是「文档/注释承诺了但实现漂移」**——peerRuntime 校验只有类型没有执行、requiredPermissions 声明了没人消费、设计文档声称的「深路径报错」「rad info/merge」并不存在。整改方向因此不是逐条打补丁，而是给每条承诺补测试卡口：
+核心结论：**22/22 确认问题中 9 项的根因是「文档/注释承诺了但实现漂移」**——peerRuntime 校验只有类型没有执行、requiredPermissions 声明了没人消费、设计文档声称的「深路径报错」「ram info/merge」并不存在。整改方向因此不是逐条打补丁，而是给每条承诺补测试卡口：
 
 - 安全：信任 URL 归一化堵 `//evil.com`、`\`、blob: 绕过（S1）；scoped client 段边界匹配 + 归一化 + 剥离单次请求 `prefix` 覆盖（S2，token 外泄通道）；iframe 白名单与 CSP/modules 三方一致性测试卡口（S4）。
 - 契约闭环：peerRuntime 真实 semver 校验（最小实现 `satisfiesSemver`）、依赖缺失 `status: "missing-deps"` 半加载杜绝、requiredPermissions 落地、shell 清单 `toLoaderManifest` 全字段透传（F1/F2 被裁剪）、shell 包转 npm 发布（**翻转 P6.6 的 private 决策**，F5）。
-- 工具补齐：`rad info` / `rad merge` 真实落地（P7.11/P7.15）；entry 并入 chunks[] 完整性链路（P7.3）；深路径裸说明符构建期报错（P7.9）。
+- 工具补齐：`ram info` / `ram merge` 真实落地（P7.11/P7.15）；entry 并入 chunks[] 完整性链路（P7.3）；深路径裸说明符构建期报错（P7.9）。
 - 新决策 D-P7-1/2/3：create-module 不并入 CLI（playground 复制降级）；动态 import 无法携带 integrity（浏览器限制）写回设计文档；CSP 静态 nonce 保留。
 
 **接手者注意**：凡在设计文档/手册里读到的行为承诺，应能在 `tests/` 找到对应卡口；找不到即视为漂移嫌疑（P7 的教训）。

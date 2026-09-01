@@ -366,7 +366,7 @@ var require_zh_CN7 = __commonJS({
   }
 });
 
-// .rad-shim-antd-locale-zh_CN.mjs
+// .ram-shim-antd-locale-zh_CN.mjs
 var rad_shim_antd_locale_zh_CN_exports = {};
 __export(rad_shim_antd_locale_zh_CN_exports, {
   default: () => rad_shim_antd_locale_zh_CN_default

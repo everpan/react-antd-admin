@@ -15,7 +15,7 @@
 | `layout-header/index.tsx` | 新增 `header-actions` 插槽 | 故意（P3.6） |
 | `layout-menu/index.tsx` | `indexOf` → `includes` | 等价改写 |
 
-但 `HANDOFF.md` §4 记录了未闭环现象：**`rad dev`（host.tsx 链路）浏览器实跑左侧菜单空白**，而 happy-dom 自动化全绿。根因判断：偏差不在 layout 组件，而在宿主链路的数据填充（`wholeMenus`），且该链路无浏览器级测试覆盖。
+但 `HANDOFF.md` §4 记录了未闭环现象：**`ram dev`（host.tsx 链路）浏览器实跑左侧菜单空白**，而 happy-dom 自动化全绿。根因判断：偏差不在 layout 组件，而在宿主链路的数据填充（`wholeMenus`），且该链路无浏览器级测试覆盖。
 
 **目标**：
 
@@ -54,7 +54,7 @@ e2e/
 
 | profile | 目标 | 启动 | 认证 | 菜单数据 |
 |---------|------|------|------|----------|
-| `playground` | HEAD，`apps/playground` | `pnpm --filter @apps/playground dev`（rad dev :5174） | 免登录（D5②） | demo 模块路由 |
+| `playground` | HEAD，`apps/playground` | `pnpm --filter @apps/playground dev`（ram dev :5174） | 免登录（D5②） | demo 模块路由 |
 | `legacy` | 411e353b worktree | `pnpm dev`（vite :3333） | fake 登录（`fake/auth.fake.ts`） | 静态路由 + fake 后端动态路由 |
 
 - `webServer` 由 playwright config 按 project 自动拉起；legacy 环境用 `git worktree add` 检出 411e353b 到 `.claude/worktrees/legacy-411e353b`（仅运行用，不入库）。

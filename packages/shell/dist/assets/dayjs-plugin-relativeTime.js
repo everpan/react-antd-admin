@@ -79,7 +79,7 @@ var require_relativeTime = __commonJS({
   }
 });
 
-// .rad-shim-dayjs-plugin-relativeTime.mjs
+// .ram-shim-dayjs-plugin-relativeTime.mjs
 var rad_shim_dayjs_plugin_relativeTime_exports = {};
 __export(rad_shim_dayjs_plugin_relativeTime_exports, {
   default: () => rad_shim_dayjs_plugin_relativeTime_default

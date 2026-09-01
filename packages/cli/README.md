@@ -1,19 +1,19 @@
-# @react-antd-admin/cli
+# @react-antd-module/cli
 
-模块工程命令行工具 `rad`。让外部团队只维护模块代码，框架与宿主全部来自 npm。
+模块工程命令行工具 `ram`。让外部团队只维护模块代码，框架与宿主全部来自 npm。
 
 ## 安装
 
 ```jsonc
 {
   "devDependencies": {
-    "@react-antd-admin/cli": "^x.y.z",
-    "@react-antd-admin/runtime": "^x.y.z",
-    "@react-antd-admin/shell": "^x.y.z"
+    "@react-antd-module/cli": "^x.y.z",
+    "@react-antd-module/runtime": "^x.y.z",
+    "@react-antd-module/shell": "^x.y.z"
   },
   "scripts": {
-    "dev": "rad dev",
-    "build": "rad build"
+    "dev": "ram dev",
+    "build": "ram build"
   }
 }
 ```
@@ -21,11 +21,11 @@
 ## 命令
 
 ```bash
-rad dev [port]   # 启动开发服务器（默认 5174）：宿主代理 + 本地模块重建
-rad build        # 构建模块产物与 dist/modules.json
+ram dev [port]   # 启动开发服务器（默认 5174）：宿主代理 + 本地模块重建
+ram build        # 构建模块产物与 dist/modules.json
 ```
 
-### `rad build`
+### `ram build`
 
 读取 `modules.config.ts`，逐个模块构建：
 
@@ -41,12 +41,12 @@ dist/
 - 只有共享表内的依赖被 external，其余依赖会被打进模块产物（不在表内时 CLI 会告警）；
 - 每个 chunk 计算 `sha384` 完整性摘要写入 `modules.json`，懒加载 chunk 标记 `lazy: true`；
 - 模块元信息（`name` / `version` / `peerRuntime`）通过 esbuild 打包后真实 `import()` entry 读取，而非正则解析——因此配置文件里可以写注释、用变量、做条件判断；
-- 读取元信息时 `@react-antd-admin/runtime` 被替换为只读占位模块，避免在 Node 下加载含 Vite 专有 svg 导入的框架运行时。
+- 读取元信息时 `@react-antd-module/runtime` 被替换为只读占位模块，避免在 Node 下加载含 Vite 专有 svg 导入的框架运行时。
 
-### `rad dev`
+### `ram dev`
 
-1. 定位 `@react-antd-admin/shell` 的预构建 `dist`（先找 `node_modules`，monorepo dogfooding 时回退到 workspace）；
-2. 先跑一次 `rad build`；
+1. 定位 `@react-antd-module/shell` 的预构建 `dist`（先找 `node_modules`，monorepo dogfooding 时回退到 workspace）；
+2. 先跑一次 `ram build`；
 3. 起静态服务器：
 
    | 路由 | 来源 |
@@ -80,14 +80,14 @@ export default {
 
 ```ts
 // 共享依赖表 —— importmap / external / 版本校验的单一常量源
-import { HARD_SHARED_DEPS, isSharedDep, SHARED_DEPS, SOFT_SHARED_DEPS } from "@react-antd-admin/cli/shared-deps";
+import { HARD_SHARED_DEPS, isSharedDep, SHARED_DEPS, SOFT_SHARED_DEPS } from "@react-antd-module/cli/shared-deps";
 
 // 配置加载
-import { loadModulesConfig, resolveModuleEntry } from "@react-antd-admin/cli/config";
+import { loadModulesConfig, resolveModuleEntry } from "@react-antd-module/cli/config";
 ```
 
-**硬共享**（`react` / `react-router` / `@tanstack/react-query` / `@react-antd-admin/runtime` …）破坏即崩溃，必须由宿主提供，模块不得自带；**软共享**（`antd` / `dayjs` / `i18next` …）允许版本漂移。
+**硬共享**（`react` / `react-router` / `@tanstack/react-query` / `@react-antd-module/runtime` …）破坏即崩溃，必须由宿主提供，模块不得自带；**软共享**（`antd` / `dayjs` / `i18next` …）允许版本漂移。
 
 ## 实现说明
 
-`bin/rad.mjs` 通过 `--import tsx` 让 Node 直接执行 TypeScript 源码，因此包发布时带 `src/` 而不是编译产物。
+`bin/ram.mjs` 通过 `--import tsx` 让 Node 直接执行 TypeScript 源码，因此包发布时带 `src/` 而不是编译产物。

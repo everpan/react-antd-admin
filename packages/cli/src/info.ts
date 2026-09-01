@@ -1,5 +1,5 @@
 /**
- * `rad info`（设计文档 §1 / US-7，P7.11）：一键输出报障所需的版本矩阵。
+ * `ram info`（设计文档 §1 / US-7，P7.11）：一键输出报障所需的版本矩阵。
  *
  * 模块开发者怀疑 runtime 有 bug 时，把本命令输出直接粘贴给框架团队即可
  * 复现环境——代替「拿不到框架源码」的自行翻查（O4 已定：包内不发源码/map）。
@@ -23,8 +23,8 @@ function readPkgVersion(pkgJsonPath: string): string {
 }
 
 export async function printInfo(projectRoot: string): Promise<void> {
-	const cliVersion = readPkgVersion(path.join(projectRoot, "node_modules/@react-antd-admin/cli/package.json"));
-	const runtimeVersion = readPkgVersion(path.join(projectRoot, "node_modules/@react-antd-admin/runtime/package.json"));
+	const cliVersion = readPkgVersion(path.join(projectRoot, "node_modules/@react-antd-module/cli/package.json"));
+	const runtimeVersion = readPkgVersion(path.join(projectRoot, "node_modules/@react-antd-module/runtime/package.json"));
 
 	let shellDist = "";
 	let hostVersions: Record<string, string> = {};
@@ -33,7 +33,7 @@ export async function printInfo(projectRoot: string): Promise<void> {
 		hostVersions = readHostVersions(shellDist);
 	}
 	catch {
-		console.warn("[rad] 未找到 shell 预构建产物，共享依赖版本矩阵不可得");
+		console.warn("[ram] 未找到 shell 预构建产物，共享依赖版本矩阵不可得");
 	}
 
 	let moduleLines = "（modules.config.ts 加载失败或无模块）";
@@ -51,11 +51,11 @@ export async function printInfo(projectRoot: string): Promise<void> {
 		.map(([spec, version]) => `  ${spec}: ${version}`)
 		.join("\n");
 
-	console.log(`rad info（报障请完整粘贴以下输出）
+	console.log(`ram info（报障请完整粘贴以下输出）
 ================================
 cli:     ${cliVersion}
 runtime: ${runtimeVersion}（本地安装）
-shell:   ${hostVersions["@react-antd-admin/runtime"] ?? "unknown"}（宿主 dist 内建，${shellDist || "未找到"}）
+shell:   ${hostVersions["@react-antd-module/runtime"] ?? "unknown"}（宿主 dist 内建，${shellDist || "未找到"}）
 
 共享依赖版本矩阵（宿主 versions.json）:
 ${matrix || "  （不可得）"}
@@ -65,10 +65,10 @@ ${moduleLines}
 `);
 }
 
-/** `rad merge`（R12 接线，P7.15）：合并多份 modules.json，同名模块显式拒绝 */
+/** `ram merge`（R12 接线，P7.15）：合并多份 modules.json，同名模块显式拒绝 */
 export async function mergeManifests(outFile: string, inputs: string[]): Promise<void> {
 	if (!outFile || inputs.length === 0)
-		throw new Error("用法：rad merge <out.json> <in1.json> [in2.json ...]（至少一份输入清单）");
+		throw new Error("用法：ram merge <out.json> <in1.json> [in2.json ...]（至少一份输入清单）");
 
 	const sources = inputs.map(file => ({
 		source: file,
@@ -77,5 +77,5 @@ export async function mergeManifests(outFile: string, inputs: string[]): Promise
 	const merged = mergeModuleManifests(sources);
 	fs.mkdirSync(path.dirname(outFile), { recursive: true });
 	fs.writeFileSync(outFile, `${JSON.stringify(merged, null, 2)}\n`);
-	console.log(`[rad] 已合并 ${inputs.length} 份清单（${merged.length} 个模块）→ ${outFile}`);
+	console.log(`[ram] 已合并 ${inputs.length} 份清单（${merged.length} 个模块）→ ${outFile}`);
 }

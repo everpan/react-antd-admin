@@ -160,7 +160,7 @@ var require_customParseFormat = __commonJS({
   }
 });
 
-// .rad-shim-dayjs-plugin-customParseFormat.mjs
+// .ram-shim-dayjs-plugin-customParseFormat.mjs
 var rad_shim_dayjs_plugin_customParseFormat_exports = {};
 __export(rad_shim_dayjs_plugin_customParseFormat_exports, {
   default: () => rad_shim_dayjs_plugin_customParseFormat_default

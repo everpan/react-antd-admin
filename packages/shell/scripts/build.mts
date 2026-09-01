@@ -5,7 +5,7 @@
  *   index.html                  —— importmap 由 cli 的 SHARED_DEPS 单一来源生成（P4.1/P4.3）
  *   assets/<name>.js            —— 各共享依赖的单入口自包含 ESM
  *   assets/index-<hash>.js      —— 宿主应用（host.tsx，external 全部共享依赖）
- *   assets/runtime.js           —— 拷贝自 @react-antd-admin/runtime 的 dist
+ *   assets/runtime.js           —— 拷贝自 @react-antd-module/runtime 的 dist
  *
  * 关键：每个共享依赖单独打包、相互 external（经 importmap 解析），
  * 从而宿主与模块命中同一份 react / antd / runtime 实例（单例，D5）。
@@ -26,8 +26,8 @@ import {
 	formatExportGap,
 	parseDynamicRequires,
 	parseEsmExports,
-} from "@react-antd-admin/cli/esm-exports";
-import { generateImportmap, generateShellEntries, isSharedDep, SHARED_DEPS } from "@react-antd-admin/cli/shared-deps";
+} from "@react-antd-module/cli/esm-exports";
+import { generateImportmap, generateShellEntries, isSharedDep, SHARED_DEPS } from "@react-antd-module/cli/shared-deps";
 import react from "@vitejs/plugin-react";
 import { build as esbuild } from "esbuild";
 import { build } from "vite";
@@ -82,7 +82,7 @@ const VALID_ID = /^[A-Z_$][\w$]*$/i;
  */
 function makeExternalShared(currentPkg: string): import("esbuild").Plugin {
 	return {
-		name: "rad-external-shared",
+		name: "ram-external-shared",
 		setup(b) {
 			b.onResolve({ filter: /.*/ }, (args) => {
 				if (isSharedDep(args.path) && args.path !== currentPkg)
@@ -95,7 +95,7 @@ function makeExternalShared(currentPkg: string): import("esbuild").Plugin {
 
 /** 把一份入口 shim 打成自包含 ESM 资产 */
 async function bundleShim(name: string, pkg: string, shim: string, banner?: string) {
-	const shimPath = resolve(shellDir, `.rad-shim-${name}.mjs`);
+	const shimPath = resolve(shellDir, `.ram-shim-${name}.mjs`);
 	writeFileSync(shimPath, shim);
 	try {
 		await esbuild({
@@ -224,7 +224,7 @@ function starShim(pkg: string): string {
 
 /**
  * 共享样式依赖（如 `nprogress/nprogress.css`）：生成一段自执行的 JS 垫片，
- * 把 CSS 文本包进 <style> 注入 <head>（用 data-rad-css 标记去重，避免重复注入）。
+ * 把 CSS 文本包进 <style> 注入 <head>（用 data-ram-css 标记去重，避免重复注入）。
  * 该垫片经 importmap 解析（`nprogress/nprogress.css` → /assets/nprogress-css.js），
  * 因此宿主/模块侧 `import "nprogress/nprogress.css"` 这类副作用导入即可生效。
  */
@@ -235,9 +235,9 @@ async function buildCssEntry(entry: { name: string, pkg: string }) {
 	const css = readFileSync(cssPath, "utf-8");
 	const shim = [
 		`const __css = ${JSON.stringify(css)};\n`,
-		`if (!document.querySelector('style[data-rad-css=${JSON.stringify(entry.pkg)}]')) {\n`,
+		`if (!document.querySelector('style[data-ram-css=${JSON.stringify(entry.pkg)}]')) {\n`,
 		"  const __s = document.createElement(\"style\");\n",
-		`  __s.setAttribute("data-rad-css", ${JSON.stringify(entry.pkg)});\n`,
+		`  __s.setAttribute("data-ram-css", ${JSON.stringify(entry.pkg)});\n`,
 		"  __s.textContent = __css;\n",
 		"  document.head.appendChild(__s);\n",
 		"}\n",
@@ -320,9 +320,9 @@ const SUBPATH_PARENT_REEXPORTS = new Set([
 /** 捕获三种裸导入形式：from "…" / import("…") / 副作用 import "…" */
 const BARE_IMPORT_RE = /\bimport\s*\(\s*["']([^"']+)["']\s*\)|\bfrom\s+["']([^"']+)["']|\bimport\s+["']([^"']+)["']/g;
 
-/** 自动生成的子路径资产名统一加 rad- 前缀，避免与 SHARED_DEPS 显式资产名冲突 */
+/** 自动生成的子路径资产名统一加 ram- 前缀，避免与 SHARED_DEPS 显式资产名冲突 */
 function subpathAssetName(spec: string): string {
-	return `rad-${spec.replace(/[^a-z0-9]+/gi, "-")}`;
+	return `ram-${spec.replace(/[^a-z0-9]+/gi, "-")}`;
 }
 
 /** 为单个非父包透传的子路径构建独立 ESM（或 CSS）共享资产 */
@@ -333,7 +333,7 @@ async function buildSubpathAsset(spec: string) {
 		return;
 	}
 	const shim = starShim(spec);
-	const shimPath = resolve(shellDir, `.rad-shim-${name}.mjs`);
+	const shimPath = resolve(shellDir, `.ram-shim-${name}.mjs`);
 	writeFileSync(shimPath, shim);
 	try {
 		await esbuild({
@@ -425,7 +425,7 @@ async function buildHost() {
 /**
  * 导出完整性门禁（设计文档 R14 落地）。
  *
- * 实现在 `@react-antd-admin/cli/esm-exports`，与 CI 测试共用同一份判定逻辑：
+ * 实现在 `@react-antd-module/cli/esm-exports`，与 CI 测试共用同一份判定逻辑：
  * importmap 给出的每个资产都必须**静态**提供消费方 import 的具名导出，
  * 缺一个就是浏览器里的 "does not provide an export named 'x'" + 整页白屏。
  */
@@ -509,7 +509,7 @@ async function main() {
 	// runtime 完整构建（js + d.ts）：shell 直接拷贝其 dist/runtime.js。
 	// 注意不可只跑 vite build —— emptyOutDir 会清掉 dist 里的 d.ts 声明树。
 	console.log("[shell] 构建 runtime（完整：js + d.ts）");
-	execSync("pnpm --filter @react-antd-admin/runtime build", {
+	execSync("pnpm --filter @react-antd-module/runtime build", {
 		cwd: resolve(shellDir, "../.."),
 		stdio: "inherit",
 	});

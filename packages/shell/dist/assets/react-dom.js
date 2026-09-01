@@ -217,7 +217,7 @@ var require_react_dom = __commonJS({
   }
 });
 
-// .rad-shim-react-dom.mjs
+// .ram-shim-react-dom.mjs
 var __m = __toESM(require_react_dom(), 1);
 var __DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE2 = __m["__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE"];
 var createPortal2 = __m["createPortal"];

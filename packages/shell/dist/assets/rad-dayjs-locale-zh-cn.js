@@ -68,7 +68,7 @@ var require_zh_cn = __commonJS({
   }
 });
 
-// .rad-shim-rad-dayjs-locale-zh-cn.mjs
+// .ram-shim-rad-dayjs-locale-zh-cn.mjs
 var rad_shim_rad_dayjs_locale_zh_cn_exports = {};
 __export(rad_shim_rad_dayjs_locale_zh_cn_exports, {
   default: () => rad_shim_rad_dayjs_locale_zh_cn_default

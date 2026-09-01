@@ -33,7 +33,7 @@ export const SHARED_DEPS: SharedDepEntry[] = [
 	{ specifier: "react-router/dom", asset: "react-router-dom", hard: true },
 	{ specifier: "@tanstack/react-query", asset: "react-query", hard: true },
 	// runtime 由 shell 直接拷贝其 dist/runtime.js
-	{ specifier: "@react-antd-admin/runtime", asset: "runtime", hard: true },
+	{ specifier: "@react-antd-module/runtime", asset: "runtime", hard: true },
 	// —— 软共享 ——
 	// 注：@rc-component/form（antd 6 Form 底层）曾尝试单例化以修 my-profile
 	// 崩溃（React #130），假说未证实——多副本并非充分根因，已回退；见
@@ -119,7 +119,7 @@ export function isSharedDep(id: string): boolean {
  */
 export function generateShellEntries(): { name: string, pkg: string }[] {
 	return SHARED_DEPS
-		.filter(dep => dep.asset && dep.specifier !== "@react-antd-admin/runtime")
+		.filter(dep => dep.asset && dep.specifier !== "@react-antd-module/runtime")
 		.map(dep => ({ name: dep.asset!, pkg: dep.specifier }));
 }
 

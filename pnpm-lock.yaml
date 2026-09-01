@@ -465,13 +465,13 @@ importers:
       '@ant-design/icons':
         specifier: 'catalog:'
         version: 6.3.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@react-antd-admin/cli':
+      '@react-antd-module/cli':
         specifier: workspace:*
         version: link:../../packages/cli
-      '@react-antd-admin/runtime':
+      '@react-antd-module/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
-      '@react-antd-admin/shell':
+      '@react-antd-module/shell':
         specifier: workspace:*
         version: link:../../packages/shell
       '@types/react':
@@ -604,10 +604,10 @@ importers:
 
   packages/shell:
     dependencies:
-      '@react-antd-admin/cli':
+      '@react-antd-module/cli':
         specifier: workspace:*
         version: link:../cli
-      '@react-antd-admin/runtime':
+      '@react-antd-module/runtime':
         specifier: workspace:*
         version: link:../runtime
     devDependencies:

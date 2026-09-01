@@ -1,4 +1,4 @@
-import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
+import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-module/runtime";
 
 import {
 	NodeExpandOutlined,

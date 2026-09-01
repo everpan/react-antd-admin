@@ -1,4 +1,4 @@
-import { BasicContent } from "@react-antd-admin/runtime";
+import { BasicContent } from "@react-antd-module/runtime";
 
 import { Input } from "antd";
 

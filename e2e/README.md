@@ -11,7 +11,7 @@
 | legacy（411e353b worktree） | legacy | 3333 | fake 预填，自动提交 | `pnpm test:e2e:legacy` |
 
 - workers=1 串行：tabbar/menu 用例有全局 UI 状态；`reuseExistingServer: false`，跑前确保 5174/3333 无残留进程（`lsof -iTCP:5174 -iTCP:3333 -sTCP:LISTEN`）。
-- playground 的 `rad dev` 需要 shell/playground 产物先行构建：`pnpm --filter @react-antd-admin/shell build && pnpm --filter playground build`。
+- playground 的 `ram dev` 需要 shell/playground 产物先行构建：`pnpm --filter @react-antd-module/shell build && pnpm --filter playground build`。
 
 ## legacy worktree 建法（一次性）
 
@@ -26,7 +26,7 @@ prepare 必失败，因此 legacy webServer 命令带 `--config.verify-deps-befo
 
 ## 约定（审查 spec 时对照）
 
-1. **spec 零 import 源码**：不得 import `#src/*` / `@react-antd-admin/*`。只通过
+1. **spec 零 import 源码**：不得 import `#src/*` / `@react-antd-module/*`。只通过
    DOM / URL / localStorage 观测——这是「架构变动后基线仍可跑」的前提。
 2. **语义选择器**：`header / aside / main / footer / .ant-menu-root / .ant-tabs-tab`；
    组件类名仅用 antd 公共类（`.ant-menu-item-selected` 等），不依赖业务类名。
@@ -55,5 +55,5 @@ prepare 必失败，因此 legacy webServer 命令带 `--config.verify-deps-befo
   自身的暗色算法与语言包在宿主链仍不随偏好。H3/H4 绿只保证断言的那部分行为。
 - **语言偏好同步**（原 host 链缺失，审查期修复入 LayoutEffects）只覆盖 i18next 与
   `html[lang]`；dayjs/antd locale 同步仍在 App 链。
-- **rad dev 的 SPA history fallback** 按 `Accept: text/html` 判定（对齐 vite dev），
+- **ram dev 的 SPA history fallback** 按 `Accept: text/html` 判定（对齐 vite dev），
   非 HTML 请求（fetch API）仍按 404 处理——这是特性不是缺陷。

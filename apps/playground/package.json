@@ -4,15 +4,15 @@
 	"private": true,
 	"description": "模拟外部开发者的模块工程 —— 只含模块，框架通过 npm 安装",
 	"scripts": {
-		"dev": "rad dev 5174",
-		"build": "rad build",
+		"dev": "ram dev 5174",
+		"build": "ram build",
 		"typecheck": "tsc --noEmit -p tsconfig.json"
 	},
 	"devDependencies": {
 		"@ant-design/icons": "catalog:",
-		"@react-antd-admin/cli": "workspace:*",
-		"@react-antd-admin/runtime": "workspace:*",
-		"@react-antd-admin/shell": "workspace:*",
+		"@react-antd-module/cli": "workspace:*",
+		"@react-antd-module/runtime": "workspace:*",
+		"@react-antd-module/shell": "workspace:*",
 		"@types/react": "catalog:",
 		"antd": "catalog:",
 		"react": "catalog:",

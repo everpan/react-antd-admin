@@ -6,13 +6,13 @@ import { mergeManifests, printInfo } from "./info";
 const [command] = process.argv.slice(2);
 
 function usage(): never {
-	console.log(`@react-antd-admin/cli
+	console.log(`@react-antd-module/cli
 
 用法:
-  rad dev [port]   启动开发服务器（宿主代理 + 本地模块重建）
-  rad build        构建模块产物与 modules.json
-  rad info         输出版本矩阵与模块清单（报障用，US-7）
-  rad merge <out.json> <in1.json> [in2.json ...]  合并多团队清单（R12）
+  ram dev [port]   启动开发服务器（宿主代理 + 本地模块重建）
+  ram build        构建模块产物与 modules.json
+  ram info         输出版本矩阵与模块清单（报障用，US-7）
+  ram merge <out.json> <in1.json> [in2.json ...]  合并多团队清单（R12）
 `);
 	process.exit(command ? 1 : 0);
 }
@@ -42,6 +42,6 @@ async function main() {
 }
 
 main().catch((error: unknown) => {
-	console.error(`[rad] ${error instanceof Error ? error.stack ?? error.message : String(error)}`);
+	console.error(`[ram] ${error instanceof Error ? error.stack ?? error.message : String(error)}`);
 	process.exit(1);
 });

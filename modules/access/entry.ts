@@ -1,7 +1,7 @@
-import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-admin/runtime";
+import type { AppRouteRecordRaw, ModuleDefinition } from "@react-antd-module/runtime";
 import { EyeOutlined, FileTextOutlined, LockOutlined, SafetyOutlined } from "@ant-design/icons";
 
-import { accessControlCodes } from "@react-antd-admin/runtime";
+import { accessControlCodes } from "@react-antd-module/runtime";
 import { createElement, lazy } from "react";
 
 const PageControl = lazy(() => import("./pages/page-control"));

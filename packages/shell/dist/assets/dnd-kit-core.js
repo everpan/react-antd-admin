@@ -3563,7 +3563,7 @@ var DragOverlay = /* @__PURE__ */ React2.memo((_ref) => {
   }, children) : null));
 });
 
-// .rad-shim-dnd-kit-core.mjs
+// .ram-shim-dnd-kit-core.mjs
 var rad_shim_dnd_kit_core_default = void 0 ?? core_esm_exports;
 export {
   AutoScrollActivator,

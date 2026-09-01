@@ -50,7 +50,7 @@ var require_jsx_dev_runtime = __commonJS({
   }
 });
 
-// .rad-shim-jsx-dev-runtime.mjs
+// .ram-shim-jsx-dev-runtime.mjs
 var __m = __toESM(require_jsx_dev_runtime(), 1);
 var Fragment2 = __m["Fragment"];
 var jsxDEV2 = __m["jsxDEV"];

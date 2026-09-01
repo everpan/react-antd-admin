@@ -295,7 +295,7 @@ var require_nprogress = __commonJS({
   }
 });
 
-// .rad-shim-nprogress.mjs
+// .ram-shim-nprogress.mjs
 var rad_shim_nprogress_exports = {};
 __export(rad_shim_nprogress_exports, {
   default: () => rad_shim_nprogress_default

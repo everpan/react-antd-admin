@@ -1,6 +1,6 @@
-import type { PieDataType } from "@react-antd-admin/runtime";
+import type { PieDataType } from "@react-antd-module/runtime";
 import type { EChartsOption } from "echarts";
-import { fetchPie } from "@react-antd-admin/runtime";
+import { fetchPie } from "@react-antd-module/runtime";
 import { Card, Segmented } from "antd";
 import ReactECharts from "echarts-for-react";
 import { useEffect, useState } from "react";

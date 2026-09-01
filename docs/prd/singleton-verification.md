@@ -9,7 +9,7 @@
 
 - `react` / `react-dom` —— 否则 Context（QueryClient、ConfigProvider、i18n）、
   hooks 规则全部失效；
-- `@react-antd-admin/runtime` —— 否则 `loadAll` 注册的 store/apiPrefix、i18n
+- `@react-antd-module/runtime` —— 否则 `loadAll` 注册的 store/apiPrefix、i18n
   合并、路由收集彼此看不见；
 - `antd` / `@ant-design/cssinjs` —— 否则 cssinjs `hashPriority` 样式哈希不统一、
   `StyleProvider` 作用域错位。
@@ -19,7 +19,7 @@
 - **宿主侧**：`packages/shell/scripts/build.mts` 手写 16 项 importmap
   （9 硬共享 + 7 软共享），宿主本身 `external` 全部共享裸说明符 → 共享依赖经
   importmap 解析到 `assets/<name>.js` 单入口 ESM。
-- **模块侧**：`rad build` 的 `external` 列表（`isSharedDep`）与同一张表对齐，
+- **模块侧**：`ram build` 的 `external` 列表（`isSharedDep`）与同一张表对齐，
   模块产物只保留 `import ... from "react"` 等裸说明符，由宿主 importmap 解析。
 - **结果**：宿主与模块对 `react` / `runtime` / `antd` / `react-i18next` 等
   解析到**同一 URL**，浏览器按 URL 去重 → 同一模块实例（天然单例）。
@@ -51,7 +51,7 @@ of null (reading 'useState')`、Context 跨模块取不到。下面方法能在�
 
 ### 4.2 方法 A（推荐，零额外构建）—— 实例同一性探测
 
-`rad dev` 启动后，打开页面，在 DevTools Console 粘贴：
+`ram dev` 启动后，打开页面，在 DevTools Console 粘贴：
 
 ```js
 // 同一说明符两次 import；因 importmap 指向同一 URL，浏览器按 URL 去重 → 同一实例
@@ -60,8 +60,8 @@ const b = await import("react");
 console.log("react identity:", a === b, a.default === b.default); // 期望 true true
 
 // 同理验证 runtime 与 antd（它们也必须命中同一份）
-const r1 = await import("@react-antd-admin/runtime");
-const r2 = await import("@react-antd-admin/runtime");
+const r1 = await import("@react-antd-module/runtime");
+const r2 = await import("@react-antd-module/runtime");
 console.log("runtime identity:", r1 === r2); // 期望 true
 ```
 

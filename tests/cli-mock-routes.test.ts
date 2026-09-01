@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-// rad dev 工程 mock 约定（docs/prd/202609010056-playground-full-modules-plan.md）：
+// ram dev 工程 mock 约定（docs/prd/202609010056-playground-full-modules-plan.md）：
 // mock/*.mock.mjs default 导出路由数组，dev 服务器按 method+path 精确匹配 /api/* 请求
 import { loadProjectMocks, matchMockRoute } from "../packages/cli/src/dev-mock";
 
@@ -19,19 +19,19 @@ describe("loadProjectMocks", () => {
 
 	it("解析 mock/*.mock.mjs 的 default 路由数组", async () => {
 		// 仓库内 fixture：vitest 求值器无法 import tmp 目录下的文件
-		const routes = await loadProjectMocks(join(__dirname, "fixtures/rad-mock"));
+		const routes = await loadProjectMocks(join(__dirname, "fixtures/ram-mock"));
 		expect(routes).toHaveLength(2);
 		expect(routes[0]?.url).toBe("/home/line");
 	});
 
 	it("无 mock 目录时返回空数组（零行为变化）", async () => {
-		const root = mkdtempSync(join(tmpdir(), "rad-nomock-"));
+		const root = mkdtempSync(join(tmpdir(), "ram-nomock-"));
 		dirs.push(root);
 		expect(await loadProjectMocks(root)).toEqual([]);
 	});
 
 	it("忽略非 .mock 约定文件", async () => {
-		const routes = await loadProjectMocks(join(__dirname, "fixtures/rad-mock"));
+		const routes = await loadProjectMocks(join(__dirname, "fixtures/ram-mock"));
 		expect(routes.some(route => route.url === "/should-not-load")).toBe(false);
 	});
 });

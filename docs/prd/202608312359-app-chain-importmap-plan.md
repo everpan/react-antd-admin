@@ -26,7 +26,7 @@
 | # | 文件 | 改动 |
 |---|------|------|
 | 1 | `vite.config.ts` | `build.rolldownOptions.external = isSharedDep`（相对导入 `./packages/cli/src/shared-deps`，零新依赖声明）；删除 codeSplitting 的 react/antd 组（external 后死配置，faker 组保留） |
-| 2 | `scripts/inject-importmap.mts`（新） | ① 检测 `packages/shell/dist/assets` 存在，缺失则报错指引 `pnpm --filter @react-antd-admin/shell build`；② 从 shell `dist/index.html` 解析 importmap（真源，天然含不动点补全的全部深路径）；③ 值前缀改写 `/assets/` → `${base}assets/`（生产 base `/react-antd-admin/`）；④ 拷贝 shell assets → `build/assets/`；⑤ 注入 `<script type="importmap">` 至 `build/index.html` head 首位（须先于任何 module script）；⑥ 门禁：`collectUnresolvedSpecifiers` + `collectDynamicRequires`（复用 `@react-antd-admin/cli/esm-exports`） |
+| 2 | `scripts/inject-importmap.mts`（新） | ① 检测 `packages/shell/dist/assets` 存在，缺失则报错指引 `pnpm --filter @react-antd-module/shell build`；② 从 shell `dist/index.html` 解析 importmap（真源，天然含不动点补全的全部深路径）；③ 值前缀改写 `/assets/` → `${base}assets/`（生产 base `/react-antd-admin/`）；④ 拷贝 shell assets → `build/assets/`；⑤ 注入 `<script type="importmap">` 至 `build/index.html` head 首位（须先于任何 module script）；⑥ 门禁：`collectUnresolvedSpecifiers` + `collectDynamicRequires`（复用 `@react-antd-module/cli/esm-exports`） |
 | 3 | `package.json` | `build` 管线追加 `&& tsx scripts/inject-importmap.mts` |
 | 4 | `scripts/prod-smoke.mjs` | 头部 KNOWN-RED 注释更新为常规防护语义 |
 | 5 | `docs/prd/202608312337-511-display-parity-plan.md` | 「遗留决策」标注 A 已落地 |
@@ -64,7 +64,7 @@ Feature: App 链生产 importmap 注入
 
 | # | 风险 | 验证 |
 |---|------|------|
-| R1 | rolldown-vite external 与 resolve.alias 时序：`@react-antd-admin/runtime` 可能被 alias 先解析为源码而非保留裸说明符 → 主应用内嵌一份 runtime，与模块的 runtime.js 双实例破坏 store 单例 | build 后 grep 产物确认裸说明符保留；冒烟登录态/菜单渲染侧面验证单例 |
+| R1 | rolldown-vite external 与 resolve.alias 时序：`@react-antd-module/runtime` 可能被 alias 先解析为源码而非保留裸说明符 → 主应用内嵌一份 runtime，与模块的 runtime.js 双实例破坏 store 单例 | build 后 grep 产物确认裸说明符保留；冒烟登录态/菜单渲染侧面验证单例 |
 | R2 | 主应用源码独有的深路径导入（shell 资产没有的）未被 importmap 覆盖 | 门禁 `collectUnresolvedSpecifiers` 抓出并 fail，逐条在 SHARED_DEPS 补登记 |
 | R3 | external 后 CSS 裸说明符（如 `nprogress/nprogress.css`）解析 | shell importmap 已含 nprogress-css JS 垫片映射，冒烟覆盖 |
 | R4 | 首次构建要求 shell assets 先在 | 注入脚本检测 + 指引；不做自动构建链（YAGNI） |
@@ -84,7 +84,7 @@ Feature: App 链生产 importmap 注入
 **关键过程与两个计划外真发现：**
 
 1. **R1 重新定性**：external 后主产物（324K，原数 MB）裸说明符全部保留，但
-   `@react-antd-admin/runtime` 消失——**不是 alias 时序问题**，而是架构形态：
+   `@react-antd-module/runtime` 消失——**不是 alias 时序问题**，而是架构形态：
    App 链入口就是 `packages/runtime/src/index.tsx`（bootstrap 源码本身），从无
    runtime 裸说明符 import。模块经 importmap 拿 runtime 会拿到 shell 的 lib 产物
    （`index.ts` 纯出口、无 bootstrap）→ 与宿主源码实例分裂（store/路由注册表）。

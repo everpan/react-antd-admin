@@ -13,16 +13,16 @@
 
 | 维度 | 内容 |
 |------|------|
-| **S** 具体 | 框架（runtime + 宿主 shell + CLI）发布为 npm 包；新建只含 `modules/`、`modules.config.ts`、`package.json` 的模块工程（无需 vite 配置），通过 `npm install @react-antd-admin/cli` 完成本地开发，构建产出**仅含模块 chunk** 的产物 |
+| **S** 具体 | 框架（runtime + 宿主 shell + CLI）发布为 npm 包；新建只含 `modules/`、`modules.config.ts`、`package.json` 的模块工程（无需 vite 配置），通过 `npm install @react-antd-module/cli` 完成本地开发，构建产出**仅含模块 chunk** 的产物 |
 | **M** 可度量 | 工程内框架源码文件数 = 0；模块产物不含 react/antd/runtime 实现代码；共享依赖运行时实例数 = 1；**新模块从创建到上线 ≤ 1 个工作日**；模块产物体积与首屏时间相对现状不劣化 |
 | **A** 可达成 | 复用现有 `module-loader` 契约与 `build-modules.ts` 的 lib 构建能力，不引入 Module Federation 等重型运行时 |
 | **R** 相关 | 支撑"多团队并行交付模块、框架统一升级" |
 | **T** 有时限 | 分 7 个 Phase 落地（P0–P6），每个 Phase 独立可验证、可回滚 |
 
-**"拿不到框架源码"的准确表述**：框架**默认不可见、可按需获取**。模块开发者怀疑 runtime 有 bug 时，应能通过 `rad info` 拿到精确版本矩阵并附给框架团队复现，而不是自行翻源码改。因此：
+**"拿不到框架源码"的准确表述**：框架**默认不可见、可按需获取**。模块开发者怀疑 runtime 有 bug 时，应能通过 `ram info` 拿到精确版本矩阵并附给框架团队复现，而不是自行翻源码改。因此：
 
 - 包内默认不发 sourcemap（O4 已定：不发；框架团队内部保留，对外提供按版本索取的 debug 通道）
-- `rad info` 一键输出：runtime/shell/cli 版本、共享依赖版本矩阵、当前工程模块清单
+- `ram info` 一键输出：runtime/shell/cli 版本、共享依赖版本矩阵、当前工程模块清单
 
 **非目标（本期不做）**：运行期热替换整体布局（L3）、模块市场、微前端多框架共存、模块沙箱化（sandbox iframe / Worker）。
 
@@ -83,10 +83,10 @@
 ```
 react-antd-admin/                      # pnpm workspace 根
 ├── packages/
-│   ├── runtime/    → @react-antd-admin/runtime     # 框架源码(src) → dist: ESM 产物 + d.ts
-│   ├── shell/      → @react-antd-admin/shell       # 预构建宿主站点(dist + importmap 片段)
-│   ├── cli/        → @react-antd-admin/cli         # rad dev / rad build / rad create / rad info
-│   └── create-module/ → @react-antd-admin/create-module
+│   ├── runtime/    → @react-antd-module/runtime     # 框架源码(src) → dist: ESM 产物 + d.ts
+│   ├── shell/      → @react-antd-module/shell       # 预构建宿主站点(dist + importmap 片段)
+│   ├── cli/        → @react-antd-module/cli         # ram dev / ram build / ram create / ram info
+│   └── create-module/ → @react-antd-module/create-module
 ├── modules/                           # 自带模块（dogfooding）
 ├── apps/playground/                   # 模拟外部开发者的最小模块工程（CI 里真跑）
 └── .changeset/
@@ -108,14 +108,14 @@ my-admin/
 **工程内无 `src/`、无 `layout/`、无 `router/`、无框架配置文件，也不需要 `vite.config.ts`。**
 
 > 修订（2026-08-30）：早期草稿此处列了 `vite.config.ts` 且写作
-> `export default from "@react-antd-admin/cli/vite"` —— 两处都不成立：
+> `export default from "@react-antd-module/cli/vite"` —— 两处都不成立：
 > cli 没有 `./vite` 子路径导出，且该写法本身不是合法 ES 语法。
-> `rad build` / `rad dev` 均以编程式 `build()` 驱动（见 `packages/cli/src/build.ts`），
+> `ram build` / `ram dev` 均以编程式 `build()` 驱动（见 `packages/cli/src/build.ts`），
 > 外部工程自带 vite 配置文件反而会被加载。以 `apps/playground` 为准。
 
 ### 4.3 共享依赖契约（分两层，单一常量源）
 
-**核心约束**：importmap、`SHARED_EXTERNALS`、CLI 版本校验表必须由**同一常量**生成（`@react-antd-admin/cli` 导出 `SHARED_DEPS`），否则 B11 必复发。
+**核心约束**：importmap、`SHARED_EXTERNALS`、CLI 版本校验表必须由**同一常量**生成（`@react-antd-module/cli` 导出 `SHARED_DEPS`），否则 B11 必复发。
 
 **硬共享**（破坏即崩溃：React 单例、Context 单例）——必须由宿主 importmap 提供，禁止模块自带：
 
@@ -125,7 +125,7 @@ my-admin/
 | `react/jsx-runtime`、`react/jsx-dev-runtime` | 后者为 dev 模式必需（见 §4.5） |
 | `react-router`、`react-router/dom`、`react-router/` | 路由 context 单例；注意深路径 |
 | `@tanstack/react-query` | QueryClient context（B12） |
-| `@react-antd-admin/runtime` | 框架运行时 |
+| `@react-antd-module/runtime` | 框架运行时 |
 
 **软共享**（允许自带或用 importmap `scopes` 多版本共存）：`antd`、`antd/`（深路径：`antd/es/*`、`antd/lib/*`、`antd/locale/*`）、`@ant-design/icons`、`@ant-design/pro-components`、`i18next`、`react-i18next`、`zustand`、`dayjs`、`echarts`、`echarts-for-react`、`motion`、`@dnd-kit/*`、`react-countup`、`clsx`。
 
@@ -142,7 +142,7 @@ my-admin/
     "@tanstack/react-query": "/shell/assets/react-query.js",
     "antd": "/shell/assets/antd.js",
     "antd/": "/shell/assets/antd/",
-    "@react-antd-admin/runtime": "/shell/assets/runtime.js"
+    "@react-antd-module/runtime": "/shell/assets/runtime.js"
   }
 }
 ```
@@ -164,7 +164,7 @@ my-admin/
 
 ```ts
 import { createElement } from "react";
-import { defineModule } from "@react-antd-admin/runtime";
+import { defineModule } from "@react-antd-module/runtime";
 import SettingOutlined from "@ant-design/icons/SettingOutlined";
 
 export default defineModule({
@@ -205,10 +205,10 @@ export default defineModule({
 
 **配套的框架侧改造（P2 前置，顺序不可颠倒）**：KeepAlive 先从 `ContainerLayout → LayoutContent` 上移到 shell 固定层（LayoutRoot 之后、路由 outlet 之外），exclude 改由 module-loader 汇总各模块 `handle` 计算；**这一步先于布局去中心化**，否则 B13 导致缓存整体失效。
 
-### 4.5 dev 流程（`rad dev`）
+### 4.5 dev 流程（`ram dev`）
 
 1. 起 Vite dev server（root = 模块工程）。
-2. 中间件代理宿主：`GET /` 返回 `@react-antd-admin/shell/dist/index.html`（含 importmap），注入 dev bootstrap 声明本地模块清单。
+2. 中间件代理宿主：`GET /` 返回 `@react-antd-module/shell/dist/index.html`（含 importmap），注入 dev bootstrap 声明本地模块清单。
 3. 本地模块由 Vite 编译；runtime 与共享依赖 **alias 到 shell 的 dist 文件**，保证与生产同一份实例。
 4. 模块改动走 HMR。
 
@@ -220,7 +220,7 @@ export default defineModule({
 | react-refresh preamble | shell 预构建 html 里没有 `/@react-refresh` | CLI 代理注入，否则模块改动退化为整页刷新 |
 | sourcemap | `vite.config.ts:141` `sourcemap:false`，runtime 栈帧全是压缩代码 | shell 构建改 `sourcemap:"hidden"`（产物不上线、栈帧可解析；与 O4"包内不发 map"不冲突） |
 
-### 4.6 build 流程（`rad build`）
+### 4.6 build 流程（`ram build`）
 
 - lib 模式，每个模块一个 entry；`formats: ["es"]`。
 - `external` = `SHARED_DEPS` 常量（软 + 硬）。
@@ -305,7 +305,7 @@ dist/
 | Token | `store/auth.ts:80` 现把 token/refreshToken 存 localStorage，模块可读且 refreshToken 可长期重放 → P6 改内存 + httpOnly Cookie |
 | iframe | `src/components/iframe/index.tsx:33`、`generate-routes-from-backend.ts:102-108` 无 scheme 白名单 → `new URL(u).protocol === "https:"` + 域名白名单 + `sandbox="allow-scripts allow-popups"`（**勿**同时给 `allow-same-origin`） |
 | fake server | B15：`enableProd: true` 必须改为受显式环境变量控制，CI 断言 shell dist 无 fake 代码 |
-| 供应链 | `publishConfig.registry` + `.npmrc` 锁定、2FA + `--provenance`、`pnpm install --frozen-lockfile`、`npm audit signatures`；`@react-antd-admin/*` 需防 typosquat |
+| 供应链 | `publishConfig.registry` + `.npmrc` 锁定、2FA + `--provenance`、`pnpm install --frozen-lockfile`、`npm audit signatures`；`@react-antd-module/*` 需防 typosquat |
 | CSP | 见下 |
 
 ```
@@ -339,16 +339,16 @@ require-trusted-types-for 'script'; upgrade-insecure-requests;
 
 ### US-1 模块开发者初始化工程
 
-> ⚠️ **P7 降级（D-P7-1）**：`@react-antd-admin/create-module` 独立包本期不做；
-> 初始化路径改述为「复制 `apps/playground` 起步」。`rad dev/build/info/merge` 均已落地（P7.11）。
+> ⚠️ **P7 降级（D-P7-1）**：`@react-antd-module/create-module` 独立包本期不做；
+> 初始化路径改述为「复制 `apps/playground` 起步」。`ram dev/build/info/merge` 均已落地（P7.11）。
 
 ```gherkin
 Feature: 只含模块的工程能被创建并跑起来
   Scenario: 从 playground 起步（P7 修订）
     Given 复制 apps/playground 为新工程
-    When npm install 并执行 rad dev
+    When npm install 并执行 ram dev
     Then 工程内不存在任何框架源码文件
-    And @react-antd-admin/cli 与 shell dist 可用（P7.10 起 shell 走 npm 发布）
+    And @react-antd-module/cli 与 shell dist 可用（P7.10 起 shell 走 npm 发布）
 ```
 
 ### US-2 本地开发
@@ -357,14 +357,14 @@ Feature: 只含模块的工程能被创建并跑起来
 Feature: dev 加载的是发布态框架
   Scenario: 单例成立
     Given 模块工程已 npm install
-    When 执行 rad dev
+    When 执行 ram dev
     Then window.__REACT_INSTANCE_COUNT__ === 1
     And window.__RUNTIME_INSTANCE_COUNT__ === 1
-    And node_modules/@react-antd-admin/runtime 下无 .ts 文件
+    And node_modules/@react-antd-module/runtime 下无 .ts 文件
 
   Scenario: 共享依赖版本不一致
     Given 模块工程 react 版本与宿主声明不严格相等
-    When 执行 rad dev
+    When 执行 ram dev
     Then CLI 报错并打印期望版本
     And 进程以非 0 退出
 
@@ -382,15 +382,15 @@ Feature: dev 加载的是发布态框架
 Feature: build 只产出模块 chunk
   Scenario: 产物内容与体积
     Given 一个含 order 模块的工程
-    When 执行 rad build
+    When 执行 ram build
     Then 产出 dist/modules/order/<version>/entry.js
     And 产物中不含 react / antd / @tanstack/react-query / runtime 的实现代码
-    And 产物中保留裸说明符 "react" / "@react-antd-admin/runtime"
+    And 产物中保留裸说明符 "react" / "@react-antd-module/runtime"
     And 生成 dist/modules.json 且含 entry / integrity / peerRuntime / enabled / dependencies
 
   Scenario: code splitting 可用
     Given 模块内存在 React.lazy 页面
-    When 执行 rad build
+    When 执行 ram build
     Then 产出除 entry.js 外的独立 chunk 文件
     And entry.js 中以相对路径引用该 chunk
     And 产物中不含 blob: 或 data: 形式的 import
@@ -398,7 +398,7 @@ Feature: build 只产出模块 chunk
 
   Scenario: 共享表外依赖被拦截
     Given 模块 import 了共享表外的三方库
-    When 执行 rad build
+    When 执行 ram build
     Then CLI 输出告警并列出替代方案
     And 告警在构建期而非浏览器运行期出现
 ```
@@ -482,14 +482,14 @@ Feature: 篡改行为被分级处置（默认 L2）
 ```gherkin
 Feature: 框架源码不外泄
   Scenario: npm 包内容检查
-    Given 已发布 @react-antd-admin/runtime@x.y.z
+    Given 已发布 @react-antd-module/runtime@x.y.z
     When 执行 npm pack --dry-run
     Then 包内只含 dist/*.js、dist/*.d.ts、package.json、README
     And 包内无 src/ 目录、无 .ts 源文件、无 .map
 
   Scenario: 报障可复现（原"调试不了"的反例）
     Given 模块开发者怀疑 runtime 有 bug
-    When 执行 rad info
+    When 执行 ram info
     Then 输出 runtime/shell/cli 版本与共享依赖版本矩阵
     And 输出当前工程模块清单
     And 输出内容可直接粘贴给框架团队复现
@@ -594,7 +594,7 @@ Feature: 模块级权限真实生效
 | Phase | 主题 | 主要任务 | 完成判据 |
 |-------|------|----------|----------|
 | **P0** | 骨架 + 双 Spike | 改造 `pnpm-workspace.yaml`（已存在）；`src/` → `packages/runtime/src`；changesets；测试路径常量化（`RUNTIME_DIR`）；**Spike A**：antd 6 / react-router 7 / react 19 能否产出单入口自包含 ESM 并在 importmap 下正常工作（含 `antd/es/*`、`antd/locale/*`、`react-router/dom` 深路径、`StyleProvider layer`）；**Spike B**：外部工程 Tailwind 产出与宿主注入 | `pnpm dev`/`build`/`test` 行为与迁移前一致；两个 Spike 给出明确结论 |
-| **P1** | 垂直切片打通 | 最小 CLI（`rad dev` / `rad build`）+ 手写 importmap + 一个 demo 模块端到端跑通；用 playground 实际用到的 API 倒推 runtime 出口白名单 | `apps/playground` 内一个外部模块能 dev 能 build 能被宿主加载 |
+| **P1** | 垂直切片打通 | 最小 CLI（`ram dev` / `ram build`）+ 手写 importmap + 一个 demo 模块端到端跑通；用 playground 实际用到的 API 倒推 runtime 出口白名单 | `apps/playground` 内一个外部模块能 dev 能 build 能被宿主加载 |
 | **P2** | 依赖反转与语义迁移 | B3 exception 依赖反转（runtime 内置 NotFound/UnknownComponent，exception 降级为可选覆盖）；**KeepAlive 上移到 shell 固定层**（必须先做）；`handle.layout` 语义迁移；L1/L2 布局；`__APP_INFO__` → `getAppInfo()`（B9） | 主包不含任何模块页面代码；模块无 layout import；缓存行为不回退 |
 | **P3** | Runtime 出口收敛与冻结 | 23 个说明符 → 冻结出口白名单（components/、hooks/、store/、api/、icons、router/types、module-loader/types），其余标 internal；d.ts；`files`/`exports`/`peerDependencies`；图标统一为 ReactNode | 白名单评审冻结；playground 仅靠包名 `tsc --noEmit` 通过 |
 | **P4** | Shell 与共享表治理 | 共享表常量化（单一源，软/硬分层）；shell 预构建 + importmap 片段生成；dev 体验三件套；版本矩阵门禁；移除 `build-modules.ts` 死产物逻辑（B1） | 浏览器打开 shell，模块经 importmap 加载成功；HMR 与 sourcemap 可用 |
@@ -634,7 +634,7 @@ Feature: 模块级权限真实生效
 |---|------|------|
 | O1 | 完整性与加载方式（原 fetch+blob vs script integrity） | **已关闭**：D5 + D7 定为真实 URL + `modulepreload + integrity`；blob 仅作逃生通道 |
 | O4 | sourcemap 是否随包发布 | **已定**：包内不发；shell 生产用 `sourcemap:"hidden"`；对外提供按版本索取的 debug 通道 |
-| O2 | npm registry | **已定：公开 npm**（`registry.npmjs.org`）。代价：需防 `@react-antd-admin/*` typosquat，见 §4.8 供应链 |
+| O2 | npm registry | **已定：公开 npm**（`registry.npmjs.org`）。代价：需防 `@react-antd-module/*` typosquat，见 §4.8 供应链 |
 | O3 | `modules.json` 托管 | **已定：同源静态文件，不实施签名**（同组织不同团队）。缓解靠 CI 单一出口 + 清单与产物分目录分凭据 + origin 白名单（§4.8）。残留风险见 R13 |
 | O5 | 旧 `manifest.json` | 未定，建议 P5 直接下线（避免两套清单并存） |
 | O6 | 模块私有 npm 依赖 | 未定，建议先白名单（C8 构建期告警），防止重复打包共享依赖 |
@@ -693,7 +693,7 @@ Feature: 模块级权限真实生效
 | 架构师 / 产品 | 首屏串行瀑布；P0–P3 用户价值为零 | §4.7 步骤 0 并行化；P1 垂直切片前置 |
 | 产品 | `modules.json` 丢掉 `enabled` / `dependencies` | §4.4 保留 + US-9 |
 | 产品 | 缺运维角色与卸载/回滚/依赖缺失场景；报错可理解性无验收 | US-9 / US-10 + §4.7 错误处理契约 |
-| 产品 | "拿不到源码"缺反例 | §1 改述 + `rad info` + O4 拍板 |
+| 产品 | "拿不到源码"缺反例 | §1 改述 + `ram info` + O4 拍板 |
 | 安全 | 授权边界在前端；模块可拿全局 request 与 localStorage 里的 refreshToken | D11 + §4.8 + P6 |
 | 安全 | 静默 catch 吞掉安全失败 | B7 + §4.7 错误处理契约 |
 | 安全 | importmap 无法被 SRI 保护；CSP 缺失；iframe 无 scheme 白名单；生产 fake server | §4.8 全部条目 |

@@ -268,7 +268,7 @@ var ct = (e) => {
 var st = ct;
 var Ir = le;
 
-// .rad-shim-keepalive-for-react.mjs
+// .ram-shim-keepalive-for-react.mjs
 var rad_shim_keepalive_for_react_default = void 0 ?? dist_exports;
 export {
   je as KeepAlive,

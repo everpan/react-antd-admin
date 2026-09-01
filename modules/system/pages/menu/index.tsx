@@ -1,8 +1,8 @@
 import type { ActionType, ProColumns, ProCoreActionType } from "@ant-design/pro-components";
-import type { MenuItemType } from "@react-antd-admin/runtime";
+import type { MenuItemType } from "@react-antd-module/runtime";
 import { PlusCircleOutlined } from "@ant-design/icons";
 
-import { accessControlCodes, BasicButton, BasicContent, BasicTable, fetchDeleteMenuItem, fetchMenuList, handleTree, useAccess } from "@react-antd-admin/runtime";
+import { accessControlCodes, BasicButton, BasicContent, BasicTable, fetchDeleteMenuItem, fetchMenuList, handleTree, useAccess } from "@react-antd-module/runtime";
 import { Button, Popconfirm } from "antd";
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";

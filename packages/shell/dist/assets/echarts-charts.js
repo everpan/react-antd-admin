@@ -58512,7 +58512,7 @@ function install27(registers) {
   registers.registerSeriesModel(CustomSeries_default);
 }
 
-// .rad-shim-echarts-charts.mjs
+// .ram-shim-echarts-charts.mjs
 var rad_shim_echarts_charts_default = void 0 ?? charts_exports;
 export {
   install2 as BarChart,

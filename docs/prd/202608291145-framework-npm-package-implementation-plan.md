@@ -100,7 +100,7 @@ git switch -c feature/pkg-p0-monorepo
 Node 的 subpath imports 只查找**最近的** package.json，**不向上回溯**。把 `src/` 迁到 `packages/runtime/src/` 并新建 `packages/runtime/package.json` 后：
 
 1. Tailwind 经 jiti 加载 `plugins/tailwind.ts` → `#src/styles/theme/antd/css-variables` 解析失败（此处是 Node `require`，Vite alias 与 tsconfig paths 均不生效）
-2. `auth-guard.tsx` 的 `#manifest.json` → Vite `resolveSubpathImports` 报 `Missing "#manifest.json" specifier in "@react-antd-admin/runtime" package`
+2. `auth-guard.tsx` 的 `#manifest.json` → Vite `resolveSubpathImports` 报 `Missing "#manifest.json" specifier in "@react-antd-module/runtime" package`
 
 **修复**：子包 package.json 必须自行声明完整的 `imports`：
 
@@ -123,7 +123,7 @@ Node 的 subpath imports 只查找**最近的** package.json，**不向上回溯
 2. 建 `packages/runtime/package.json` 骨架：
    ```json
    {
-     "name": "@react-antd-admin/runtime",
+     "name": "@react-antd-module/runtime",
      "version": "0.0.0",
      "type": "module",
      "private": true,
@@ -177,7 +177,7 @@ pnpm build
    - 深路径：`antd/es/message/interface`、`antd/es/modal/confirm`（类型 + 运行时）
    - `react-router/dom`、`react-router`
    - `@tanstack/react-query`
-   - `@react-antd-admin/runtime` 的最小替身（导出一个 `createElement` 组件）
+   - `@react-antd-module/runtime` 的最小替身（导出一个 `createElement` 组件）
 2. `external` 掉 `react` / `react-dom` / `react/jsx-runtime`，其余全部打进单文件 ESM
 3. 写 `spikes/esm-importmap/index.html`，内联 importmap 映射上述裸说明符与深路径前缀（含 `"antd/": "/antd/"`）
 4. 起静态服务，浏览器验证清单：
@@ -267,8 +267,8 @@ pnpm build
 | # | 任务 | 产出 | 验收 |
 |---|------|------|------|
 | 1.1 | 建 `apps/playground/`（模拟外部工程：一个 demo 模块） | `apps/playground/{modules,modules.config.ts,vite.config.ts,package.json}` | 工程内无框架源码 |
-| 1.2 | `packages/cli` 最小实现：`rad dev` | 起宿主代理 + 编译本地模块 | 浏览器能看到宿主 + demo 模块菜单与页面 |
-| 1.3 | `packages/cli`：`rad build` | lib 模式多 chunk 产物 + `modules.json` | 产物不含共享依赖实现代码 |
+| 1.2 | `packages/cli` 最小实现：`ram dev` | 起宿主代理 + 编译本地模块 | 浏览器能看到宿主 + demo 模块菜单与页面 |
+| 1.3 | `packages/cli`：`ram build` | lib 模式多 chunk 产物 + `modules.json` | 产物不含共享依赖实现代码 |
 | 1.4 | 手写版 importmap 契约（先不自动生成） | `packages/shell/dist/index.html` | 单例验证：`__REACT_INSTANCE_COUNT__ === 1` |
 | 1.5 | **记录 playground 实际用到的 API** | `docs/prd/runtime-api-usage.md` | 作为 P3 出口白名单的输入 |
 | 1.6 | TDD：新增 `tests/vertical-slice.test.ts` | 断言产物无共享依赖实现、无 blob import、modules.json 字段完整 | 通过 |
@@ -297,7 +297,7 @@ pnpm build
 
 - **位置取舍**：KeepAlive 抽到 `layout/keep-alive-layer`（shell 固定层组件），但**只包裹页面 outlet**，不包在 `LayoutRoot` 的 `<Outlet/>` 外层。理由：包外层会把 header/sidebar 也缓存，导致切回路由时 chrome 状态错位（违背「整站 chrome 不消失」约束）。功能目标（B13：缓存不依赖 ContainerLayout 是否存在）已达成——exclude 现在由 module-loader 汇总 `handle.keepAlive` 得出。
 - **exclude 数据源反转**：`keep-alive.ts` 提供纯函数 `collectKeepAliveExcludes` / `collectAllRoutePaths`（复用 `flattenRoutes`，key 与 `activeCacheKey` 精确对齐），module-loader 暴露 `getKeepAliveExcludeKeys` / `getAllRoutePathKeys`；`LayoutContent` 不再依赖 access store 的 `flatRouteList`。
-- **验证**：新增 `tests/keep-alive.test.ts`（3 例）；full vitest 48/48；`rad build` 与完整应用 `vite build` 均通过。
+- **验证**：新增 `tests/keep-alive.test.ts`（3 例）；full vitest 48/48；`ram build` 与完整应用 `vite build` 均通过。
 
 ### P2.3 执行小结
 
@@ -371,7 +371,7 @@ P2 完成判据逐条核对（2026-08-29）：
 | # | 任务 | 说明 |
 |---|------|------|
 | 3.1 | 冻结出口白名单 | 基于 P1 实际用量，定 `components/` `hooks/` `store/` `api/` `icons` `router/types` `module-loader/types`；其余标 internal |
-| 3.2 | 23 个 `#src/*` 说明符 → `@react-antd-admin/runtime` | 约 86 条 import / 29 个文件，可用 codemod |
+| 3.2 | 23 个 `#src/*` 说明符 → `@react-antd-module/runtime` | 约 86 条 import / 29 个文件，可用 codemod |
 | 3.3 | 图标契约统一为 `ReactNode` | 11 处字符串 → `createElement(X)`；`generate-menu-items-from-routes.ts:42-54` 去掉 `isString` 分支 |
 | 3.4 | `defineModule` + `tsx` 真实 import 解析 name/version | 一次性替换 `build-modules.ts:69-76` 的脆弱正则（B10） |
 | 3.5 | 出 d.ts；补 `files` / `exports` / `peerDependencies` | 取消 `private: true` 准备发版。✅ 已完成（d.ts 于 P3.5 前半解除阻塞，元数据定稿见执行小结） |
@@ -382,7 +382,7 @@ P2 完成判据逐条核对（2026-08-29）：
 
 ### P3.5（部分）执行小结：d.ts 阻塞解除（2026-08-29，`feature/pkg-p3-runtime-api`）
 
-- **3 处报错已解**：① ② `layout-menu/style.ts` / `layout-tabbar/style.ts` 的 TS2883；③ `locales/helper.ts` 的 `LanguageModule`（连同 `LanguageFileMap`）显式导出。`pnpm --filter @react-antd-admin/runtime build` 现可完整产出 `dist/` 声明树（146 个 d.ts），`exports["."].types` 顺手修正为真实存在的 `./dist/index.d.ts`（原指向从未存在的 `runtime.d.ts`）。
+- **3 处报错已解**：① ② `layout-menu/style.ts` / `layout-tabbar/style.ts` 的 TS2883；③ `locales/helper.ts` 的 `LanguageModule`（连同 `LanguageFileMap`）显式导出。`pnpm --filter @react-antd-module/runtime build` 现可完整产出 `dist/` 声明树（146 个 d.ts），`exports["."].types` 顺手修正为真实存在的 `./dist/index.d.ts`（原指向从未存在的 `runtime.d.ts`）。
 - **对原处方的偏差**：计划写的修法是「给 `createUseStyles` 显式 `Classes` 标注」（即引用 `import("jss").Classes`）。实测 **jss 不是 runtime 的直接依赖也不在 hoist 根**，声明若引用 `import("jss")`，消费方（外部模块工程）将解析不到。改用结构化等价标注 `(data?: any) => Record<"class 名", string>`（jss 的 `Classes<C>` 定义即 `Record<C, string>`），声明产物零额外依赖，更符合「冻结出口」目标。
 - **TDD 载体**：新增 `tests/runtime-declarations.test.ts` 3 例（d.ts 存在、入口声明含 `getAppInfo`、exports types 指向真实文件）；full vitest 71/71，`tsc --noEmit` 0 错误，根完整构建通过。
 - **3.5 仍未完成**：`files` 字段核对、出口树裁剪（internal 标注）、取消 `private: true`——与 3.1 出口白名单一并做。dist 产物已随本提交入库（.gitignore 白名单放行）。
@@ -404,7 +404,7 @@ P2 完成判据逐条核对（2026-08-29）：
 ### P3.2 执行小结：模块包名化（2026-08-29，`feature/pkg-p3-runtime-api`）
 
 - **布局迁移提前完成（前跑 P5.1 布局部分）**：剩余 6 个模块（home/access/exception/outside/about/personal-center）的顶层路由由 `Component: ContainerLayout` 改为 `handle.layout: "container"`，runtime 无需把布局组件冻结进出口（与 D9 目标态一致）。P5.1 剩余范围仅迁移核验。`tests/module-layout.test.ts` 的 `LAYOUT_MIGRATED_MODULES` 扩至 8 个。
-- **codemod**：`modules/` 下 29 个文件的 23 种 `#src/*` 说明符全部合并为 `@react-antd-admin/runtime` 具名导入（value / type 两条语句）；`apps/playground` 的 demo 模块 P1 起已是包名化，无需处理。合并后全仓（modules + playground）零 `#src` import。
+- **codemod**：`modules/` 下 29 个文件的 23 种 `#src/*` 说明符全部合并为 `@react-antd-module/runtime` 具名导入（value / type 两条语句）；`apps/playground` 的 demo 模块 P1 起已是包名化，无需处理。合并后全仓（modules + playground）零 `#src` import。
 - **monorepo 解析三件套**：根 `tsconfig.json` paths 与根 `vite.config.ts` alias 将包名直指 `packages/runtime/src/index.ts`（源码同源编译，保持 dev 体验）；`scripts/build-modules.ts` 将包名加入 external（独立构建产物由宿主 importmap 提供，与 cli `build.ts` 的既有插件语义一致）。刻意**不**把 runtime 加为根 package.json 依赖。
 - **契约闭环**：`tests/module-package-imports.test.ts` 4 例——modules + playground 零 `#src`、每个 entry 均从包名导入、tsconfig/vite 包名映射存在、build-modules external 存在。「模块 import 的符号是否都在冻结出口里」由 tsc 保证（paths 直指 `index.ts`，出口外符号 typecheck 报错），与 P3.1 的 `runtime-exports.test.ts` 组成双向契约。
 - **全绿**：tsc 0 错误，vitest 82/82（新增 4），根构建 + 模块独立构建通过。无新增问题记录（eslint 4 条警告均为既有代码的 `react/exhaustive-deps`）。
@@ -418,7 +418,7 @@ P2 完成判据逐条核对（2026-08-29）：
 
 ### P3.4 执行小结：元数据真实 import 解析（2026-08-29，`feature/pkg-p3-runtime-api`）
 
-- **实现**：主仓库 `scripts/build-modules.ts` 弃用 `parseEntryMeta` 正则（B10），改经 `@react-antd-admin/cli` 的 `readModuleDefinition`（esbuild bundle + runtime stub + 真实 `import()`）。cli `exports` 新增 `./build` 子路径；根 devDependencies 显式补 `esbuild`（此前为 cli 传递依赖，scripts 上下文解析不到）。
+- **实现**：主仓库 `scripts/build-modules.ts` 弃用 `parseEntryMeta` 正则（B10），改经 `@react-antd-module/cli` 的 `readModuleDefinition`（esbuild bundle + runtime stub + 真实 `import()`）。cli `exports` 新增 `./build` 子路径；根 devDependencies 显式补 `esbuild`（此前为 cli 传递依赖，scripts 上下文解析不到）。
 - **P3.1 出口扩大的连锁修复**：cli 的 `RUNTIME_STUB_SOURCE` 仍是 P1 最小集合，模块页面 import 的 api/utils/constants 符号在 stub 中缺失导致 bundle 报 missing export。已补齐全量出口，并在 `runtime-exports.test.ts` 增加**防漂移断言**（比对运行时真实出口与 stub 静态导出名），出口与 stub 的同步从此由测试锁定。
 - **动态 import 的两难与化解**：lazy 页面 / i18n JSON 的动态导入若放任进 bundle，esbuild 输出 ESM 时把页面模块的裸导入 hoist 到顶层（pro-components 假 ESM 在 Node import() 时爆炸）；若标 external，vitest 又在 transform 阶段强行解析相对说明符。最终以「动态导入目标替换为虚拟空模块」双堵——元数据读取本就不需要动态模块。
 - **顺带修一个隐含假设**：esbuild 输出名默认取入口 basename，非 `entry.ts` 文件名的产物对不上后续 `import(outDir/entry.js)` 路径（测试夹具暴露）。加 `entryNames: "entry"` 固定。
@@ -452,7 +452,7 @@ P2 完成判据逐条核对（2026-08-29）：
 
 ### P3.7 执行小结：playground 仅靠包名通过 tsc（2026-08-29，`feature/pkg-p3-runtime-api`）
 
-- **实现**：`apps/playground` 建独立 `tsconfig.json`——**无任何 `@react-antd-admin/*` 的 paths 映射**，包名经 `node_modules`（workspace symlink）→ `exports["."].types` 解析到 `packages/runtime/dist/index.d.ts`。这是「外部工程无框架源码」形态的最终验收：P3.5 的 jss 结构化标注、图标包装（零 `~icons` 泄漏）、peerDeps 声明链在此一次兑现。
+- **实现**：`apps/playground` 建独立 `tsconfig.json`——**无任何 `@react-antd-module/*` 的 paths 映射**，包名经 `node_modules`（workspace symlink）→ `exports["."].types` 解析到 `packages/runtime/dist/index.d.ts`。这是「外部工程无框架源码」形态的最终验收：P3.5 的 jss 结构化标注、图标包装（零 `~icons` 泄漏）、peerDeps 声明链在此一次兑现。
 - **TDD**：`tests/playground-package-tsc.test.ts` 2 例——①tsconfig 存在且不含 runtime 的 paths 映射（防倒退回源码同源编译）；②`npx tsc -p tsconfig.json --noEmit` 退出码 0（真跑子进程 tsc）。首跑红（无 tsconfig），落地后绿。
 - **顺带补齐**：playground devDeps 显式声明 `@ant-design/icons`（demo 模块实际使用；此前靠 monorepo hoist 隐式命中，外部工程语义上必须显式）。
 - **全绿**：tsc（根 + playground 独立）0 错误，vitest 100/100（新增 2），根完整构建通过。
@@ -490,9 +490,9 @@ P2 完成判据逐条核对（2026-08-29）：
 
 **4.1 单一常量源**：`SHARED_DEPS` 重构为结构化条目（`specifier`/`asset`/`hard`），**条目粒度 = importmap 键 = 实际裸说明符**（importmap 无前缀通配，`motion/react`、`zustand/shallow` 等深路径必须单独成条）。`generateShellEntries()` 生成 shell 预构建入口、`generateImportmap()` 生成映射，防漂移测试三张网：runtime peerDeps ⊆ 共享表、产物裸说明符 ⊆ importmap、共享表全量产物存在。补齐 runtime 实际依赖的 11 个缺口包（ahooks/ky/react-jss 等）与 clsx。`src/entries/*.ts` 实体文件删除——入口直接 `import.meta.resolve` 包说明符为真实路径（vite lib.entry 不解析裸说明符），`rollupOptions.output.entryFileNames` 会覆盖 `lib.fileName` 导致产物名取包入口 basename（如 `dayjs.min.js`），必须删 output 配置。
 
-**4.3 shell 重建**：产物从手写 15 项扩到共享表全量 39 入口 + runtime（sha256 与包 dist 一致性入测）。shell 构建改走 `pnpm --filter @react-antd-admin/runtime build` 完整构建——只跑 `vite build` 会 emptyOutDir 清掉 dist 里的 d.ts 声明树（P3.5 隐患）。
+**4.3 shell 重建**：产物从手写 15 项扩到共享表全量 39 入口 + runtime（sha256 与包 dist 一致性入测）。shell 构建改走 `pnpm --filter @react-antd-module/runtime build` 完整构建——只跑 `vite build` 会 emptyOutDir 清掉 dist 里的 d.ts 声明树（P3.5 隐患）。
 
-**4.4 dev 三件套**：jsx-dev-runtime 已随共享表映射 ✓；`sourcemap: "hidden"` 落地且 `.map` 不入库（gitignore）✓；**react-refresh preamble 未落地（偏差）**：当前 `rad dev` 是「build + watch + 手动刷新」静态架构，无 `/@react-refresh` 端点、模块产物也不含 refresh 代码，强行注入 preamble 只会报 import 失败。真 HMR 需要 dev 服务器升级为 vite middleware 模式（transform 模块产物），记入 P5 待办评估。
+**4.4 dev 三件套**：jsx-dev-runtime 已随共享表映射 ✓；`sourcemap: "hidden"` 落地且 `.map` 不入库（gitignore）✓；**react-refresh preamble 未落地（偏差）**：当前 `ram dev` 是「build + watch + 手动刷新」静态架构，无 `/@react-refresh` 端点、模块产物也不含 refresh 代码，强行注入 preamble 只会报 import 失败。真 HMR 需要 dev 服务器升级为 vite middleware 模式（transform 模块产物），记入 P5 待办评估。
 
 **4.5 版本矩阵门禁**：shell 构建时经 `import.meta.resolve` 逐包向上找最近 package.json 读**实际安装版本**写 `dist/versions.json`（40 项）；`checkSharedVersions` 在 `buildModules` 前强制执行。**语义修正**：C4「版本严格相等」指**安装后版本**（读模块工程 node_modules，跟随 pnpm symlink），而非 devDependencies 的范围字面量——`^19.2.6` 与安装的 `19.2.8` 字面上永远不等，按字面校验全员误伤。校验逻辑抽纯函数 `validateSharedVersions`，fs 无关可直测。
 
@@ -570,7 +570,7 @@ P2 完成判据逐条核对（2026-08-29）：
 | 6.3 | scoped request client | 模块不再拿全局 request，改为按 `register.apiPrefix` 前缀收敛，越界拒绝 | ✅ |
 | 6.4 | iframe 加固 | `new URL(u).protocol === "https:"` + 域名白名单 + `sandbox="allow-scripts allow-popups"` | ✅ |
 | 6.5 | fake server 治理（B15） | `enableProd: true` 改受显式环境变量控制；CI 断言 dist 无 fake 代码 | ✅ |
-| 6.6 | 供应链（公开 npm） | `publishConfig.registry` 锁定、2FA、`--provenance`、`--frozen-lockfile`、`npm audit signatures`；防 `@react-antd-admin/*` typosquat | ✅（账号级 2FA 为流程约束落档） |
+| 6.6 | 供应链（公开 npm） | `publishConfig.registry` 锁定、2FA、`--provenance`、`--frozen-lockfile`、`npm audit signatures`；防 `@react-antd-module/*` typosquat | ✅（账号级 2FA 为流程约束落档） |
 | 6.7 | O7 refreshToken | **待需求方与后端确认**，未确认前保持现状，风险记 R13 / O7 | ⏸️ 阻塞（按需求方指示不实施） |
 | 6.8 | 残留风险登记 | 不签名（O3 已定）→ R13，需在 README 与运维文档中明示 | ✅ |
 

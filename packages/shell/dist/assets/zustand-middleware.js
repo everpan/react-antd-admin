@@ -499,7 +499,7 @@ function ssrSafe(config, isSSR = typeof window === "undefined") {
   };
 }
 
-// .rad-shim-zustand-middleware.mjs
+// .ram-shim-zustand-middleware.mjs
 var rad_shim_zustand_middleware_default = void 0 ?? middleware_exports;
 export {
   combine,

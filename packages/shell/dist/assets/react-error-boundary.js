@@ -129,7 +129,7 @@ function w(r, e) {
   return t.displayName = `withErrorBoundary(${o})`, t;
 }
 
-// .rad-shim-react-error-boundary.mjs
+// .ram-shim-react-error-boundary.mjs
 var rad_shim_react_error_boundary_default = void 0 ?? react_error_boundary_exports;
 export {
   m as ErrorBoundary,

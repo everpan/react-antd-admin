@@ -1,7 +1,7 @@
 import type { ProColumns } from "@ant-design/pro-components";
-import type { MenuItemType } from "@react-antd-admin/runtime";
+import type { MenuItemType } from "@react-antd-module/runtime";
 import type { TFunction } from "i18next";
-import { getYesNoOptions } from "@react-antd-admin/runtime";
+import { getYesNoOptions } from "@react-antd-module/runtime";
 
 import { Tag } from "antd";
 

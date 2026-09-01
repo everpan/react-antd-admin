@@ -1,7 +1,7 @@
 # Runtime 外部 API 实际用量（P1 基线）
 
 > 用途：作为 **P3 Runtime 出口收敛** 的输入。记录「外部模块工程」真实从
-> `@react-antd-admin/runtime` import 了哪些符号，从而确定哪些能力必须成为
+> `@react-antd-module/runtime` import 了哪些符号，从而确定哪些能力必须成为
 > runtime 的公开导出、哪些仍可留在框架内部。
 
 ## 扫描范围
@@ -23,9 +23,9 @@
 
 ```ts
 // entry.ts
-import { defineModule } from "@react-antd-admin/runtime";
+import { defineModule } from "@react-antd-module/runtime";
 // pages/index.tsx
-import { BasicContent } from "@react-antd-admin/runtime";
+import { BasicContent } from "@react-antd-module/runtime";
 ```
 
 ## 结论与对 P3 的含义
@@ -46,5 +46,5 @@ import { BasicContent } from "@react-antd-admin/runtime";
 ## 统计命令（复跑用）
 
 ```bash
-grep -rn 'from "@react-antd-admin/runtime"' apps --include=*.ts --include=*.tsx
+grep -rn 'from "@react-antd-module/runtime"' apps --include=*.ts --include=*.tsx
 ```

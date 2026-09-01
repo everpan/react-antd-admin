@@ -4,7 +4,7 @@ import {
 	ProFormText,
 	ProFormTextArea,
 } from "@ant-design/pro-components";
-import { BasicContent, FormAvatarItem, useUserStore } from "@react-antd-admin/runtime";
+import { BasicContent, FormAvatarItem, useUserStore } from "@react-antd-module/runtime";
 import { Form, Input } from "antd";
 
 export default function Profile() {

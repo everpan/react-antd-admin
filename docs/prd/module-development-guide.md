@@ -10,10 +10,10 @@
 > 更新：2026-08-30 P7 评审整改（详见 `202608300957-p7-review-remediation-plan.md`）——
 > peerRuntime 校验真实生效、依赖缺失标记 missing-deps、requiredPermissions 落地、
 > scoped client 增加路径归一化与 prefix 剥离、entry 并入 L2 完整性链路、
-> 新增 `rad info` / `rad merge`、shell 包转 npm 发布。
+> 新增 `ram info` / `ram merge`、shell 包转 npm 发布。
 >
 > 更新：2026-09-01 随 playground 全量模块接入（`202609010056-playground-full-modules-plan.md`）
-> ——新增 rad dev 工程 mock 约定（§3.4）、路由相对 path 的菜单 key/id 契约
+> ——新增 ram dev 工程 mock 约定（§3.4）、路由相对 path 的菜单 key/id 契约
 > （§3.2 要点 4）、AppInfo 缺字段空态契约（§9 常见问题）。
 >
 > 前置阅读：`202608291145-framework-npm-package-implementation-plan.md`（设计文档），
@@ -42,16 +42,16 @@
                │ modules.json（BuiltModule[]，可多份合并）
 ┌──────────────┴──────────────────────────────────────┐
 │ 业务模块（外部团队，独立仓库）                          │
-│  entry.ts（defineModule）→ rad build → chunk + 完整性 │
+│  entry.ts（defineModule）→ ram build → chunk + 完整性 │
 └──────────────┬──────────────────────────────────────┘
-               │ import { ... } from "@react-antd-admin/runtime"
+               │ import { ... } from "@react-antd-module/runtime"
 ┌──────────────┴──────────────────────────────────────┐
 │ runtime（框架 npm 包，P3 冻结出口）                    │
 └─────────────────────────────────────────────────────┘
 ```
 
-- **模块只依赖三个 npm 包**：`@react-antd-admin/runtime`（出口冻结）、
-  `@react-antd-admin/cli`（`rad` 命令）、宿主提供的共享依赖（importmap 注入，
+- **模块只依赖三个 npm 包**：`@react-antd-module/runtime`（出口冻结）、
+  `@react-antd-module/cli`（`ram` 命令）、宿主提供的共享依赖（importmap 注入，
   模块侧不得打进 bundle）。
 - **共享依赖单例**：react/antd/zustand 等由宿主 importmap 提供，
   模块构建时全部 external（`SHARED_DEPS` 表，P4.1 单一来源），
@@ -72,20 +72,20 @@
 {
 	"name": "@your-team/biz-module",
 	"scripts": {
-		"dev": "rad dev 5174",
-		"build": "rad build"
+		"dev": "ram dev 5174",
+		"build": "ram build"
 	},
 	"devDependencies": {
-		"@react-antd-admin/cli": "<与宿主同版本>",
-		"@react-antd-admin/runtime": "<与宿主同版本>",
-		"@react-antd-admin/shell": "<与宿主同版本>",   // P7.10 起经 npm 发布，rad dev/build 的宿主产物来源
+		"@react-antd-module/cli": "<与宿主同版本>",
+		"@react-antd-module/runtime": "<与宿主同版本>",
+		"@react-antd-module/shell": "<与宿主同版本>",   // P7.10 起经 npm 发布，ram dev/build 的宿主产物来源
 		"@types/react": "^19.x",
 		"typescript": "^5.x"
 	}
 }
 ```
 
-**版本门禁（C4/D12）**：`rad build` 会校验——
+**版本门禁（C4/D12）**：`ram build` 会校验——
 
 1. `dependencies` 中**禁止**出现硬依赖（react/react-dom/react-router/
    @tanstack/react-query/runtime——它们只能来自宿主 importmap）；
@@ -111,7 +111,7 @@ your-module/
 
 ```ts
 import { lazy } from "react";
-import { defineModule } from "@react-antd-admin/runtime";
+import { defineModule } from "@react-antd-module/runtime";
 
 const definition = defineModule({
 	name: "order",                    // 全局唯一，进清单合并（重名直接拒绝）
@@ -190,7 +190,7 @@ export default definition;
 
 | 引用对象 | 方式 |
 | --- | --- |
-| 框架能力（store/request/布局/hooks…） | `import { ... } from "@react-antd-admin/runtime"` |
+| 框架能力（store/request/布局/hooks…） | `import { ... } from "@react-antd-module/runtime"` |
 | 共享三方（antd/zustand/dayjs…） | 直接 `import "antd"` 等——构建时 external，importmap 提供单例 |
 | 模块内部 | 相对路径（`./pages/list`） |
 | 发起 HTTP 请求 | `ctx.utils.request`——按 `register.apiPrefix` 前缀收敛的 scoped client，**越界请求被拒绝**（D11） |
@@ -200,14 +200,14 @@ export default definition;
 ### 3.4 开发服务器
 
 ```bash
-pnpm dev        # = rad dev 5174
+pnpm dev        # = ram dev 5174
 ```
 
-`rad dev` 是「构建 + watch + 静态服务」架构：宿主页面（shell dist）
+`ram dev` 是「构建 + watch + 静态服务」架构：宿主页面（shell dist）
 代理访问，模块产物变更后**手动刷新**生效。真正的 HMR 需要 vite 中间件
 形态的 dev server（已知差距，见设计文档 P5 偏差记录）。
 
-**工程 mock 约定**：`rad dev` 会加载工程根目录 `mock/*.mock.mjs`
+**工程 mock 约定**：`ram dev` 会加载工程根目录 `mock/*.mock.mjs`
 （或 `.mock.js`）下 default 导出的路由数组，挂到同源 `/api` 前缀，
 供本地开发替代后端：
 
@@ -228,13 +228,13 @@ export default [
 
 - url + method **精确匹配**，未命中返回 404 JSON（不做透传）——
   mock 表就是该 dev 形态的后端边界；
-- 无 `mock/` 目录时零行为变化；**重启 `rad dev` 生效**（不热载）；
-- 生产构建不受影响（约定仅存在于 rad dev）。
+- 无 `mock/` 目录时零行为变化；**重启 `ram dev` 生效**（不热载）；
+- 生产构建不受影响（约定仅存在于 ram dev）。
 
 ## 4. 构建与发布
 
 ```bash
-pnpm build      # = rad build
+pnpm build      # = ram build
 ```
 
 产物：
@@ -281,12 +281,12 @@ dist/modules.json          # BuiltModule[]（含每 chunk sha384 完整性）
 
 **完整性档位（§4.7）**：宿主按 L2 保护——所有非 lazy chunk（P7.3 起含 entry）
 以 `modulepreload + integrity + crossorigin` 注入，浏览器加载前校验；
-lazy chunk 按需加载不受保护（D7），`rad build` 会在产物含 lazy chunk 时
+lazy chunk 按需加载不受保护（D7），`ram build` 会在产物含 lazy chunk 时
 显式提示。注意：篡改的 chunk 会被预载通道拒绝并触发控制台报错，但随后的
 动态 import() 不带 integrity（浏览器限制）——需要「拒绝执行」语义时升级到 L3。
 
 **深路径约束（P7.9）**：共享表外的深路径裸说明符（如 `dayjs/plugin/utc`）
-无法被 importmap 解析（无前缀通配），`rad build` 会**构建期报错**；
+无法被 importmap 解析（无前缀通配），`ram build` 会**构建期报错**；
 请改从包根导入，或联系框架方在 SHARED_DEPS 增补条目。
 
 ## 5. 多团队清单合并
@@ -295,7 +295,7 @@ lazy chunk 按需加载不受保护（D7），`rad build` 会在产物含 lazy c
 P7.15 起可直接用 CLI 执行：
 
 ```bash
-rad merge dist/modules.json team-a/modules.json team-b/modules.json
+ram merge dist/modules.json team-a/modules.json team-b/modules.json
 ```
 
 - **同名模块在任意两份清单中重复 = 构建期直接拒绝**，报错定位两个来源。
@@ -354,7 +354,7 @@ P7.12 起在 `getRoutes()` 真实过滤）。`ModuleDefinition` 另有
 
 `defineModule` / `getRoutes` / `getModules` / `loadAll` / `unloadModule` /
 `getRegisteredStore` / `getRegisteredApiPrefix` / `getAppInfo` /
-`useSlotNodes` 等——完整清单以 `@react-antd-admin/runtime` 的 d.ts 为准
+`useSlotNodes` 等——完整清单以 `@react-antd-module/runtime` 的 d.ts 为准
 （出口已冻结，drift-prevention 测试锁定，P3）。
 
 ## 8. 红线与门禁
@@ -362,7 +362,7 @@ P7.12 起在 `getRoutes()` 真实过滤）。`ModuleDefinition` 另有
 | 红线 | 卡口 |
 | --- | --- |
 | import 框架内部实现（`#src/`、`#modules/`） | eslint + CI 双卡口（P2.4），构建 external 白名单兜底 |
-| dependencies 声明硬依赖 / 共享依赖版本与宿主不一致 | `rad build` 版本矩阵门禁（C4/D12） |
+| dependencies 声明硬依赖 / 共享依赖版本与宿主不一致 | `ram build` 版本矩阵门禁（C4/D12） |
 | 请求越出本模块登记的 `apiPrefix` | scoped client 直接抛错（P6.3/D11） |
 | 资源 URL origin 未登记（自建 CDN 未报备） | 宿主 `moduleOrigins` 白名单在加载前拒绝整份清单（P6.1/D10） |
 | iframe 路由非 https / 域名不在白名单 | `resolveSafeIframeLink` 拒绝渲染，控制台人话报错（P6.4） |
@@ -406,7 +406,7 @@ DEV 下 loader 会打 `[module-loader]` 前缀日志（加载清单、✓ 每模
 （`missing-deps` 即依赖未就绪）。
 
 **Q: 怀疑 runtime 有 bug，如何向框架团队报障？（P7.11）**
-在模块工程根目录执行 `rad info`——输出 cli/runtime/shell 三方版本 +
+在模块工程根目录执行 `ram info`——输出 cli/runtime/shell 三方版本 +
 共享依赖版本矩阵 + 当前模块清单，完整粘贴即可复现环境。
 
 **Q: 使用 `getAppInfo()` 的字段报 undefined / 崩溃？**

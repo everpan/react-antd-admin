@@ -12,7 +12,7 @@ import { isSharedDep, SHARED_DEPS } from "./shared-deps";
 import { checkSharedVersions, resolveShellDist } from "./versions";
 
 /**
- * `@react-antd-admin/runtime` 的只读占位源码（设计文档 B10 / §4.3）。
+ * `@react-antd-module/runtime` 的只读占位源码（设计文档 B10 / §4.3）。
  *
  * 读取模块定义时只需要 entry 顶层调用 `defineModule({ name, version, ... })` 的
  * 结果，而绝不需要真正加载框架运行时（其产物含 Vite 专有的 `?react`/`?url` svg
@@ -111,18 +111,18 @@ export const useSlotNodes = () => [];
 `;
 
 /**
- * esbuild 插件：把 `@react-antd-admin/runtime` 解析到一个内联的只读占位虚拟模块，
+ * esbuild 插件：把 `@react-antd-module/runtime` 解析到一个内联的只读占位虚拟模块，
  * 避免真正加载框架运行时（含 svg）。用虚拟模块而非 alias 指向实体文件，是因为
  * 实体路径依赖 import.meta.url，在 vitest 等变换环境下拿不到合法的 file URL。
  */
 const runtimeStubPlugin: EsbuildPlugin = {
-	name: "rad-runtime-stub",
+	name: "ram-runtime-stub",
 	setup(b) {
-		b.onResolve({ filter: /^@react-antd-admin\/runtime$/ }, () => ({
-			path: "@react-antd-admin/runtime",
-			namespace: "rad-runtime-stub",
+		b.onResolve({ filter: /^@react-antd-module\/runtime$/ }, () => ({
+			path: "@react-antd-module/runtime",
+			namespace: "ram-runtime-stub",
 		}));
-		b.onLoad({ filter: /.*/, namespace: "rad-runtime-stub" }, () => ({
+		b.onLoad({ filter: /.*/, namespace: "ram-runtime-stub" }, () => ({
 			contents: RUNTIME_STUB_SOURCE,
 			loader: "js",
 			resolveDir: process.cwd(),
@@ -139,16 +139,16 @@ const runtimeStubPlugin: EsbuildPlugin = {
  * 空模块两条路都堵死（P3.4）。
  */
 const dynamicImportStubPlugin: EsbuildPlugin = {
-	name: "rad-dynamic-import-stub",
+	name: "ram-dynamic-import-stub",
 	setup(b) {
 		// esbuild 的 onResolve 不支持按 kind 过滤，在回调里判断后放行其余 resolver
 		b.onResolve({ filter: /^\./ }, (args) => {
 			if (args.kind === "dynamic-import") {
-				return { path: args.path, namespace: "rad-dynamic-stub" };
+				return { path: args.path, namespace: "ram-dynamic-stub" };
 			}
 			return null;
 		});
-		b.onLoad({ filter: /.*/, namespace: "rad-dynamic-stub" }, () => ({
+		b.onLoad({ filter: /.*/, namespace: "ram-dynamic-stub" }, () => ({
 			contents: "export default {};",
 			loader: "js",
 		}));
@@ -194,7 +194,7 @@ function sha384(file: string): string {
 export async function readModuleDefinition(entryFile: string, projectRoot: string) {
 	// 必须落在工程目录内（而非 os.tmpdir），否则 bundle 外部化的共享依赖
 	// （react / antd …）在 import() 时无法从 /tmp 解析到 node_modules。
-	const outDir = fs.mkdtempSync(path.join(projectRoot, ".rad-tmp-"));
+	const outDir = fs.mkdtempSync(path.join(projectRoot, ".ram-tmp-"));
 	try {
 		await esbuild({
 			entryPoints: [entryFile],
@@ -236,11 +236,11 @@ function warnUnsharedDeps(projectRoot: string) {
 
 	const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
 	const deps = Object.keys(pkg.dependencies ?? {});
-	const unshared = deps.filter(dep => !isSharedDep(dep) && !dep.startsWith("@react-antd-admin/"));
+	const unshared = deps.filter(dep => !isSharedDep(dep) && !dep.startsWith("@react-antd-module/"));
 
 	if (unshared.length) {
 		console.warn(
-			`[rad] ⚠️ 以下运行时依赖不在共享表内，会被打进模块产物：${unshared.join(", ")}\n`
+			`[ram] ⚠️ 以下运行时依赖不在共享表内，会被打进模块产物：${unshared.join(", ")}\n`
 			+ "     若它应与宿主共用，请加入 SHARED_DEPS 并在宿主 importmap 中映射（设计文档 C8）",
 		);
 	}
@@ -298,7 +298,7 @@ function assertResolvableSpecifiers(
 
 	if (deepPathErrors.length > 0) {
 		throw new Error(
-			`[rad] 模块 "${moduleName}" 的产物含 importmap 无法解析的深路径说明符：\n`
+			`[ram] 模块 "${moduleName}" 的产物含 importmap 无法解析的深路径说明符：\n`
 			+ `${deepPathErrors.join("\n")}\n`
 			+ "共享表只提供精确键（importmap 无前缀通配）。修复建议：改从包根导入"
 			+ "（如 dayjs 插件改在宿主侧注册），或联系框架方在 SHARED_DEPS 增补该深路径条目。",
@@ -307,7 +307,7 @@ function assertResolvableSpecifiers(
 
 	if (unsharedWarnings.size > 0) {
 		console.warn(
-			`[rad] ⚠️ 模块 "${moduleName}" import 了共享表外的三方库：${[...unsharedWarnings].join(", ")}\n`
+			`[ram] ⚠️ 模块 "${moduleName}" import 了共享表外的三方库：${[...unsharedWarnings].join(", ")}\n`
 			+ "     它们会被打进模块产物。若应与宿主共用，请加入 SHARED_DEPS（设计文档 C8）",
 		);
 	}
@@ -334,7 +334,7 @@ export async function buildModules(projectRoot: string): Promise<BuiltModule[]> 
 
 	for (const item of config.modules) {
 		if (item.enabled === false) {
-			console.log(`[rad] 跳过已禁用模块 ${item.name}`);
+			console.log(`[ram] 跳过已禁用模块 ${item.name}`);
 			continue;
 		}
 
@@ -351,7 +351,7 @@ export async function buildModules(projectRoot: string): Promise<BuiltModule[]> 
 		const emitted = new Map<string, { fileName: string, type: "chunk" | "asset", isEntry: boolean, isDynamicEntry: boolean }>();
 
 		const collectChunks: Plugin = {
-			name: "rad:collect-chunks",
+			name: "ram:collect-chunks",
 			writeBundle(_options, bundle) {
 				for (const [fileName, output] of Object.entries(bundle)) {
 					emitted.set(fileName, {
@@ -364,7 +364,7 @@ export async function buildModules(projectRoot: string): Promise<BuiltModule[]> 
 			},
 		};
 
-		console.log(`[rad] 构建 ${definition.name}@${definition.version} ...`);
+		console.log(`[ram] 构建 ${definition.name}@${definition.version} ...`);
 
 		await build({
 			root: projectRoot,
@@ -428,7 +428,7 @@ export async function buildModules(projectRoot: string): Promise<BuiltModule[]> 
 		const lazyChunks = chunks.filter(c => c.lazy);
 		if (lazyChunks.length > 0) {
 			console.warn(
-				`[rad] 模块 "${definition.name}" 含 ${lazyChunks.length} 个 lazy chunk，`
+				`[ram] 模块 "${definition.name}" 含 ${lazyChunks.length} 个 lazy chunk，`
 				+ "它们在 L2 完整性档位下不受保护（§4.7 D7）：\n"
 				+ `${lazyChunks.map(c => `  · ${c.url}`).join("\n")}\n`
 				+ "若这些 chunk 也要求完整性，请升级到 L3（Service Worker）或使用逃生通道（§4.7）。",
@@ -457,7 +457,7 @@ export async function buildModules(projectRoot: string): Promise<BuiltModule[]> 
 	const manifestPath = path.join(outDir, "modules.json");
 	fs.mkdirSync(outDir, { recursive: true });
 	fs.writeFileSync(manifestPath, `${JSON.stringify(built, null, 2)}\n`);
-	console.log(`[rad] 清单已生成 → ${manifestPath}`);
+	console.log(`[ram] 清单已生成 → ${manifestPath}`);
 
 	return built;
 }

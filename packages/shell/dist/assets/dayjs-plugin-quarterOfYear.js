@@ -64,7 +64,7 @@ var require_quarterOfYear = __commonJS({
   }
 });
 
-// .rad-shim-dayjs-plugin-quarterOfYear.mjs
+// .ram-shim-dayjs-plugin-quarterOfYear.mjs
 var rad_shim_dayjs_plugin_quarterOfYear_exports = {};
 __export(rad_shim_dayjs_plugin_quarterOfYear_exports, {
   default: () => rad_shim_dayjs_plugin_quarterOfYear_default

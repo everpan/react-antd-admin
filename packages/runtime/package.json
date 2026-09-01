@@ -1,5 +1,5 @@
 {
-	"name": "@react-antd-admin/runtime",
+	"name": "@react-antd-module/runtime",
 	"type": "module",
 	"version": "0.0.0",
 	"description": "React Antd Admin 框架运行时，供模块工程消费",

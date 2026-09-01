@@ -60,7 +60,7 @@ var require_weekOfYear = __commonJS({
   }
 });
 
-// .rad-shim-dayjs-plugin-weekOfYear.mjs
+// .ram-shim-dayjs-plugin-weekOfYear.mjs
 var rad_shim_dayjs_plugin_weekOfYear_exports = {};
 __export(rad_shim_dayjs_plugin_weekOfYear_exports, {
   default: () => rad_shim_dayjs_plugin_weekOfYear_default

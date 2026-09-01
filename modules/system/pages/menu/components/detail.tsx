@@ -1,4 +1,4 @@
-import type { MenuItemType } from "@react-antd-admin/runtime";
+import type { MenuItemType } from "@react-antd-module/runtime";
 import {
 	ModalForm,
 	ProFormCascader,
@@ -7,7 +7,7 @@ import {
 	ProFormRadio,
 	ProFormText,
 } from "@ant-design/pro-components";
-import { fetchAddMenuItem, fetchUpdateMenuItem, handleTree } from "@react-antd-admin/runtime";
+import { fetchAddMenuItem, fetchUpdateMenuItem, handleTree } from "@react-antd-module/runtime";
 import { Form } from "antd";
 
 import { useEffect } from "react";

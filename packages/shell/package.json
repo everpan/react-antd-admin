@@ -1,8 +1,8 @@
 {
-	"name": "@react-antd-admin/shell",
+	"name": "@react-antd-module/shell",
 	"type": "module",
 	"version": "0.0.0",
-	"description": "预构建宿主站点（dist + importmap），由 rad dev / rad build 使用",
+	"description": "预构建宿主站点（dist + importmap），由 ram dev / ram build 使用",
 	"license": "MIT",
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org/",
@@ -19,8 +19,8 @@
 		"dev": "tsx scripts/build.mts --watch"
 	},
 	"dependencies": {
-		"@react-antd-admin/cli": "workspace:*",
-		"@react-antd-admin/runtime": "workspace:*"
+		"@react-antd-module/cli": "workspace:*",
+		"@react-antd-module/runtime": "workspace:*"
 	},
 	"devDependencies": {
 		"@ant-design/cssinjs": "catalog:",
@@ -38,7 +38,7 @@
 		"dayjs": "catalog:",
 		"echarts": "catalog:",
 		"echarts-for-react": "catalog:",
-		"esbuild": "^0.28.2",
+		"esbuild": "catalog:",
 		"i18next": "catalog:",
 		"keepalive-for-react": "catalog:",
 		"ky": "catalog:",
@@ -55,10 +55,10 @@
 		"simplebar-react": "catalog:",
 		"spin-delay": "catalog:",
 		"tailwind-merge": "catalog:",
-		"tsx": "^4.23.12",
+		"tsx": "catalog:",
 		"typescript": "catalog:",
 		"use-sync-external-store": "catalog:",
-		"vite": "^8.0.13",
+		"vite": "catalog:",
 		"zustand": "catalog:"
 	}
 }

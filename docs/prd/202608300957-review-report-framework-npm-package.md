@@ -36,7 +36,7 @@
 | F3 | packages/runtime/src/module-loader/index.ts:87-96 | 依赖缺失仅 console.warn，模块半加载且 status 标 loaded，US-9 明文禁止 |
 | F4 | packages/cli/src/shared-deps.ts:70-98 | isSharedDep 前缀匹配（`dayjs/plugin/utc` → external）但 importmap 无尾斜杠前缀键，浏览器解析必崩且无构建期提示（B11 换形态复发） |
 | F5 | packages/shell/package.json:5 | shell private:true 无 publishConfig，resolveShellDist 在外部工程两路径均找不到，US-1/US-2 第一步即失败 |
-| F6 | packages/cli/src/index.ts:18-33 | rad info 未实现（交接文档标 P4 ✅ 完成，记录与实现矛盾）；@react-antd-admin/create-module 包不存在（US-1） |
+| F6 | packages/cli/src/index.ts:18-33 | ram info 未实现（交接文档标 P4 ✅ 完成，记录与实现矛盾）；@react-antd-module/create-module 包不存在（US-1） |
 | F7 | packages/runtime/src/index.ts:36-46 | 手册 §7.3 承诺的 unloadModule/useSlotNodes 未从入口导出，外部工程 import 即编译失败 |
 | F8 | scripts/build-modules.ts:78-82 | `main().catch(console.error)` 不 exit(1)，模块构建失败 CI 判成功放行坏产物 |
 | F9 | scripts/create-module.ts:55-80 | 向导选「不需要国际化」：locales 目录条件创建但 json 无条件写入 → ENOENT + 半成品目录 |

@@ -1,6 +1,6 @@
 # Playground 模块化方案 e2e 验证
 
-> 任务目标与验证结论（供查阅）。对应 `@apps/playground` 模块在 `@react-antd-admin/runtime`
+> 任务目标与验证结论（供查阅）。对应 `@apps/playground` 模块在 `@react-antd-module/runtime`
 > 宿主下的端到端打通情况。
 
 ## 一、验证目标（用户 5 点）
@@ -40,7 +40,7 @@
 
 ```bash
 # 1) 构建 playground 模块（单文件 entry.js）
-cd apps/playground && npx rad build
+cd apps/playground && npx ram build
 
 # 2) 运行 e2e（happy-dom 集成，vitest 4）
 VITEST=1 npx vitest run tests/playground-e2e.test.tsx

@@ -9,7 +9,7 @@
 | 层 | 事实 |
 |----|------|
 | 触发点 | header 通知组件 `NotificationContainer` 挂载即 `fetchNotifications()` → ky `GET /api/notifications` |
-| 404 来源 | playground（rad dev）无 /api 后端（fake 仅 vite dev 有，P6.5），rad dev 404 响应体为纯文本 `404 Not Found: /api/notifications` |
+| 404 来源 | playground（ram dev）无 /api 后端（fake 仅 vite dev 有，P6.5），ram dev 404 响应体为纯文本 `404 Not Found: /api/notifications` |
 | 报错机制 | `handleErrorResponse` 对 !ok 响应盲调 `response.json()`：`JSON.parse("404 …")` 解析出数字 `404` 后在位置 4 遇 `N` → SyntaxError（与用户报错逐字吻合，已 node 复现） |
 | 次生 | `.catch` 兜底本可工作（回退 statusText toast），但 `console.error` 把「错误体非 JSON」这一**常态**（网关 502 HTML、代理 404 文本同理）当异常刷屏 |
 
@@ -32,7 +32,7 @@
 ## 边界/遗留
 
 - playground 无 /api 后端属设计现状：通知/图表接口 404 → toast 提示，属诚实降级。
-  若要让 playground 图表/通知有数据，需给 rad dev 接 mock API（独立任务，非本缺陷）。
+  若要让 playground 图表/通知有数据，需给 ram dev 接 mock API（独立任务，非本缺陷）。
 - `modules/home` 图表 `.then` 无 `.catch`：本次探针未见噪声（ky HTTPError 经
   handleErrorResponse 后仍在 fetchLine promise 链内），如后续复现 unhandled rejection 再处理。
 

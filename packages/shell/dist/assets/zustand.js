@@ -19,7 +19,7 @@ __reExport(esm_exports, react_star);
 import * as vanilla_star from "zustand/vanilla";
 import * as react_star from "zustand/react";
 
-// .rad-shim-zustand.mjs
+// .ram-shim-zustand.mjs
 var create2 = esm_exports["create"];
 var createStore2 = esm_exports["createStore"];
 var useStore2 = esm_exports["useStore"];

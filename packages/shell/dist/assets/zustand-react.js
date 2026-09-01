@@ -30,7 +30,7 @@ var createImpl = (createState) => {
 };
 var create = ((createState) => createState ? createImpl(createState) : createImpl);
 
-// .rad-shim-zustand-react.mjs
+// .ram-shim-zustand-react.mjs
 var rad_shim_zustand_react_default = void 0 ?? react_exports;
 export {
   create,

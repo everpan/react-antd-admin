@@ -50,7 +50,7 @@ var require_weekday = __commonJS({
   }
 });
 
-// .rad-shim-dayjs-plugin-weekday.mjs
+// .ram-shim-dayjs-plugin-weekday.mjs
 var rad_shim_dayjs_plugin_weekday_exports = {};
 __export(rad_shim_dayjs_plugin_weekday_exports, {
   default: () => rad_shim_dayjs_plugin_weekday_default

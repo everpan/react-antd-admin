@@ -481,7 +481,7 @@ var require_react = __commonJS({
   }
 });
 
-// .rad-shim-react.mjs
+// .ram-shim-react.mjs
 var __m = __toESM(require_react(), 1);
 var Activity2 = __m["Activity"];
 var Children2 = __m["Children"];

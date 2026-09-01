@@ -9640,7 +9640,7 @@ function distance2D(a, b) {
   return Math.sqrt(xDelta ** 2 + yDelta ** 2);
 }
 
-// .rad-shim-motion.mjs
+// .ram-shim-motion.mjs
 var rad_shim_motion_default = void 0 ?? es_exports;
 export {
   AsyncMotionValueAnimation,

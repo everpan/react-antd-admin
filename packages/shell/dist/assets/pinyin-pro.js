@@ -25152,7 +25152,7 @@ function segment(word, options) {
   return middlewareOutputFormat(segments, { format: options.format, separator: options.separator });
 }
 
-// .rad-shim-pinyin-pro.mjs
+// .ram-shim-pinyin-pro.mjs
 var rad_shim_pinyin_pro_default = void 0 ?? esm_exports;
 export {
   OutputFormat,

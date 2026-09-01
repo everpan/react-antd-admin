@@ -1,9 +1,9 @@
 /**
- * `rad dev` —— 宿主代理 + 本地模块编译。
+ * `ram dev` —— 宿主代理 + 本地模块编译。
  *
  * 流程（设计文档 §4.5）：
- * 1. 解析 @react-antd-admin/shell 的预构建 dist（含 importmap）；
- * 2. 先把本地模块构建一次（rad build），得到 dist/modules.json + dist/modules；
+ * 1. 解析 @react-antd-module/shell 的预构建 dist（含 importmap）；
+ * 2. 先把本地模块构建一次（ram build），得到 dist/modules.json + dist/modules；
  * 3. 起一个静态服务器：
  *      /                       → shell 的 index.html（含 importmap）
  *      /assets/*               → shell/dist/assets/*
@@ -42,7 +42,7 @@ const MIME: Record<string, string> = {
 
 function resolveShellDist(projectRoot: string): string {
 	// 1) 外部工程：shell 作为 npm 依赖安装到 node_modules
-	const fromNodeModules = resolve(projectRoot, "node_modules/@react-antd-admin/shell/dist");
+	const fromNodeModules = resolve(projectRoot, "node_modules/@react-antd-module/shell/dist");
 	if (existsSync(fromNodeModules))
 		return fromNodeModules;
 	// 2) monorepo dogfooding：回退到 workspace 源码树
@@ -50,8 +50,8 @@ function resolveShellDist(projectRoot: string): string {
 	if (existsSync(fromWorkspace))
 		return fromWorkspace;
 	throw new Error(
-		"找不到 @react-antd-admin/shell 的预构建产物（dist）。\n"
-		+ "请先构建宿主：pnpm --filter @react-antd-admin/shell build",
+		"找不到 @react-antd-module/shell 的预构建产物（dist）。\n"
+		+ "请先构建宿主：pnpm --filter @react-antd-module/shell build",
 	);
 }
 
@@ -71,7 +71,7 @@ function listenOnFreePort(server: http.Server, startPort: number, maxTries = 10)
 		const attempt = (port: number) => {
 			server.once("error", (err: NodeJS.ErrnoException) => {
 				if (err.code === "EADDRINUSE" && port - startPort < maxTries) {
-					console.warn(`[rad] 端口 ${port} 已被占用，改用 ${port + 1}`);
+					console.warn(`[ram] 端口 ${port} 已被占用，改用 ${port + 1}`);
 					attempt(port + 1);
 				}
 				else {
@@ -90,7 +90,7 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 
 	// 1) 先把本地模块构建一次
 
-	console.log("[rad] 构建本地模块…");
+	console.log("[ram] 构建本地模块…");
 	await buildModules(projectRoot);
 
 	// 工程 mock（可选约定 mock/*.mock.mjs）：挂到同源 /api 前缀，让依赖
@@ -209,14 +209,14 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 	// 端口被占用时自动顺延，避免 `EADDRINUSE` 直接让 `pnpm dev` 以非零码退出
 	// （常见于上一次 dev 进程未退出、或被其它程序占用默认端口）。
 	const actualPort = await listenOnFreePort(server, port);
-	console.log(`\n[rad] 开发服务器已启动：http://localhost:${actualPort}`);
+	console.log(`\n[ram] 开发服务器已启动：http://localhost:${actualPort}`);
 
-	console.log("[rad] 宿主来自 @react-antd-admin/shell（importmap 单例），模块来自本地 dist/");
+	console.log("[ram] 宿主来自 @react-antd-module/shell（importmap 单例），模块来自本地 dist/");
 
 	if (mocks.length)
-		console.log(`[rad] 工程 mock：${mocks.length} 条路由（mock/ 目录，重启生效）`);
+		console.log(`[ram] 工程 mock：${mocks.length} 条路由（mock/ 目录，重启生效）`);
 
-	console.log("[rad] 修改 modules/ 下的源码会触发重建，刷新浏览器即可生效。\n");
+	console.log("[ram] 修改 modules/ 下的源码会触发重建，刷新浏览器即可生效。\n");
 
 	// 2) 监听本地模块源码，增量重建
 	const modulesDir = resolve(projectRoot, "modules");
@@ -227,13 +227,13 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 				clearTimeout(timer);
 			timer = setTimeout(async () => {
 				try {
-					console.log("[rad] 检测到模块源码变更，重建中…");
+					console.log("[ram] 检测到模块源码变更，重建中…");
 					await buildModules(projectRoot);
 
-					console.log("[rad] 重建完成，请刷新浏览器。");
+					console.log("[ram] 重建完成，请刷新浏览器。");
 				}
 				catch (err) {
-					console.error("[rad] 重建失败：", err);
+					console.error("[ram] 重建失败：", err);
 				}
 			}, 300);
 		};
@@ -244,7 +244,7 @@ export async function devServer(projectRoot: string, port: number = DEFAULT_PORT
 			});
 		}
 		catch {
-			// 某些平台不支持 recursive，退化为不自动重建（手动 rad build 仍可用）
+			// 某些平台不支持 recursive，退化为不自动重建（手动 ram build 仍可用）
 		}
 	}
 

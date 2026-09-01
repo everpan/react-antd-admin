@@ -7,13 +7,13 @@
 
 **Architecture:** Playwright + 语义选择器（`header/aside/main/.ant-menu/.ant-tabs-tab/footer`），spec 零 import 源码；环境差异收敛于 `e2e/fixtures/env.ts`（`E2E_TARGET` 切换）；菜单断言数据驱动（DOM ↔ 路由一致性），不写死条目。
 
-**Tech Stack:** @playwright/test（chromium）、rad dev(:5174)、vite dev(:3333, legacy worktree)。
+**Tech Stack:** @playwright/test（chromium）、ram dev(:5174)、vite dev(:3333, legacy worktree)。
 
 **设计文档：** `docs/prd/202608311543-layout-e2e-baseline-design.md`（覆盖矩阵 S1-S5/H1-H4/T1-T5/F1/M1-M2 以此为准）
 
 ## Global Constraints
 
-- spec 文件**禁止 import 任何源码**（`#src/*`、`@react-antd-admin/*` 均不可）；只通过 DOM/URL/localStorage 观测。
+- spec 文件**禁止 import 任何源码**（`#src/*`、`@react-antd-module/*` 均不可）；只通过 DOM/URL/localStorage 观测。
 - 菜单相关断言一律数据驱动，不出现硬编码菜单条目（唯一例外： playground 语言切换用例用「演示模块/Demo Module」对，其来自 HANDOFF §2 既定验收点）。
 - 数值类断言（侧栏宽度等）读运行时计算样式，不硬编码像素。
 - 等待一律用 `expect(...).toBeVisible()` / `waitForURL` 轮询，禁止固定 `waitForTimeout`（动画除外，允许一次性 500ms 过渡等待）。
@@ -22,7 +22,7 @@
 
 ## 已知事实（探索结论，直接可用）
 
-- **playground 环境**：`pnpm --filter playground dev` = `rad dev 5174`（**注意：包名是 `playground`，非 HANDOFF 所写的 `@apps/playground`**——HANDOFF §7 命令已过时）；免登录（D5②）；菜单仅 demo 模块（当前 1 项 `/demo`）；dev 前需先构建：`pnpm --filter @react-antd-admin/shell build && pnpm --filter playground build`。
+- **playground 环境**：`pnpm --filter playground dev` = `ram dev 5174`（**注意：包名是 `playground`，非 HANDOFF 所写的 `@apps/playground`**——HANDOFF §7 命令已过时）；免登录（D5②）；菜单仅 demo 模块（当前 1 项 `/demo`）；dev 前需先构建：`pnpm --filter @react-antd-module/shell build && pnpm --filter playground build`。
 - **legacy 环境**：worktree 检出 411e353b 至 `.e2e-legacy/`；`pnpm dev` = vite :3333（vite.config 内 `port: 3333`）；fake 登录预填 `admin / 123456789admin`（`src/pages/login/components/password-login.tsx` 的 `FORM_INITIAL_VALUES`），点提交即过；登录后跳 `/home`。
 - **DOM 锚点**：antd Sider 收起态类 `.ant-layout-sider-collapsed`；菜单选中 `.ant-menu-item-selected`；submenu `.ant-menu-submenu`；页签 `.ant-tabs-tab` / 激活 `.ant-tabs-tab-active` / 关闭钮 `.ant-tabs-tab-remove`；页脚为语义 `<footer>`；折叠触发器为 header 内带 `.anticon-menu-fold`/`.anticon-menu-unfold` 图标的 button；偏好里页脚开关字段名 `enableFooter`。
 - **demo 页面现状**：仅一张 `Card+Tag`，无状态组件 → T2（keepalive）需先在 demo 模块加第二页（Task 4 内完成）。
@@ -65,7 +65,7 @@ const TARGETS = {
 		webServer: {
 			command: "pnpm --filter playground dev",
 			url: "http://localhost:5174",
-			// rad dev 端口被占会顺延（HANDOFF §8 坑），不复用、撞车即报错
+			// ram dev 端口被占会顺延（HANDOFF §8 坑），不复用、撞车即报错
 			reuseExistingServer: false,
 			timeout: 120_000,
 		},
@@ -168,10 +168,10 @@ e2e/test-results/
 e2e/playwright-report/
 ```
 
-- [x] **Step 5: 构建 shell 与 playground 产物（rad dev 前置）**
+- [x] **Step 5: 构建 shell 与 playground 产物（ram dev 前置）**
 
 ```bash
-pnpm --filter @react-antd-admin/shell build && pnpm --filter playground build
+pnpm --filter @react-antd-module/shell build && pnpm --filter playground build
 ```
 
 - [x] **Step 6: Commit**
@@ -226,7 +226,7 @@ Expected 两种结局：
 
 按 HANDOFF §4 排查清单执行，顺序：
 1. `pnpm test:e2e -- --headed`（或 `pnpm test:e2e:ui`）肉眼确认现象；
-2. 在 page 上取数：`page.evaluate` 读 `localStorage` 无菜单数据属正常——改在 `packages/runtime/src/module-loader/index.tsx` 的 `loadAll` 末尾临时 `console.log(useAccessStore.getState().wholeMenus)`，重建 shell（`pnpm --filter @react-antd-admin/shell build`）后重跑，看 host 链路 `setAccessStore` 是否执行、`wholeMenus` 是否含 `/demo`；
+2. 在 page 上取数：`page.evaluate` 读 `localStorage` 无菜单数据属正常——改在 `packages/runtime/src/module-loader/index.tsx` 的 `loadAll` 末尾临时 `console.log(useAccessStore.getState().wholeMenus)`，重建 shell（`pnpm --filter @react-antd-module/shell build`）后重跑，看 host 链路 `setAccessStore` 是否执行、`wholeMenus` 是否含 `/demo`；
 3. 若 `wholeMenus` 为空 → 修 `module-loader`/`resolve-layout` 链路；若 `wholeMenus` 含 `/demo` 但视觉空白 → 查 `usePreferences` 默认收起态（H2）与 `LayoutSidebar` 渲染条件；
 4. 修复后必须回归：`npx vitest run tests/playground-e2e.test.tsx tests/playground-no-auth.test.tsx` 全绿，再跑 `pnpm test:e2e` 至 PASS。
 
@@ -348,7 +348,7 @@ pnpm test:e2e
 
 ```tsx
 // apps/playground/modules/demo/pages/detail.tsx
-import { BasicContent } from "@react-antd-admin/runtime";
+import { BasicContent } from "@react-antd-module/runtime";
 import { Card, Input } from "antd";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -642,7 +642,7 @@ git add -A && git commit -m "test(e2e): legacy(411e353b) 双环境基线贯通�
 > 每 Phase 结束追加一段：状态、关键过程、耗时。
 
 - [x] Phase 1 小结：骨架一次成型；`pnpm add` 把全部 devDeps 迁入 catalog 触发 yaml/sort-keys，已排序修复（反常规：pnpm 11 的 catalog 迁移副作用）。S1 首跑即暴露 HANDOFF §8 坑——5174 被 pid 90710（交接期残留进程）占用，`reuseExistingServer:false` 正确拦截；kill 后**真实浏览器一次通过**，证实「菜单空白」是残留进程/缓存幻觉（H1），非代码缺陷，HANDOFF §4 闭环。耗时约 25 分钟（含 chromium 下载与构建）。
-- [x] Phase 2 小结：M1/M2 一次成型，但 **M2 首跑红，捕获演进偏差 1（真缺陷）**——host.tsx 链路（rad dev）路由无 `id`，菜单选中态依赖 `useMatches().match.id`，`addRouteIdByPath` 只在 auth-guard 里做，宿主链不经守卫 → 菜单永远无高亮。修复取单点根因：`getRoutes()` 出口统一 `addRouteIdByPath`（幂等，auth-guard 双重应用无害），并加单元回归断言 `getRoutes()[0]?.id === "/demo"`。S1/M1 因 demo 模块新增 detail 子路由使 `/demo` 变 submenu，`.ant-menu` 同时匹配根菜单与弹层 → 全部收敛为 `.ant-menu-root`（反常规：antd Menu 嵌套时类选择器有歧义）。S2-S3 揭示实现与常规 antd 布局不同（与业界不符类）：侧栏是自绘 `<aside>`（无 `.ant-layout-sider-collapsed` 类），折叠态 = aside 宽度收缩 + 菜单 `ant-menu-inline-collapsed`；PC 折叠触发器在侧栏底部 SiderTrigger，header 内折叠按钮仅移动端渲染——spec 按实现校准。demo 模块补 `/demo/detail`（keepAlive + 受控 Input）供 T2。playground 6/6 绿（5.0s）。耗时约 45 分钟。
+- [x] Phase 2 小结：M1/M2 一次成型，但 **M2 首跑红，捕获演进偏差 1（真缺陷）**——host.tsx 链路（ram dev）路由无 `id`，菜单选中态依赖 `useMatches().match.id`，`addRouteIdByPath` 只在 auth-guard 里做，宿主链不经守卫 → 菜单永远无高亮。修复取单点根因：`getRoutes()` 出口统一 `addRouteIdByPath`（幂等，auth-guard 双重应用无害），并加单元回归断言 `getRoutes()[0]?.id === "/demo"`。S1/M1 因 demo 模块新增 detail 子路由使 `/demo` 变 submenu，`.ant-menu` 同时匹配根菜单与弹层 → 全部收敛为 `.ant-menu-root`（反常规：antd Menu 嵌套时类选择器有歧义）。S2-S3 揭示实现与常规 antd 布局不同（与业界不符类）：侧栏是自绘 `<aside>`（无 `.ant-layout-sider-collapsed` 类），折叠态 = aside 宽度收缩 + 菜单 `ant-menu-inline-collapsed`；PC 折叠触发器在侧栏底部 SiderTrigger，header 内折叠按钮仅移动端渲染——spec 按实现校准。demo 模块补 `/demo/detail`（keepAlive + 受控 Input）供 T2。playground 6/6 绿（5.0s）。耗时约 45 分钟。
 - [x] Phase 3 小结：**本阶段价值最高——e2e 连续揪出三个真缺陷（偏差 2/3/4）**。T1-T5 首轮暴露两个夹具层事实：index 子路由在父路由有其他子路由时不再渲染为独立菜单项（菜单叶子=详情/关于，断言全部改为数据驱动探测）；home 页签 closable:false 无关闭钮（T3-T5 据此设计）。T2 keepalive 用例否决了计划中的 page.goto 方案（整页刷新摧毁缓存必假红），改为全程客户端导航+页签标题定位。T5 首红牵出**偏差 2**：shell host 以空 resources 自行 init i18next，框架 translation 命名空间全丢（tabbar 菜单裸奔成 key）——修复：runtime 出口补 setupI18n、CLI stub 同步、host 改调 runtime 初始化。H3/H4 首红牵出**偏差 3（最严重）**：几何探测发现 header 操作按钮 y=59 落在页签栏带区（y56-109）被页签 remove 按钮拦截，截图证实整链视觉崩坏——根因是 runtime 预构建产物零样式（lib 入口不含 styles/index.css 且缺 tailwind 插件），修复为产物自携带 CSS（34KB 内联注入 + 契约测试冻结）。H4 再牵出**偏差 4**：html.dark/动态标题/NProgress 副作用只活在 LayoutRoot（带 AuthGuard），宿主免登录链路全部失效——抽取 LayoutEffects 双链共用。playground 16/16 绿，布局视觉复核对齐设计。反常规记录：①e2e 语义断言（visible/count）对 CSS 缺失完全免疫，S1 冒烟「绿」不代表布局对——几何/视觉断言（boundingBox、elementFromPoint、截图）是必要补充；②ThemeButton 用 onPointerDown 而非 onClick。耗时约 100 分钟。
 - [x] Phase 4 小结：legacy 接入顺带修了 4 个 spec 侧环境缺陷，全程未改产品代码。①worktree webServer 三连坑：playwright 的 webServer cwd 是 config 目录（命令需 ../）、worktree 的 .git 是文件致 simple-git-hooks prepare 必失败、pnpm 11 run 前自动 install（verify-deps-before-run）拖死启动——命令统一 `--config.verify-deps-before-run=false`；②**全量假红根因**：登录页是懒加载 chunk，`load` 事件时表单未挂载，`count()>0` 判断恒 0 从未点击（曾以「点了但导航失败」误诊，绕了远路）——改 waitFor 等表单；③**手风琴模式**（legacy preferences.accordion 默认开，同层互斥、祖先保留）宣判 expandAllSubmenus 全量展开在该环境不可能成立：M1/M2 改深度优先逐组访问、tabbar 只挂载首组；「当前路由所在组自动展开、点击反而收起」吃掉三轮绿红反复，isOpen 守卫三处统一；④legacy closeOthers 在 openTabs.size===2 时禁用 → T3/T4/T5 改按导航数点击。legacy 假菜单含无组件路由（/route-nest/menu2）空白属数据特性，M1 以 allowBlankRoutes 区分。期间 38.8 分钟超长跑与 15 连假红均定位到上述根因后消除。**双环境全绿：playground 16/16（9.8s）、legacy 15 过 + 1 跳（T2 仅 playground 夹具）（1.3min）**。耗时约 130 分钟。
-- [x] Phase 5 总结：**文档回写（Task 8）**：`e2e/README.md`（双环境命令、worktree 建法、六条 spec 约定、环境噪音）；HANDOFF 头部状态/§1/§2（补浏览器级 e2e 列）/§4（闭环结论 + 偏差 1-4 清单 + 假设存档）/§7（修正 playground 包名、补 e2e 命令）/§9 重写。**审查（Task 9）**：subagent 首次因默认模型 400 失败，换显式 sonnet 成功；结论「With fixes」——无 Critical，硬约束①-⑥逐条验证通过，夹具（手风琴感知 DFS）获评出色。按意见修复：**Important 2 项**——①设计矩阵 M2 的「直接 URL 访问」路径缺覆盖 → 新增 **M3 深链接用例**，连带揪出两个真产品缺陷并根因修复：host 相对路径 `fetch("./modules.json")` 在深链接下 404（改 BASE_URL 绝对路径）+ rad dev 无 SPA history fallback（按 Accept: text/html 补齐，对齐 vite dev）；②host 链语言偏好不同源（刷新回退 zh-CN）→ 语言同步抽入 LayoutEffects 双链共用。**Minor 9 项**：setupI18n 幂等守卫、host 去 await、auth-guard 两处冗余 addRouteIdByPath 移除（id 单一所有权在 getRoutes 出口）、inline-css 缺 CSS 改响亮失败、assetsInlineLimit:0 风险注释、header H1 空 filter 无效断言移除、tabbar T5 下拉按钮限定页签区、tsconfig include 补 e2e、`test.deps.inline` → `test.server.deps.inline` 修复**先前已存在**的 `pnpm typecheck` 报错（现全绿且 typecheck 覆盖 e2e）。附带发现并修正：vitest 误收 e2e spec（include 收敛 tests/）；**`tests/cli-build.test.ts`「多 chunk」契约已过期**——P7.x 已刻意决策单文件模块（build.ts codeSplitting:false 注释详尽），契约反转更新（审查者「分支门禁漏跑全量单测」的提醒成立，该回归在分支上存在了 6 个提交）。双绿回归：playground 17/17（12s）、legacy 16 过 + 1 跳（2.2min）、vitest 45 文件 233 用例全绿、typecheck 全绿。M3 两环境调试沉淀断言语义：叶子路由 item 恰 1、组落地页（index 子路由）submenu 恰 1、兜底页不属不变量。已知边界（记录于 e2e/README.md）：host 链 antd 暗色算法/地域包未与偏好同源，属后续工作。Phase 5 耗时约 100 分钟；**全计划累计约 445 分钟**。
+- [x] Phase 5 总结：**文档回写（Task 8）**：`e2e/README.md`（双环境命令、worktree 建法、六条 spec 约定、环境噪音）；HANDOFF 头部状态/§1/§2（补浏览器级 e2e 列）/§4（闭环结论 + 偏差 1-4 清单 + 假设存档）/§7（修正 playground 包名、补 e2e 命令）/§9 重写。**审查（Task 9）**：subagent 首次因默认模型 400 失败，换显式 sonnet 成功；结论「With fixes」——无 Critical，硬约束①-⑥逐条验证通过，夹具（手风琴感知 DFS）获评出色。按意见修复：**Important 2 项**——①设计矩阵 M2 的「直接 URL 访问」路径缺覆盖 → 新增 **M3 深链接用例**，连带揪出两个真产品缺陷并根因修复：host 相对路径 `fetch("./modules.json")` 在深链接下 404（改 BASE_URL 绝对路径）+ ram dev 无 SPA history fallback（按 Accept: text/html 补齐，对齐 vite dev）；②host 链语言偏好不同源（刷新回退 zh-CN）→ 语言同步抽入 LayoutEffects 双链共用。**Minor 9 项**：setupI18n 幂等守卫、host 去 await、auth-guard 两处冗余 addRouteIdByPath 移除（id 单一所有权在 getRoutes 出口）、inline-css 缺 CSS 改响亮失败、assetsInlineLimit:0 风险注释、header H1 空 filter 无效断言移除、tabbar T5 下拉按钮限定页签区、tsconfig include 补 e2e、`test.deps.inline` → `test.server.deps.inline` 修复**先前已存在**的 `pnpm typecheck` 报错（现全绿且 typecheck 覆盖 e2e）。附带发现并修正：vitest 误收 e2e spec（include 收敛 tests/）；**`tests/cli-build.test.ts`「多 chunk」契约已过期**——P7.x 已刻意决策单文件模块（build.ts codeSplitting:false 注释详尽），契约反转更新（审查者「分支门禁漏跑全量单测」的提醒成立，该回归在分支上存在了 6 个提交）。双绿回归：playground 17/17（12s）、legacy 16 过 + 1 跳（2.2min）、vitest 45 文件 233 用例全绿、typecheck 全绿。M3 两环境调试沉淀断言语义：叶子路由 item 恰 1、组落地页（index 子路由）submenu 恰 1、兜底页不属不变量。已知边界（记录于 e2e/README.md）：host 链 antd 暗色算法/地域包未与偏好同源，属后续工作。Phase 5 耗时约 100 分钟；**全计划累计约 445 分钟**。

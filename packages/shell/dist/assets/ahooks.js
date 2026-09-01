@@ -6810,7 +6810,7 @@ function useTheme(options) {
   };
 }
 
-// .rad-shim-ahooks.mjs
+// .ram-shim-ahooks.mjs
 var rad_shim_ahooks_default = void 0 ?? es_exports;
 export {
   clearCache,

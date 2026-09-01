@@ -19,7 +19,7 @@ function useShallow(selector) {
   };
 }
 
-// .rad-shim-zustand-react-shallow.mjs
+// .ram-shim-zustand-react-shallow.mjs
 var rad_shim_zustand_react_shallow_default = void 0 ?? shallow_exports;
 export {
   rad_shim_zustand_react_shallow_default as default,

@@ -1,4 +1,4 @@
-import { BasicContent, getAppInfo } from "@react-antd-admin/runtime";
+import { BasicContent, getAppInfo } from "@react-antd-module/runtime";
 
 import { Badge, Card, Col, Descriptions, Row, Tag, theme, Typography } from "antd";
 import { useTranslation } from "react-i18next";

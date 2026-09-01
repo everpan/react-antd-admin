@@ -33,11 +33,11 @@ pnpm check:circular-deps  # Check for circular dependencies
 
 ### Monorepo 结构（P0 起）
 
-框架源码已从 `src/` 迁至 `packages/runtime/src/`（发布为 `@react-antd-admin/runtime`），其余包：
+框架源码已从 `src/` 迁至 `packages/runtime/src/`（发布为 `@react-antd-module/runtime`），其余包：
 
-- `packages/runtime/` → `@react-antd-admin/runtime`：框架运行时（路由/布局/store/请求/组件/module-loader）
-- `packages/shell/` → `@react-antd-admin/shell`：预构建宿主站点（dist + importmap，由共享表生成）
-- `packages/cli/` → `@react-antd-admin/cli`：`rad dev / build / info / merge`
+- `packages/runtime/` → `@react-antd-module/runtime`：框架运行时（路由/布局/store/请求/组件/module-loader）
+- `packages/shell/` → `@react-antd-module/shell`：预构建宿主站点（dist + importmap，由共享表生成）
+- `packages/cli/` → `@react-antd-module/cli`：`ram dev / build / info / merge`
 - `modules/`：自带模块（dogfooding）；`apps/playground/`：模拟外部模块工程
 
 `#src/*` alias 指向 `packages/runtime/src/*`（由 packages/runtime/package.json 的 imports 字段与 vite alias 双声明，A11）。

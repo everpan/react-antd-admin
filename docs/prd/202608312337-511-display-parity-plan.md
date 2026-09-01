@@ -10,7 +10,7 @@
 | 形态 | 5.11 基线 | 模块化后（main） | 定性 |
 |------|-----------|------------------|------|
 | dev（vite :3333） | ✓ 全正常（菜单中文、图标、头像照片、仪表盘） | ✓ **与基线肉眼零差异**（截图对比） | 无回归 |
-| playground（rad dev，新形态） | （无此形态） | ✓ 全正常（布局/头像人形图标/favicon，e2e 20/20） | 新形态正常 |
+| playground（ram dev，新形态） | （无此形态） | ✓ 全正常（布局/头像人形图标/favicon，e2e 20/20） | 新形态正常 |
 | 生产 preview | **半坏**：模块全 404（manifest 指向 dev 形态 `entry.ts`，生产无此文件）→ 菜单剩 fake 后端路由兜底，但**文案全是原始 i18n key**（`menu.home`/`menu.access`…）且**主内容区落「未知组件」错误页**（P3-5 缺陷模式） | **全坏**：模块产物裸说明符炸（`Failed to resolve module specifier "@ant-design/icons"`，宿主无 importmap）→ 模块路由全挂，**登录后无 header/菜单/头像/样式内容** | 两代生产形态均未工作；main 症状更重（用户报告的现象即此） |
 | 生产产物 importmap | 0 处 | 0 处 | 设计（modular-refactoring §5.4/5.5）从未落地，**非回归**：5.11 起生产模块加载就是坏的，坏法不同（5.11=404；main=裸说明符） |
 
@@ -60,7 +60,7 @@ App 链生产形态修复方向：
 **关键过程：**
 
 1. **取证（T1）**：playwright 探针逐形态采集样式表数/anticon 数/菜单图标数/avatar
-   HTML/img 加载态 + 截图。dev 链（5.11 dev / main dev / playground rad dev）显示
+   HTML/img 加载态 + 截图。dev 链（5.11 dev / main dev / playground ram dev）显示
    一致；生产链 5.11 半坏（manifest 指向 dev 形态 `entry.ts` 404 → 原始 i18n key +
    未知组件兜底页）、main 全坏（裸说明符炸 → 登录后无 header）。根因：importmap
    注入设计从未落地，**非回归**。

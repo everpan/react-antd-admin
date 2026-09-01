@@ -698,7 +698,7 @@ function isAfter(a, b) {
   return a.data.current.sortable.index < b.data.current.sortable.index;
 }
 
-// .rad-shim-dnd-kit-sortable.mjs
+// .ram-shim-dnd-kit-sortable.mjs
 var rad_shim_dnd_kit_sortable_default = void 0 ?? sortable_esm_exports;
 export {
   SortableContext,

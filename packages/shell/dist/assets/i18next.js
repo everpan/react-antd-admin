@@ -2299,7 +2299,7 @@ var hasLoadedNamespace = instance.hasLoadedNamespace;
 var loadNamespaces = instance.loadNamespaces;
 var loadLanguages = instance.loadLanguages;
 
-// .rad-shim-i18next.mjs
+// .ram-shim-i18next.mjs
 var rad_shim_i18next_default = instance ?? i18next_exports;
 export {
   changeLanguage,

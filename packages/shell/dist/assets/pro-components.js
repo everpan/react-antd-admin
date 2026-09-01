@@ -44355,7 +44355,7 @@ var version2 = {
   "@ant-design/pro-components": "3.0.0"
 };
 
-// .rad-shim-pro-components.mjs
+// .ram-shim-pro-components.mjs
 var rad_shim_pro_components_default = void 0 ?? es_exports;
 export {
   BaseProList,

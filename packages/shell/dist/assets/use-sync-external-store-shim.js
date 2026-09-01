@@ -107,7 +107,7 @@ var require_shim = __commonJS({
   }
 });
 
-// .rad-shim-use-sync-external-store-shim.mjs
+// .ram-shim-use-sync-external-store-shim.mjs
 var __m = __toESM(require_shim(), 1);
 var useSyncExternalStore2 = __m["useSyncExternalStore"];
 var rad_shim_use_sync_external_store_shim_default = __m.default ?? __m;

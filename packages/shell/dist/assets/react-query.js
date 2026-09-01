@@ -3006,7 +3006,7 @@ function useInfiniteQuery(options, queryClient) {
   return useBaseQuery(options, InfiniteQueryObserver, queryClient);
 }
 
-// .rad-shim-react-query.mjs
+// .ram-shim-react-query.mjs
 var rad_shim_react_query_default = void 0 ?? modern_exports;
 export {
   CancelledError,

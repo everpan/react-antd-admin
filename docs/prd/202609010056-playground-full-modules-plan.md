@@ -21,8 +21,8 @@
 ## 任务清单
 
 - [x] T1 `modules.config.ts` 登记全部 8 模块（顺序对齐根 manifest.json；demo 保留）
-- [x] T2 `rad build` 全量构建，处理报错（如有）
-- [x] T3 `rad dev` 起服 + Playwright 探针：菜单全量/图标/头像/样式/home 仪表盘图表
+- [x] T2 `ram build` 全量构建，处理报错（如有）
+- [x] T3 `ram dev` 起服 + Playwright 探针：菜单全量/图标/头像/样式/home 仪表盘图表
 - [x] T4 与 5.11 基线逐项对比，差异定因（缺陷则修，架构差异则记录）
 - [x] T5 回归（playground e2e + vitest）+ 文档回填 + 提交
 
@@ -30,7 +30,7 @@
 
 ```gherkin
 场景: playground 加载全部仓库模块
-  当 rad dev 启动并加载 modules.json
+  当 ram dev 启动并加载 modules.json
   那么 侧栏菜单出现 8 个模块的菜单树（首页/关于/个人中心/嵌套菜单/外部页面/权限演示/异常页面/系统管理）
   并且 每个菜单项渲染 icon（与 5.11 同）
   并且 顶栏头像为照片（非人形兜底）
@@ -53,7 +53,7 @@
 
 | # | 现象 | 定因 | 处置 |
 |---|------|------|------|
-| D1 | playground `/home` 图表接口 404，折线/饼图无数据 | rad dev 无后端边界（App 链由 vite fake server 提供） | 新增 rad dev 工程 mock 约定：`mock/*.mock.mjs`（TDD，`tests/cli-mock-routes.test.ts` 6 用例）；playground 补 home/notification mock。契约已写入模块开发手册 §3.4 |
+| D1 | playground `/home` 图表接口 404，折线/饼图无数据 | ram dev 无后端边界（App 链由 vite fake server 提供） | 新增 ram dev 工程 mock 约定：`mock/*.mock.mjs`（TDD，`tests/cli-mock-routes.test.ts` 6 用例）；playground 补 home/notification mock。契约已写入模块开发手册 §3.4 |
 | D2 | `/personal-center/my-profile` 在 importmap 资产链形态（playground 宿主 + App 链生产）整页崩（React #130，受控 Form.Item 链）；App 链 dev 正常 | **存量缺陷，非本次引入**。三形态对照定性；`@rc-component/form` 单例化假说经验证**不成立**（多副本非充分根因，已回退） | e2e `KNOWN_BROKEN_ROUTES` 显式豁免（遍历完全跳过点击）；**需独立任务追踪修复** |
 | D3 | 菜单出现幽灵项「演示详情」，点击落 `/system/detail` 404；`/demo/detail` 高亮丢失、手风琴收起当前组 | **demo 模块相对 path（`"detail"`）撞上框架两个绝对路径假设**：①菜单 key 原样用 `item.path`，点击 `navigate("detail")` 被相对解析到当前路由；②`addRouteIdByPath` 不拼相对 path，id 与菜单 key 空间错位。demo-only 时代两空间同为相对恰好对齐，多模块后必炸 | 框架侧修复两处（菜单生成器 + id 补齐统一拼父路径为绝对），TDD：`tests/menu-relative-path.test.ts` 6 用例；契约写入手册 §3.2 要点 4 |
 | D4 | `/about` 页宿主形态整页崩 | 模块直接解构 `getAppInfo().pkg.dependencies`，runtime 产物按 P6.5 刻意不注入该字段 | 模块侧 `?? {}` 空态防御；契约写入手册 §9（P6.5/AppInfo） |
@@ -74,7 +74,7 @@ menu-consistency M1/M3 在全量菜单下暴露两类**测试自身缺陷**，�
 | 套件 | 结果 |
 |------|------|
 | vitest 全量 | 257 passed（含新增 cli-mock 6 + menu-relative-path 6） |
-| e2e playground（rad dev 5174） | 21 passed, 1 skipped |
+| e2e playground（ram dev 5174） | 21 passed, 1 skipped |
 | e2e legacy（App 链 dev 3333） | 21 passed, 1 skipped |
 | eslint（改动文件）/ tsc --noEmit | 通过 |
 

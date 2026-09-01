@@ -13,7 +13,7 @@ __export(shallow_exports, {
 import { shallow } from "zustand/vanilla/shallow";
 import { useShallow } from "zustand/react/shallow";
 
-// .rad-shim-zustand-shallow.mjs
+// .ram-shim-zustand-shallow.mjs
 var rad_shim_zustand_shallow_default = void 0 ?? shallow_exports;
 export {
   rad_shim_zustand_shallow_default as default,

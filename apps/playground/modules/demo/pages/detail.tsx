@@ -1,4 +1,4 @@
-import { BasicContent } from "@react-antd-admin/runtime";
+import { BasicContent } from "@react-antd-module/runtime";
 import { Card, Input } from "antd";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
