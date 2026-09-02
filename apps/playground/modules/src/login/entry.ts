@@ -1,5 +1,18 @@
+import type { AuthType, UserInfoType } from "@react-antd-module/runtime";
 import { defineModule } from "@react-antd-module/runtime";
 import { lazy } from "react";
+
+/**
+ * 模块自有接口信封（与 runtime 主入口的响应包裹约定一致）。
+ * ApiResponse 未从 runtime 主入口导出，故在模块内声明最小信封，
+ * 不为此扩 runtime 出口（YAGNI）。
+ */
+interface ApiResponse<T> {
+	code: number
+	result: T
+	message: string
+	success: boolean
+}
 
 /**
  * 登录模块参考实现（login 模块化，P4）。
@@ -36,5 +49,27 @@ export default defineModule({
 	i18n: {
 		"zh-CN": () => import("./locales/zh-CN.json"),
 		"en-US": () => import("./locales/en-US.json"),
+	},
+	lifecycle: {
+		async onInit(ctx) {
+			// 必须先登记 apiPrefix，scoped request 才会收敛到 /login 命名空间；
+			// 否则请求报「未登记 API 前缀」错（见 scoped.ts）。
+			ctx.register.apiPrefix("/login");
+			ctx.register.authProvider({
+				async login(payload) {
+					const res = await ctx.utils.request.post("login", { json: payload }).json<ApiResponse<AuthType>>();
+					if (res.success === false)
+						throw new Error(res.message || "登录失败");
+					return res.result;
+				},
+				async logout() {
+					await ctx.utils.request.post("logout").json();
+				},
+				async getUserInfo() {
+					const res = await ctx.utils.request.get("user-info").json<ApiResponse<UserInfoType>>();
+					return res.result;
+				},
+			});
+		},
 	},
 });
