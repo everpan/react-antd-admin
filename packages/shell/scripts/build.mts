@@ -355,6 +355,52 @@ async function buildSubpathAsset(spec: string) {
 	await repairDynamicRequires(name, spec, shim);
 }
 
+/**
+ * 为 antd 父包的子路径（如 `antd/es/modal`）构建「从父包再导出」的 shim 资产。
+ *
+ * 背景（本轮 my-profile 白屏根因）：共享表把 `antd/es/*` 这类父包透传子路径映射到
+ * 父包资产 `antd.js`，而 `antd.js` 的 `default` 是**整个 antd 命名空间对象**
+ * （`export default (__ns.default ?? __ns)`）。消费方若用**默认导入**子路径
+ * （`antd-img-crop` 的 `import AntModal from "antd/es/modal"`），拿到的就是命名空间，
+ * 渲染时触发 React #130（got object）。
+ *
+ * shim 复用父包 `antd.js` 的单一实例（`makeExternalShared(spec)` 让 `antd` 走 importmap，
+ * 不重复打包 rc-*，满足 D5 单例），并把 `default` 修正为父包中对应的具名导出
+ * （`modal→Modal` / `upload→Upload` 等；`Cap`/`last` 双重候选 + 命名空间回退），
+ * 同时 `export *` 透传全部具名导出以兼容其它具名导入。
+ */
+async function buildAntdSubpathAsset(spec: string) {
+	const name = subpathAssetName(spec);
+	const last = spec.split("/").pop() || "";
+	const Cap = last.charAt(0).toUpperCase() + last.slice(1);
+	const shim = [
+		"import * as __antd from \"antd\";\n",
+		"export * from \"antd\";\n",
+		`const __d = __antd[${JSON.stringify(Cap)}] ?? __antd[${JSON.stringify(last)}] ?? __antd.default;\n`,
+		"export default __d;\n",
+	].join("");
+	const shimPath = resolve(shellDir, `.ram-shim-${name}.mjs`);
+	writeFileSync(shimPath, shim);
+	try {
+		await esbuild({
+			entryPoints: [shimPath],
+			bundle: true,
+			format: "esm",
+			platform: "browser",
+			target: "es2020",
+			define: { "process.env.NODE_ENV": JSON.stringify("production") },
+			plugins: [makeExternalShared(spec)],
+			outfile: resolve(assetsDir, `${name}.js`),
+			sourcemap: "external",
+			logLevel: "warning",
+		});
+	}
+	finally {
+		rmSync(shimPath, { force: true });
+	}
+	await repairDynamicRequires(name, spec, shim);
+}
+
 async function autoGenerateSubpathAssets(base: Record<string, string>): Promise<Record<string, string>> {
 	const map: Record<string, string> = { ...base };
 	const maxIter = 20;
@@ -378,6 +424,25 @@ async function autoGenerateSubpathAssets(base: Record<string, string>): Promise<
 				if (!parent)
 					continue; // 与共享表无关，交给浏览器/其它机制
 				if (SUBPATH_PARENT_REEXPORTS.has(parent.specifier) && parent.asset) {
+					if (parent.specifier === "antd") {
+						// antd 子路径（antd/es/*）不能用父包资产 antd.js 兜底：父包
+						// default 是整包命名空间，默认导入子路径会拿到命名空间而非组件，
+						// 触发 React #130。改为构建「从父包再导出」的 shim，复用单一实例
+						// 且提供正确的 default（见 buildAntdSubpathAsset）。
+						const name = subpathAssetName(spec);
+						if (!existsSync(resolve(assetsDir, `${name}.js`))) {
+							try {
+								await buildAntdSubpathAsset(spec);
+								console.log(`[shell] 自动构建 antd 子路径共享资产 ${name} ← ${spec}`);
+							}
+							catch (e) {
+								console.warn(`[shell] 跳过无法构建的 antd 子路径 ${spec}：${(e as Error).message}`);
+							}
+						}
+						map[spec] = `/assets/${name}.js`;
+						changed = true;
+						continue;
+					}
 					map[spec] = `/assets/${parent.asset}.js`;
 					changed = true;
 					continue;

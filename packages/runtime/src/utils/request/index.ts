@@ -9,6 +9,7 @@ import { AUTH_HEADER, LANG_HEADER, REFRESH_TOKEN_PATH } from "./constants";
 import { handleErrorResponse } from "./error-response";
 import { globalProgress } from "./global-progress";
 import { goLogin } from "./go-login";
+import { setHeaderSafe } from "./header-safe";
 import { refreshTokenAndRetry } from "./refresh";
 import { isAnonymousApi } from "./whitelist";
 
@@ -33,10 +34,10 @@ const defaultConfig: Options = {
 				const isWhiteRequest = isAnonymousApi(request.url);
 				if (!isWhiteRequest) {
 					const { token } = useAuthStore.getState();
-					request.headers.set(AUTH_HEADER, `Bearer ${token}`);
+					setHeaderSafe(request.headers, AUTH_HEADER, `Bearer ${token}`);
 				}
 				// 语言等所有的接口都需要携带
-				request.headers.set(LANG_HEADER, usePreferencesStore.getState().language);
+				setHeaderSafe(request.headers, LANG_HEADER, usePreferencesStore.getState().language);
 			},
 		],
 		afterResponse: [

@@ -174,7 +174,7 @@ function getAppInfo() {
 			"version": "0.1.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-09-02 17:47:33"
+		"lastBuildTime": "2026-09-02 20:21:21"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -8714,6 +8714,31 @@ var init_go_login = __esmMin((() => {
 	init_remember_route();
 }));
 //#endregion
+//#region src/utils/request/header-safe.ts
+/**
+* charset-agnostic 的 `Headers.set` 封装。
+*
+* HTTP 头名/值按 Fetch 规范只能容纳 Latin1（ISO-8859-1）字符；直接
+* `Headers.set` 遇到非 Latin1（如中文）字符会抛
+* "Failed to execute 'set' on 'Headers': String contains non ISO-8859-1 code point"。
+* 该异常会让整个请求拦截器（ky 的 beforeRequest）崩溃，进而阻断本次请求。
+*
+* 这里把值（以及头名）做百分号编码后再写入：ASCII 字符原样透传，
+* 不影响既有后端对 `Authorization` / `X-Lang` 等 ASCII 值的解析；
+* 非 Latin1 字符转为 `%XX`，由服务端按 `decodeURIComponent` 还原即可。
+* 如此 `ky` 设置请求头与字符集无关（charset-agnostic）。
+*/
+function isLatin1(value) {
+	for (const ch of value) if (ch.charCodeAt(0) > 255) return false;
+	return true;
+}
+function setHeaderSafe(headers, name, value) {
+	const safeName = isLatin1(name) ? name : encodeURIComponent(name);
+	const safeValue = isLatin1(value) ? value : encodeURIComponent(value);
+	headers.set(safeName, safeValue);
+}
+var init_header_safe = __esmMin((() => {}));
+//#endregion
 //#region src/utils/request/refresh.ts
 /**
 * 刷新token并重新发起请求
@@ -8736,7 +8761,7 @@ async function refreshTokenAndRetry(request, options, refreshToken) {
 				refreshToken: newRefreshToken
 			});
 			onRefreshed(newToken);
-			request.headers.set(AUTH_HEADER, `Bearer ${newToken}`);
+			setHeaderSafe(request.headers, AUTH_HEADER, `Bearer ${newToken}`);
 			return ky(request, options);
 		} catch (error) {
 			onRefreshFailed(error);
@@ -8748,7 +8773,7 @@ async function refreshTokenAndRetry(request, options, refreshToken) {
 	} else return new Promise((resolve, reject) => {
 		addRefreshSubscriber({
 			resolve: async (newToken) => {
-				request.headers.set(AUTH_HEADER, `Bearer ${newToken}`);
+				setHeaderSafe(request.headers, AUTH_HEADER, `Bearer ${newToken}`);
 				resolve(ky(request, options));
 			},
 			reject
@@ -8792,6 +8817,7 @@ var init_refresh = __esmMin((() => {
 	init_auth();
 	init_constants$4();
 	init_go_login();
+	init_header_safe();
 	isRefreshing = false;
 	refreshSubscribers = [];
 }));
@@ -8816,6 +8842,7 @@ var init_request = __esmMin((() => {
 	init_error_response();
 	init_global_progress();
 	init_go_login();
+	init_header_safe();
 	init_refresh();
 	init_whitelist();
 	defaultConfig = {
@@ -8827,9 +8854,9 @@ var init_request = __esmMin((() => {
 				if (!options.ignoreLoading) globalProgress.start();
 				if (!isAnonymousApi(request.url)) {
 					const { token } = useAuthStore.getState();
-					request.headers.set(AUTH_HEADER, `Bearer ${token}`);
+					setHeaderSafe(request.headers, AUTH_HEADER, `Bearer ${token}`);
 				}
-				request.headers.set(LANG_HEADER, usePreferencesStore.getState().language);
+				setHeaderSafe(request.headers, LANG_HEADER, usePreferencesStore.getState().language);
 			}],
 			afterResponse: [async ({ request, options, response }) => {
 				if (!options.ignoreLoading) globalProgress.done();

@@ -5,6 +5,7 @@ import { fetchRefreshToken } from "#src/api/user";
 import { useAuthStore } from "#src/store/auth";
 import { AUTH_HEADER } from "./constants";
 import { goLogin } from "./go-login";
+import { setHeaderSafe } from "./header-safe";
 
 let isRefreshing = false;
 
@@ -34,7 +35,7 @@ export async function refreshTokenAndRetry(request: Request, options: Options, r
 
 			// 设置请求的 Authorization 头部为新的 token
 			// 重试当前请求
-			request.headers.set(AUTH_HEADER, `Bearer ${newToken}`);
+			setHeaderSafe(request.headers, AUTH_HEADER, `Bearer ${newToken}`);
 			// 使用新的 token 重新发起请求
 			return ky(request, options);
 		}
@@ -59,7 +60,7 @@ export async function refreshTokenAndRetry(request: Request, options: Options, r
 			addRefreshSubscriber({
 				// 当 token 刷新成功后，将新的 token 设置到请求的 Authorization 头部，并重新发起请求
 				resolve: async (newToken) => {
-					request.headers.set(AUTH_HEADER, `Bearer ${newToken}`);
+					setHeaderSafe(request.headers, AUTH_HEADER, `Bearer ${newToken}`);
 					resolve(ky(request, options));
 				},
 				// 当 token 刷新失败时，拒绝当前 Promise
