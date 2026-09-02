@@ -1,6 +1,7 @@
+import type { AuthType } from "#src/api/user/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fetchLogin } from "#src/api/user";
+import { fetchLogin, fetchLogout } from "#src/api/user";
 import { useAuthStore } from "#src/store/auth";
 
 import {
@@ -112,5 +113,44 @@ describe("auth store 委托 provider（P5）", () => {
 
 		expect(fetchLogin).toHaveBeenCalled();
 		expect(useAuthStore.getState().token).toBe("builtin");
+	});
+
+	it("provider 登出抛错 → 本地状态仍被清空", async () => {
+		useAuthStore.setState({ token: "x", refreshToken: "xr" });
+		registerAuthProvider("m-lo", {
+			login: async () => ({ token: "", refreshToken: "" }),
+			logout: async () => { throw new Error("后端挂了"); },
+			getUserInfo: async () => ({ id: "", roles: [] }) as any,
+		});
+		await expect(useAuthStore.getState().logout()).rejects.toThrowError(/后端挂了/);
+		expect(useAuthStore.getState().token).toBe("");
+		expect(useAuthStore.getState().refreshToken).toBe("");
+		unregisterAuthProvider("m-lo");
+	});
+
+	it("无 provider 且 fetchLogout 失败 → 本地状态仍被清空", async () => {
+		useAuthStore.setState({ token: "y", refreshToken: "yr" });
+		vi.mocked(fetchLogout).mockRejectedValue(new Error("网络断了"));
+		await expect(useAuthStore.getState().logout()).rejects.toThrowError(/网络断了/);
+		expect(useAuthStore.getState().token).toBe("");
+		// 本用例未注册 provider：unregister 是 no-op，但保留无害
+		unregisterAuthProvider("m-net");
+	});
+
+	it("正常登出 → 走 provider 且清空", async () => {
+		useAuthStore.setState({ token: "z", refreshToken: "zr" });
+		const prov = { login: async () => ({ token: "", refreshToken: "" }), logout: vi.fn().mockResolvedValue(undefined), getUserInfo: async () => ({ id: "", roles: [] }) as any };
+		registerAuthProvider("m-ok", prov);
+		await useAuthStore.getState().logout();
+		expect(prov.logout).toHaveBeenCalled();
+		expect(useAuthStore.getState().token).toBe("");
+		unregisterAuthProvider("m-ok");
+	});
+
+	it("provider 返回未归一结构 → runtime 原样写入（路径零校验）", async () => {
+		registerAuthProvider("m-raw", { login: async () => ({ accessToken: "x" }) as unknown as AuthType, logout: async () => {}, getUserInfo: async () => ({ id: "", roles: [] }) as any });
+		await useAuthStore.getState().login({ username: "a", password: "b" });
+		expect((useAuthStore.getState() as Record<string, unknown>).accessToken).toBe("x");
+		unregisterAuthProvider("m-raw");
 	});
 });

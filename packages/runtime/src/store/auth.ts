@@ -36,6 +36,8 @@ export const useAuthStore = create<AuthState & AuthAction>()(
 			 */
 			const provider = getAuthProvider();
 			if (provider) {
+				// provider 路径不做 success/字段校验、不弹错误：校验与错误 UX 由 provider
+				// 自管（见 auth-provider.ts 契约），runtime 仅透传 rejection、统一写库。
 				set(await provider.login(loginPayload));
 				return;
 			}
@@ -54,15 +56,21 @@ export const useAuthStore = create<AuthState & AuthAction>()(
 
 		logout: async () => {
 			/**
-			 * 1. 退出登录
+			 * 1. 退出登录（provider 优先，未注册回落内置契约）
+			 * 2. 清空 token 等其他信息 —— 放 finally：后端不可用时本地也必须清
+			 *    （此前 await fetchLogout() 一抛错，reset() 完全不执行，
+			 *    playground 这类无后端场景点了退出登录毫无反应）
 			 */
-
-			await fetchLogout({ refreshToken: get().refreshToken });
-			/**
-			 * 2. 清空 token 等其他信息
-			 */
-
-			get().reset();
+			try {
+				const provider = getAuthProvider();
+				if (provider)
+					await provider.logout();
+				else
+					await fetchLogout({ refreshToken: get().refreshToken });
+			}
+			finally {
+				get().reset();
+			}
 		},
 
 		reset: () => {
