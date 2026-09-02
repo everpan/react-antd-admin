@@ -1,7 +1,7 @@
 import type { Options } from "ky";
 
 import ky from "ky";
-import { loginPath } from "#src/router/extra-info";
+import { isLoginPathname } from "#src/router/extra-info";
 import { useAuthStore } from "#src/store/auth";
 import { usePreferencesStore } from "#src/store/preferences";
 
@@ -10,9 +10,7 @@ import { handleErrorResponse } from "./error-response";
 import { globalProgress } from "./global-progress";
 import { goLogin } from "./go-login";
 import { refreshTokenAndRetry } from "./refresh";
-
-// 请求白名单, 请求白名单内的接口不需要携带 token
-const requestWhiteList = [loginPath];
+import { isAnonymousApi } from "./whitelist";
 
 // 请求超时时间
 const API_TIMEOUT = Number(import.meta.env.VITE_API_TIMEOUT) || 10000;
@@ -32,7 +30,7 @@ const defaultConfig: Options = {
 					globalProgress.start();
 				}
 				// 不需要携带 token 的请求
-				const isWhiteRequest = requestWhiteList.some(url => request.url.endsWith(url));
+				const isWhiteRequest = isAnonymousApi(request.url);
 				if (!isWhiteRequest) {
 					const { token } = useAuthStore.getState();
 					request.headers.set(AUTH_HEADER, `Bearer ${token}`);
@@ -60,7 +58,8 @@ const defaultConfig: Options = {
 						// If there is no refresh token, it means that the user has not logged in.
 						if (!refreshToken) {
 							// 如果页面的路由已经重定向到登录页，则不用跳转直接返回结果
-							if (location.pathname === loginPath) {
+							// （basename 感知：原始 location.pathname 含 BASE_URL，P0 修复）
+							if (isLoginPathname(location.pathname)) {
 								return response;
 							}
 							else {
