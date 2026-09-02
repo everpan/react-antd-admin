@@ -1,4 +1,4 @@
-import type { AuthType } from "#src/api/user/types";
+import type { AuthType, UserInfoType } from "#src/api/user/types";
 import { pathToFileURL } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -151,7 +151,7 @@ describe("auth store 委托 provider（P5）", () => {
 	it("provider 返回未归一结构 → runtime 原样写入（路径零校验）", async () => {
 		registerAuthProvider("m-raw", { login: async () => ({ accessToken: "x" }) as unknown as AuthType, logout: async () => {}, getUserInfo: async () => ({ id: "", roles: [] }) as any });
 		await useAuthStore.getState().login({ username: "a", password: "b" });
-		expect((useAuthStore.getState() as Record<string, unknown>).accessToken).toBe("x");
+		expect((useAuthStore.getState() as unknown as Record<string, unknown>).accessToken).toBe("x");
 		unregisterAuthProvider("m-raw");
 	});
 
@@ -164,7 +164,7 @@ describe("auth store 委托 provider（P5）", () => {
 	});
 
 	it("无 provider → 走内置 fetchUserInfo（取 response.result）", async () => {
-		vi.mocked(fetchUserInfo).mockResolvedValue({ code: 200, result: { id: "7", username: "Builtin", roles: [] }, message: "ok", success: true });
+		vi.mocked(fetchUserInfo).mockResolvedValue({ code: 200, result: { id: "7", username: "Builtin", roles: [] } as unknown as UserInfoType, message: "ok", success: true });
 		await useUserStore.getState().getUserInfo();
 		expect(useUserStore.getState().username).toBe("Builtin");
 	});
