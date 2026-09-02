@@ -1,4 +1,5 @@
 import type { AuthType } from "#src/api/user/types";
+import { pathToFileURL } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { fetchLogin, fetchLogout, fetchUserInfo } from "#src/api/user";
@@ -8,8 +9,9 @@ import {
 	registerAuthProvider,
 	unregisterAuthProvider,
 } from "#src/store/auth-provider";
-
 import { useUserStore } from "#src/store/user";
+
+import { PROJECT_ROOT } from "../helpers/paths";
 
 vi.hoisted(() => {
 	// happy-dom 的 localStorage 缺 setItem（同 auth-login-failure.test.ts），
@@ -134,8 +136,6 @@ describe("auth store 委托 provider（P5）", () => {
 		vi.mocked(fetchLogout).mockRejectedValue(new Error("网络断了"));
 		await expect(useAuthStore.getState().logout()).rejects.toThrowError(/网络断了/);
 		expect(useAuthStore.getState().token).toBe("");
-		// 本用例未注册 provider：unregister 是 no-op，但保留无害
-		unregisterAuthProvider("m-net");
 	});
 
 	it("正常登出 → 走 provider 且清空", async () => {
@@ -167,6 +167,25 @@ describe("auth store 委托 provider（P5）", () => {
 		vi.mocked(fetchUserInfo).mockResolvedValue({ code: 200, result: { id: "7", username: "Builtin", roles: [] }, message: "ok", success: true });
 		await useUserStore.getState().getUserInfo();
 		expect(useUserStore.getState().username).toBe("Builtin");
-		unregisterAuthProvider("m-userinfo-none"); // 本用例未注册 provider，no-op，保留无害
+	});
+});
+
+describe("auth provider 生命周期注入（P5）", () => {
+	beforeAll(async () => {
+		const { loadAll } = await import("#src/module-loader");
+		await loadAll({ modules: [{ name: "auth-provider-fixture", entry: pathToFileURL(`${PROJECT_ROOT}/tests/fixtures/auth-provider-entry.tsx`).href }] });
+	});
+
+	it("loadAll 后未渲染任何页面即可走 provider 登录/登出", async () => {
+		await useAuthStore.getState().login({ username: "admin", password: "x" });
+		expect(useAuthStore.getState().token).toBe("tok:admin");
+		await useAuthStore.getState().logout();
+		expect(useAuthStore.getState().token).toBe("");
+	});
+
+	it("unloadModule 后退回内置实现", async () => {
+		const { unloadModule } = await import("#src/module-loader");
+		await unloadModule("auth-provider-fixture");
+		expect(getAuthProvider()).toBeUndefined();
 	});
 });
