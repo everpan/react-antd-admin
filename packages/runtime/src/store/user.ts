@@ -2,6 +2,7 @@ import type { UserInfoType } from "#src/api/user/types";
 import { create } from "zustand";
 
 import { fetchUserInfo } from "#src/api/user";
+import { getAuthProvider } from "#src/store/auth-provider";
 
 const initialState = {
 	id: "",
@@ -27,11 +28,12 @@ export const useUserStore = create<UserState & UserAction>()(
 		...initialState,
 
 		getUserInfo: async () => {
-			const response = await fetchUserInfo();
-			set({
-				...response.result,
-			});
-			return response.result;
+			const provider = getAuthProvider();
+			const result = provider
+				? await provider.getUserInfo()
+				: (await fetchUserInfo()).result;
+			set({ ...result });
+			return result;
 		},
 
 		reset: () => {

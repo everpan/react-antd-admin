@@ -1,14 +1,15 @@
 import type { AuthType } from "#src/api/user/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fetchLogin, fetchLogout } from "#src/api/user";
+import { fetchLogin, fetchLogout, fetchUserInfo } from "#src/api/user";
 import { useAuthStore } from "#src/store/auth";
-
 import {
 	getAuthProvider,
 	registerAuthProvider,
 	unregisterAuthProvider,
 } from "#src/store/auth-provider";
+
+import { useUserStore } from "#src/store/user";
 
 vi.hoisted(() => {
 	// happy-dom 的 localStorage 缺 setItem（同 auth-login-failure.test.ts），
@@ -152,5 +153,20 @@ describe("auth store 委托 provider（P5）", () => {
 		await useAuthStore.getState().login({ username: "a", password: "b" });
 		expect((useAuthStore.getState() as Record<string, unknown>).accessToken).toBe("x");
 		unregisterAuthProvider("m-raw");
+	});
+
+	it("有 provider 时 getUserInfo 走 provider 并写入 user store", async () => {
+		registerAuthProvider("m-user", { login: async () => ({ token: "", refreshToken: "" }), logout: async () => {}, getUserInfo: async () => ({ id: "42", username: "Tom", roles: ["common"] }) as any });
+		const result = await useUserStore.getState().getUserInfo();
+		expect(result.id).toBe("42");
+		expect(useUserStore.getState().username).toBe("Tom");
+		unregisterAuthProvider("m-user");
+	});
+
+	it("无 provider → 走内置 fetchUserInfo（取 response.result）", async () => {
+		vi.mocked(fetchUserInfo).mockResolvedValue({ code: 200, result: { id: "7", username: "Builtin", roles: [] }, message: "ok", success: true });
+		await useUserStore.getState().getUserInfo();
+		expect(useUserStore.getState().username).toBe("Builtin");
+		unregisterAuthProvider("m-userinfo-none"); // 本用例未注册 provider，no-op，保留无害
 	});
 });
