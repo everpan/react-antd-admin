@@ -15,20 +15,57 @@
 
 ## Introduction
 
-react-antd-admin is a middle and back-office solution based on React Hooks, Vite, and TypeScript. It aims to help you quickly build enterprise-level middle and back-office projects, with no additional configuration required, ready to use out of the box.
+react-antd-module is a modular, middle-and-back-office solution built on top of [`react-antd-admin`](https://github.com/condorheroblog/react-antd-admin/). It helps you quickly scaffold enterprise-grade middle-and-back-office projects and is suited to multi-team development organized by domain modules.
 
 ## Features
 
-- Cutting-edge technology stack: [React Hooks](https://react.dev/)、[TypeScript](https://www.typescriptlang.org/)、[Vite](https://vitejs.dev/)、[ant design](https://ant.design/)、[React Router](https://reactrouter.com/)、[Tailwind CSS](https://tailwindcss.com/docs/installation)
-- Intuitive state management library: [Zustand](https://zustand-demo.pmnd.rs/)
+- Cutting-edge tech stack: [React Hooks](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Vite](https://vitejs.dev/), [ant design](https://ant.design/index-cn/), [React Router](https://reactrouter.com/), [Tailwind CSS](https://tailwindcss.com/docs/installation)
+- Intuitive state management: [Zustand](https://zustand-demo.pmnd.rs/)
 - Internationalization: [I18n](https://react.i18next.com/)
-- Fetch requests: [Ky](https://github.com/sindresorhus/ky)、[@tanstack/react-query](https://tanstack.com/query/latest/docs/framework/react/overview)
+- Fetch requests: [Ky](https://github.com/sindresorhus/ky), [@tanstack/react-query](https://tanstack.com/query/latest/docs/framework/react/overview)
 - Code formatting: [ESLint Flat Config](https://eslint.org/docs/latest/use/configure/configuration-files-new/)
 - Route-level component caching: [keepalive-for-react](https://github.com/irychen/keepalive-for-react)
-- API Mocking: [vite-plugin-fake-server](https://github.com/condorheroblog/vite-plugin-fake-server)
-- **Modular Architecture**: Feature pages are self-contained modules that can be developed and released independently
-- Permission Routing: Supports both frontend static routing and backend dynamic routing, with three-level access control (route / menu / button)
-- Theme Configuration: Built-in multiple theme configurations, supports dark theme, and unified color system for Ant Design and Tailwind CSS
+- API mocking: [vite-plugin-fake-server](https://github.com/condorheroblog/vite-plugin-fake-server)
+- **Modular architecture**: business pages are organized as independent modules that can be developed and released independently
+- Permission routing: supports both frontend static routing and backend dynamic routing, with three-level access control (route / menu / button)
+- Theme configuration: built-in multiple theme configurations, supports dark theme, unified color system for Ant Design and Tailwind CSS
+- Modular loading with version management
+
+## Core Features Brought by Modularization
+
+1. Runtime remote module loading (business decoupled from the host)
+   The host (shell) no longer bundles any business code — it only "loads modules + renders the container". Business modules declare their metadata via `defineModule`, and `loadAll(manifest)` lazily fetches the registered `/modules/<name>/<version>/entry.js` from `modules.json` at runtime. Modules can be developed, deployed, and versioned independently; the host and business are fully decoupled and never block each other's release cadence.
+
+2. Shared-dependency single instance (importmap + single-instance constraint)
+   `react` / `react-dom` / `antd` / `@ant-design/pro-components` / `runtime` and other shared dependencies are externalized at build time by `generateImportmap()` into exact `importmap` keys. Both the host and every module resolve through the same ESM asset, guaranteeing a single instance site-wide. This fundamentally eliminates the classic micro-frontend pitfalls of "multiple React / multiple antd instances" — broken context, failed hooks, and `findDOMNode` warnings.
+
+3. Clear host/business layout boundary (no double nesting)
+   The host route root only renders `<Outlet/>`; the entire site chrome (sidebar / header / tabs / menu) is provided entirely by the module's own `ContainerLayout` (`host.tsx` deliberately does not overlay a host sidebar). After modularization, "the framework only manages the container, the module manages all presentation" — there is no chaotic double-nested layout of host sidebar + module sidebar, and theme / dark mode / navigation mode are unified by the module, consistent with the App chain.
+
+4. Build-time dependency closure + export-completeness gate (white screen shifted left)
+   `autoGenerateSubpathAssets` uses fixed-point iteration to automatically discover deep-path bare specifiers inside shared assets (e.g. `antd/es/modal`, `dayjs/locale/zh-cn`) and build "re-export-from-parent" subpath assets on the fly (this `antd/es/*` fix is exactly this mechanism). The `assertSharedExportsComplete` gate intercepts three classes of white-screen root causes at build time: missing named exports, `Failed to resolve module specifier`, and un-shimmed dynamic `require`. Entire runtime white screens are shifted left to a build-time failure that CI blocks directly.
+
+5. Security in depth (trust root + L2 integrity + CSP)
+   - Trust root: `assertTrustedModules` validates `modules.json` against a source whitelist before loading / preloading / injecting CSS;
+   - L2 integrity: non-lazy chunks are preloaded carrying build-time `sha384` integrity + `modulepreload`, verified by the browser before load;
+   - CSP: the `importmap` and `<meta http-equiv="Content-Security-Policy">` are injected with a random `nonce`, rotated on every build.
+   The modular loading chain is controlled on three layers: who may be loaded, whether the load is tampered with, and whether it is injected.
+
+6. Version-matrix gate and peerRuntime contract (anti-drift)
+   `checkSharedVersions` compares the host's `versions.json` against each module's `peerRuntime`; shared-dependency version drift is rejected outright at the `ram build` stage. Modules and host align via a "version contract", avoiding the hidden incompatibility of "host upgraded antd while the module still runs the old antd single instance".
+
+7. Heterogeneous auth-backend adaptation (normalization, zero module changes)
+   The request layer `request/index.ts` uses a whitelist (`isAnonymousApi` / `anonymousApiPrefix`) to distinguish anonymous channels; it normalizes envelopes uniformly (oj's `code/data/access_token` snake_case → `code/result/token` camelCase), so consumers (auth-guard, refresh, user store) integrate different auth backends with zero changes. Modules may also register their own auth provider, with the framework falling back to the built-in `auth/login` — auth capability is decoupled from the modular system.
+
+8. Type-driven module contract (strongly-typed `defineModule`)
+   A module entry strongly types its declaration via `defineModule({ name, version, routes, config, lifecycle, apiPrefix })`; routes, i18n, lifecycle, and dependencies are constrained at compile time. Modules never import each other — they communicate only through the contract, which naturally supports the "repository-level modules (`/modules/*`) dogfooding alongside in-project modules (`modules/src`)" development model.
+
+9. Defensive, charset-agnostic request layer (robustness as a decoupling win)
+   The `setHeaderSafe` wrapper added in this fix automatically percent-encodes non-Latin1 values such as `Authorization` / `X-Lang`, making ky's header setting charset-agnostic — modules passing any language / username will never crash the request interceptor. This "framework-level兜底, business-unaware" defensive design means module developers need not care about the host runtime's charset / header boundaries.
+
+---
+
+In one sentence: after the modularization refactor, the project forms a micro-frontend architecture of "host only as container, self-contained modules, single shared-dependency instance, build-time closed-loop verification, trustworthy and verifiable loading chain, and normalizable auth adaptation" — business modules are highly decoupled from the framework and from each other, and a large class of runtime white-screen / security / version risks are shifted left to the build stage and the contract layer.
 
 ## Modular Architecture
 
@@ -36,7 +73,7 @@ Feature pages are organized as independent modules under `modules/`. Each module
 
 ```
 modules/
-├── home/              # Home page
+├── home/              # Home page module
 │   ├── entry.ts       # Single source of truth: name, version, routes, i18n
 │   ├── pages/         # Page components
 │   └── locales/       # i18n resources (zh-CN.json, en-US.json)
@@ -80,9 +117,7 @@ corepack enable
 pnpm i # If you haven't installed pnpm before, run: npm install -g pnpm
 ```
 
-## Development
-
-### Install
+### Development
 
 ```bash
 corepack enable
@@ -128,26 +163,26 @@ The build output is by default in the build folder.
 pnpm preview
 ```
 
-## Security & Publishing（P6）
+## Security & Publishing (P6)
 
-### 残留风险 R13（明示）
+### Residual risk R13 (explicit)
 
-清单托管为同源静态文件且**不实施签名**（O3 已定：同组织不同团队，签名收益不抵成本）。信任根退化为「CI 单一出口 + 清单与产物分目录分发布凭据 + moduleOrigins 来源白名单 + L2 完整性 + CSP」。**接受残余风险：能写清单目录的凭据等同于可注入任意模块代码**——请确保清单目录仅 CI 可写。
+The manifest is hosted as a same-origin static file and is **not signed** (O3 already decided: same org, different teams — the cost of signing outweighs the benefit). The trust root degrades to "single CI egress + manifest and artifacts in separate directories with separate publish credentials + `moduleOrigins` source whitelist + L2 integrity + CSP". **Residual risk accepted: credentials that can write to the manifest directory are equivalent to being able to inject arbitrary module code** — ensure only CI can write to the manifest directory.
 
-### 发布 checklist（@react-antd-module/runtime / cli）
+### Publish checklist (@react-antd-module/runtime / cli)
 
-- 安装走 `.npmrc` 镜像加速；**发布**经各包 `publishConfig.registry` 锁定官方源，防误发
-- npm 账号开启 **2FA**（账号设置，一次性）
-- 发布命令统一：`pnpm --filter @react-antd-module/<pkg> publish --provenance --access public`
-- CI 安装统一 `pnpm install --frozen-lockfile`，lockfile 变更必须过评审
-- 定期 `npm audit signatures` 校验依赖签名链
-- 防 typosquat：外部团队安装时核对 scope `@react-antd-module/*` 拼写（官方源唯一发布方）
+- Installation uses `.npmrc` mirror acceleration; **publishing** is locked to the official registry via each package's `publishConfig.registry` to prevent mis-publishing
+- Enable **2FA** on the npm account (account settings, one-time)
+- Unified publish command: `pnpm --filter @react-antd-module/<pkg> publish --provenance --access public`
+- CI install unified as `pnpm install --frozen-lockfile`; lockfile changes must pass review
+- Periodically run `npm audit signatures` to verify the dependency signature chain
+- Anti-typosquat: external teams should verify the `@react-antd-module/*` scope spelling when installing (official source is the only publisher)
 
 ## Credits
 
 Thanks to the following excellent projects for providing inspiration:
 
-- [vue-vben-admin](https://github.com/vbenjs/vue-vben-admin)  for design inspiration
+- [vue-vben-admin](https://github.com/vbenjs/vue-vben-admin) for design inspiration
 - [vue-pure-admin](https://github.com/pure-admin/vue-pure-admin) for business logic inspiration
 
 ## Star History
