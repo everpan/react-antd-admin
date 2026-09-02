@@ -79,12 +79,14 @@ Feature: fullscreen 布局
 
 ### 任务
 
-- [ ] T1.1 用例先行：fullscreen 渲染测试（参照现有布局测试形态）
-- [ ] T1.2 `resolveLayoutComponent` switch → 注册表 `Record`（既有 case 平移，回归测试保行为）
-- [ ] T1.3 `RouteMeta` 扩 `layout: "fullscreen"` / `login?: boolean` / `internal?: boolean`（全可选）
-- [ ] T1.4 `layout/fullscreen-layout/index.tsx`：从 `pages/login/index.tsx` 平移外壳（视口/品牌区/工具区/页脚），内容区渲染 `Outlet`
+- [x] T1.1 用例先行：`tests/runtime/fullscreen-layout.test.tsx`（解析 + DOM 无 sidebar）
+- [x] T1.2 `resolveLayoutComponent` switch → 注册表 `layoutRegistry`（既有 case 平移，`resolve-layout.test.ts` 回归保行为）
+- [x] T1.3 `RouteMeta` 扩 `layout: "fullscreen"` / `login?: boolean` / `internal?: boolean`（全可选）
+- [x] T1.4 `layout/fullscreen-layout/index.tsx`：外壳自 `pages/login` 平移（视口/品牌区/工具区/横幅列/页脚 + Outlet）
 
-**预计耗时**：1.5 h
+**验证**：342 全绿 + typecheck 干净 + lint 0 error（59 warnings 为既有基线）
+
+**实际耗时**：约 0.5 h（预计 1.5 h；外壳平移一次到位，无返工）
 
 ---
 
