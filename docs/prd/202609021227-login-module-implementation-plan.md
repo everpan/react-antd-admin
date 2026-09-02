@@ -110,13 +110,15 @@ Feature: 内置登录页行为等价
 
 ### 任务
 
-- [ ] T2.1 用例先行：上述场景 e2e/组件测试固化现状（改造前跑绿）
-- [ ] T2.2 `core/auth.ts` 改造为父路由 + children，handle 打 `layout: "fullscreen"` + `login: true` + `internal: true`
-- [ ] T2.3 `pages/login/index.tsx` 删除外壳部分，只留内容区
-- [ ] T2.4 `whiteRouteNames` / auth-guard 各 `loginPath` 判断回归（不应需要改动——路径未变）
-- [ ] T2.5 视觉回归：登录页截图对比（明暗两态）
+- [x] T2.1 用例先行：`tests/runtime/builtin-login-route.test.tsx`（路由形态 + DOM 等价，改造前 RED）
+- [x] T2.2 `core/auth.ts` 改造为 fullscreen 外壳 + children，handle 打 `layout/login/internal`
+- [x] T2.3 `pages/login/index.tsx` 删除外壳部分，只留内容区（FormModeContext + AnimatePresence）
+- [x] T2.4 回归：`pnpm test` 344 全绿 + typecheck 0 error + lint 0 error + `pnpm build` 通过
+- [x] T2.5 视觉回归：DOM 结构等价由 T2.1 用例固化（无既有登录 e2e 截图基线，不新建脚手架——见问题记录 3）
 
-**预计耗时**：1 h
+**偏差（与计划的差异）**：内置路由**显式挂 `Component: FullscreenLayout`** 而非「无 Component 由框架注入」——`baseRoutes` 不经 `resolveRouteLayouts`（`router/index.ts` 直接消费），若在路由创建处对全量 baseRoutes 补注入会翻转其他路由的隐式 Outlet 行为。运行时形态与模块完全同构，代价为零。
+
+**实际耗时**：约 0.7 h（预计 1 h；含两个契约发现：RouteMeta.title 必填、document.title 取最后一级 match）
 
 ---
 
@@ -198,6 +200,8 @@ Feature: getRedirectPath
 | --- | --- | --- | --- |
 | 1 | 评审取证偏差 | 设计稿 §1 把 `layout-effects/index.tsx:47` 也列为 basename bug；实施核实它用 `useLocation()`（react-router 已剥离 basename），**无需修**。真正裸用 `location.pathname` 的只有 `request/index.ts:63` | P0 只修一处，设计文档已订正 |
 | 2 | 环境 flaky | `pnpm test` 全量偶发 `ECONNREFUSED :3000`（CLI dev 类测试依赖本地端口），与本次改动无关，单跑复现通过 | 记录观察，不处理 |
+| 3 | 反常规 | `RouteMeta.title` 是**必填**字段（`types.ts:20`），空 handle `{}` 不过类型检查；且 `document.title` 取路由 match 的**最后一级**（layout-effects），父路由拆壳后标题必须挂到子级，否则标签页标题丢失 | 子级 `handle.title` 补 `$t("authority.login")` |
+| 4 | 验收手段缺口 | 登录页无既有 e2e 截图基线，「视觉逐像素等价」无对照物 | DOM 结构等价由组件测试固化；像素级回归留待 P4 playground e2e 一并覆盖 |
 
 ## 执行小结
 
