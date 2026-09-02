@@ -342,7 +342,8 @@ onInit: async (ctx) => {
   `try { ... } finally { reset() }`，无论成功失败都清 token / 用户 / 权限 / tabs。
 
 参考实现：`apps/playground/modules/src/login/entry.ts` + `mock/auth.mock.mjs`；
-设计细节见 `202609021446-auth-provider-injection-design.md`。
+设计细节与**流程图（mermaid）**见 `202609021446-auth-provider-injection-design.md` §5.1
+（登录 / 登出 / 取用户信息 + runtime↔login 模块交互）。
 
 ## 4. 构建与发布
 

@@ -190,6 +190,100 @@ lifecycle: {
    不会自动触发、`host.tsx:50-58` 播种的演示用户仍在。可验证的是：登录后 token 真实写入
    persist、登出后 token 与播种用户被 `reset()` 一并清空。
 
+### 5.1 流程图（登录 / 登出 / 取用户信息 + runtime↔login 交互）
+
+> 下列 mermaid 图与 §3 / §4 / §5 的实现一一对应，可对照阅读。
+
+**图 1 · 注册时序（模块经 `onInit` 把 provider 交给 runtime）**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Shell as 宿主 host（loadAll）
+    participant Loader as module-loader
+    participant Login as login 模块 entry.ts
+    participant Reg as auth-provider 注册表
+    participant Store as useAuthStore / useUserStore
+
+    Shell->>Loader: loadAll() → Phase 3 执行生命周期
+    Loader->>Login: onInit(ctx)
+    Login->>Login: ctx.register.apiPrefix("/login")
+    Login->>Loader: ctx.register.authProvider(provider)
+    Loader->>Reg: registerAuthProvider("login", provider)
+    Note over Reg: 先到先得；已有注册者则 console.warn 忽略
+    Reg-->>Store: getAuthProvider() 此后返回该 provider
+    Note over Shell,Store: 注册早于 createBrowserRouter 与 AuthGuard 首渲染
+```
+
+**图 2 · 登录流程**
+
+```mermaid
+flowchart TD
+    A[登录页调用 useAuthStore.s.login] --> B{getAuthProvider exist?}
+    B -- 有 provider --> C[provider.login payload]
+    C --> C1[ctx.utils.request.post login]
+    C1 --> C2[mock /login/login 返回 token]
+    C2 --> D[set token/refreshToken 写库 + persist]
+    B -- 无 provider 回落内置 --> E[fetchLogin auth/login]
+    E --> E1{success === false?}
+    E1 -- 是 --> X[message.error + throw 红条]
+    E1 -- 否 --> D
+    D --> F[页面 navigate getRedirectPath]
+    C -. 抛错 .-> X
+```
+
+**图 3 · 登出流程（本地清理不被后端失败阻塞）**
+
+```mermaid
+flowchart TD
+    A[顶栏 user-menu 调 useAuthStore.s.logout] --> B{try}
+    B --> C{getAuthProvider exist?}
+    C -- 有 provider --> D[provider.logout]
+    D --> D1[ctx.utils.request.post logout → mock /login/logout]
+    C -- 无 provider --> E[fetchLogout auth/logout]
+    D -. 抛错 .-> F
+    E -. 抛错 .-> F
+    F[finally: get.reset] --> G[清 token/用户/权限/tabs]
+    G --> H[navigate loginPath]
+```
+
+**图 4 · 取用户信息流程（AuthGuard / 宿主触发）**
+
+```mermaid
+flowchart TD
+    A[AuthGuard effect 或宿主调 getUserInfo] --> B{getAuthProvider exist?}
+    B -- 有 provider --> C[provider.getUserInfo]
+    C --> C1[ctx.utils.request.get user-info → mock /login/user-info]
+    C1 --> D[set 归一后 UserInfoType]
+    B -- 无 provider 回落内置 --> E[fetchUserInfo web/user-info]
+    E --> D
+```
+
+**图 5 · runtime 与 login 模块职责边界**
+
+```mermaid
+flowchart LR
+    subgraph LoginModule["login 模块（异构后端适配者）"]
+        L1[归一后端信封/字段/业务码]
+        L2[实现 login/logout/getUserInfo]
+        L3[登记 apiPrefix /login]
+    end
+    subgraph Runtime["runtime（唯一写入点 + 仲裁）"]
+        R1[auth-provider 注册表 先到先得]
+        R2[store 委托: 有 provider 走 provider]
+        R3[logout 的 try/finally 无条件 reset]
+    end
+    subgraph Backend["mock /login/*（演示后端）"]
+        B1[/login/login/]
+        B2[/login/logout/]
+        B3[/login/user-info/]
+    end
+    L2 -->|onInit 注册| R1
+    L3 -->|scoped request 前缀| B1 & B2 & B3
+    R2 -->|调用| L2
+    R1 -. 供 getAuthProvider .-> R2
+```
+
 ## 6. 测试
 
 新增 `tests/runtime/auth-provider.test.ts`：
