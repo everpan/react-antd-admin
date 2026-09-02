@@ -458,19 +458,19 @@ lifecycle: {
 	async onInit(ctx) {
 		ctx.register.apiPrefix("/login");
 		ctx.register.authProvider({
-			async login(payload) {
-				const res = await ctx.utils.request.post("login", { json: payload }).json<ApiResponse<AuthType>>();
-				if (res.success === false)
-					throw new Error(res.message || "登录失败");
-				return res.result;
-			},
-			async logout() {
-				await ctx.utils.request.post("logout").json();
-			},
-			async getUserInfo() {
-				const res = await ctx.utils.request.get("user-info").json<ApiResponse<UserInfoType>>();
-				return res.result;
-			},
+		async login(payload) {
+			const res = await ctx.utils.request.post("login/login", { json: payload }).json<ApiResponse<AuthType>>();
+			if (res.success === false)
+				throw new Error(res.message || "登录失败");
+			return res.result;
+		},
+		async logout() {
+			await ctx.utils.request.post("login/logout").json();
+		},
+		async getUserInfo() {
+			const res = await ctx.utils.request.get("login/user-info").json<ApiResponse<UserInfoType>>();
+			return res.result;
+		},
 		});
 	},
 },
@@ -507,6 +507,14 @@ curl -s -X POST localhost:5174/api/login/login -H 'content-type: application/jso
 npx vitest run tests/runtime tests/module tests/shell      # 目标：全绿（基线 97 + 新增）
 pnpm typecheck                                             # tsc --noEmit，守住类型出口面
 npx eslint packages/runtime/src/store/auth-provider.ts apps/playground/modules/src/login/entry.ts --fix
+```
+
+**Step 1.5：dist 同步（收尾必做，见设计文档 §10）**——改 `packages/runtime/src` 后必须重建并提交 dist，否则 checkout 后 dev 加载旧 `runtime.js` 缺 `authProvider` 方法：
+
+```bash
+pnpm --filter @react-antd-module/runtime build
+pnpm --filter @react-antd-module/shell build
+git add packages/runtime/dist packages/shell/dist   # 与源码一起提交
 ```
 
 **Step 2：** 手册补章节，内容要点（对齐手册既有编号风格）：

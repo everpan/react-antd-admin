@@ -345,6 +345,11 @@ onInit: async (ctx) => {
 设计细节与**流程图（mermaid）**见 `202609021446-auth-provider-injection-design.md` §5.1
 （登录 / 登出 / 取用户信息 + runtime↔login 模块交互）。
 
+> **框架开发者注意**：`packages/runtime/src` 改动后必须重建并提交
+> `packages/runtime/dist` + `packages/shell/dist`（见设计文档 §10），否则消费方
+> dev 会因缺新方法而报 `ctx.register.authProvider is not a function`。外部模块
+> 开发者不受影响——你只依赖已发布的 `AuthProvider` 类型。
+
 ## 4. 构建与发布
 
 ```bash

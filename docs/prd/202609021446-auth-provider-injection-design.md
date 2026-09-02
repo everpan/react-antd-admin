@@ -327,67 +327,28 @@ flowchart LR
 | 匿名前缀通道（前作 §5 已记） | 模块自有登录接口需要免 token 头、401 不 refresh | `ctx.register.anonymousApiPrefix()` |
 | provider 热替换 | 出现运行时切换认证源的场景 | 注册表补版本号与显式覆盖 API |
 
-## 10. 流程与交互图（mermaid）
+## 10. 构建产物同步（收尾必做）
 
-### 10.1 登录 / 登出时序（runtime 视角）
+`packages/runtime/dist` 与 `packages/shell/dist` 被 `.gitignore` 显式
+`!` 排除忽略、**随仓库分发**（外部工程 / playground 把它们当 npm 依赖直接
+消费 `dist/`，不靠本地 build）。因此：
 
-含「已注册 provider → 走模块实现；未注册 → 回落内置」的分支。
+- **改 `packages/runtime/src/**` 后，必须重建并提交 dist**，否则 checkout 后
+  dev 加载的是旧 `runtime.js`，缺新增的导出/方法，模块 `onInit` 会抛
+  `ctx.register.authProvider is not a function` 这类「方法不存在」错误。
+- 重建命令：
+  `pnpm --filter @react-antd-module/runtime build && pnpm --filter @react-antd-module/shell build`
+  再把两个 dist 与源码一起提交。
+- 反之，为「干净提交」而对 `packages/*/dist` 做 `git checkout --` 还原，会回退
+  到旧 dist，dev 立刻复现上述报错——此时应**重建而非还原**。
 
-```mermaid
-sequenceDiagram
-    participant U as 用户
-    participant P as 登录页/顶栏(user-menu)
-    participant S as useAuthStore/useUserStore
-    participant R as 注册表 getAuthProvider
-    participant M as 模块 provider（onInit 注册）
-    participant B as 内置 fetchLogin/fetchLogout/fetchUserInfo
+> 流程图的唯一权威位置是 **§5.1**（含登录 / 登出 / 取用户信息 + runtime↔login
+> 交互 5 张图），本节不再重复贴图。
 
-    Note over P,R: 有 provider → 走 M；无 provider → 走 B
-    U->>P: 提交登录
-    P->>S: login(payload)
-    S->>R: 取 provider
-    alt 已注册 provider
-        S->>M: provider.login(payload)
-        M-->>S: AuthType { token, refreshToken }
-    else 未注册
-        S->>B: fetchLogin(payload)
-        B-->>S: 归一后的 token
-    end
-    S->>S: set(token) 写入 persist
-    S-->>P: 返回
-    P->>U: 跳转 redirect 路径
+## 11. 已知问题与修复记录
 
-    U->>P: 点击退出登录
-    P->>S: logout()
-    S->>R: 取 provider
-    alt 已注册 provider
-        S->>M: provider.logout()
-    else 未注册
-        S->>B: fetchLogout()
-    end
-    S->>S: finally { reset() } 清 token/用户/权限/tabs
-```
+| 问题 | 现象 | 根因 | 修复 |
+| --- | --- | --- | --- |
+| login provider 请求越界 | 点退出登录报 `[module] 模块 "login" 请求越界：logout 不在其登记前缀 /login 内` | scoped request 的 D11 守卫要求路径落在前缀内；原实现 `post("logout")``/get("user-info")` 归一化为 `/logout``/user-info` 越界（`login` 因等于边界侥幸过，但也没命中 mock 的 `/login/login`） | provider 改为子路径 `login/login``/login/logout``/login/user-info`（commit `ac9b5d4`） |
+| dev 加载缺 authProvider | `onInit` 抛 `ctx.register.authProvider is not a function` | P5 源码提交时未同步 dist，checkout 后 `runtime.js` 无该方法 | 重建并提交 `packages/runtime/dist` + `packages/shell/dist`（commit `f1dc7b2`） |
 
-### 10.2 runtime 与 login 模块的交互（生命周期 + 注册表）
-
-重点表达「模块在 `onInit` 注册、runtime store 委托、先到先得、unload 清理」。
-
-```mermaid
-flowchart TD
-    A[login 模块 entry.ts] -->|defineModule| B[模块清单]
-    B -->|loadAll| C[module-loader]
-    C -->|Phase 3 生命周期| D[onInit ctx]
-    D -->|ctx.register.apiPrefix /login| E[scoped request 收敛]
-    D -->|ctx.register.authProvider| F[注册表 current = 本模块]
-    F -->|先到先得| G{已有持有者?}
-    G -->|否| H[登记成功]
-    G -->|是| I[忽略 + console.warn]
-    F -.->|unloadModule 时| J[unregisterAuthProvider 清理]
-
-    K[顶栏 user-menu / 登录页] -->|login/logout/getUserInfo| L[useAuthStore / useUserStore]
-    L -->|getAuthProvider| F
-    F -->|命中| M[模块 provider 实现]
-    F -->|未命中| N[内置 fetchLogin/fetchLogout/fetchUserInfo]
-    M -->|统一写库| L
-    N -->|统一写库| L
-```
