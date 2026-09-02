@@ -56,5 +56,11 @@ export default {
 			entry: "./modules/src/demo/entry.ts",
 			enabled: true,
 		},
+		{
+			// 登录模块参考实现（P4）：替换内置 /login 兜底页
+			name: "login",
+			entry: "./modules/src/login/entry.ts",
+			enabled: true,
+		},
 	],
 };

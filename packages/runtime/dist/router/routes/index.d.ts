@@ -19,7 +19,9 @@ declare const baseRoutes: ({
         roles?: string[];
         permissions?: string[];
         keepAlive?: boolean;
-        layout?: "container" | "parent" | "none";
+        layout?: "container" | "parent" | "fullscreen" | "none";
+        login?: boolean;
+        internal?: boolean;
         hideInMenu?: boolean;
         iframeLink?: string;
         externalLink?: string;
@@ -65,7 +67,9 @@ declare const baseRoutes: ({
         roles?: string[];
         permissions?: string[];
         keepAlive?: boolean;
-        layout?: "container" | "parent" | "none";
+        layout?: "container" | "parent" | "fullscreen" | "none";
+        login?: boolean;
+        internal?: boolean;
         hideInMenu?: boolean;
         iframeLink?: string;
         externalLink?: string;

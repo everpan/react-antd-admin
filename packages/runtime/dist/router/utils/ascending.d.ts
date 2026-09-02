@@ -8,7 +8,9 @@ export declare function ascending(arr: AppRouteRecordRaw[]): ({
         roles?: string[];
         permissions?: string[];
         keepAlive?: boolean;
-        layout?: "container" | "parent" | "none";
+        layout?: "container" | "parent" | "fullscreen" | "none";
+        login?: boolean;
+        internal?: boolean;
         hideInMenu?: boolean;
         iframeLink?: string;
         externalLink?: string;
@@ -54,7 +56,9 @@ export declare function ascending(arr: AppRouteRecordRaw[]): ({
         roles?: string[];
         permissions?: string[];
         keepAlive?: boolean;
-        layout?: "container" | "parent" | "none";
+        layout?: "container" | "parent" | "fullscreen" | "none";
+        login?: boolean;
+        internal?: boolean;
         hideInMenu?: boolean;
         iframeLink?: string;
         externalLink?: string;

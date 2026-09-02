@@ -4,8 +4,12 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Outlet } from "react-router";
 
-import Banner from "#src/assets/svg/banner.svg?react";
-import logo from "#src/assets/svg/logo.svg?url";
+// ?inline 而非 ?react/?url：runtime lib 构建（packages/runtime/vite.config.ts）
+// 无 svgr 且 assetsInlineLimit=0 禁外部资产——?inline 产 data URI，
+// 在 importmap 宿主（shell/外部工程）中自包含可渲染（P4 实测：?react 在
+// dist 退化为字符串，React createElement(data:image/…) 抛 InvalidCharacterError）
+import bannerUrl from "#src/assets/svg/banner.svg?inline";
+import logoUrl from "#src/assets/svg/logo.svg?inline";
 import { useLayoutMenu } from "#src/hooks/use-layout-menu";
 import { usePreferences } from "#src/hooks/use-preferences";
 import LayoutFooter from "#src/layout/layout-footer";
@@ -39,7 +43,7 @@ export default function FullscreenLayout() {
 				<div
 					className="text-colorText flex flex-1 items-center"
 				>
-					<img alt="App Logo" src={logo} className="mr-2 w-11" />
+					<img alt="App Logo" src={logoUrl} className="mr-2 w-11" />
 					<h1 className="m-0 text-xl font-medium">
 						{import.meta.env.VITE_GLOB_APP_TITLE}
 					</h1>
@@ -67,7 +71,9 @@ export default function FullscreenLayout() {
 						className={clsx({ hidden: isAlignCenter })}
 					>
 						<div className="flex flex-col items-center justify-center h-full gap-3">
-							<Banner
+							<img
+								alt=""
+								src={bannerUrl}
 								className="h-64 motion-safe:animate-bounce-in-down-out-up"
 							/>
 							<div className="text-xl text-colorTextSecondary mt-6 font-sans lg:text-2xl">

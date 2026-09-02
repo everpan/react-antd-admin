@@ -129,7 +129,7 @@ const definition = defineModule({
 			// 且 KeepAlive 只挂在 ContainerLayout 内，keepAlive 也会一起失效
 			path: "/order",
 			handle: {
-				layout: "container",        // "container" | "parent" | "none"
+				layout: "container",        // "container" | "parent" | "fullscreen" | "none"
 				title: "order:menu.list",   // i18next namespace 语法
 				icon: <FileTextOutlined />,
 				order: 10,                  // 菜单排序自管理（R1）
@@ -234,6 +234,41 @@ export default [
   mock 表就是该 dev 形态的后端边界；
 - 无 `mock/` 目录时零行为变化；**重启 `ram dev` 生效**（不热载）；
 - 生产构建不受影响（约定仅存在于 ram dev）。
+
+### 3.5 登录模块（替换内置登录页）
+
+框架内置 `/login` 兜底页；模块可声明同路径登录页**替换**它（login 模块化，
+设计文档 `202609021142-login-module-design.md`）：
+
+```ts
+routes: [
+	{
+		path: "/login",              // 契约路径，固定不可改
+		handle: {
+			layout: "fullscreen",    // 框架全屏外壳：视口/品牌区/工具区/页脚
+			login: true,             // “我是登录页”——存在时内置兜底被剔除
+			hideInMenu: true,
+			title: "login:page.title",
+		},
+		children: [
+			{ index: true, Component: lazy(() => import("./pages/login")), handle: { title: "login:page.title" } },
+		],
+	},
+]
+```
+
+契约与仲裁：
+
+- **路径固定 `/login`**（与 `/exception/403|404|500` 同为框架契约路径）；
+  非该路径的 `login: true` 标记被拒绝并告警；
+- 模块只写**内容区**：视口、品牌区（logo + 应用标题）、主题/语言工具、
+  页脚由 `fullscreen` 外壳兜住，模块零框架内部依赖；
+- 登录请求默认走 `useAuthStore().login()`，成功后 `navigate(getRedirectPath(search))`
+  ——`getRedirectPath` 解析 `?redirect=`，只放行站内路径；
+- 多模块声明 `login: true` 时按拓扑序**先到先得**，其余告警忽略；
+- 无 login 模块（或模块加载失败未产出路由）时，`/login` 回落内置页。
+
+参考实现：`apps/playground/modules/src/login/`。
 
 ## 4. 构建与发布
 

@@ -178,12 +178,12 @@ Feature: getRedirectPath
 
 ### 任务
 
-- [ ] T4.1 `apps/playground/modules/login/`：内容区自画（品牌区不同即肉眼可验替换生效）
-- [ ] T4.2 playground e2e：/login 渲染模块页、登录回跳、logout 回归
-- [ ] T4.3 手册新增「登录模块」章节（契约/形态约束/仲裁规则）+ `fullscreen` 布局条目 + §5 推迟项指路
-- [ ] T4.4 全量回归：`pnpm test` / `typecheck` / `lint` / e2e / `check:circular-deps`
+- [x] T4.1 `apps/playground/modules/src/login/`：参考实现（内容区自画，副标题与内置页可区分）
+- [x] T4.2 playground e2e：`tests/e2e/layout/login-module.spec.ts`（/login 渲染模块内容 + 无 chrome）；全量 23/23 绿
+- [x] T4.3 手册新增「§3.5 登录模块」章节 + §3.2 布局枚举补 `fullscreen`
+- [x] T4.4 全量回归：355 全绿 / typecheck 0 error / lint 0 error / playground e2e 23 绿 / circular-deps 基线 113
 
-**预计耗时**：1.5 h
+**实际耗时**：约 1.2 h（预计 1.5 h；大头是问题记录 7/8 两个 dist 层坑的取证）
 
 ---
 
@@ -206,7 +206,22 @@ Feature: getRedirectPath
 | 4 | 验收手段缺口 | 登录页无既有 e2e 截图基线，「视觉逐像素等价」无对照物 | DOM 结构等价由组件测试固化；像素级回归留待 P4 playground e2e 一并覆盖 |
 | 5 | 与文档不符（react-router 7.18） | `_internalSetRoutes` **不再替换稳定树**：落入 HMR 树（`setHmrRoutes`），`router.routes` 只读稳定树永不变；匹配走 `branches`（HMR 优先）；`patchRoutes` 在存在 HMR 树时**跳过 `updateState`**（不通知订阅者） | 观测断言一律走 `navigate` + `state.matches` 的匹配行为；重建后同一调用内回补获胜 login 路由，防直接落地 /login 闪现 404 |
 | 6 | 反常规（循环依赖） | `resolve-login-route` 默认参数 import router 单例 → 引入 `router/index → layout → store/access → 本模块` 环，circular-deps 113 → **211**（+98） | 改依赖注入：`router`/`rootRoute` 由调用方传入（DIP），回到基线 113 |
+| 7 | 反常识（构建产物退化） | runtime lib 构建**无 svgr 且 assetsInlineLimit=0**：`banner.svg?react` 在 dist 退化为 data URI 字符串，React `createElement(data:image/…)` 抛 InvalidCharacterError——内置 login 页在 shell 链从未渲染过，该缺陷潜伏至今才被 fullscreen 外壳暴露 | 外壳资产改 `?inline`（data URI 自包含）；记录为「dist 资产只能用 ?inline」规则 |
+| 8 | 反常规（dev 体验） | playground/shell 链消费的是**预构建 runtime dist**：runtime 新增出口（getRedirectPath）后不重跑 `pnpm --filter @react-antd-module/runtime build` + shell build，模块加载报「does not provide an export」——报错点在模块侧，根因在宿主产物过期 | 排查路径记入此档；手册 §3.4 已注明 ram dev 架构（不热载宿主） |
 
-## 执行小结
+## 执行小结（2026-09-02）
 
-（全部阶段完成后回填：关键过程、偏差、各阶段耗时与总耗时）
+**关键过程**：五阶段全部按「用例先行（RED）→ 实现（GREEN）→ 全量回归」推进，
+每阶段独立分支独立提交。评审收敛（固定路径 / 砍匿名通道）使 P0–P2 一路平顺；
+真正的复杂度集中在 P3 的两个计划外发现：RR 7.18 把 `_internalSetRoutes` 挪进
+HMR 树导致「稳定树不可观测 + patchRoutes 跳过 updateState」（问题 5），以及
+router 单例默认参数引发的 +98 循环依赖（问题 6）——两者都靠源码级取证定案，
+最终契约比设计稿更简（无内部状态、可重入、依赖注入）。P4 暴露两个 dist 层
+潜伏坑（?react 退化、预构建产物不过期感知），修复同时修好了「内置登录页在
+shell 链从未可渲染」的历史潜伏缺陷（问题 7）。
+
+**各阶段耗时**：P0 约 0.4 h / P1 约 0.5 h / P2 约 0.7 h / P3 约 1.2 h / P4 约 1.2 h，
+合计约 4 h（预计 6.5 h，评审砍范围省下 ~2.5 h 主要落在 P3 不再有 getLoginPath 全链改造）。
+
+**最终验证基线**：vitest 355 全绿（新增 18 例）、typecheck 0 error、lint 0 error、
+playground e2e 23/23、circular-deps 基线 113、runtime/shell/主仓三级 build 通过。
