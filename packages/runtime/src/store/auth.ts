@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { fetchLogin, fetchLogout } from "#src/api/user";
 import { useAccessStore } from "#src/store/access";
+import { getAuthProvider } from "#src/store/auth-provider";
 import { useTabsStore } from "#src/store/tabs";
 
 import { useUserStore } from "#src/store/user";
@@ -29,6 +30,16 @@ export const useAuthStore = create<AuthState & AuthAction>()(
 		...initialState,
 
 		login: async (loginPayload) => {
+			/**
+			 * 模块接管认证时（P5）：provider 只负责换取凭证，写库仍由 runtime
+			 * 统一做，避免模块直接碰 store 造成两套写入路径。
+			 */
+			const provider = getAuthProvider();
+			if (provider) {
+				set(await provider.login(loginPayload));
+				return;
+			}
+
 			const response = await fetchLogin(loginPayload);
 			// oj 业务失败是 HTTP 200 + success:false（D10 契约）：不检查会把
 			// mapAuth 兜底的空 token 写库，UI 还走「登录成功」分支（集中审阅 F12）
