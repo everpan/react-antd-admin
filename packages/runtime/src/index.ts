@@ -77,6 +77,9 @@ export type {
 export type { AppRouteRecordRaw, RouteMeta } from "./router/types";
 // store
 export { useAuthStore } from "./store/auth";
+// 认证 provider 注入契约（P5）：模块经 ctx.register.authProvider 实现
+export type { AuthProvider } from "./store/auth-provider";
+
 export { useUserStore } from "./store/user";
 
 export type { AppInfo } from "./types/app-info";

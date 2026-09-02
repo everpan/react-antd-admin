@@ -1,6 +1,7 @@
 import type {
 	AppInfo,
 	AppRouteRecordRaw,
+	AuthProvider,
 	BasicTableProps,
 	LoginInfo,
 	Manifest,
@@ -150,4 +151,4 @@ describe("runtime 主入口出口白名单 (P3.1)", () => {
 /**
  * 类型出口面：tsc --noEmit 校验以下类型均可从主入口获取。
  */
-export type RuntimeTypeSurface = AppInfo | AppRouteRecordRaw | BasicTableProps<any, any, any> | LoginInfo | Manifest | ManifestModuleEntry | MenuItemType | ModuleConfig | ModuleContext | ModuleDefinition | ModuleI18n | ModuleInstance | ModuleLifecycle | PieDataType | RoleItemType | RouteMeta | TreeDataNodeWithId;
+export type RuntimeTypeSurface = AppInfo | AppRouteRecordRaw | AuthProvider | BasicTableProps<any, any, any> | LoginInfo | Manifest | ManifestModuleEntry | MenuItemType | ModuleConfig | ModuleContext | ModuleDefinition | ModuleI18n | ModuleInstance | ModuleLifecycle | PieDataType | RoleItemType | RouteMeta | TreeDataNodeWithId;
