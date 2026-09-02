@@ -174,7 +174,7 @@ function getAppInfo() {
 			"version": "0.1.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-09-02 13:37:21"
+		"lastBuildTime": "2026-09-02 17:47:33"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -3490,10 +3490,31 @@ var init_routes = __esmMin((() => {
 	whiteRouteNames = [loginPath, ...traverseTreeValues(externalRoutes, (route) => route.path)];
 }));
 //#endregion
+//#region src/store/auth-provider.ts
+function registerAuthProvider(moduleName, provider) {
+	if (current) {
+		console.warn(`[auth] 重复的认证 provider 忽略：已由模块 "${current.moduleName}" 提供，忽略 "${moduleName}"（先到先得，与 login 路由去重同一规则）。`);
+		return;
+	}
+	current = {
+		moduleName,
+		provider
+	};
+}
+function getAuthProvider() {
+	return current?.provider;
+}
+function unregisterAuthProvider(moduleName) {
+	if (current?.moduleName === moduleName) current = void 0;
+}
+var current;
+var init_auth_provider = __esmMin((() => {}));
+//#endregion
 //#region src/store/user.ts
 var initialState$4, useUserStore;
 var init_user = __esmMin((() => {
 	init_user$1();
+	init_auth_provider();
 	initialState$4 = {
 		id: "",
 		avatar: "",
@@ -3506,9 +3527,10 @@ var init_user = __esmMin((() => {
 	useUserStore = create()((set) => ({
 		...initialState$4,
 		getUserInfo: async () => {
-			const response = await fetchUserInfo();
-			set({ ...response.result });
-			return response.result;
+			const provider = getAuthProvider();
+			const result = provider ? await provider.getUserInfo() : (await fetchUserInfo()).result;
+			set({ ...result });
+			return result;
 		},
 		reset: () => {
 			return set({ ...initialState$4 });
@@ -7385,6 +7407,9 @@ function createModuleContext(definition) {
 			},
 			apiPrefix: (prefix) => {
 				registeredApiPrefixes.set(definition.name, prefix);
+			},
+			authProvider: (provider) => {
+				registerAuthProvider(definition.name, provider);
 			}
 		},
 		registerSlot: (slotName, node) => {
@@ -7556,6 +7581,7 @@ async function unloadModule(name) {
 		if (instance.definition.lifecycle?.onDestroy) await instance.definition.lifecycle.onDestroy(ctx);
 	}
 	removeModuleSlots(name);
+	unregisterAuthProvider(name);
 	modules.delete(name);
 }
 /**
@@ -7580,6 +7606,7 @@ var init_module_loader = __esmMin((() => {
 	init_add_route_id_by_path();
 	init_resolve_layout();
 	init_access();
+	init_auth_provider();
 	init_user();
 	init_scoped();
 	init_keep_alive();
@@ -8526,6 +8553,7 @@ var initialState, useAuthStore;
 var init_auth = __esmMin((() => {
 	init_user$1();
 	init_access();
+	init_auth_provider();
 	init_tabs();
 	init_user();
 	init_get_app_namespace();
@@ -8537,6 +8565,15 @@ var init_auth = __esmMin((() => {
 	useAuthStore = create()(persist((set, get) => ({
 		...initialState,
 		login: async (loginPayload) => {
+			/**
+			* 模块接管认证时（P5）：provider 只负责换取凭证，写库仍由 runtime
+			* 统一做，避免模块直接碰 store 造成两套写入路径。
+			*/
+			const provider = getAuthProvider();
+			if (provider) {
+				set(await provider.login(loginPayload));
+				return;
+			}
 			const response = await fetchLogin(loginPayload);
 			if (response.success === false) {
 				message$1.error(response.message || "登录失败");
@@ -8546,13 +8583,18 @@ var init_auth = __esmMin((() => {
 		},
 		logout: async () => {
 			/**
-			* 1. 退出登录
+			* 1. 退出登录（provider 优先，未注册回落内置契约）
+			* 2. 清空 token 等其他信息 —— 放 finally：后端不可用时本地也必须清
+			*    （此前 await fetchLogout() 一抛错，reset() 完全不执行，
+			*    playground 这类无后端场景点了退出登录毫无反应）
 			*/
-			await fetchLogout({ refreshToken: get().refreshToken });
-			/**
-			* 2. 清空 token 等其他信息
-			*/
-			get().reset();
+			try {
+				const provider = getAuthProvider();
+				if (provider) await provider.logout();
+				else await fetchLogout({ refreshToken: get().refreshToken });
+			} finally {
+				get().reset();
+			}
 		},
 		reset: () => {
 			/**

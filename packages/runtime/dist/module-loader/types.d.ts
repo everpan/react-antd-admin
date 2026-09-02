@@ -1,4 +1,5 @@
 import type { AppRouteRecordRaw } from "../router/types";
+import type { AuthProvider } from "../store/auth-provider";
 /** 模块上下文 — 主框架向模块注入的能力 */
 export interface ModuleContext {
     /** 当前模块的元信息 */
@@ -16,6 +17,8 @@ export interface ModuleContext {
         store: (name: string, store: unknown) => void;
         /** 注册 API 路由前缀 */
         apiPrefix: (prefix: string) => void;
+        /** 接管登录/登出/用户信息（P5）；先到先得，模块卸载时自动注销 */
+        authProvider: (provider: AuthProvider) => void;
     };
     /** 注册布局插槽节点（US-8 L2），卸载模块时自动清理 */
     registerSlot: (slotName: string, node: React.ReactNode) => void;
