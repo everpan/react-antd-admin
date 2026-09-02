@@ -57,16 +57,16 @@ export default defineModule({
 			ctx.register.apiPrefix("/login");
 			ctx.register.authProvider({
 				async login(payload) {
-					const res = await ctx.utils.request.post("login", { json: payload }).json<ApiResponse<AuthType>>();
+					const res = await ctx.utils.request.post("login/login", { json: payload }).json<ApiResponse<AuthType>>();
 					if (res.success === false)
 						throw new Error(res.message || "登录失败");
 					return res.result;
 				},
 				async logout() {
-					await ctx.utils.request.post("logout").json();
+					await ctx.utils.request.post("login/logout").json();
 				},
 				async getUserInfo() {
-					const res = await ctx.utils.request.get("user-info").json<ApiResponse<UserInfoType>>();
+					const res = await ctx.utils.request.get("login/user-info").json<ApiResponse<UserInfoType>>();
 					return res.result;
 				},
 			});
