@@ -96,6 +96,7 @@ export const filterTree = _fn;
 export const mapTree = _fn;
 export const getAllExpandedKeys = _fn;
 export const getAppInfo = _fn;
+export const getRedirectPath = _fn;
 export const getYesNoOptions = _fn;
 export const getBooleanOptions = _fn;
 // 模块契约

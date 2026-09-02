@@ -7,8 +7,9 @@ import { ROOT_ROUTE_ID } from "#src/router/constants";
 import { baseRoutes } from "#src/router/routes";
 import { ascending } from "#src/router/utils/ascending";
 import { flattenRoutes } from "#src/router/utils/flatten-routes";
-
 import { generateMenuItemsFromRoutes } from "#src/router/utils/generate-menu-items-from-routes";
+
+import { resolveLoginRoute } from "#src/router/utils/resolve-login-route";
 
 interface AccessState {
 	// 路由菜单
@@ -37,7 +38,9 @@ export const useAccessStore = create<AccessState & AccessAction>(set => ({
 	...initialState,
 
 	setAccessStore: (routes) => {
-		const newRoutes = ascending([...baseRoutes, ...routes]);
+		/* login 模块化（P3）：存在外部 login 模块路由时剔除内置兜底（含 router 重建） */
+		const effectiveBase = resolveLoginRoute(baseRoutes, routes, router, rootRoute);
+		const newRoutes = ascending([...effectiveBase, ...routes]);
 		/* 添加新的路由到根路由 */
 		router.patchRoutes(ROOT_ROUTE_ID, routes);
 		const flatRouteList = flattenRoutes(newRoutes);

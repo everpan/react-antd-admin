@@ -3,9 +3,12 @@ import type { Manifest } from "#src/module-loader/types";
 import { createRoot } from "react-dom/client";
 import { TanstackQuery } from "#src/components/tanstack-query";
 import { setupI18n } from "#src/locales";
-import { loadAll } from "#src/module-loader";
+import { getRoutes, loadAll } from "#src/module-loader";
 
 import { setupLoading } from "#src/plugins/loading";
+import { rootRoute, router } from "#src/router";
+import { baseRoutes } from "#src/router/routes";
+import { resolveLoginRoute } from "#src/router/utils/resolve-login-route";
 
 import App from "./app";
 import "./styles/index.css";
@@ -93,6 +96,13 @@ async function setupApp() {
 			}
 		}
 		await loadAll(manifest);
+
+		/**
+		 * login 模块化（P3）：存在外部 login 模块路由时，剔除内置兜底
+		 * 并把获胜的 login 路由补装进 router——须在首次 render 前完成，
+		 * 否则直接落地 /login 会先匹配内置页（或剔除后的 404）。
+		 */
+		resolveLoginRoute(baseRoutes, getRoutes(), router, rootRoute);
 	}
 	catch (error) {
 		renderModuleLoadError(error);

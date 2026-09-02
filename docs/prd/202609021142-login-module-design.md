@@ -76,7 +76,7 @@ routes: [
 
 - 内置兜底路由（`router/routes/core/auth.ts`）同样打 `login: true`，额外打 `internal: true`，并改造为「父路由 + children + `layout: "fullscreen"`」，与模块形态完全同构。
 - **合成点唯一**：`setAccessStore`（`store/access.ts:39-53`）是 `baseRoutes` 与模块/动态路由合并的唯一入口（SRP/DRY），去重逻辑只挂在这是和启动引导两处，不散落。
-- **技术要点**：`router.patchRoutes` 只能增不能删。存在外部 login 路由时，须经 `router._internalSetRoutes` 用「剔除 internal 条的根路由」重建，再 patch 其余路由。封装为幂等helper `resolveLoginRoute`：
+- **技术要点**（P3 实施修订）：`router.patchRoutes` 只能增不能删；且 RR 7.18 起 `_internalSetRoutes` 落入 HMR 树（`router.routes` 只读稳定树、不可用于观测），重建会丢弃已 patch 的动态路由。故 `resolveLoginRoute(base, incoming, router, rootRoute)` 约定：重建根路由剔除 internal 条后，**同一调用内回补**获胜的外部 login 路由（否则直接落地 `/login` 闪现 404）；router/rootRoute 由调用方注入（DIP——默认 import 单例会引入循环依赖，实测 +98 环）。函数无内部状态、可重入：
   1. **启动时**：`index.tsx` 在 `loadAll` 之后、root render 之前调用一次——直接 `/login` 落地时不会闪现内置页；
   2. **`setAccessStore` 合成时**：logout 后 `reset()` 会恢复含 internal 条的 `rootRoute`，守卫 effect 重新注册模块路由时再次去重。
 - **多模块仲裁**：两个以上模块声明 `login: true` 时，按拓扑序**先到先得**，其余告警忽略（确定性、可测试）。

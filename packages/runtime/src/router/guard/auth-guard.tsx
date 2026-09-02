@@ -1,6 +1,6 @@
 import type { AppRouteRecordRaw } from "#src/router/types";
 import { useEffect, useMemo } from "react";
-import { matchRoutes, Navigate, useLocation, useNavigate, useSearchParams } from "react-router";
+import { matchRoutes, Navigate, useLocation, useNavigate } from "react-router";
 import { fetchAsyncRoutes } from "#src/api/user";
 import { useCurrentRoute } from "#src/hooks/use-current-route";
 import { getRoutes as getModuleRoutes } from "#src/module-loader";
@@ -14,9 +14,10 @@ import { generateRoutesFromBackend } from "#src/router/utils/generate-routes-fro
 import { generateRoutesByFrontend } from "#src/router/utils/generate-routes-from-frontend";
 import { useAccessStore } from "#src/store/access";
 import { useAuthStore } from "#src/store/auth";
-
 import { usePreferencesStore } from "#src/store/preferences";
+
 import { useUserStore } from "#src/store/user";
+import { getRedirectPath } from "#src/utils/get-redirect-path";
 
 import { removeDuplicateRoutes } from "./utils";
 
@@ -37,7 +38,6 @@ interface AuthGuardProps {
  */
 export function AuthGuard({ children }: AuthGuardProps) {
 	const navigate = useNavigate();
-	const [searchParams] = useSearchParams();
 	const currentRoute = useCurrentRoute();
 	const { pathname, search } = useLocation();
 	const isLogin = useAuthStore(state => Boolean(state.token));
@@ -283,9 +283,10 @@ export function AuthGuard({ children }: AuthGuardProps) {
 	if (pathname === loginPath) {
 		/**
 		 * @example login?redirect=/system/user
+		 * redirect 解析统一走 getRedirectPath 出口（P3）：非法/外部地址回落首页
 		 */
-		const redirectPath = searchParams.get("redirect");
-		if (redirectPath?.length && redirectPath !== pathname) {
+		const redirectPath = getRedirectPath(search);
+		if (redirectPath !== pathname) {
 			return (
 				<Navigate
 					to={redirectPath}

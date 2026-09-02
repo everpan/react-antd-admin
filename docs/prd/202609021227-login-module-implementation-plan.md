@@ -158,15 +158,17 @@ Feature: getRedirectPath
 
 ### 任务
 
-- [ ] T3.1 用例先行：去重与 getRedirectPath 单测（含上表全行）
-- [ ] T3.2 `resolveLoginRoute` helper（幂等；剔除 internal 条 + `_internalSetRoutes` 重建 + patch 其余）
-- [ ] T3.3 接入点 1：`index.tsx` bootstrap（`loadAll` 后、render 前）
-- [ ] T3.4 接入点 2：`setAccessStore` 合成处（`store/access.ts:39-53`）
-- [ ] T3.5 `getRedirectPath` 实现 + 收编 `password-login.tsx:42-48` 与 `auth-guard.tsx:287`
-- [ ] T3.6 login 标记校验（路径约束 + 多模块仲裁 + 告警）
-- [ ] T3.7 `index.ts` 导出 `getRedirectPath`，同步 `runtime-exports.test.ts` 冻结清单
+- [x] T3.1 用例先行：`tests/runtime/login-route-dedup.test.ts`（10 例含数据表格全行；断言走匹配行为，见问题记录 5）
+- [x] T3.2 `resolveLoginRoute`（无内部状态、可重入；重建根路由 + 同调用内回补获胜 login 路由）
+- [x] T3.3 接入点 1：`index.tsx` bootstrap（`loadAll` 后、render 前）
+- [x] T3.4 接入点 2：`setAccessStore` 合成处（`store/access.ts:42`）
+- [x] T3.5 `getRedirectPath` 实现 + 收编 `password-login.tsx` 与 `auth-guard.tsx`（顺手移除 auth-guard 不再使用的 `useSearchParams`）
+- [x] T3.6 login 标记校验（契约路径 + 多模块先到先得 + 告警）
+- [x] T3.7 `index.ts` 导出 `getRedirectPath` + `runtime-exports.test.ts` 冻结清单 + cli `RUNTIME_STUB_SOURCE` 三处同步
 
-**预计耗时**：2 h
+**验证**：355 全绿 + typecheck 0 error + lint 0 error + build 通过 + circular-deps 回到基线 113（一度 211，见问题记录 6）
+
+**实际耗时**：约 1.2 h（预计 2 h 内；RR 7.18 行为取证占大头）
 
 ---
 
@@ -202,6 +204,8 @@ Feature: getRedirectPath
 | 2 | 环境 flaky | `pnpm test` 全量偶发 `ECONNREFUSED :3000`（CLI dev 类测试依赖本地端口），与本次改动无关，单跑复现通过 | 记录观察，不处理 |
 | 3 | 反常规 | `RouteMeta.title` 是**必填**字段（`types.ts:20`），空 handle `{}` 不过类型检查；且 `document.title` 取路由 match 的**最后一级**（layout-effects），父路由拆壳后标题必须挂到子级，否则标签页标题丢失 | 子级 `handle.title` 补 `$t("authority.login")` |
 | 4 | 验收手段缺口 | 登录页无既有 e2e 截图基线，「视觉逐像素等价」无对照物 | DOM 结构等价由组件测试固化；像素级回归留待 P4 playground e2e 一并覆盖 |
+| 5 | 与文档不符（react-router 7.18） | `_internalSetRoutes` **不再替换稳定树**：落入 HMR 树（`setHmrRoutes`），`router.routes` 只读稳定树永不变；匹配走 `branches`（HMR 优先）；`patchRoutes` 在存在 HMR 树时**跳过 `updateState`**（不通知订阅者） | 观测断言一律走 `navigate` + `state.matches` 的匹配行为；重建后同一调用内回补获胜 login 路由，防直接落地 /login 闪现 404 |
+| 6 | 反常规（循环依赖） | `resolve-login-route` 默认参数 import router 单例 → 引入 `router/index → layout → store/access → 本模块` 环，circular-deps 113 → **211**（+98） | 改依赖注入：`router`/`rootRoute` 由调用方传入（DIP），回到基线 113 |
 
 ## 执行小结
 

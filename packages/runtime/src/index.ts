@@ -86,5 +86,8 @@ export { getAllExpandedKeys } from "./utils/get-all-expanded-keys";
 // 应用元信息（构建期注入；模块经此函数获取，不依赖全局 __APP_INFO__ 注入）
 export { getAppInfo } from "./utils/get-app-info";
 
+// redirect 解析出口（P3，login 模块化：模块登录页成功后调它跳转）
+export { getRedirectPath } from "./utils/get-redirect-path";
+
 // 工具与常量
 export * from "./utils/tree";

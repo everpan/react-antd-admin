@@ -14,6 +14,7 @@ import { useNavigate, useSearchParams } from "react-router";
 import { BasicButton } from "#src/components/basic-button";
 import { PASSWORD_RULES, USERNAME_RULES } from "#src/constants/rules";
 import { useAuthStore } from "#src/store/auth";
+import { getRedirectPath } from "#src/utils/get-redirect-path";
 
 import { FormModeContext } from "../form-mode-context";
 
@@ -39,13 +40,7 @@ export function PasswordLogin() {
 		login(values).then(() => {
 			messageLoadingApi?.destroy();
 			window.$message?.success(t("authority.loginSuccess"));
-			const redirect = searchParams.get("redirect");
-			if (redirect) {
-				navigate(`/${redirect.slice(1)}`);
-			}
-			else {
-				navigate(import.meta.env.VITE_BASE_HOME_PATH);
-			}
+			navigate(getRedirectPath(searchParams));
 		}).catch(() => {
 			// 失败提示已由更内层给出（HTTP 错误走 request 层 toast；
 			// oj 信封级失败走 auth store toast，F12）——这里只吞 rejection

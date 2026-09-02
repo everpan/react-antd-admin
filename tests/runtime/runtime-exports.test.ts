@@ -130,6 +130,10 @@ describe("runtime 主入口出口白名单 (P3.1)", () => {
 		expect(Runtime.getBooleanOptions).toBeTypeOf("function");
 	});
 
+	it("redirect 解析出口（P3，login 模块化）", () => {
+		expect(Runtime.getRedirectPath).toBeTypeOf("function");
+	});
+
 	it("cli 的 runtime stub 覆盖全部运行时出口（防漂移，P3.4）", () => {
 		const stubSource = fs.readFileSync(
 			path.join(PROJECT_ROOT, "packages/cli/src/build.ts"),
