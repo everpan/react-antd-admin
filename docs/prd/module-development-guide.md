@@ -270,6 +270,80 @@ routes: [
 
 参考实现：`apps/playground/modules/src/login/`。
 
+### 3.6 认证 Provider 注入（P5）
+
+框架内置的登录 / 登出 / 取用户信息默认对接 `auth/login`、`auth/logout`、
+`web/user-info` 三套后端契约。若模块需要对接**异构认证后端**（自有网关、
+第三方 IdP 等），可通过生命周期钩子把这套能力**整体接管**。
+
+**用途**：让模块接管 runtime 的登录 / 登出 / 取用户信息，对接异构认证后端，
+而 runtime 与各页面（登录页、`user-menu`、AuthGuard）零感知、零改动。
+
+**契约（三者全必填）**——经 `ctx.register.authProvider({...})` 注入一个
+`AuthProvider` 对象：
+
+| 方法 | 签名 | 职责 |
+| --- | --- | --- |
+| `login` | `(payload: LoginInfo) => Promise<AuthType>` | 返回 `{ token, refreshToken }`，**由 runtime 写库** |
+| `logout` | `() => Promise<void>` | 清后端会话 |
+| `getUserInfo` | `() => Promise<UserInfoType>` | 返回归一后的用户信息 |
+
+不支持部分接管：`login`/`logout`/`getUserInfo` 三者**必须全部实现**，否则
+半托管状态下两条链路并存、行为不可推理。
+
+**入口与仲裁**：
+
+- 只能经 `lifecycle.onInit` 的 `ctx.register.authProvider({...})` 注册——
+  这是**模块级**能力（登出发生在顶栏，用户刷新后可能从未挂载登录页），
+  不是 React hook；注册发生在 `loadAll` Phase 3，早于路由与守卫首次渲染。
+- **先到先得**：多个模块注册时，第一名登记成功，后续模块被 `console.warn`
+  忽略，与 login 模块去重同一规则（确定性、可测）。
+- 注册以模块 `name` 为键，`unloadModule(name)` 时随模块卸载自动清理。
+
+**scoped request 前置**：provider 内部若要发请求，必须用
+`ctx.utils.request`；而该 client 受 `ctx.register.apiPrefix()` 约束——
+**先登记前缀，再请求**，否则越界请求直接被拒（D11）。典型写法（见 §3.5
+login 模块）：
+
+```ts
+onInit: async (ctx) => {
+	ctx.register.apiPrefix("/login");          // 先登记
+	ctx.register.authProvider({
+		async login(payload) {
+			const res = await ctx.utils.request.post("login", { json: payload })
+				.json<ApiResponse<AuthType>>();
+			if (res.success === false) throw new Error(res.message || "登录失败");
+			return res.result;                  // { token, refreshToken }
+		},
+		async logout() {
+			await ctx.utils.request.post("logout").json();
+		},
+		async getUserInfo() {
+			const res = await ctx.utils.request.get("user-info")
+				.json<ApiResponse<UserInfoType>>();
+			return res.result;
+		},
+	});
+},
+```
+
+**未注册时的回落**：未注入 provider 时，`useAuthStore` / `useUserStore`
+回落框架内置 `auth/login`、`auth/logout`、`web/user-info`，行为与今日**完全一致**。
+
+**契约边界（runtime 对 provider 零干预）**：
+
+- runtime **不对 provider 返回的路径/字段做任何校验**——`token` 是否为空串
+  由 provider 自己用抛错表达；
+- provider 的 `reject` / 抛错**原样透传**给调用方（登录页 catch 后弹红条，
+  现状不变）；
+- **错误提示归 provider**：后端信封、业务码、中文 message 的归一都在 provider
+  内部完成，runtime 只认 `AuthType` / `UserInfoType`。
+- 登出 `provider.logout()` 抛错也**不阻塞本地清理**——`logout()` 外层
+  `try { ... } finally { reset() }`，无论成功失败都清 token / 用户 / 权限 / tabs。
+
+参考实现：`apps/playground/modules/src/login/entry.ts` + `mock/auth.mock.mjs`；
+设计细节见 `202609021446-auth-provider-injection-design.md`。
+
 ## 4. 构建与发布
 
 ```bash

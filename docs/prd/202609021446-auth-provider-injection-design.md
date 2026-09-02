@@ -232,3 +232,68 @@ lifecycle: {
 | `getUserInfo` 拆成独立 `userProvider` | 出现「只换用户接口、沿用宿主登录」的诉求 | 从 `AuthProvider` 拆出可选方法或独立注册口 |
 | 匿名前缀通道（前作 §5 已记） | 模块自有登录接口需要免 token 头、401 不 refresh | `ctx.register.anonymousApiPrefix()` |
 | provider 热替换 | 出现运行时切换认证源的场景 | 注册表补版本号与显式覆盖 API |
+
+## 10. 流程与交互图（mermaid）
+
+### 10.1 登录 / 登出时序（runtime 视角）
+
+含「已注册 provider → 走模块实现；未注册 → 回落内置」的分支。
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant P as 登录页/顶栏(user-menu)
+    participant S as useAuthStore/useUserStore
+    participant R as 注册表 getAuthProvider
+    participant M as 模块 provider（onInit 注册）
+    participant B as 内置 fetchLogin/fetchLogout/fetchUserInfo
+
+    Note over P,R: 有 provider → 走 M；无 provider → 走 B
+    U->>P: 提交登录
+    P->>S: login(payload)
+    S->>R: 取 provider
+    alt 已注册 provider
+        S->>M: provider.login(payload)
+        M-->>S: AuthType { token, refreshToken }
+    else 未注册
+        S->>B: fetchLogin(payload)
+        B-->>S: 归一后的 token
+    end
+    S->>S: set(token) 写入 persist
+    S-->>P: 返回
+    P->>U: 跳转 redirect 路径
+
+    U->>P: 点击退出登录
+    P->>S: logout()
+    S->>R: 取 provider
+    alt 已注册 provider
+        S->>M: provider.logout()
+    else 未注册
+        S->>B: fetchLogout()
+    end
+    S->>S: finally { reset() } 清 token/用户/权限/tabs
+```
+
+### 10.2 runtime 与 login 模块的交互（生命周期 + 注册表）
+
+重点表达「模块在 `onInit` 注册、runtime store 委托、先到先得、unload 清理」。
+
+```mermaid
+flowchart TD
+    A[login 模块 entry.ts] -->|defineModule| B[模块清单]
+    B -->|loadAll| C[module-loader]
+    C -->|Phase 3 生命周期| D[onInit ctx]
+    D -->|ctx.register.apiPrefix /login| E[scoped request 收敛]
+    D -->|ctx.register.authProvider| F[注册表 current = 本模块]
+    F -->|先到先得| G{已有持有者?}
+    G -->|否| H[登记成功]
+    G -->|是| I[忽略 + console.warn]
+    F -.->|unloadModule 时| J[unregisterAuthProvider 清理]
+
+    K[顶栏 user-menu / 登录页] -->|login/logout/getUserInfo| L[useAuthStore / useUserStore]
+    L -->|getAuthProvider| F
+    F -->|命中| M[模块 provider 实现]
+    F -->|未命中| N[内置 fetchLogin/fetchLogout/fetchUserInfo]
+    M -->|统一写库| L
+    N -->|统一写库| L
+```
