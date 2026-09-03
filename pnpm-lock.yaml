@@ -468,6 +468,9 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@25.9.5)(happy-dom@20.11.12)(vite@8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      yaml:
+        specifier: 'catalog:'
+        version: 2.9.0
 
   apps/playground:
     devDependencies:
