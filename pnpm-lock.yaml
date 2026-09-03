@@ -228,6 +228,9 @@ catalogs:
     vitest:
       specifier: ^4.1.6
       version: 4.1.11
+    yaml:
+      specifier: ^2.9.0
+      version: 2.9.0
     zod:
       specifier: ^4.5.4
       version: 4.5.4
@@ -357,6 +360,9 @@ importers:
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.62.1
+      '@react-antd-module/contract':
+        specifier: workspace:*
+        version: link:packages/contract
       '@svgr/plugin-jsx':
         specifier: 'catalog:'
         version: 8.1.0(@svgr/core@8.1.0(supports-color@7.2.0)(typescript@6.0.3))(supports-color@7.2.0)
@@ -507,6 +513,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@react-antd-module/contract':
+        specifier: workspace:*
+        version: link:../contract
       esbuild:
         specifier: 'catalog:'
         version: 0.28.2
@@ -516,6 +525,12 @@ importers:
       vite:
         specifier: 'catalog:'
         version: 8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
+      yaml:
+        specifier: 'catalog:'
+        version: 2.9.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.5.4
 
   packages/contract:
     dependencies:
@@ -7255,7 +7270,7 @@ snapshots:
       eslint: 10.9.1(jiti@2.7.0)(supports-color@7.2.0)
       ts-pattern: 5.9.0
       typescript: 6.0.3
-      zod: 4.4.3
+      zod: 4.5.4
     transitivePeerDependencies:
       - supports-color
 

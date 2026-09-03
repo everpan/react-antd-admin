@@ -104,6 +104,7 @@ catalog:
   vite-plugin-svgr: ^5.2.0
   vitepress: ^1.6.4
   vitest: ^4.1.6
+  yaml: ^2.9.0
   # AC-D12/AC-D15：契约机制钉 zod v4；非 importmap 共享条目，但 contract 微包、
   # runtime（re-export）、cli（codegen）三处必须同源定版，故纳入 catalog
   zod: ^4.5.4

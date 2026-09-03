@@ -26,9 +26,12 @@
 		"prepack": "node scripts/sync-host-versions.mjs"
 	},
 	"dependencies": {
+		"@react-antd-module/contract": "workspace:*",
 		"esbuild": "catalog:",
 		"tsx": "catalog:",
-		"vite": "catalog:"
+		"vite": "catalog:",
+		"yaml": "catalog:",
+		"zod": "catalog:"
 	},
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org/",
