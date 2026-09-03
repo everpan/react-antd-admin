@@ -6,7 +6,21 @@ import { afterEach, describe, expect, it } from "vitest";
 
 // ram dev 工程 mock 约定（docs/prd/202609010056-playground-full-modules-plan.md）：
 // mock/*.mock.mjs default 导出路由数组，dev 服务器按 method+path 精确匹配 /api/* 请求
-import { loadProjectMocks, matchMockRoute } from "../../packages/cli/src/dev-mock";
+import { loadProjectMocks, matchMockRoute, mockStatusCode } from "../../packages/cli/src/dev-mock";
+
+describe("mockStatusCode（AC-D16：HTTP 状态 = 信封 code）", () => {
+	it("code=0 → 200", () => {
+		expect(mockStatusCode({ code: 0, msg: "ok", data: null })).toBe(200);
+	});
+	it("正数业务码 → 置为 HTTP 状态", () => {
+		expect(mockStatusCode({ code: 400, msg: "bad", data: null })).toBe(400);
+	});
+	it("无 code / code<=0 → 维持 200", () => {
+		expect(mockStatusCode({ data: 1 })).toBe(200);
+		expect(mockStatusCode({ code: -1 })).toBe(200);
+		expect(mockStatusCode(null)).toBe(200);
+	});
+});
 
 describe("loadProjectMocks", () => {
 	const dirs: string[] = [];

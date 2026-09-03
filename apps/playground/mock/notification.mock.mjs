@@ -1,10 +1,11 @@
-// playground 工程 mock：顶栏通知列表（形态对齐 fake/notification.fake.ts）
+// playground 工程 mock：顶栏通知列表（AC-D16：oj 信封 {code,msg,data}）
 export default [
 	{
 		url: "/notifications",
 		response: () => ({
-			code: 200,
-			result: [
+			code: 0,
+			msg: "ok",
+			data: [
 				{
 					avatar: "https://avatar.vercel.sh/vercel.svg?text=VC",
 					date: "3 小时前",
@@ -20,8 +21,6 @@ export default [
 					title: "Tom 回复了你",
 				},
 			],
-			message: "ok",
-			success: true,
 		}),
 	},
 ];

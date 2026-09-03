@@ -3,15 +3,13 @@ import { defineModule } from "@react-antd-module/runtime";
 import { lazy } from "react";
 
 /**
- * 模块自有接口信封（与 runtime 主入口的响应包裹约定一致）。
- * ApiResponse 未从 runtime 主入口导出，故在模块内声明最小信封，
- * 不为此扩 runtime 出口（YAGNI）。
+ * AC-D16：模块自有接口信封 = oj {code,msg,data}（全站唯一信封）。
+ * 未从 runtime 主入口导出，故在模块内声明最小信封，不为此扩 runtime 出口。
  */
-interface ApiResponse<T> {
+interface OjEnvelope<T> {
 	code: number
-	result: T
-	message: string
-	success: boolean
+	msg?: string
+	data?: T
 }
 
 /**
@@ -57,17 +55,18 @@ export default defineModule({
 			ctx.register.apiPrefix("/login");
 			ctx.register.authProvider({
 				async login(payload) {
-					const res = await ctx.utils.request.post("login/login", { json: payload }).json<ApiResponse<AuthType>>();
-					if (res.success === false)
-						throw new Error(res.message || "登录失败");
-					return res.result;
+					// 业务失败（非 2xx）由 request 层统一吐司并抛 HTTPError，此处只见成功信封
+					const env = await ctx.utils.request.post("login/login", { json: payload }).json<OjEnvelope<AuthType>>();
+					if (!env.data)
+						throw new Error(env.msg || "登录失败");
+					return env.data;
 				},
 				async logout() {
 					await ctx.utils.request.post("login/logout").json();
 				},
 				async getUserInfo() {
-					const res = await ctx.utils.request.get("login/user-info").json<ApiResponse<UserInfoType>>();
-					return res.result;
+					const env = await ctx.utils.request.get("login/user-info").json<OjEnvelope<UserInfoType>>();
+					return env.data as UserInfoType;
 				},
 			});
 		},

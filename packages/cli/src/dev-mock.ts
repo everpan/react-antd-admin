@@ -30,6 +30,15 @@ export interface MockRoute {
 
 const MOCK_SUFFIXES = [".mock.mjs", ".mock.js"];
 
+/**
+ * AC-D16：oj 语义——HTTP 状态 = 信封 code（0→200）。
+ * 仅对显式正数 code 置状态；无 code / code<=0 维持 200。
+ */
+export function mockStatusCode(payload: unknown): number {
+	const code = (payload as { code?: unknown } | null)?.code;
+	return typeof code === "number" && code > 0 ? code : 200;
+}
+
 /** 加载工程 mock 目录下的全部路由；目录不存在返回空数组 */
 export async function loadProjectMocks(projectRoot: string): Promise<MockRoute[]> {
 	const mockDir = resolve(projectRoot, "mock");
@@ -49,8 +58,7 @@ export async function loadProjectMocks(projectRoot: string): Promise<MockRoute[]
 	return routes;
 }
 
-/** 按 method+path 精确匹配一条 mock 路由；未命中返回 undefined */
-export function matchMockRoute(
+/** 按 method+path 精确匹配一条 mock 路由；未命中返回 undefined */export function matchMockRoute(
 	routes: MockRoute[],
 	method: string,
 	apiPath: string,

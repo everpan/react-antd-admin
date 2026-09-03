@@ -10,7 +10,8 @@ export default function LineChart() {
 	const { t } = useTranslation();
 	const [value, setValue] = useState("week");
 
-	const [data, setData] = useState<string[]>([]);
+	// AC-D16：接口 data 为 number[]（旧类型误标 string[]，借机对齐线格式）
+	const [data, setData] = useState<number[]>([]);
 
 	const DATA_KEYS = {
 		week: [
@@ -54,8 +55,8 @@ export default function LineChart() {
 
 	useEffect(() => {
 		if (value) {
-			fetchLine({ range: value }).then(({ result }) => {
-				setData(result);
+			fetchLine({ range: value }).then((list) => {
+				setData(list);
 			});
 		}
 	}, [value]);

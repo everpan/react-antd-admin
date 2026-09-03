@@ -1,6 +1,6 @@
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
 import { ADMIN_TOKEN } from "./constants";
-import { resultSuccess } from "./utils";
+import { ojOk } from "./utils";
 
 /**
  * roles：页面级别权限，这里模拟二种 "admin"、"common"
@@ -284,7 +284,7 @@ export default defineFakeRoute([
 						},
 				],
 			};
-			return resultSuccess(
+			return ojOk(
 				[
 					homeRouter,
 					accessRouter,

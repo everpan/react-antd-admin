@@ -25,7 +25,7 @@ import http from "node:http";
 import { resolve } from "node:path";
 import process from "node:process";
 import { buildModules } from "./build";
-import { loadProjectMocks, matchMockRoute } from "./dev-mock";
+import { loadProjectMocks, matchMockRoute, mockStatusCode } from "./dev-mock";
 import { createReloadHub, proxyApi, sseScript } from "./dev-proxy";
 import { resolveLayout } from "./layout";
 import { startOj } from "./oj";
@@ -123,7 +123,8 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 			const route = matchMockRoute(mocks, req.method ?? "get", apiRel.slice(apiBase.length));
 			if (!route) {
 				res.writeHead(404, { "content-type": "application/json; charset=utf-8" });
-				res.end(JSON.stringify({ code: 404, message: `No mock for ${req.method} ${apiRel}` }));
+				// AC-D16：信封键为 msg（oj 形态）
+				res.end(JSON.stringify({ code: 404, msg: `No mock for ${req.method} ${apiRel}`, data: null }));
 				return;
 			}
 			const chunks: Buffer[] = [];
@@ -136,11 +137,12 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 				catch {
 					// 非 JSON 请求体按空 body 交给 mock 处理
 				}
-				res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-				res.end(JSON.stringify(route.response({
+				const payload = route.response({
 					body,
 					query: new URLSearchParams((req.url ?? "").split("?")[1] ?? ""),
-				})));
+				});
+				res.writeHead(mockStatusCode(payload), { "content-type": "application/json; charset=utf-8" });
+				res.end(JSON.stringify(payload));
 			});
 			return;
 		}
