@@ -182,6 +182,8 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 	console.log(`[ram] 修改 ${layout.modulesSrc} 下的源码会触发重建并自动刷新浏览器。\n`);
 
 	// 4) 监听模块源码（watchTarget 纯源码目录，永不落产物 → 无自触发循环）
+	const { createContractRegen } = await import("./contract/watch");
+	const regenContracts = createContractRegen(projectRoot);
 	let timer: NodeJS.Timeout | null = null;
 	const trigger = () => {
 		if (timer)
@@ -200,12 +202,29 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 	};
 	try {
 		watch(layout.watchTarget, { recursive: true }, (_event, filename) => {
-			if (filename)
-				trigger();
+			if (!filename)
+				return;
+			// 契约文件变更：先 runApi 重生成 client（落 modules 树 → 二次触发本 watch 走重建）
+			if (filename.endsWith("contract.ts"))
+				regenContracts();
+			trigger();
 		});
 	}
 	catch {
 		// 某些平台不支持 recursive，退化为不自动重建（手动 ram build 仍可用）
+	}
+	// uni-dev 契约在 api/src（不在模块 watch 范围内），单独挂 watcher
+	try {
+		const apiSrc = `${projectRoot}/api/src`;
+		if (existsSync(apiSrc)) {
+			watch(apiSrc, { recursive: true }, (_event, filename) => {
+				if (filename?.endsWith("contract.ts"))
+					regenContracts();
+			});
+		}
+	}
+	catch {
+		// 同上：平台不支持 recursive 时退化为手动 ram api
 	}
 
 	return server;
