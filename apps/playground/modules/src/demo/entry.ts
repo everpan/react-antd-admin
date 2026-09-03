@@ -1,6 +1,7 @@
 import { FileTextOutlined, HomeOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { defineModule } from "@react-antd-module/runtime";
 import { createElement } from "react";
+import { Navigate } from "react-router";
 
 import { bindRequest } from "./api/client";
 import DemoAboutPage from "./pages/about";
@@ -37,10 +38,18 @@ export default defineModule({
 			},
 			children: [
 				{
+					// 组落地页：菜单生成器不为 index 子路由建菜单项（框架按
+					// 「唯一 index 子 = 父项即页面」折叠），有兄弟子路由时落地页
+					// 须落具名 path 才有侧边栏入口；/demo 直达重定向过去
 					index: true,
+					element: createElement(Navigate, { to: "/demo/todos", replace: true }),
+					handle: { title: "demo:menu.demo" },
+				},
+				{
+					path: "todos",
 					Component: DemoPage,
 					handle: {
-						title: "demo:menu.demo",
+						title: "demo:menu.todos",
 						icon: createElement(HomeOutlined),
 						keepAlive: true,
 					},

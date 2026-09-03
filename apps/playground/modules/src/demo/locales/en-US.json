@@ -1,6 +1,7 @@
 {
 	"menu": {
 		"demo": "Demo Module",
+		"todos": "Todo List",
 		"detail": "Demo Detail",
 		"about": "Demo About"
 	},

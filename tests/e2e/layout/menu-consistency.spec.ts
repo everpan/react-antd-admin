@@ -108,7 +108,7 @@ test.describe("menu-consistency", () => {
 			if (isKnownBroken(url))
 				continue;
 			// 叶子路由：恰 1 个选中 item（antd 会同时给父组挂 submenu-selected，
-			// 不计入）；组落地页（index 子路由，如 /demo）：无 item，恰 1 个选中 submenu（同 S4）
+			// 不计入）；组落地页（index 子路由被直接深链时）：无 item，恰 1 个选中 submenu（同 S4）
 			await expect.poll(async () => {
 				const items = await page.locator(".ant-menu-root .ant-menu-item-selected").count();
 				if (items > 0)
