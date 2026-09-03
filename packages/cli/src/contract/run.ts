@@ -1,5 +1,10 @@
+import { execFile as execFileCb } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
+import process from "node:process";
+import { promisify } from "node:util";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { emitClient } from "./emit-client";
 import { emitOpenapiYaml, emitRoutesJson } from "./emit-meta";
 import { applyStubWrites, planStubWrites } from "./emit-stub";
@@ -139,4 +144,64 @@ export async function runApi(opts: { cwd: string }): Promise<RunResult> {
 	for (const found of contracts)
 		await runOne(found, opts.cwd, result);
 	return result;
+}
+
+/**
+ * R5：`ram api --docs`——聚合全部契约的 OpenAPI → redoc 渲染静态站。
+ * uni-dev 形态（存在 api/src 契约）落 `api/docs/index.html`，纯前端落 `docs/api/index.html`；
+ * 聚合 spec 同目录落 `openapi.yaml`（评审可直读）。redoc CLI 缺失时人话报错。
+ */
+export async function runApiDocs(cwd: string, opts: { redocBin?: string } = {}): Promise<string> {
+	const contracts = discoverContracts(cwd);
+	if (contracts.length === 0) {
+		throw new Error(`[ram-api] ${cwd} 下没有发现契约文件——默认发现：api/src/*/contract.ts（uni-dev）与 modules/src/*/api/contract.ts（纯前端）。`);
+	}
+
+	// 聚合：逐契约 IR → openapi doc → paths 合并（operation 打模块 tag）
+	const paths: Record<string, Record<string, unknown>> = {};
+	for (const found of contracts) {
+		const ir = await irOf(found, cwd);
+		const doc = parseYaml(emitOpenapiYaml(ir, { title: `${found.module} api`, version: "0.0.0" })) as { paths: Record<string, Record<string, { tags?: string[] }>> };
+		for (const [p, methods] of Object.entries(doc.paths)) {
+			for (const [method, op] of Object.entries(methods)) {
+				if (paths[p]?.[method])
+					throw new Error(`[ram-api] 聚合冲突：${method.toUpperCase()} ${p} 被多个契约声明——请检查各模块 apiPrefix 是否撞车。`);
+				op.tags = [found.module];
+				(paths[p] ??= {})[method] = op;
+			}
+		}
+	}
+
+	const outDir = contracts.some(c => c.kind === "uni-dev") ? join(cwd, "api/docs") : join(cwd, "docs/api");
+	mkdirSync(outDir, { recursive: true });
+	const specPath = join(outDir, "openapi.yaml");
+	writeFileSync(specPath, stringifyYaml({ openapi: "3.1.0", info: { title: "API 文档", version: "0.0.0" }, paths }));
+
+	const bin = opts.redocBin ?? defaultRedocBin();
+	const outPath = join(outDir, "index.html");
+	try {
+		await promisify(execFileCb)(process.execPath, [bin, "build-docs", specPath, "-o", outPath], { cwd, maxBuffer: 16 * 1024 * 1024 });
+	}
+	catch (error) {
+		const stderr = (error as { stderr?: string }).stderr?.trim();
+		throw new Error(`[ram-api] redoc 渲染失败${stderr ? `：${stderr.split("\n").pop()}` : ""}——请确认 @redocly/cli 已安装（pnpm install）；若刚装依赖，重试即可。`);
+	}
+	return outPath;
+}
+
+/** redocly CLI 的 js bin 路径（走 Node 模块解析，随 cli 依赖安装） */
+function defaultRedocBin(): string {
+	const require = createRequire(import.meta.url);
+	let pkgPath: string;
+	try {
+		pkgPath = require.resolve("@redocly/cli/package.json");
+	}
+	catch {
+		throw new Error("[ram-api] 找不到 @redocly/cli——请先 pnpm install 安装依赖（ram api --docs 的文档渲染器）。");
+	}
+	const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { bin?: string | Record<string, string> };
+	const binRel = typeof pkg.bin === "string" ? pkg.bin : pkg.bin?.redocly;
+	if (!binRel)
+		throw new Error("[ram-api] @redocly/cli 的 package.json 没有 bin 入口——依赖损坏，请重装。");
+	return join(dirname(pkgPath), binRel);
 }

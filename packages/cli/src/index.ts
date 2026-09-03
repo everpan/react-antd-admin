@@ -45,9 +45,12 @@ async function main() {
 			await printInfo(projectRoot);
 			break;
 		case "api": {
-			// --docs 由 Task 4.3 接线
-			if (process.argv.includes("--docs"))
-				throw new Error("[ram] ram api --docs 尚未接线（Phase 4.3）——当前请用 ram api / ram api --check。");
+			if (process.argv.includes("--docs")) {
+				const { runApiDocs } = await import("./contract/run");
+				const out = await runApiDocs(projectRoot);
+				console.log(`[ram-api] 文档站已生成：${path.relative(projectRoot, out)}（浏览器直接打开即可）`);
+				break;
+			}
 			if (process.argv.includes("--check")) {
 				const { checkApi } = await import("./contract/check");
 				const { violations, hints } = await checkApi({ cwd: projectRoot });
