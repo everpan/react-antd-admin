@@ -1,0 +1,187 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`emitClient（AC-D5/D6/D8/D15） > 快照：module 目标双产物（bindRequest 持有者 + 类型推导 + DEV 校验 + raw 通道） 1`] = `
+"/* eslint-disable */
+// 生成物：ram api 从契约生成，勿手改（改动请改契约文件后重跑 ram api）
+import { ContractApiError } from "@react-antd-module/contract";
+import type { ScopedRequestLike } from "@react-antd-module/contract";
+import type { z } from "@react-antd-module/runtime";
+import type { schemas } from "./client.schemas";
+
+/** oj 信封（AC-D16）：code=0 成功；非 0 时 HTTP status=code，由 toApiError 归一为 ContractApiError */
+interface OjEnvelope<T> { code: number, msg?: string, data?: T }
+
+let req: ScopedRequestLike | undefined;
+
+/** 模块入口 onInit 里调用：bindRequest(ctx.utils.request)（AC-D8 能力持有者） */
+export function bindRequest(r: ScopedRequestLike): void {
+	req = r;
+}
+
+function ensureReq(): ScopedRequestLike {
+	if (!req)
+		throw new ContractApiError(-1, "[ram-api] 请求未绑定——请在模块 entry.ts 的 onInit 里调用 bindRequest(ctx.utils.request)。");
+	return req;
+}
+
+/** ky HTTPError → ContractApiError（错误体为信封时取 code/msg）；契约违例与原错误原样透传 */
+async function toApiError(e: unknown): Promise<unknown> {
+	if (e instanceof ContractApiError)
+		return e;
+	const res = (e as { response?: Response } | null)?.response;
+	if (res instanceof Response) {
+		try {
+			const env = await res.clone().json() as { code?: number, msg?: string } | null;
+			if (env && typeof env.code === "number")
+				return new ContractApiError(env.code, env.msg ?? res.statusText);
+		}
+		catch { /* 非 JSON 错误体——回退原错误 */ }
+	}
+	return e;
+}
+
+export type GetOrderListQuery = z.infer<(typeof schemas)["getOrderList"]["query"]>;
+export type GetOrderListData = z.infer<(typeof schemas)["getOrderList"]["data"]>;
+
+export async function getOrderList(query: GetOrderListQuery): Promise<GetOrderListData> {
+	const client = ensureReq();
+	try {
+		const env = await client.get(\`order/list\`, { searchParams: query as Record<string, unknown> }).json<OjEnvelope<GetOrderListData>>();
+		const data = env.data as GetOrderListData;
+		if (import.meta.env.DEV) {
+			const { schemas } = await import("./client.schemas");
+			const r = schemas.getOrderList.data.safeParse(data);
+			if (!r.success)
+				throw new ContractApiError(-1, \`[契约违例] getOrderList 响应与契约不符：\${r.error.issues.map(i => \`\${i.path.join(".") || "(root)"}: \${i.message}\`).join("; ")}\`);
+		}
+		return data;
+	}
+	catch (e) {
+		throw await toApiError(e);
+	}
+}
+
+export type GetOrderDetailParams = z.infer<(typeof schemas)["getOrderDetail"]["params"]>;
+export type GetOrderDetailData = z.infer<(typeof schemas)["getOrderDetail"]["data"]>;
+
+export async function getOrderDetail(params: GetOrderDetailParams): Promise<GetOrderDetailData> {
+	const client = ensureReq();
+	try {
+		const env = await client.get(\`order/item/\${encodeURIComponent(String(params.id))}\`).json<OjEnvelope<GetOrderDetailData>>();
+		const data = env.data as GetOrderDetailData;
+		if (import.meta.env.DEV) {
+			const { schemas } = await import("./client.schemas");
+			const r = schemas.getOrderDetail.data.safeParse(data);
+			if (!r.success)
+				throw new ContractApiError(-1, \`[契约违例] getOrderDetail 响应与契约不符：\${r.error.issues.map(i => \`\${i.path.join(".") || "(root)"}: \${i.message}\`).join("; ")}\`);
+		}
+		return data;
+	}
+	catch (e) {
+		throw await toApiError(e);
+	}
+}
+
+export type CreateOrderBody = z.infer<(typeof schemas)["createOrder"]["body"]>;
+export type CreateOrderData = z.infer<(typeof schemas)["createOrder"]["data"]>;
+
+export async function createOrder(body: CreateOrderBody): Promise<CreateOrderData> {
+	const client = ensureReq();
+	try {
+		const env = await client.post(\`order/item\`, { json: body }).json<OjEnvelope<CreateOrderData>>();
+		const data = env.data as CreateOrderData;
+		if (import.meta.env.DEV) {
+			const { schemas } = await import("./client.schemas");
+			const r = schemas.createOrder.data.safeParse(data);
+			if (!r.success)
+				throw new ContractApiError(-1, \`[契约违例] createOrder 响应与契约不符：\${r.error.issues.map(i => \`\${i.path.join(".") || "(root)"}: \${i.message}\`).join("; ")}\`);
+		}
+		return data;
+	}
+	catch (e) {
+		throw await toApiError(e);
+	}
+}
+
+export type UpdateOrderParams = z.infer<(typeof schemas)["updateOrder"]["params"]>;
+export type UpdateOrderBody = z.infer<(typeof schemas)["updateOrder"]["body"]>;
+export type UpdateOrderData = z.infer<(typeof schemas)["updateOrder"]["data"]>;
+
+export async function updateOrder(input: { params: UpdateOrderParams, body: UpdateOrderBody }): Promise<UpdateOrderData> {
+	const client = ensureReq();
+	try {
+		const env = await client.put(\`order/item/\${encodeURIComponent(String(input.params.id))}\`, { json: input.body }).json<OjEnvelope<UpdateOrderData>>();
+		const data = env.data as UpdateOrderData;
+		if (import.meta.env.DEV) {
+			const { schemas } = await import("./client.schemas");
+			const r = schemas.updateOrder.data.safeParse(data);
+			if (!r.success)
+				throw new ContractApiError(-1, \`[契约违例] updateOrder 响应与契约不符：\${r.error.issues.map(i => \`\${i.path.join(".") || "(root)"}: \${i.message}\`).join("; ")}\`);
+		}
+		return data;
+	}
+	catch (e) {
+		throw await toApiError(e);
+	}
+}
+
+export type DownloadFileParams = { path: string };
+
+export function downloadFile(params: DownloadFileParams): Promise<Response> {
+	const client = ensureReq();
+	return client.get(\`order/file/\${String(params.path).split("/").map(encodeURIComponent).join("/")}\`);
+}
+"
+`;
+
+exports[`emitClient（AC-D5/D6/D8/D15） > 快照：module 目标双产物（bindRequest 持有者 + 类型推导 + DEV 校验 + raw 通道） 2`] = `
+"/* eslint-disable */
+// 生成物：ram api 从契约生成，勿手改（改动请改契约文件后重跑 ram api）
+// AC-D15：仅供 DEV 校验动态 import，生产构建不进产物
+import { z } from "@react-antd-module/runtime";
+
+export const schemas = {
+	getOrderList: {
+		query: z.object({
+	page: z.number().int().min(1),
+	size: z.number().int().optional(),
+}),
+		data: z.object({
+	list: z.array(z.object({
+		id: z.number(),
+		order_no: z.string(),
+	})),
+	total: z.number(),
+}),
+	},
+	getOrderDetail: {
+		params: z.object({
+	id: z.number(),
+}),
+		data: z.object({
+	id: z.number(),
+	order_no: z.string(),
+}),
+	},
+	createOrder: {
+		body: z.object({
+	order_no: z.string().min(1),
+}),
+		data: z.object({
+	id: z.number(),
+}),
+	},
+	updateOrder: {
+		params: z.object({
+	id: z.number(),
+}),
+		body: z.object({
+	order_no: z.string().optional(),
+}),
+		data: z.object({
+	id: z.number(),
+}),
+	},
+};
+"
+`;
