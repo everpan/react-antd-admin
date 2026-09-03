@@ -5,6 +5,7 @@
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
+		"allowImportingTsExtensions": true,
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,
 		"noEmit": true,
@@ -16,6 +17,7 @@
 	},
 	"include": [
 		"modules",
-		"modules.config.ts"
+		"modules.config.ts",
+		"typings.d.ts"
 	]
 }

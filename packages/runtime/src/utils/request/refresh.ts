@@ -23,19 +23,16 @@ export async function refreshTokenAndRetry(request: Request, options: Options, r
 		isRefreshing = true;
 		try {
 			// 调用 fetchRefreshToken 函数，使用传入的 refreshToken 获取新的 token 和 refreshToken
-			const freshResponse = await fetchRefreshToken({ refreshToken });
-			// 从响应中提取新的 token
-			const newToken = freshResponse.result.token;
-			// 从响应中提取新的 refreshToken
-			const newRefreshToken = freshResponse.result.refreshToken;
+			// （AC-D16：直返 { token, refreshToken }，无信封）
+			const fresh = await fetchRefreshToken({ refreshToken });
 			// 将新的 token 和 refreshToken 保存到 userStore 中
-			useAuthStore.setState({ token: newToken, refreshToken: newRefreshToken });
+			useAuthStore.setState({ token: fresh.token, refreshToken: fresh.refreshToken });
 			// 调用 onRefreshed 函数，传入新的 token
-			onRefreshed(newToken);
+			onRefreshed(fresh.token);
 
 			// 设置请求的 Authorization 头部为新的 token
 			// 重试当前请求
-			setHeaderSafe(request.headers, AUTH_HEADER, `Bearer ${newToken}`);
+			setHeaderSafe(request.headers, AUTH_HEADER, `Bearer ${fresh.token}`);
 			// 使用新的 token 重新发起请求
 			return ky(request, options);
 		}

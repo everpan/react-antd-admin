@@ -7,82 +7,56 @@ import { REFRESH_TOKEN_PATH } from "#src/utils/request/constants";
 export * from "./types";
 
 /**
- * D10：runtime 唯一适配点——把 oj 原生契约归一为对外 `ApiResponse<T>`，
- * 消费方（auth/user store、refresh、auth-guard）零改动。
- *  - 信封：oj `{code,msg,data}` → `{code,result,message,success}`；
- *    fake 旧信封（已有 result）原样透传
- *  - 字段：`access_token/refresh_token` → `token/refreshToken`
- *  - 端点：`auth/*`（oj 内置，无模块段）、`web/*`（业务必含模块段）
+ * AC-D16：全站唯一信封 = oj `{code,msg,data}`（code=0 成功，HTTP 状态=code）。
+ * fetch* 直返业务 data，失败路径由 ky HTTPError + error-response 统一吐司；
+ * 旧的 normalize/mapAuth 信封归一层已删除。
+ * 保留的唯一边界映射：auth 载荷 snake_case（access_token）→ camelCase（token），
+ * 属字段映射而非信封归一，3 行收口在 fetch 函数内。
  */
 
-/** oj 原生信封（登录链） */
+/** oj 信封（线格式） */
 interface OjEnvelope<T> {
 	code: number
 	msg?: string
 	data?: T
 }
 
-/** oj 原生信封 → ApiResponse；已带 result 的旧信封（fake）原样透传 */
-function normalize<T>(raw: OjEnvelope<T> | ApiResponse<T>): ApiResponse<T> {
-	if (raw && typeof raw === "object" && "result" in raw) {
-		return raw;
-	}
-	const oj = raw as OjEnvelope<T>;
-	const ok = (oj.code ?? 0) === 0;
+/** auth 载荷线格式 → 应用模型（字段映射，非信封归一） */
+function mapAuthPayload(data?: { access_token?: string, refresh_token?: string }): AuthType {
 	return {
-		code: ok ? 200 : oj.code,
-		result: oj.data as T,
-		message: oj.msg ?? "",
-		success: ok,
+		token: data?.access_token ?? "",
+		refreshToken: data?.refresh_token ?? "",
 	};
 }
 
-/** 认证载荷字段兼容：oj snake_case（access_token）与 fake camelCase（token）双读 */
-function mapAuth(res: ApiResponse<Partial<AuthType> & { access_token?: string, refresh_token?: string }>): ApiResponse<AuthType> {
-	return {
-		...res,
-		result: {
-			token: res.result?.token ?? res.result?.access_token ?? "",
-			refreshToken: res.result?.refreshToken ?? res.result?.refresh_token ?? "",
-		},
-	};
-}
-
-export function fetchLogin(data: LoginInfo) {
+export function fetchLogin(data: LoginInfo): Promise<AuthType> {
 	return request
 		.post("auth/login", { json: data })
-		.json<OjEnvelope<Partial<AuthType> & { access_token?: string, refresh_token?: string }>>()
-		.then(normalize)
-		.then(mapAuth);
+		.json<OjEnvelope<{ access_token?: string, refresh_token?: string }>>()
+		.then(env => mapAuthPayload(env.data));
 }
 
-export function fetchLogout(data?: { readonly refreshToken?: string }) {
-	return request.post("auth/logout", { json: { refresh_token: data?.refreshToken ?? "" } }).json();
+export function fetchLogout(data?: { readonly refreshToken?: string }): Promise<void> {
+	return request.post("auth/logout", { json: { refresh_token: data?.refreshToken ?? "" } }).json().then(() => {});
 }
 
-export function fetchAsyncRoutes() {
+export function fetchAsyncRoutes(): Promise<AppRouteRecordRaw[]> {
 	return request
 		.get("web/get-async-routes")
 		.json<OjEnvelope<AppRouteRecordRaw[]>>()
-		.then(raw => normalize<AppRouteRecordRaw[]>(raw));
+		.then(env => env.data ?? []);
 }
 
-export function fetchUserInfo() {
+export function fetchUserInfo(): Promise<UserInfoType> {
 	return request
 		.get("web/user-info")
 		.json<OjEnvelope<UserInfoType>>()
-		.then(raw => normalize<UserInfoType>(raw));
+		.then(env => env.data as UserInfoType);
 }
 
-export interface RefreshTokenResult {
-	token: string
-	refreshToken: string
-}
-
-export function fetchRefreshToken(data: { readonly refreshToken: string }) {
+export function fetchRefreshToken(data: { readonly refreshToken: string }): Promise<AuthType> {
 	return request
 		.post(REFRESH_TOKEN_PATH, { json: { refresh_token: data.refreshToken } })
-		.json<OjEnvelope<Partial<RefreshTokenResult> & { access_token?: string, refresh_token?: string }>>()
-		.then(normalize)
-		.then(mapAuth);
+		.json<OjEnvelope<{ access_token?: string, refresh_token?: string }>>()
+		.then(env => mapAuthPayload(env.data));
 }

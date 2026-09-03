@@ -27,6 +27,7 @@
 		"@dnd-kit/core": "catalog:",
 		"@dnd-kit/sortable": "catalog:",
 		"@dnd-kit/utilities": "catalog:",
+		"@react-antd-module/contract": "workspace:*",
 		"ahooks": "catalog:",
 		"antd": "catalog:",
 		"antd-img-crop": "catalog:",
@@ -48,13 +49,16 @@
 		"tailwind-merge": "catalog:",
 		"zustand": "catalog:"
 	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org/",
+		"access": "public"
+	},
+	"dependencies": {
+		"zod": "catalog:"
+	},
 	"devDependencies": {
 		"@iconify-json/ri": "catalog:",
 		"@iconify/tools": "catalog:",
 		"unplugin-icons": "catalog:"
-	},
-	"publishConfig": {
-		"registry": "https://registry.npmjs.org/",
-		"access": "public"
 	}
 }

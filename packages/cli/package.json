@@ -26,9 +26,15 @@
 		"prepack": "node scripts/sync-host-versions.mjs"
 	},
 	"dependencies": {
+		"@faker-js/faker": "catalog:",
+		"@react-antd-module/contract": "workspace:*",
+		"@redocly/cli": "catalog:",
 		"esbuild": "catalog:",
 		"tsx": "catalog:",
-		"vite": "catalog:"
+		"typescript": "catalog:",
+		"vite": "catalog:",
+		"yaml": "catalog:",
+		"zod": "catalog:"
 	},
 	"publishConfig": {
 		"registry": "https://registry.npmjs.org/",

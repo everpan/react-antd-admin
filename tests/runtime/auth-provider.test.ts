@@ -103,13 +103,11 @@ describe("auth store 委托 provider（P5）", () => {
 		unregisterAuthProvider("m-throw");
 	});
 
-	it("无 provider → 走内置 fetchLogin（回归 F12）", async () => {
+	it("无 provider → 走内置 fetchLogin（AC-D16：直返 AuthType）", async () => {
 		expect(getAuthProvider()).toBeUndefined();
 		vi.mocked(fetchLogin).mockResolvedValue({
-			code: 200,
-			result: { token: "builtin", refreshToken: "br" },
-			message: "ok",
-			success: true,
+			token: "builtin",
+			refreshToken: "br",
 		});
 
 		await useAuthStore.getState().login({ username: "a", password: "b" });
@@ -163,8 +161,8 @@ describe("auth store 委托 provider（P5）", () => {
 		unregisterAuthProvider("m-user");
 	});
 
-	it("无 provider → 走内置 fetchUserInfo（取 response.result）", async () => {
-		vi.mocked(fetchUserInfo).mockResolvedValue({ code: 200, result: { id: "7", username: "Builtin", roles: [] } as unknown as UserInfoType, message: "ok", success: true });
+	it("无 provider → 走内置 fetchUserInfo（AC-D16：直返 data）", async () => {
+		vi.mocked(fetchUserInfo).mockResolvedValue({ id: "7", username: "Builtin", roles: [] } as unknown as UserInfoType);
 		await useUserStore.getState().getUserInfo();
 		expect(useUserStore.getState().username).toBe("Builtin");
 	});

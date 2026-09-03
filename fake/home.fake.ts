@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker/locale/zh_CN";
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
 
-import { resultSuccess } from "./utils";
+import { ojOk } from "./utils";
 
 const home = {
 	cardList: [],
@@ -12,7 +12,7 @@ export default defineFakeRoute([
 		url: "/home",
 		timeout: 1000,
 		method: "get",
-		response: () => resultSuccess(home),
+		response: () => ojOk(home),
 	},
 	{
 		url: "/home/pie",
@@ -36,7 +36,7 @@ export default defineFakeRoute([
 					code: "beauty_skincare",
 				},
 			];
-			return resultSuccess(pie);
+			return ojOk(pie);
 		},
 	},
 	{
@@ -45,7 +45,7 @@ export default defineFakeRoute([
 		method: "post",
 		response: ({ body }) => {
 			if (body.range === "week") {
-				return resultSuccess(
+				return ojOk(
 					Array.from({ length: 7 }).map(() =>
 						faker.number.int({ min: 100, max: 1000 }),
 					),
@@ -54,7 +54,7 @@ export default defineFakeRoute([
 			if (body.range === "month") {
 				const currentDate = new Date();
 				const currentDay = currentDate.getDate();
-				return resultSuccess(
+				return ojOk(
 					Array.from({ length: currentDay }).map(() =>
 						faker.number.int({ min: 100, max: 1000 }),
 					),
@@ -74,13 +74,13 @@ export default defineFakeRoute([
 					}
 				}
 
-				return resultSuccess(
+				return ojOk(
 					Array.from({ length: daysBeforeCurrentMonth.length }).map(() =>
 						faker.number.int({ min: 100, max: 1000 }),
 					),
 				);
 			}
-			return resultSuccess([]);
+			return ojOk([]);
 		},
 	},
 ]);

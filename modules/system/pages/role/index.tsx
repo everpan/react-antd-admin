@@ -17,8 +17,8 @@ export default function Role() {
 	const { data: menuItems } = useQuery({
 		queryKey: ["role-menu"],
 		queryFn: async () => {
-			const responseData = await fetchRoleMenu();
-			return responseData?.result.map(item => ({
+			const menuList = await fetchRoleMenu();
+			return menuList.map(item => ({
 				...item,
 				title: item.name,
 				key: item.id,
@@ -32,14 +32,14 @@ export default function Role() {
 	/* Detail Data */
 	const [isOpen, setIsOpen] = useState(false);
 	const [title, setTitle] = useState("");
-	const [detailData, setDetailData] = useState<Partial<RoleItemType> & { menus?: string[] }>({});
+	const [detailData, setDetailData] = useState<Partial<RoleItemType> & { menus?: number[] }>({});
 
 	const actionRef = useRef<ActionType>(null);
 
 	const handleDeleteRow = async (id: number, action?: ProCoreActionType<object>) => {
-		const responseData = await deleteRoleItemMutation.mutateAsync(id);
+		const deletedId = await deleteRoleItemMutation.mutateAsync(id);
 		await action?.reload?.();
-		window.$message?.success(`${t("common.deleteSuccess")} id = ${responseData.result}`);
+		window.$message?.success(`${t("common.deleteSuccess")} id = ${deletedId}`);
 	};
 
 	const columns: ProColumns<RoleItemType>[] = [
@@ -59,10 +59,10 @@ export default function Role() {
 						disabled={!hasAccessByCodes(accessControlCodes.update)}
 						onClick={async () => {
 							/* 请求角色菜单权限 */
-							const responseData = await fetchMenuByRoleId({ id: record.id });
+							const menuIds = await fetchMenuByRoleId({ id: record.id });
 							setIsOpen(true);
 							setTitle(t("system:role.editRole"));
-							setDetailData({ ...record, menus: responseData.result });
+							setDetailData({ ...record, menus: menuIds });
 						}}
 					>
 						{t("common.edit")}
@@ -97,11 +97,10 @@ export default function Role() {
 				actionRef={actionRef}
 				request={async (params) => {
 					// console.log(sort, filter);
-					const responseData = await fetchRoleList(params);
+					const { list, total } = await fetchRoleList(params);
 					return {
-						...responseData,
-						data: responseData.result.list,
-						total: responseData.result.total,
+						data: list,
+						total,
 					};
 				}}
 				headerTitle={`${t("system:menu.role")} （${t("common.demoOnly")}）`}

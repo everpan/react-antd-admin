@@ -1,24 +1,21 @@
 /**
- * 接口返回数据格式
- * data: 接口返回数据
+ * AC-D16：全站唯一信封 = oj `{code,msg,data}`（code=0 成功，HTTP 状态=code）。
+ * fetch* 一律直返业务 data（不返回本信封）；本类型仅供 request 层与
+ * 契约机制（生成 client / 手写 api 的 unwrap）使用。
  */
-interface ApiResponse<T> {
+interface OjEnvelope<T> {
 	code: number
-	result: T
-	message: string
-	success: boolean
+	msg?: string
+	data?: T
 }
 
 /**
- * 数组形式的接口返回数据格式
- * list: 接口返回数据
+ * 列表接口的 data 载荷
  */
-interface ApiListResponse<T> extends ApiResponse<T> {
-	result: {
-		list: T[]
-		total: number
-		current: number
-	}
+interface ListData<T> {
+	list: T[]
+	total: number
+	current?: number
 }
 
 /**

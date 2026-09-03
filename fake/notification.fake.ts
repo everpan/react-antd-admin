@@ -1,13 +1,13 @@
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
 
-import { resultSuccess } from "./utils";
+import { ojOk } from "./utils";
 
 export default defineFakeRoute([
 	{
 		url: "/notifications",
 		timeout: 1000,
 		method: "get",
-		response: () => resultSuccess([
+		response: () => ojOk([
 			{
 				avatar: "https://avatar.vercel.sh/vercel.svg?text=VC",
 				date: "3 小时前",

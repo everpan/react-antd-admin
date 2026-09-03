@@ -21,6 +21,7 @@
 			"@testing-library/jest-dom",
 			"unplugin-icons/types/react"
 		],
+		"allowImportingTsExtensions": true,
 		"allowJs": true,
 		"strict": true,
 		"noFallthroughCasesInSwitch": true,

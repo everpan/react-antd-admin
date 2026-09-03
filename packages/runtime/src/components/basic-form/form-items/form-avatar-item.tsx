@@ -40,7 +40,8 @@ export function FormAvatarItem({ value, onChange }: FormAvatarItemProps) {
 							// }
 							if (info.file.status === "done") {
 								window.$message?.success(`${info.file.name} file uploaded successfully`);
-								onChange?.(info.file.response?.result);
+								// AC-D16：上传响应为 oj 信封，取 data
+								onChange?.((info.file.response as OjEnvelope<string> | undefined)?.data);
 							}
 							else if (info.file.status === "error") {
 								window.$message?.error(`${info.file.name} file upload failed.`);

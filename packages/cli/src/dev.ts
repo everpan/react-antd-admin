@@ -16,16 +16,18 @@
  * 测试经 DevOptions 注入桩（shell dist / 重建函数 / ojStarter）。
  */
 
+import type { ContractMockRoute } from "./contract/mock";
 import type { MockRoute } from "./dev-mock";
 import type { OjProcess } from "./oj";
 import { Buffer } from "node:buffer";
 import { existsSync, watch } from "node:fs";
-import http from "node:http";
 
+import http from "node:http";
 import { resolve } from "node:path";
 import process from "node:process";
 import { buildModules } from "./build";
-import { loadProjectMocks, matchMockRoute } from "./dev-mock";
+import { loadContractMocks, resolveMock } from "./contract/mock";
+import { loadProjectMocks, mockStatusCode } from "./dev-mock";
 import { createReloadHub, proxyApi, sseScript } from "./dev-proxy";
 import { resolveLayout } from "./layout";
 import { startOj } from "./oj";
@@ -73,6 +75,14 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 
 	// 工程 mock（可选约定 mock/*.mock.mjs）：纯前端形态的 /api 边界
 	const mocks: MockRoute[] = await loadProjectMocks(projectRoot);
+	// 契约 mock（AC-D14）：手写精确匹配优先，契约 pattern 兜底示例值；装载失败不崩 dev
+	let contractMocks: ContractMockRoute[] = [];
+	try {
+		contractMocks = await loadContractMocks(projectRoot);
+	}
+	catch (error) {
+		console.error(`[ram-api] 契约 mock 装载失败（不影响 dev 启动）：${error instanceof Error ? error.message : String(error)}`);
+	}
 
 	// 2) oj 后端（工程有 api/config.yaml 时全栈形态；桩可注入）
 	const configPath = resolve(projectRoot, "api/config.yaml");
@@ -120,10 +130,11 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 				return;
 			}
 			const apiRel = urlPath.replace(/^(\.\.[/\\])+/, "");
-			const route = matchMockRoute(mocks, req.method ?? "get", apiRel.slice(apiBase.length));
-			if (!route) {
+			const respond = resolveMock(mocks, contractMocks, req.method ?? "get", apiRel.slice(apiBase.length));
+			if (!respond) {
 				res.writeHead(404, { "content-type": "application/json; charset=utf-8" });
-				res.end(JSON.stringify({ code: 404, message: `No mock for ${req.method} ${apiRel}` }));
+				// AC-D16：信封键为 msg（oj 形态）
+				res.end(JSON.stringify({ code: 404, msg: `No mock for ${req.method} ${apiRel}`, data: null }));
 				return;
 			}
 			const chunks: Buffer[] = [];
@@ -136,11 +147,12 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 				catch {
 					// 非 JSON 请求体按空 body 交给 mock 处理
 				}
-				res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-				res.end(JSON.stringify(route.response({
+				const payload = respond({
 					body,
 					query: new URLSearchParams((req.url ?? "").split("?")[1] ?? ""),
-				})));
+				});
+				res.writeHead(mockStatusCode(payload), { "content-type": "application/json; charset=utf-8" });
+				res.end(JSON.stringify(payload));
 			});
 			return;
 		}
@@ -180,6 +192,23 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 	console.log(`[ram] 修改 ${layout.modulesSrc} 下的源码会触发重建并自动刷新浏览器。\n`);
 
 	// 4) 监听模块源码（watchTarget 纯源码目录，永不落产物 → 无自触发循环）
+	const { createContractRegen } = await import("./contract/watch");
+	// 评审 F2：契约重生成后同步重建契约 mock 表——否则 client 按新 schema
+	// 校验、mock 按旧 schema 出数，dev 期必现假「契约违例」且需重启恢复
+	const regenContracts = createContractRegen(projectRoot, {
+		onRegenerated: (result) => {
+			if (result.written.length > 0)
+				console.log(`[ram-api] 契约产物已更新 ${result.written.length} 个文件——模块重建将自动触发。`);
+			loadContractMocks(projectRoot).then(
+				(routes) => {
+					contractMocks = routes;
+				},
+				(error: unknown) => {
+					console.error(`[ram-api] 契约 mock 表重载失败（沿用旧表）：${error instanceof Error ? error.message : String(error)}`);
+				},
+			);
+		},
+	});
 	let timer: NodeJS.Timeout | null = null;
 	const trigger = () => {
 		if (timer)
@@ -198,12 +227,29 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 	};
 	try {
 		watch(layout.watchTarget, { recursive: true }, (_event, filename) => {
-			if (filename)
-				trigger();
+			if (!filename)
+				return;
+			// 契约文件变更：先 runApi 重生成 client（落 modules 树 → 二次触发本 watch 走重建）
+			if (filename.endsWith("contract.ts"))
+				regenContracts();
+			trigger();
 		});
 	}
 	catch {
 		// 某些平台不支持 recursive，退化为不自动重建（手动 ram build 仍可用）
+	}
+	// uni-dev 契约在 api/src（不在模块 watch 范围内），单独挂 watcher
+	try {
+		const apiSrc = `${projectRoot}/api/src`;
+		if (existsSync(apiSrc)) {
+			watch(apiSrc, { recursive: true }, (_event, filename) => {
+				if (filename?.endsWith("contract.ts"))
+					regenContracts();
+			});
+		}
+	}
+	catch {
+		// 同上：平台不支持 recursive 时退化为手动 ram api
 	}
 
 	return server;

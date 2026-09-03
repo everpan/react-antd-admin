@@ -34,6 +34,13 @@ export const SHARED_DEPS: SharedDepEntry[] = [
 	{ specifier: "@tanstack/react-query", asset: "react-query", hard: true },
 	// runtime 由 shell 直接拷贝其 dist/runtime.js
 	{ specifier: "@react-antd-module/runtime", asset: "runtime", hard: true },
+	// 契约包主入口（含 zod re-export）仅供 codegen（Node 侧）；保留条目是为
+	// 包级对齐（runtime peerDependencies 命中检查），浏览器无人 import 它
+	{ specifier: "@react-antd-module/contract", asset: "contract", hard: true },
+	// zod-free 子路径出口（评审 F3）：生成 client 浏览器侧只 import
+	// ContractApiError/ScopedRequestLike，instanceof 要求宿主与模块单实例 →
+	// 硬共享；zod 不随该资产（AC-D15 零成本承诺）
+	{ specifier: "@react-antd-module/contract/errors", asset: "contract-errors", hard: true },
 	// —— 软共享 ——
 	// 注：@rc-component/form（antd 6 Form 底层）曾尝试单例化以修 my-profile
 	// 崩溃（React #130），假说未证实——多副本并非充分根因，已回退；见

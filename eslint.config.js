@@ -62,6 +62,14 @@ const runtimeNoModulesGuard = {
 export default antfu({
 	react: true,
 	markdown: false,
+	ignores: [
+		// ram api 生成物（banner 注明勿手改），不参与 lint——
+		// yaml/json 经 eslint 重排版会导致 --check 永久误报 artifact-stale
+		"**/api/client.ts",
+		"**/api/client.schemas.ts",
+		"**/openapi.yaml",
+		"**/routes.json",
+	],
 	rules: {
 		"style/quotes": ["error", "double"],
 		"style/semi": ["error", "always"],

@@ -82,6 +82,7 @@
 		"@iconify-json/ri": "catalog:",
 		"@iconify/tools": "catalog:",
 		"@playwright/test": "catalog:",
+		"@react-antd-module/contract": "workspace:*",
 		"@svgr/plugin-jsx": "catalog:",
 		"@svgr/plugin-svgo": "catalog:",
 		"@tailwindcss/vite": "catalog:",
@@ -116,7 +117,8 @@
 		"vite-plugin-checker": "catalog:",
 		"vite-plugin-fake-server": "catalog:",
 		"vite-plugin-svgr": "catalog:",
-		"vitest": "catalog:"
+		"vitest": "catalog:",
+		"yaml": "catalog:"
 	},
 	"simple-git-hooks": {
 		"pre-commit": "npx lint-staged",

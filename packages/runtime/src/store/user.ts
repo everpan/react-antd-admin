@@ -29,9 +29,10 @@ export const useUserStore = create<UserState & UserAction>()(
 
 		getUserInfo: async () => {
 			const provider = getAuthProvider();
+			// AC-D16：fetchUserInfo 直返 data，无 .result 信封
 			const result = provider
 				? await provider.getUserInfo()
-				: (await fetchUserInfo()).result;
+				: await fetchUserInfo();
 			set({ ...result });
 			return result;
 		},

@@ -1,7 +1,7 @@
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
 
 import { ADMIN_REFRESH_TOKEN, ADMIN_TOKEN, COMMON_REFRESH_TOKEN, COMMON_TOKEN, COUNTRIES_CODE } from "./constants";
-import { resultSuccess } from "./utils";
+import { ojOk } from "./utils";
 
 export default defineFakeRoute([
 	{
@@ -14,15 +14,15 @@ export default defineFakeRoute([
 		// response: () => ({ code: 404, message: "Not found" }),
 		response: ({ body }) => {
 			if (body.username !== "common") {
-				return resultSuccess({
-					token: ADMIN_TOKEN,
-					refreshToken: ADMIN_REFRESH_TOKEN,
+				return ojOk({
+					access_token: ADMIN_TOKEN,
+					refresh_token: ADMIN_REFRESH_TOKEN,
 				});
 			}
 			else {
-				return resultSuccess({
-					token: COMMON_TOKEN,
-					refreshToken: COMMON_REFRESH_TOKEN,
+				return ojOk({
+					access_token: COMMON_TOKEN,
+					refresh_token: COMMON_REFRESH_TOKEN,
 				});
 			}
 		},
@@ -31,7 +31,7 @@ export default defineFakeRoute([
 		url: "/auth/logout",
 		timeout: 1000,
 		method: "post",
-		response: () => resultSuccess({}),
+		response: () => ojOk({}),
 	},
 	{
 		url: "/auth/refresh",
@@ -39,9 +39,9 @@ export default defineFakeRoute([
 		method: "post",
 		response: ({ body }) => {
 			if (body.refresh_token === ADMIN_REFRESH_TOKEN) {
-				return resultSuccess({ token: ADMIN_TOKEN, refreshToken: ADMIN_REFRESH_TOKEN });
+				return ojOk({ access_token: ADMIN_TOKEN, refresh_token: ADMIN_REFRESH_TOKEN });
 			}
-			return resultSuccess({ token: COMMON_TOKEN, refreshToken: COMMON_REFRESH_TOKEN });
+			return ojOk({ access_token: COMMON_TOKEN, refresh_token: COMMON_REFRESH_TOKEN });
 		},
 	},
 	{
@@ -49,7 +49,7 @@ export default defineFakeRoute([
 		timeout: 1000,
 		method: "get",
 		response: () => {
-			return resultSuccess(COUNTRIES_CODE);
+			return ojOk(COUNTRIES_CODE);
 		},
 	},
 ]);

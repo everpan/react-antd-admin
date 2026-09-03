@@ -41,3 +41,4 @@ export { getAllExpandedKeys } from "./utils/get-all-expanded-keys";
 export { getAppInfo } from "./utils/get-app-info";
 export { getRedirectPath } from "./utils/get-redirect-path";
 export * from "./utils/tree";
+export { z } from "zod";

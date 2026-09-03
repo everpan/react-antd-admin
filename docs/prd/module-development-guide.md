@@ -197,7 +197,8 @@ export default definition;
 | 框架能力（store/request/布局/hooks…） | `import { ... } from "@react-antd-module/runtime"` |
 | 共享三方（antd/zustand/dayjs…） | 直接 `import "antd"` 等——构建时 external，importmap 提供单例 |
 | 模块内部 | 相对路径（`./pages/list`） |
-| 发起 HTTP 请求 | `ctx.utils.request`——按 `register.apiPrefix` 前缀收敛的 scoped client，**越界请求被拒绝**（D11） |
+| 发起 HTTP 请求 | `ctx.utils.request`——按 `register.apiPrefix` 前缀收敛的 scoped client，**越界请求被拒绝**（D11）；推荐经契约生成 client（§3.7），不手写 URL |
+| API 契约 | `import { defineApi, z } from "@react-antd-module/contract"`——硬共享，devDependency 声明且版本与宿主严格相等 |
 | **其他模块的内部文件** | **禁止**（含 `#src/`、`#modules/`——eslint + CI 双卡口，P2.4） |
 | 其他模块的能力 | 经 runtime 注册表：`ctx.register.store()` + `getRegisteredStore()` |
 
@@ -222,9 +223,9 @@ export default [
 		url: "/order-api/list",              // 归一化到 /api/order-api/list
 		method: "POST",                       // 缺省 GET
 		response: ({ body, query }) => ({     // 返回值即响应 JSON
-			code: 200,
-			result: { list: [], total: 0 },
-			success: true,
+			code: 0,                          // oj 信封（AC-D16）：0 成功，非 0 时 HTTP status=code
+			msg: "ok",
+			data: { list: [], total: 0 },
 		}),
 	},
 ];
@@ -232,7 +233,10 @@ export default [
 
 - url + method **精确匹配**，未命中返回 404 JSON（不做透传）——
   mock 表就是该 dev 形态的后端边界；
-- 无 `mock/` 目录时零行为变化；**重启 `ram dev` 生效**（不热载）；
+- **契约驱动 mock 兜底**（§3.7）：手写 mock 未命中时，按契约 `data`
+  schema 自动生成示例数据——纯前端开发可以只写契约、零手写 mock；
+- 无 `mock/` 目录时零行为变化；**重启 `ram dev` 生效**（手写 mock 不热载；
+  契约文件变更则自动重生成 + 热载，见 §3.7）；
 - 生产构建不受影响（约定仅存在于 ram dev）。
 
 ### 3.5 登录模块（替换内置登录页）
@@ -344,6 +348,79 @@ onInit: async (ctx) => {
 参考实现：`apps/playground/modules/src/login/entry.ts` + `mock/auth.mock.mjs`；
 设计细节与**流程图（mermaid）**见 `202609021446-auth-provider-injection-design.md` §5.1
 （登录 / 登出 / 取用户信息 + runtime↔login 模块交互）。
+
+### 3.7 API 契约（ram api）
+
+模块 API 调用不再是手写 URL 字符串——契约是单一事实源，类型化 client、
+dev 响应校验、mock 兜底、OpenAPI 文档全部从契约生成。
+
+**写契约** —— `modules/src/<模块>/api/contract.ts`：
+
+```ts
+import { defineApi, z } from "@react-antd-module/contract";
+
+export const getTodoList = defineApi({
+	apiPrefix: "/demo",              // 须与 entry.ts 登记的 apiPrefix 一致
+	route: "/todos",                // 相对 apiPrefix；支持 {id} / {*path} 参数段
+	query: z.object({ keyword: z.string().optional() }),
+	data: z.object({                 // 信封 data 部分的 schema（线协议唯一真相）
+		list: z.array(z.object({ id: z.number(), title: z.string(), done: z.boolean() })),
+		total: z.number(),
+	}),
+	description: "演示待办列表",      // 进 OpenAPI 文档
+});
+```
+
+**生成** —— 工程根执行：
+
+```bash
+ram api          # 生成 client.ts / client.schemas.ts / routes.json / openapi.yaml（幂等，内容不变则跳过）
+ram api --check  # CI 门禁：生成物过期、route 双向对账不一致即 error 退出 1
+ram api --docs   # 聚合全部契约渲染 redoc 静态文档站
+```
+
+`ram dev` 自带契约 watch：改 `contract.ts` 自动重生成，页面刷新即生效。
+
+**绑定请求能力** —— `entry.ts` 的 `onInit` 里两行（顺序不可颠倒）：
+
+```ts
+import { bindRequest } from "./api/client";
+
+onInit: async (ctx) => {
+	ctx.register.apiPrefix("/demo");   // D11 前缀收敛
+	bindRequest(ctx.utils.request);    // AC-D8：宿主注入 scoped client
+},
+```
+
+**页面使用** —— 类型推导 + 信封自动解包 + dev 下响应违例人话报错：
+
+```ts
+import { getTodoList } from "../api/client";
+
+const { list, total } = await getTodoList({ keyword: "x" });
+// list 类型自动推导为 { id: number, title: string, done: boolean }[]
+```
+
+约束与逃生口：
+
+- 信封格式统一为 oj `{ code, msg, data }`（code=0 成功；非 0 时 HTTP
+  status=code，client 归一抛 `ContractApiError`）；
+- schema 白名单：string/number/boolean/date/object/array/enum/literal/
+  union/optional/nullable/default——`transform`/`refine`/`coerce`/`pipe`/
+  `lazy` 无法转 OpenAPI，定义期即拒绝；
+- `response: "raw"` 端点不解包不校验（二进制/非信封逃生口）；
+- 生成物（`api/client.ts` / `client.schemas.ts`）**勿手改**（eslint 已忽略），
+  改动一律改契约后重跑 `ram api`；
+- `import.meta.env.DEV` 校验分支在生产构建中被常量消除，zod 不进产物。
+
+**常见问题**：
+
+1. **「请求未绑定」**——`onInit` 里没调 `bindRequest`（或顺序颠倒在
+   `apiPrefix` 之前导致越界拒绝）；
+2. **「请求越界」**——契约 `apiPrefix` 与 `entry.ts` 登记前缀不一致；
+3. **typecheck 报 `import.meta.env` 不存在**——工程无 vite 依赖时，按
+   `apps/playground/typings.d.ts` 补一份最小 `ImportMeta.env` 声明，
+   并开 `allowImportingTsExtensions`（契约包源码以 `.ts` 后缀相对导入）。
 
 > **框架开发者注意**：`packages/runtime/src` 改动后必须重建并提交
 > `packages/runtime/dist` + `packages/shell/dist`（见设计文档 §10），否则消费方

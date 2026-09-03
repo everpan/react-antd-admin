@@ -1,3 +1,5 @@
+minimumReleaseAgeExclude:
+  - '@redocly/cli@2.51.0'
 shellEmulator: true
 
 trustPolicy: no-downgrade
@@ -43,6 +45,7 @@ catalog:
   '@iconify-json/ri': ^1.2.10
   '@iconify/tools': ^5.0.11
   '@playwright/test': ^1.62.1
+  '@redocly/cli': ^2.51.0
   '@svgr/plugin-jsx': ^8.1.0
   '@svgr/plugin-svgo': ^8.1.0
   '@tailwindcss/vite': ^4.3.0
@@ -104,4 +107,8 @@ catalog:
   vite-plugin-svgr: ^5.2.0
   vitepress: ^1.6.4
   vitest: ^4.1.6
+  yaml: ^2.9.0
+  # AC-D12/AC-D15：契约机制钉 zod v4；非 importmap 共享条目，但 contract 微包、
+  # runtime（re-export）、cli（codegen）三处必须同源定版，故纳入 catalog
+  zod: ^4.5.4
   zustand: ^5.0.13

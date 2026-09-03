@@ -44,6 +44,35 @@ async function main() {
 		case "info":
 			await printInfo(projectRoot);
 			break;
+		case "api": {
+			if (process.argv.includes("--docs")) {
+				const { runApiDocs } = await import("./contract/run");
+				const out = await runApiDocs(projectRoot);
+				console.log(`[ram-api] 文档站已生成：${path.relative(projectRoot, out)}（浏览器直接打开即可）`);
+				break;
+			}
+			if (process.argv.includes("--check")) {
+				const { checkApi } = await import("./contract/check");
+				const { violations, hints } = await checkApi({ cwd: projectRoot });
+				for (const v of violations)
+					console[v.level === "error" ? "error" : "warn"](`${v.level === "error" ? "✗" : "⚠"} ${v.message}`);
+				for (const h of hints)
+					console.log(h);
+				if (violations.length === 0)
+					console.log("[ram-api] --check 通过：生成物同步、route 双向对账、routes.js 均无 drift。");
+				const errors = violations.filter(v => v.level === "error").length;
+				console.log(`[ram-api] --check 结果：${errors} error / ${violations.length - errors} warn`);
+				if (errors > 0)
+					process.exit(1);
+				break;
+			}
+			const { runApi } = await import("./contract/run");
+			const result = await runApi({ cwd: projectRoot });
+			console.log(`[ram-api] 契约 ${result.contracts} 份；写入 ${result.written.length} 个文件，跳过（未变）${result.skipped.length} 个；stub 新建 ${result.stubs.created} / 更新 ${result.stubs.updated} / 跳过 ${result.stubs.skipped}`);
+			for (const p of result.written)
+				console.log(`  + ${path.relative(projectRoot, p)}`);
+			break;
+		}
 		case "merge":
 			await mergeManifests(process.argv[3] ?? "", process.argv.slice(4));
 			break;

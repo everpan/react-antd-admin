@@ -51,6 +51,9 @@ catalogs:
     '@playwright/test':
       specifier: ^1.62.1
       version: 1.62.1
+    '@redocly/cli':
+      specifier: ^2.51.0
+      version: 2.51.0
     '@svgr/plugin-jsx':
       specifier: ^8.1.0
       version: 8.1.0
@@ -228,6 +231,12 @@ catalogs:
     vitest:
       specifier: ^4.1.6
       version: 4.1.11
+    yaml:
+      specifier: ^2.9.0
+      version: 2.9.0
+    zod:
+      specifier: ^4.5.4
+      version: 4.5.4
     zustand:
       specifier: ^5.0.13
       version: 5.0.15
@@ -354,6 +363,9 @@ importers:
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.62.1
+      '@react-antd-module/contract':
+        specifier: workspace:*
+        version: link:packages/contract
       '@svgr/plugin-jsx':
         specifier: 'catalog:'
         version: 8.1.0(@svgr/core@8.1.0(supports-color@7.2.0)(typescript@6.0.3))(supports-color@7.2.0)
@@ -459,6 +471,9 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@25.9.5)(happy-dom@20.11.12)(vite@8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+      yaml:
+        specifier: 'catalog:'
+        version: 2.9.0
 
   apps/playground:
     devDependencies:
@@ -468,6 +483,9 @@ importers:
       '@react-antd-module/cli':
         specifier: workspace:*
         version: link:../../packages/cli
+      '@react-antd-module/contract':
+        specifier: workspace:*
+        version: link:../../packages/contract
       '@react-antd-module/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
@@ -504,15 +522,39 @@ importers:
 
   packages/cli:
     dependencies:
+      '@faker-js/faker':
+        specifier: 'catalog:'
+        version: 10.6.0
+      '@react-antd-module/contract':
+        specifier: workspace:*
+        version: link:../contract
+      '@redocly/cli':
+        specifier: 'catalog:'
+        version: 2.51.0
       esbuild:
         specifier: 'catalog:'
         version: 0.28.2
       tsx:
         specifier: 'catalog:'
         version: 4.23.12
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
       vite:
         specifier: 'catalog:'
         version: 8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
+      yaml:
+        specifier: 'catalog:'
+        version: 2.9.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.5.4
+
+  packages/contract:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.5.4
 
   packages/runtime:
     dependencies:
@@ -531,6 +573,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: 'catalog:'
         version: 3.2.2(react@19.2.8)
+      '@react-antd-module/contract':
+        specifier: workspace:*
+        version: link:../contract
       ahooks:
         specifier: 'catalog:'
         version: 3.9.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -588,6 +633,9 @@ importers:
       tailwind-merge:
         specifier: 'catalog:'
         version: 3.6.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.5.4
       zustand:
         specifier: 'catalog:'
         version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
@@ -2389,6 +2437,11 @@ packages:
     peerDependencies:
       react: '>=18.0.0'
       react-dom: '>=18.0.0'
+
+  '@redocly/cli@2.51.0':
+    resolution: {integrity: sha512-X4zaTTFA7V3T1s7CVdeqU2pcFVxZtQ5FKQDoW0eUurb6ntD+5XWqPr57gr55XaLYA1zrUCKvnZpN4Tr2VUBkBg==}
+    engines: {node: '>=22.12.0 || >=20.19.0 <21.0.0', npm: '>=10'}
+    hasBin: true
 
   '@rolldown/binding-android-arm-eabi@1.2.6':
     resolution: {integrity: sha512-b+jTcARdTiFLI6jB4a5XjTm0RWd6KcRfQj/I2356fxUZemiho9zQLxo0RtCuMDAyKcLo6cEltkgbQp6d1+sjjQ==}
@@ -6098,6 +6151,9 @@ packages:
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
+  zod@4.5.4:
+    resolution: {integrity: sha512-sC95tT5iHHH9gtpj6A81kh+NEaRAUFN+qlUPDUbRfOMvNf5QCBqsb3WgvnpVtK5Y+4UfA6KqufotuTvMGiTlsA==}
+
   zrender@6.1.0:
     resolution: {integrity: sha512-oEGMDB6pOP2S6OwRR4PdVv610zrjnA3Bh+JnSG12fYJlBKjtNAoEb5fSUoCOOINlH96I2fU38/A2UpRKs67xYQ==}
 
@@ -7243,7 +7299,7 @@ snapshots:
       eslint: 10.9.1(jiti@2.7.0)(supports-color@7.2.0)
       ts-pattern: 5.9.0
       typescript: 6.0.3
-      zod: 4.4.3
+      zod: 4.5.4
     transitivePeerDependencies:
       - supports-color
 
@@ -7780,6 +7836,8 @@ snapshots:
       clsx: 2.1.1
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
+
+  '@redocly/cli@2.51.0': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.6':
     optional: true
@@ -11725,6 +11783,8 @@ snapshots:
       zod: 4.4.3
 
   zod@4.4.3: {}
+
+  zod@4.5.4: {}
 
   zrender@6.1.0:
     dependencies:

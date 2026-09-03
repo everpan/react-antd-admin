@@ -8,6 +8,7 @@
 		"title": "Vertical Slice Demo",
 		"loaded": "Module loaded",
 		"detail": "Demo Detail Page",
-		"about": "Demo About Page"
+		"about": "Demo About Page",
+		"todos": "Contract-driven todo list"
 	}
 }

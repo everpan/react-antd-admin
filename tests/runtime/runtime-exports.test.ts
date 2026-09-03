@@ -55,6 +55,9 @@ describe("runtime 主入口出口白名单 (P3.1)", () => {
 		expect(Runtime.unloadModule).toBeTypeOf("function");
 		expect(Runtime.useSlotNodes).toBeTypeOf("function");
 		expect(Runtime.getAppInfo).toBeTypeOf("function");
+		// AC-D15：zod re-export（契约 schema 书写入口；zod 随 runtime dist 走，不进 importmap）
+		expect(Runtime.z).toBeTypeOf("object");
+		expect(Runtime.z.object).toBeTypeOf("function");
 	});
 
 	it("组件：basic-* / iframe / access-control / 表单项", () => {
