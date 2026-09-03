@@ -7,7 +7,7 @@
  * - ContractApiError：契约制 client 统一错误类型
  * - ScopedRequestLike：生成 client 的 request 最小结构类型
  */
-export { defineApi } from "./define-api";
+export { API_DEF, defineApi } from "./define-api";
 export type { ApiDefinitionInput, HttpMethod } from "./define-api";
 export { ContractApiError } from "./errors";
 export type { ScopedRequestLike } from "./scoped-request-like";
