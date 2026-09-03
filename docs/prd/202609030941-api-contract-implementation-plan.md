@@ -572,11 +572,11 @@ bindRequest(ctx.utils.request);
 
 ### Task 6.2：集中评审 + 修复闭环
 
-- [ ] 邀架构/开发双角色评审实现（评审输入：本计划 + 设计文档 + `git diff feat/ram...feat/api-contract`）；
-- [ ] 评审报告落盘 `docs/prd/<日期>-api-contract-review-report.md`；findings 分类处置（blocker/major 必修，minor 评估），修复提交后复跑 Task 6.1 回归；
-- [ ] 设计文档与计划文末追加总结段（关键过程与耗时）；合并回 `feat/ram` 前的 commit 序列整理。
+- [x] 邀架构/开发双角色评审实现（评审输入：本计划 + 设计文档 + `git diff feat/ram...feat/api-contract`）；
+- [x] 评审报告落盘 `docs/prd/<日期>-api-contract-review-report.md`；findings 分类处置（blocker/major 必修，minor 评估），修复提交后复跑 Task 6.1 回归；
+- [x] 设计文档与计划文末追加总结段（关键过程与耗时）；合并回 `feat/ram` 前的 commit 序列整理。
 
-- [ ] **Phase 6 小结**：文末追加小结 + 全文总结段。
+- [x] **Phase 6 小结**：文末追加小结 + 全文总结段。
 
 ---
 
@@ -617,3 +617,42 @@ bindRequest(ctx.utils.request);
      `beforeEach(clearAllMocks)` 后恢复判定力——BDD 用例必须隔离断言。
 - 验证：typecheck 零错误；单测 368 通过（仅上述 2 条环境性集成失败）；
   lint 0 error。
+
+### Phase 5：试点迁移 + 手册——已完成（2026-09-03，约 1 小时）
+
+- 完成：runtime system/role 六端点契约化（internal 目标，消费方零改动）；
+  playground demo 模块接入（契约驱动 mock 兜底跑通「无后端先写页」）；
+  模块手册 §3.7 + uni-dev 手册命令表/布局图/watch 说明。
+- 试点裂缝 ⑨-⑬（详见 Phase 5 节内小结）：ky 类型兼容、importmap 覆盖、
+  ignoreLoading 透传、模块工程 tsconfig 前提、生成物 lint 重排版误报——
+  全部是首次真实消费才现形的形态问题，为 Phase 6 评审提供了实证素材。
+
+### Phase 6：集中评审 + 回归——已完成（2026-09-03，约 2.5 小时）
+
+- 回归（Task 6.1）：typecheck / lint / 464 单测 / 根+playground 构建 /
+  circular-deps / e2e 23/23 / 双仓 `ram api --check` 全绿；产物断言无
+  fake 代码（B15）、无 client.schemas 泄漏；demo 契约 mock curl 冒烟通过。
+- 评审（Task 6.2）：架构/开发双角色独立评审（报告落盘
+  `202609031526-api-contract-review-report.md`）——25 条 findings 归并，
+  无 blocker；8 条 major 全修（F1-F8），minor 顺手修 6 条（F9-F14），
+  演进点 6 条记录在案（F15-F20）。
+- 评审揭示的共性问题：**「机制核心承诺（dev 校验 + 契约 mock 反馈环）
+  在单测里全绿、在真实联用路径上失效」**——date 语义三链互斥、mock
+  自违例、mock 不热载三条互相咬合，只有真起 dev server 才现形。教训已
+  固化：F25（生成物 tsc 兜底）+ F1 端到端断言（mock 值过生成 schema）
+  + dev 冒烟脚本化。
+- 偏差：主仓 `ram api --check` 不适用（无可发现契约）——以
+  `role-contract-freshness.test.ts` 补门禁；oj-process / uni-dev-smoke
+  的环境性 flake 与基线一致，非本分支引入。
+
+## 全文总结
+
+契约机制（ram api）七阶段全部闭环。最终形态：zod 契约为单一事实源
+（`@react-antd-module/contract`），`ram api` 幂等生成强类型 client /
+OpenAPI / routes.json / handler stub，`--check` 三重对账（生成物同步 +
+route 双向 + routes.js），`ram dev` 契约 watch + 契约驱动 mock 兜底 +
+dev 响应违例人话报错，redoc 文档站聚合。前端信封统一 oj 格式（AC-D16）。
+两处试点（runtime internal role + playground demo module）验证双目标
+生成路径；生产产物实证 zod 零泄漏（模块侧 984B contract-errors 资产 +
+DEV 分支消除）。累计耗时约 8 小时（设计+计划 ~2h 在前序会话，
+P0-P6 实现约 6h），新增/修改测试约 90 用例。
