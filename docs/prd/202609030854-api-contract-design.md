@@ -49,6 +49,7 @@
 | D7 | 生成物提交 git；`ram api` 显式命令 + `ram dev` watch 自动重生成 | 契约变更在 PR diff 可见、可评审；CI 校验同步 |
 | D8 | 生成 client 经 runtime 新出口 `getModuleRequest(moduleName)` 拿 scoped client | 页面组件拿不到生命周期 ctx；scoped client 前缀本就惰性求值，D11 收敛保留 |
 | D9 | 生成 `routes.json`（method + pattern 表），mock 直接消费，CI 与 oj routes.js diff | 对齐 oj build 剥 `.route` 成 routes.js 的机制（R8） |
+| D10 | 契约 route 是唯一手写事实源；`ram api` 为无 handler 的端点生成 `api.ts` stub（`.route`/方法名/`json.ok` 收口已填好）；`ram api --check` 静态扫描后端源做**双向对账** | 消除「契约 route ↔ handler `.route`」两处手写的人为漂移；不采用 handler import 契约取 route（语义需换算，且破坏 oj build 对 `.route` 字面量的静态提取） |
 
 ## 4. 契约 DSL
 
@@ -166,11 +167,25 @@ dev 环境（`import.meta.env.DEV` 守卫，生产构建整段剔除、零成本
 
 ## 9. 测试与门禁
 
-- codegen 单测：IR → client/openapi/routes/mock 快照（Vitest）；
+- codegen 单测：IR → client/openapi/routes/mock/handler stub 快照（Vitest）；
 - e2e：mock 返回与 schema 不符 → dev 报契约违例（字段级 diff 文案断言）；
-- CI：`ram api --check` 校验「契约 ↔ 生成物」同步，drift 即失败（同 P3
-  drift-prevention 思路）；uni-dev 工程另校验「契约路由表 ↔ 后端
-  routes.js」一致（R8）。
+- CI：`ram api --check` 三重校验——
+  1. 「契约 ↔ 生成物」同步，drift 即失败（同 P3 drift-prevention 思路）；
+  2. **route 双向对账**（D10）：静态扫描 `api/src/**/api.ts` 的目录镜像
+     路径 + `.route` 字面量，与契约路由表 diff——契约路由无 handler
+     （契约先行期可配 warn）、handler `.route` 未登记（error）、同名端点
+     参数段不一致（error）；
+  3. uni-dev 工程校验「契约路由表 ↔ 后端 routes.js」一致（R8，release 兜底）。
+
+## 9.1 handler stub 生成（D10）
+
+`ram api` 发现契约端点尚无对应 handler 时生成 `api.ts` stub：
+
+- 目录按契约 route 的镜像路径创建；`.route` 参数段已按契约填好；
+- 方法名已按契约 method 映射（`DELETE`→`del`，规避手册红线）；
+- 响应已带 `json.ok` 占位；stub 内的 TODO 注释标注对应契约端点名。
+- 已有 handler 的端点不覆盖（stub 只生成缺失项），后续 drift 由
+  `ram api --check` 对账兜底。
 
 ## 10. 风险与开放点
 
