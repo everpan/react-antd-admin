@@ -151,7 +151,7 @@ export async function runApi(opts: { cwd: string }): Promise<RunResult> {
  * uni-dev 形态（存在 api/src 契约）落 `api/docs/index.html`，纯前端落 `docs/api/index.html`；
  * 聚合 spec 同目录落 `openapi.yaml`（评审可直读）。redoc CLI 缺失时人话报错。
  */
-export async function runApiDocs(cwd: string, opts: { redocBin?: string } = {}): Promise<string> {
+export async function runApiDocs(cwd: string, opts: { redocBin?: string, fetchJs?: (url: string) => Promise<string> } = {}): Promise<string> {
 	const contracts = discoverContracts(cwd);
 	if (contracts.length === 0) {
 		throw new Error(`[ram-api] ${cwd} 下没有发现契约文件——默认发现：api/src/*/contract.ts（uni-dev）与 modules/src/*/api/contract.ts（纯前端）。`);
@@ -186,7 +186,35 @@ export async function runApiDocs(cwd: string, opts: { redocBin?: string } = {}):
 		const stderr = (error as { stderr?: string }).stderr?.trim();
 		throw new Error(`[ram-api] redoc 渲染失败${stderr ? `：${stderr.split("\n").pop()}` : ""}——请确认 @redocly/cli 已安装（pnpm install）；若刚装依赖，重试即可。`);
 	}
+	// 202609032041：redocly 产物外链 CDN redoc bundle（离线/内网白页）——内联成单文件自包含页
+	try {
+		writeFileSync(outPath, await inlineRedocScript(readFileSync(outPath, "utf8"), opts.fetchJs ?? fetchRedocBundle));
+	}
+	catch (error) {
+		throw new Error(`[ram-api] 内联 redoc bundle 失败（${error instanceof Error ? error.message : String(error)}）——构建机需能访问 cdn.redocly.com；离线环境请先在有网机器生成。`);
+	}
 	return outPath;
+}
+
+/**
+ * redocly 产物的 CDN `<script src>` 替换为内联 bundle（版本随 redocly 模板 URL 走，不硬编码）。
+ * 无 CDN 标签原样返回（幂等）。bundle 中 `</script` 转义防页面提前闭合。
+ */
+export async function inlineRedocScript(html: string, load: (url: string) => Promise<string>): Promise<string> {
+	const m = html.match(/<script src="(https:\/\/cdn\.redocly\.com\/[^"]*redoc\.standalone\.js)"[^>]*><\/script>/);
+	if (!m)
+		return html;
+	const js = (await load(m[1])).replaceAll("</script", "<\\/script");
+	// 替换函数而非字符串：bundle 含 $&/$1 等 $ 模式，字符串替换会把匹配段重复插回
+	return html.replace(m[0], () => `<script>${js}</script>`);
+}
+
+/** 默认 bundle loader：全局 fetch（构建期一次性网络请求，产物离线可看） */
+async function fetchRedocBundle(url: string): Promise<string> {
+	const res = await fetch(url);
+	if (!res.ok)
+		throw new Error(`HTTP ${res.status}`);
+	return res.text();
 }
 
 /** redocly CLI 的 js bin 路径（走 Node 模块解析，随 cli 依赖安装） */
