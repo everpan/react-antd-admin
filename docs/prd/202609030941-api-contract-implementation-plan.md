@@ -1,6 +1,6 @@
 # API 契约机制（ram api）实现计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** 落地契约机制——zod 契约为源，`ram api` 生成强类型 client/OpenAPI/routes/handler stub，前端统一 oj 信封，dev 运行时校验与契约 mock。
 
@@ -36,7 +36,7 @@
 **Interfaces:**
 - Produces: `handleErrorResponse(response: Response): Promise<Response>` 签名不变；行为变更——JSON 错误体优先读 `msg` 键。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
@@ -63,10 +63,10 @@ describe("handleErrorResponse（oj 信封）", () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败** — `pnpm vitest run packages/runtime/src/utils/request/error-response.test.ts`，预期第 1、3 条 FAIL。
-- [ ] **Step 3: 实现** — `error-response.ts:27` 的键读取改为 `const json = data as { msg?: string }; message.error(json.msg || response.statusText);`
-- [ ] **Step 4: 跑测试确认通过**（同上命令，全 PASS）。
-- [ ] **Step 5: Commit** — `fix(runtime): error-response 改读 oj 信封 msg 键（ac-d16）`
+- [x] **Step 2: 跑测试确认失败** — `pnpm vitest run packages/runtime/src/utils/request/error-response.test.ts`，预期第 1、3 条 FAIL。
+- [x] **Step 3: 实现** — `error-response.ts:27` 的键读取改为 `const json = data as { msg?: string }; message.error(json.msg || response.statusText);`
+- [x] **Step 4: 跑测试确认通过**（同上命令，全 PASS）。
+- [x] **Step 5: Commit** — `fix(runtime): error-response 改读 oj 信封 msg 键（ac-d16）`
 
 ### Task 0.2：api/user 直消费 oj 信封 + store 适配
 
@@ -82,7 +82,7 @@ describe("handleErrorResponse（oj 信封）", () => {
   - `fetchLogin(data: LoginInfo): Promise<AuthType>`——成功返回 `{ token, refreshToken }`（`access_token`→`token` 的 3 行边界映射保留在本函数内，**信封**不再归一）；oj 业务失败由 ky HTTPError → error-response 吐司 + throw，store 不再检查 `success` 字段。
   - `fetchUserInfo(): Promise<UserInfoType>`、`fetchAsyncRoutes(): Promise<AppRouteRecordRaw[]>`、`fetchRefreshToken(...): Promise<AuthType>`、`fetchLogout(...): Promise<void>`——全部直返 `data` 或 void，返回类型不再是 `ApiResponse<T>`。
 
-- [ ] **Step 1: 写失败测试**（msw 不用，直接 stub ky 链：vi.mock `#src/utils/request` 的 `request`，返回带 `.json()` 的 thenable）
+- [x] **Step 1: 写失败测试**（msw 不用，直接 stub ky 链：vi.mock `#src/utils/request` 的 `request`，返回带 `.json()` 的 thenable）
 
 ```ts
 it("fetchLogin 成功：oj 信封 data.access_token 映射为 token", async () => {
@@ -95,10 +95,10 @@ it("fetchUserInfo 直返 data", async () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败** — `pnpm vitest run packages/runtime/src/api/user`。
-- [ ] **Step 3: 实现** — `api/user/index.ts` 重写：`fetchLogin` 体为 `request.post("auth/login", { json: data }).json<{ code: number, data: { access_token?: string, refresh_token?: string } }>().then(d => ({ token: d.data.access_token ?? "", refreshToken: d.data.refresh_token ?? "" }))`；`fetchUserInfo`/`fetchAsyncRoutes` 为 `.json<{ data: T }>().then(d => d.data)`；删除 `normalize`/`mapAuth`/`OjEnvelope`/`success` 检查。`store/auth.ts:45-54` 改为 `const auth = await fetchLogin(loginPayload); set(auth);`（删 success 分支——业务失败已是 HTTPError，由 error-response 吐司）。`store/user.ts`、`auth-guard.tsx`、`refresh.ts` 中 `.result` 消费改为直接消费返回对象（`refresh.ts:36` 附近读 `result.token` 处同改）。
-- [ ] **Step 4: 跑测试 + `pnpm typecheck`** — 全 PASS、类型零错误（`.result` 残留会编译报错，typecheck 即回归网）。
-- [ ] **Step 5: Commit** — `refactor(runtime): api/user 直消费 oj 信封，删除 normalize/mapauth（ac-d16）`
+- [x] **Step 2: 跑测试确认失败** — `pnpm vitest run packages/runtime/src/api/user`。
+- [x] **Step 3: 实现** — `api/user/index.ts` 重写：`fetchLogin` 体为 `request.post("auth/login", { json: data }).json<{ code: number, data: { access_token?: string, refresh_token?: string } }>().then(d => ({ token: d.data.access_token ?? "", refreshToken: d.data.refresh_token ?? "" }))`；`fetchUserInfo`/`fetchAsyncRoutes` 为 `.json<{ data: T }>().then(d => d.data)`；删除 `normalize`/`mapAuth`/`OjEnvelope`/`success` 检查。`store/auth.ts:45-54` 改为 `const auth = await fetchLogin(loginPayload); set(auth);`（删 success 分支——业务失败已是 HTTPError，由 error-response 吐司）。`store/user.ts`、`auth-guard.tsx`、`refresh.ts` 中 `.result` 消费改为直接消费返回对象（`refresh.ts:36` 附近读 `result.token` 处同改）。
+- [x] **Step 4: 跑测试 + `pnpm typecheck`** — 全 PASS、类型零错误（`.result` 残留会编译报错，typecheck 即回归网）。
+- [x] **Step 5: Commit** — `refactor(runtime): api/user 直消费 oj 信封，删除 normalize/mapauth（ac-d16）`
 
 ### Task 0.3：fake/mock 改 oj 信封 + 存量 `.result` 消费面迁移
 
@@ -113,13 +113,13 @@ it("fetchUserInfo 直返 data", async () => {
 - Consumes: Task 0.2 的 fetch* 新签名。
 - Produces: 全仓 fetch* 约定——`fetch*(...): Promise<T>` 直返业务 data；失败抛错（HTTPError），不再返回信封对象。
 
-- [ ] **Step 1: 写失败测试** — `packages/runtime/src/api/system/role/index.test.ts`：stub request 返回 `{code:0,msg:"ok",data:{list:[],total:0}}`，断言 `fetchRoleList(...)` resolves `{list:[],total:0}`（非信封对象）。
-- [ ] **Step 2: 跑测试确认失败**（当前实现返回信封）。
-- [ ] **Step 3: 实现** — 按 Files 清单逐个迁移；页面迁移模式：`const responseData = await fetchRoleList(p); responseData.result.list` → `const { list } = await fetchRoleList(p)`；`responseData?.result.map` → 直接 `data.map`；`window.$message.success(... responseData.result)` → 直接用返回值。逐个文件改完即跑 typecheck 收敛。
-- [ ] **Step 4: 回归** — `pnpm typecheck && pnpm test && pnpm lint` 全绿；`pnpm dev` 手动冒烟登录链 + system/role 列表页。
-- [ ] **Step 5: Commit** — `refactor: 全站 fake/mock/页面迁移 oj 信封（ac-d16）`
+- [x] **Step 1: 写失败测试** — `packages/runtime/src/api/system/role/index.test.ts`：stub request 返回 `{code:0,msg:"ok",data:{list:[],total:0}}`，断言 `fetchRoleList(...)` resolves `{list:[],total:0}`（非信封对象）。
+- [x] **Step 2: 跑测试确认失败**（当前实现返回信封）。
+- [x] **Step 3: 实现** — 按 Files 清单逐个迁移；页面迁移模式：`const responseData = await fetchRoleList(p); responseData.result.list` → `const { list } = await fetchRoleList(p)`；`responseData?.result.map` → 直接 `data.map`；`window.$message.success(... responseData.result)` → 直接用返回值。逐个文件改完即跑 typecheck 收敛。
+- [x] **Step 4: 回归** — `pnpm typecheck && pnpm test && pnpm lint` 全绿；`pnpm dev` 手动冒烟登录链 + system/role 列表页。
+- [x] **Step 5: Commit** — `refactor: 全站 fake/mock/页面迁移 oj 信封（ac-d16）`
 
-- [ ] **Phase 0 小结**：更新上述 checkbox；文末「阶段小结」追加 Phase 0 段落（迁移文件数、遇到的坑、耗时）。
+- [x] **Phase 0 小结**：更新上述 checkbox；文末「阶段小结」追加 Phase 0 段落（迁移文件数、遇到的坑、耗时）。
 
 ---
 
@@ -540,4 +540,26 @@ bindRequest(ctx.utils.request);
 
 > 每阶段完成后在此追加：关键过程、偏差与原因、耗时。
 
-（待填）
+### Phase 0：信封统一（AC-D16）——已完成（2026-09-03，约 40 分钟）
+
+- 完成：error-response 改读 oj `msg`（存量 bug 顺带修复）；api/user 删
+  normalize/mapAuth，fetch* 直返 data；全局类型 `ApiResponse/ApiListResponse`
+  → `OjEnvelope/ListData`；runtime api 层（home/notifications/system）经新增
+  `unwrap` 助手直返 data；fake 统一 `ojOk` 助手且 auth 载荷改 snake_case 线
+  格式；页面/组件 `.result` 消费面全量迁移（role/menu/home/notification/
+  avatar）；playground mock 改 oj 信封；ram dev mock 按信封 code 置 HTTP
+  状态（`mockStatusCode`，含单测）；login 模块 authProvider 同步适配。
+- 偏差记录：
+  1. 仓规 vitest 只收 `tests/**`（不收包内 co-located 测试）——计划中的
+     测试全部落 `tests/`，且发现已有 `tests/runtime/error-response.test.ts`
+     同主题文件，合并去重（删了计划外的新建重复文件）。
+  2. 存量测试三处编码了旧 D10 信封行为（api-oj-contract/auth-login-failure/
+     auth-provider），按 AC-D16 语义重写而非删除，F12 防回归意图保留。
+  3. `tests/integration/uni-dev-smoke.test.ts` 2 条失败为**基线既有**
+     （feat/ram 上同样挂，oj 真二进制环境 404），CI 本就跳过，与本阶段无关。
+  4. `line-chart.tsx` 旧类型误标 `string[]`（fake 实际发 number[]），借机
+     对齐线格式。
+  5. 反常规记录：初版测试因 mock 未在用例间清理出现「假失败/假通过」，
+     `beforeEach(clearAllMocks)` 后恢复判定力——BDD 用例必须隔离断言。
+- 验证：typecheck 零错误；单测 368 通过（仅上述 2 条环境性集成失败）；
+  lint 0 error。
