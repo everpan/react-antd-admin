@@ -57,6 +57,7 @@
 | AC-D13 | 契约求值复用 `packages/cli/src/build.ts` 的 `readModuleDefinition` 链路（esbuild bundle + 真 import()），stub 插件换**功能版**（真 zod + 真 defineApi，zod 版本与浏览器侧严格一致） | 评审：仓内已有现成解法先例（B10）；两端 zod 版本漂移由既有版本矩阵门禁（模块手册 C4/D12）覆盖 |
 | AC-D14 | mock 按工程形态分两路：**uni-dev 全栈形态**由 stub handler 承担（stub 的 `json.ok` 直接填 schema 示例值——stub 即 mock，oj dev 热更零额外机制）；**纯前端形态**由 ram dev mock 表消费 routes.json + schema 示例值（段级 matcher：字面段优先于参数段，自研极简实现零新依赖） | 评审：全栈形态 `/api/*` 整体反代 oj，未写 handler 的端点会落 oj 404 而非前端 mock，R4 在全栈形态本不可用；stub handler 正好填这个洞 |
 | AC-D15 | zod 经 **runtime re-export** 进浏览器侧（随 runtime dist 进 shell，不新增 importmap 条目）；生成 client 的 dev 校验 schema `import { z } from "@react-antd-module/runtime"`，且 schema 定义整体包进 `import.meta.env.DEV` 守卫（生产 tree-shake 剔除，零成本） | 评审：runtime 本就是硬共享单例，re-export 省一张 importmap 条目且与 codegen Node 侧同源定版；原「zod 独立进 SHARED_DEPS」会让没用契约的模块也买单 |
+| AC-D16 | **前端统一适配 oj 信封** `{code,msg,data}`（`code=0` 成功，HTTP 状态=code）作为全站唯一信封形态：`error-response.ts` 改读 `msg`（顺带修复存量 bug）；auth/user store、authProvider、生成 client 全部直接消费 oj 信封；`fake/*.fake.ts` 与 `mock/*.mock.mjs` 改发 oj 信封；旧 `ApiResponse{result}` 透传兼容**删除** | 用户拍板（2026-09-03）：双信封兼容（fake 透传通道）是临时态的永久化，每接一个端点写一遍 normalize 正是本机制要消灭的「原始」痛点；uni-dev D10 适配层随之整体退役 |
 
 ## 4. 契约 DSL
 
@@ -172,22 +173,23 @@ modules/src/order/api/
 | handler stub | uni-dev 形态为缺失端点生成 `api.ts` stub，`json.ok` 预填 schema 示例值（AC-D10/AC-D14） |
 | 文档站 | `ram api docs` 用 redoc 渲染聚合 OpenAPI 3.1（R5） |
 
-### 6.2 生成 client 的错误语义（评审补章）
+### 6.2 生成 client 的错误语义（评审补章，AC-D16 定稿）
 
-三种响应通道统一收口：
+全站唯一信封 = oj `{code,msg,data}`（AC-D16），两种响应通道收口：
 
 | 通道 | 形态 | 生成 client 行为 |
 | --- | --- | --- |
-| (a) 成功 | 2xx + oj 信封 `code=0` | dev `safeParse` 后返回 typed `data` |
-| (b) fake 旧信封 | 2xx + `success:false` | 抛 `ContractApiError { code, msg }`（仅 dev mock 路径存在此形态） |
-| (c) 业务/系统错误 | 非 2xx（oj `json.fail(code,msg)` 把 HTTP 状态置为 code） | catch ky `HTTPError` → 尝试解析响应体信封 → 抛 `ContractApiError { code, msg }`（msg 取信封 `msg`，缺则 statusText） |
+| (a) 成功 | 2xx + 信封 `code=0` | dev `safeParse` 后返回 typed `data` |
+| (b) 业务/系统错误 | 非 2xx（oj `json.fail(code,msg)` 把 HTTP 状态置为 code） | catch ky `HTTPError` → 解析响应体信封 → 抛 `ContractApiError { code, msg }`（msg 取信封 `msg`，缺则 statusText） |
 
 - 401 刷新重试由 request 层 hooks 先行处理，生成 client 只见最终结果，
   不重复实现；
 - `ContractApiError` 由 contract 微包导出类型，消费方
   `catch (e) { if (e instanceof ContractApiError) ... }`；
 - `response: "raw"` 端点不进上述任何通道：原样返回 `Response`，
-  错误处理归调用方。
+  错误处理归调用方；
+- 旧 fake 信封（2xx + `success/result`）形态随 AC-D16 废弃，fake 与 mock
+  一律改发 oj 信封，runtime 的 `normalize`/`mapAuth` 适配层整体删除。
 
 ### 6.3 依赖新增（评审点名）
 
@@ -269,8 +271,7 @@ stub 文件头带指纹注释（`// ram-api:stub <端点名> sha256:<内容哈�
 | codegen 自研维护成本 | IR + 模板发射，量薄；schema 侧有白名单（AC-D12）封顶，不引入 openapi-generator 级重型工具 |
 | 契约文件进 oj 构建产物 | `oj build` 把 `api/src` 全部 .ts 原路径转译进 dist，`contract.js` 成死代码（其 import 的微包在部署机不存在，但永不加载故无运行害）；uni-dev 试点验收加一条「产物含 contract.js 无害 + oj build 不受 contract.ts 影响」 |
 | 对账盲区 | oj build 剥 `.route` 只认「语句起始的标准赋值写法」（oj 手册 §13 已知限制）；人把 stub 改成花式写法后 `--check` 同样漏——此处承认不完备，release 兜底靠 routes.js diff（第 3 重校验） |
-| 信封双形态 | fake 旧信封（2xx + `success` 标志）与 oj（HTTP 状态 = code）是两个错误通道，生成 client 三通道收口见 §6.2 |
-| **存量 bug（独立修复，不绑本期）** | `error-response.ts` 只认 `errorMsg/message` 两键、不读 oj 的 `msg`——今天 oj 业务错误的吐司显示 statusText 而非后端 msg；建议独立修复，避免契约制与手写 client 错误提示分叉 |
+| 信封统一（AC-D16 已拍板） | 前端全站统一为 oj 信封：`error-response.ts` 读 `msg`（存量 bug 一并修复）、`normalize`/`mapAuth` 适配层删除、fake/mock 改发 oj 信封；影响面集中在 request 层 + auth/user store + 登录链，由实现计划 P1 承载 |
 | zod 版本 | 钉 v4 主版本；两端（Node stub / 浏览器 re-export）同源定版，版本矩阵门禁覆盖；「zod 升级 = 快照批量重生」为已知运维成本 |
 | 后端消费契约（oj test 校验响应） | 留作演进点；契约位置放对（AC-D3）后此事免费 |
 | OpenAPI YAML 输入（原 R6） | 演进点：需 openapi→zod 生成层才有 R3/R4，本期不引 |
