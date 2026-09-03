@@ -26,6 +26,7 @@
 		"prepack": "node scripts/sync-host-versions.mjs"
 	},
 	"dependencies": {
+		"@faker-js/faker": "catalog:",
 		"@react-antd-module/contract": "workspace:*",
 		"esbuild": "catalog:",
 		"tsx": "catalog:",

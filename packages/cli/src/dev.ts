@@ -16,16 +16,18 @@
  * 测试经 DevOptions 注入桩（shell dist / 重建函数 / ojStarter）。
  */
 
+import type { ContractMockRoute } from "./contract/mock";
 import type { MockRoute } from "./dev-mock";
 import type { OjProcess } from "./oj";
 import { Buffer } from "node:buffer";
 import { existsSync, watch } from "node:fs";
-import http from "node:http";
 
+import http from "node:http";
 import { resolve } from "node:path";
 import process from "node:process";
 import { buildModules } from "./build";
-import { loadProjectMocks, matchMockRoute, mockStatusCode } from "./dev-mock";
+import { loadContractMocks, resolveMock } from "./contract/mock";
+import { loadProjectMocks, mockStatusCode } from "./dev-mock";
 import { createReloadHub, proxyApi, sseScript } from "./dev-proxy";
 import { resolveLayout } from "./layout";
 import { startOj } from "./oj";
@@ -73,6 +75,14 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 
 	// 工程 mock（可选约定 mock/*.mock.mjs）：纯前端形态的 /api 边界
 	const mocks: MockRoute[] = await loadProjectMocks(projectRoot);
+	// 契约 mock（AC-D14）：手写精确匹配优先，契约 pattern 兜底示例值；装载失败不崩 dev
+	let contractMocks: ContractMockRoute[] = [];
+	try {
+		contractMocks = await loadContractMocks(projectRoot);
+	}
+	catch (error) {
+		console.error(`[ram-api] 契约 mock 装载失败（不影响 dev 启动）：${error instanceof Error ? error.message : String(error)}`);
+	}
 
 	// 2) oj 后端（工程有 api/config.yaml 时全栈形态；桩可注入）
 	const configPath = resolve(projectRoot, "api/config.yaml");
@@ -120,8 +130,8 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 				return;
 			}
 			const apiRel = urlPath.replace(/^(\.\.[/\\])+/, "");
-			const route = matchMockRoute(mocks, req.method ?? "get", apiRel.slice(apiBase.length));
-			if (!route) {
+			const respond = resolveMock(mocks, contractMocks, req.method ?? "get", apiRel.slice(apiBase.length));
+			if (!respond) {
 				res.writeHead(404, { "content-type": "application/json; charset=utf-8" });
 				// AC-D16：信封键为 msg（oj 形态）
 				res.end(JSON.stringify({ code: 404, msg: `No mock for ${req.method} ${apiRel}`, data: null }));
@@ -137,7 +147,7 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 				catch {
 					// 非 JSON 请求体按空 body 交给 mock 处理
 				}
-				const payload = route.response({
+				const payload = respond({
 					body,
 					query: new URLSearchParams((req.url ?? "").split("?")[1] ?? ""),
 				});
