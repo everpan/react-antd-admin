@@ -44,6 +44,17 @@ async function main() {
 		case "info":
 			await printInfo(projectRoot);
 			break;
+		case "api": {
+			// --check / --docs 分别由 Task 3.2 / 4.3 接线；当前为生成主路径
+			if (process.argv.includes("--check") || process.argv.includes("--docs"))
+				throw new Error("[ram] ram api --check/--docs 尚未接线（Phase 3.2/4.3）——当前请直接 ram api 生成产物。");
+			const { runApi } = await import("./contract/run");
+			const result = await runApi({ cwd: projectRoot });
+			console.log(`[ram-api] 契约 ${result.contracts} 份；写入 ${result.written.length} 个文件，跳过（未变）${result.skipped.length} 个；stub 新建 ${result.stubs.created} / 更新 ${result.stubs.updated} / 跳过 ${result.stubs.skipped}`);
+			for (const p of result.written)
+				console.log(`  + ${path.relative(projectRoot, p)}`);
+			break;
+		}
 		case "merge":
 			await mergeManifests(process.argv[3] ?? "", process.argv.slice(4));
 			break;
