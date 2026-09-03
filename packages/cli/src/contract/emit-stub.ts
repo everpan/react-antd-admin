@@ -2,6 +2,7 @@ import type { IrEndpoint } from "./ir";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { keyOf } from "./emit-schema";
 import { splitRoute } from "./ir";
 
 /**
@@ -13,8 +14,10 @@ import { splitRoute } from "./ir";
  * - 指纹匹配但契约已变 → update（无人劳动成果，覆盖安全）
  * - 指纹不匹配（人已编辑）→ skip + reason 指路 --check；工具永不写、永不删
  *
- * 指纹健壮性：内容先过 fixer（生产注入本仓 ESLint fix，对齐 lint-staged）
- * 再算 sha256；哈希输入做 LF + 行尾空白归一，跨机器稳定。
+ * 指纹健壮性（评审 F6）：stub 模板按仓风格写死（tab/双引号/分号）天然
+ * lint-clean，指纹直接哈希发射内容——不再依赖消费工程装了 ESLint
+ * （cli 并未声明该依赖，真实工程里 `await import("eslint")` 即崩）。
+ * eslintFix 注入缝保留给测试与特殊工程的自定义格式化。
  */
 
 export interface StubWrite {
@@ -29,7 +32,7 @@ export interface PlanStubOptions {
 	apiSrcDir: string
 	/** 读已有文件（不存在返回 undefined）；缺省真实 fs */
 	readFile?: (path: string) => string | undefined
-	/** 格式化后再算哈希；缺省本仓 ESLint --fix（对齐 lint-staged） */
+	/** 格式化注入缝（测试/特殊工程）；缺省恒等——模板本身天然 lint-clean（F6） */
 	eslintFix?: (code: string, filePath: string) => Promise<string>
 }
 
@@ -51,8 +54,8 @@ export function hashContent(body: string): string {
 	return createHash("sha256").update(norm).digest("hex");
 }
 
-/** 最小示例值生成（Task 4.2 收敛为共享 exampleFromSchema；此处够用即止） */
-function exampleFromSchema(schema: unknown): string {
+/** 最小示例值源码生成（与 mock.ts 的值版有意不收敛——此处产代码模板文本） */
+function exampleSourceFromSchema(schema: unknown): string {
 	const def = (schema as { _zod?: { def?: Record<string, unknown> } })?._zod?.def;
 	if (!def)
 		return "null";
@@ -90,16 +93,16 @@ function exampleFromSchema(schema: unknown): string {
 		case "enum":
 			return JSON.stringify(Object.keys(def.entries as object)[0]);
 		case "union":
-			return exampleFromSchema((def.options as unknown[])[0]);
+			return exampleSourceFromSchema((def.options as unknown[])[0]);
 		case "array":
-			return `[${exampleFromSchema(def.element)}]`;
+			return `[${exampleSourceFromSchema(def.element)}]`;
 		case "object": {
 			const entries = Object.entries(def.shape as Record<string, unknown>)
-				.map(([k, v]) => `\t\t${k}: ${exampleFromSchema(v).replaceAll("\n", "\n\t\t")},`);
+				.map(([k, v]) => `\t\t${keyOf(k)}: ${exampleSourceFromSchema(v).replaceAll("\n", "\n\t\t")},`);
 			return `{\n${entries.join("\n")}\n\t}`;
 		}
 		case "optional":
-			return exampleFromSchema(def.innerType);
+			return exampleSourceFromSchema(def.innerType);
 		case "nullable":
 			return "null";
 		case "default":
@@ -116,7 +119,7 @@ function emitHandler(ep: IrEndpoint): string {
 	const { tail } = splitRoute(ep.route);
 	const body = ep.raw
 		? "\t// TODO: raw 端点（二进制/流）——请自行实现响应写回\n\tjson.fail(501, \"not implemented\");"
-		: `\tjson.ok(${ep.dataSchema ? exampleFromSchema(ep.dataSchema) : ""});`;
+		: `\tjson.ok(${ep.dataSchema ? exampleSourceFromSchema(ep.dataSchema) : ""});`;
 	const routeLine = tail ? `${method}.route = "${tail}";\n` : "";
 	return `function ${method}(): void {
 ${body}
@@ -134,13 +137,6 @@ function emitStubBody(endpoints: IrEndpoint[]): string {
 	return `${handlers}export default { ${names} };\n`;
 }
 
-async function defaultEslintFix(code: string, filePath: string): Promise<string> {
-	const { ESLint } = await import("eslint");
-	const eslint = new ESLint({ fix: true });
-	const [result] = await eslint.lintText(code, { filePath });
-	return result.output ?? code;
-}
-
 /** 纯计划不写盘：IR → 逐文件 StubWrite（create/update/skip + reason） */
 export async function planStubWrites(ir: IrEndpoint[], opts: PlanStubOptions): Promise<StubWrite[]> {
 	const readFile = opts.readFile ?? ((p: string) => {
@@ -151,7 +147,7 @@ export async function planStubWrites(ir: IrEndpoint[], opts: PlanStubOptions): P
 			return undefined;
 		}
 	});
-	const fix = opts.eslintFix ?? defaultEslintFix;
+	const fix = opts.eslintFix ?? ((code: string) => Promise.resolve(code));
 
 	// 按（模块段 + 目录镜像）分组 → 一个 api.ts
 	const groups = new Map<string, IrEndpoint[]>();
@@ -166,7 +162,7 @@ export async function planStubWrites(ir: IrEndpoint[], opts: PlanStubOptions): P
 	const writes: StubWrite[] = [];
 	for (const [rel, endpoints] of [...groups.entries()].sort()) {
 		const filePath = `${opts.apiSrcDir}/${rel}`;
-		// 先 fix 再算指纹：与 lint-staged 同款规则对齐，防「首次提交重排 → 指纹静默失配」
+		// 模板天然 lint-clean（F6）→ 直接哈希发射内容；注入缝仅供测试/特殊工程对齐
 		const body = await fix(emitStubBody(endpoints), filePath);
 		const fingerprint = `// ram-api:stub ${endpoints.map(e => e.name).sort().join(",")} sha256:${hashContent(body)}\n`;
 		const content = fingerprint + body;

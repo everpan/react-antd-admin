@@ -35,7 +35,7 @@ import { DndContext, PointerSensor, closestCenter, useSensor } from "@dnd-kit/co
 import { SortableContext, horizontalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useShallow } from "zustand/shallow";
-import { ContractApiError } from "@react-antd-module/contract";
+import { ContractApiError } from "@react-antd-module/contract/errors";
 import ImgCrop from "antd-img-crop";
 //#region \0rolldown/runtime.js
 var __defProp = Object.defineProperty;
@@ -160,7 +160,7 @@ function getAppInfo() {
 			"version": "0.1.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-09-03 14:14:43"
+		"lastBuildTime": "2026-09-03 15:55:06"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -8929,10 +8929,12 @@ async function toApiError(e) {
 async function fetchAddRoleItem(body) {
 	const client = ensureReq();
 	try {
-		return (await client.post(`role-item`, {
+		const env = await client.post(`role-item`, {
 			json: body,
 			ignoreLoading: true
-		}).json()).data;
+		}).json();
+		if (typeof env.code === "number" && env.code !== 0) throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
+		return env.data;
 	} catch (e) {
 		throw await toApiError(e);
 	}
@@ -8940,10 +8942,12 @@ async function fetchAddRoleItem(body) {
 async function fetchDeleteRoleItem(body) {
 	const client = ensureReq();
 	try {
-		return (await client.delete(`role-item`, {
+		const env = await client.delete(`role-item`, {
 			json: body,
 			ignoreLoading: true
-		}).json()).data;
+		}).json();
+		if (typeof env.code === "number" && env.code !== 0) throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
+		return env.data;
 	} catch (e) {
 		throw await toApiError(e);
 	}
@@ -8951,7 +8955,9 @@ async function fetchDeleteRoleItem(body) {
 async function fetchMenuByRoleId(query) {
 	const client = ensureReq();
 	try {
-		return (await client.get(`menu-by-role-id`, { searchParams: query }).json()).data;
+		const env = await client.get(`menu-by-role-id`, { searchParams: query }).json();
+		if (typeof env.code === "number" && env.code !== 0) throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
+		return env.data;
 	} catch (e) {
 		throw await toApiError(e);
 	}
@@ -8959,10 +8965,12 @@ async function fetchMenuByRoleId(query) {
 async function fetchRoleList(query) {
 	const client = ensureReq();
 	try {
-		return (await client.get(`role-list`, {
+		const env = await client.get(`role-list`, {
 			searchParams: query,
 			ignoreLoading: true
-		}).json()).data;
+		}).json();
+		if (typeof env.code === "number" && env.code !== 0) throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
+		return env.data;
 	} catch (e) {
 		throw await toApiError(e);
 	}
@@ -8970,7 +8978,9 @@ async function fetchRoleList(query) {
 async function fetchRoleMenu() {
 	const client = ensureReq();
 	try {
-		return (await client.get(`role-menu`, { ignoreLoading: true }).json()).data;
+		const env = await client.get(`role-menu`, { ignoreLoading: true }).json();
+		if (typeof env.code === "number" && env.code !== 0) throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
+		return env.data;
 	} catch (e) {
 		throw await toApiError(e);
 	}
@@ -8978,10 +8988,12 @@ async function fetchRoleMenu() {
 async function fetchUpdateRoleItem(body) {
 	const client = ensureReq();
 	try {
-		return (await client.put(`role-item`, {
+		const env = await client.put(`role-item`, {
 			json: body,
 			ignoreLoading: true
-		}).json()).data;
+		}).json();
+		if (typeof env.code === "number" && env.code !== 0) throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
+		return env.data;
 	} catch (e) {
 		throw await toApiError(e);
 	}

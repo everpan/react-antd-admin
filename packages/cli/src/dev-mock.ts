@@ -33,10 +33,14 @@ const MOCK_SUFFIXES = [".mock.mjs", ".mock.js"];
 /**
  * AC-D16：oj 语义——HTTP 状态 = 信封 code（0→200）。
  * 仅对显式正数 code 置状态；无 code / code<=0 维持 200。
+ * 评审 F5：手写 mock 的 code 可能是任意业务码（如 10001），Node writeHead
+ * 只接受 100–599——越界归 500，不让 dev 进程崩。
  */
 export function mockStatusCode(payload: unknown): number {
 	const code = (payload as { code?: unknown } | null)?.code;
-	return typeof code === "number" && code > 0 ? code : 200;
+	if (typeof code !== "number" || code <= 0)
+		return 200;
+	return code >= 100 && code <= 599 ? code : 500;
 }
 
 /** 加载工程 mock 目录下的全部路由；目录不存在返回空数组 */
@@ -58,7 +62,8 @@ export async function loadProjectMocks(projectRoot: string): Promise<MockRoute[]
 	return routes;
 }
 
-/** 按 method+path 精确匹配一条 mock 路由；未命中返回 undefined */export function matchMockRoute(
+/** 按 method+path 精确匹配一条 mock 路由；未命中返回 undefined */
+export function matchMockRoute(
 	routes: MockRoute[],
 	method: string,
 	apiPath: string,

@@ -193,7 +193,22 @@ export async function devServer(projectRoot: string, opts: DevOptions = {}): Pro
 
 	// 4) 监听模块源码（watchTarget 纯源码目录，永不落产物 → 无自触发循环）
 	const { createContractRegen } = await import("./contract/watch");
-	const regenContracts = createContractRegen(projectRoot);
+	// 评审 F2：契约重生成后同步重建契约 mock 表——否则 client 按新 schema
+	// 校验、mock 按旧 schema 出数，dev 期必现假「契约违例」且需重启恢复
+	const regenContracts = createContractRegen(projectRoot, {
+		onRegenerated: (result) => {
+			if (result.written.length > 0)
+				console.log(`[ram-api] 契约产物已更新 ${result.written.length} 个文件——模块重建将自动触发。`);
+			loadContractMocks(projectRoot).then(
+				(routes) => {
+					contractMocks = routes;
+				},
+				(error: unknown) => {
+					console.error(`[ram-api] 契约 mock 表重载失败（沿用旧表）：${error instanceof Error ? error.message : String(error)}`);
+				},
+			);
+		},
+	});
 	let timer: NodeJS.Timeout | null = null;
 	const trigger = () => {
 		if (timer)

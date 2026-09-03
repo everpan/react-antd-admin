@@ -73,7 +73,8 @@ function emitTypes(ep: IrEndpoint): string[] {
 			lines.push(`export type ${pascal(ep.name)}Params = { ${ep.paramNames.map(n => `${n}: string`).join(", ")} };`);
 			continue;
 		}
-		lines.push(`export type ${pascal(ep.name)}${SLOT_TYPE_SUFFIX[slot]} = z.infer<(typeof schemas)["${ep.name}"]["${slot}"]>;`);
+		// 请求槽用 z.input（带 .default() 的字段入参可选）；data 用 z.infer（输出型）
+		lines.push(`export type ${pascal(ep.name)}${SLOT_TYPE_SUFFIX[slot]} = z.input<(typeof schemas)["${ep.name}"]["${slot}"]>;`);
 	}
 	if (ep.dataSchema)
 		lines.push(`export type ${pascal(ep.name)}Data = z.infer<(typeof schemas)["${ep.name}"]["data"]>;`);
@@ -132,6 +133,9 @@ function emitEndpoint(ep: IrEndpoint): string {
 	const client = ensureReq();
 	try {
 		const env = await ${call}.json<OjEnvelope<${returnType}>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as ${returnType};${devValidate}
 		return data;
 	}
@@ -160,8 +164,8 @@ function ensureReq(): ScopedRequestLike {
 }`;
 
 	return `${BANNER}
-import { ContractApiError } from "@react-antd-module/contract";
-import type { ScopedRequestLike } from "@react-antd-module/contract";
+import { ContractApiError } from "@react-antd-module/contract/errors";
+import type { ScopedRequestLike } from "@react-antd-module/contract/errors";
 ${target === "internal" ? "import { request } from \"#src/utils/request\";\n" : ""}import type { z } from "${zImport(target)}";
 import type { schemas } from "./client.schemas";
 
@@ -194,19 +198,23 @@ function zImport(target: "module" | "internal"): string {
 
 function emitSchemas(ir: IrEndpoint[], target: "module" | "internal"): string {
 	const entries = ir
-		.filter(ep => !ep.raw)
 		.map((ep) => {
 			const slots: string[] = [];
+			// raw 端点也保留请求槽（params/query/body 类型引用此处 schema）；
+			// 仅 data 槽与 raw 互斥（定义期已拦截 data+raw）
 			if (ep.paramsSchema)
 				slots.push(`\t\tparams: ${emitSchemaSource(ep.paramsSchema)},`);
 			if (ep.querySchema)
 				slots.push(`\t\tquery: ${emitSchemaSource(ep.querySchema)},`);
 			if (ep.bodySchema)
 				slots.push(`\t\tbody: ${emitSchemaSource(ep.bodySchema)},`);
-			if (ep.dataSchema)
+			if (!ep.raw && ep.dataSchema)
 				slots.push(`\t\tdata: ${emitSchemaSource(ep.dataSchema)},`);
+			if (slots.length === 0)
+				return "";
 			return `\t${ep.name}: {\n${slots.join("\n")}\n\t},`;
-		});
+		})
+		.filter(Boolean);
 
 	return `${BANNER}
 // AC-D15：仅供 DEV 校验动态 import，生产构建不进产物

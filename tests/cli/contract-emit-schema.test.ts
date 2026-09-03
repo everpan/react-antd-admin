@@ -48,6 +48,28 @@ describe("emitSchemaSource（白名单内往返保真）", () => {
 		expect(rebuilt.safeParse({ id: "x", flag: 1, matrix: [[1]], kind: "no" }).success).toBe(false);
 	});
 
+	it("评审 F1：z.date() 发为 z.iso.datetime()——线上 ISO 串过 safeParse，Date 实例反而不收", () => {
+		const src = emitSchemaSource(z.date());
+		expect(src).toBe("z.iso.datetime()");
+		const rebuilt = rebuild(src);
+		expect(rebuilt.safeParse("2026-01-01T00:00:00.000Z").success).toBe(true);
+		expect(rebuilt.safeParse(new Date()).success).toBe(false);
+	});
+
+	it("评审 F10：不可保真即拒绝——带 flags 的 regex / 未映射 string format 报错而非静默降级", () => {
+		expect(() => emitSchemaSource(z.string().regex(/^ORD-\d+$/i))).toThrowError(/flags/);
+		expect(() => emitSchemaSource(z.string().ulid())).toThrowError(/format/);
+	});
+
+	it("评审 F10：array 的 min/max 约束保真发射", () => {
+		const src = emitSchemaSource(z.array(z.string()).min(1).max(5));
+		expect(src).toContain(".min(1)");
+		expect(src).toContain(".max(5)");
+		const rebuilt = rebuild(src);
+		expect(rebuilt.safeParse([]).success).toBe(false);
+		expect(rebuilt.safeParse(["a"]).success).toBe(true);
+	});
+
 	it("非法标识符键名被引号包裹", () => {
 		const src = emitSchemaSource(z.object({ "order-no": z.string() }));
 		expect(src).toContain("\"order-no\"");

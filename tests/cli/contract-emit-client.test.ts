@@ -1,7 +1,9 @@
 import type { ScopedRequestLike } from "@react-antd-module/contract";
 import type { Plugin } from "esbuild";
 import type { ResponsePromiseLike } from "../../packages/contract/src/scoped-request-like";
+import { execFileSync } from "node:child_process";
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
@@ -211,6 +213,63 @@ describe("emitClient（AC-D5/D6/D8/D15）", () => {
 		const err = await mod.getOrderDetail({ id: 404 }).catch((e: unknown) => e);
 		expect(err).toMatchObject({ name: "ContractApiError", code: 1001, msg: "订单不存在" });
 	});
+
+	it("评审 F13：2xx 但信封 code!==0 → 同样归一 ContractApiError（防漂移）", async () => {
+		const { req } = stubRequest(() => ({ code: 500, msg: "静默业务错误", data: { id: 7, order_no: "A7" } }));
+		const { mod } = await bundleClient(emitClient(ir, { target: "module" }), true);
+		mod.bindRequest(req);
+		const err = await mod.getOrderDetail({ id: 7 }).catch((e: unknown) => e);
+		expect(err).toMatchObject({ name: "ContractApiError", code: 500, msg: "静默业务错误" });
+	});
+
+	it("评审 F7/F25：raw+params 与 .default() 槽位的生成物过 tsc --noEmit", async () => {
+		const ir2 = buildIr({
+			downloadFile: defineApi({
+				apiPrefix: "/order",
+				route: "/file/{*path}",
+				params: z.object({ path: z.string() }),
+				response: "raw",
+			}),
+			getOrderList: defineApi({
+				apiPrefix: "/order",
+				route: "/list",
+				query: z.object({ page: z.number().default(1) }),
+				data: z.object({ total: z.number() }),
+			}),
+		});
+		const files = emitClient(ir2, { target: "module" });
+		// F7 形态断言：raw 端点的 params 槽保留在 schemas（client 类型引用不断链）
+		expect(files["client.schemas.ts"]).toContain("downloadFile");
+		expect(files["client.schemas.ts"]).not.toContain("downloadFile: {\n\t\tdata");
+
+		const dir = mkdtempSync(join(repoRoot, "node_modules/.cache/ram-tsc-test-"));
+		writeFileSync(join(dir, "client.ts"), files["client.ts"]);
+		writeFileSync(join(dir, "client.schemas.ts"), files["client.schemas.ts"]);
+		// 与 apps/playground/typings.d.ts 同款最小 ImportMeta.env 声明（模块工程无 vite 依赖的形态）
+		writeFileSync(join(dir, "typings.d.ts"), "interface ImportMeta { readonly env: { readonly DEV: boolean } }\n");
+		writeFileSync(join(dir, "tsconfig.json"), JSON.stringify({
+			compilerOptions: {
+				strict: true,
+				noEmit: true,
+				module: "esnext",
+				moduleResolution: "bundler",
+				target: "esnext",
+				skipLibCheck: true,
+				allowImportingTsExtensions: true,
+				types: [],
+				// 仓根 node_modules 未链接 runtime（pnpm 只链接声明依赖）——paths 直指 dist 声明
+				// （TS 6 已弃 baseUrl；paths 值用绝对路径免 baseUrl）
+				paths: {
+					"@react-antd-module/runtime": [join(repoRoot, "packages/runtime/dist/index.d.ts")],
+				},
+			},
+			include: ["client.ts", "client.schemas.ts", "typings.d.ts"],
+		}));
+		const tscPkg = createRequire(join(repoRoot, "packages/cli/index.js")).resolve("typescript/package.json");
+		const tscBin = join(tscPkg, "..", "bin", "tsc");
+		// 生成物类型级兜底：codegen 形态变更若产不可编译代码，此处先红
+		execFileSync(process.execPath, [tscBin, "-p", dir], { stdio: "pipe" });
+	}, 60_000);
 
 	it("raw 端点：不解包不校验，原样返回 Response；catch-all 逐段编码", async () => {
 		const { req, calls } = stubRequest(() => new Response("bin"));

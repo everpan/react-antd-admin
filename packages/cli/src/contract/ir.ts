@@ -137,6 +137,18 @@ export function buildIr(exports: Record<string, unknown>): IrEndpoint[] {
 			if (schema)
 				assertWhitelisted(schema, `${name}.${slot}`);
 		}
+		const paramNames = paramNamesOf(def.route);
+		// 评审 F8：params schema 键必须覆盖 route 参数段——否则生成物 URL 插值出 undefined
+		if (def.params) {
+			const shape = (def.params as unknown as ZodLike)?._zod?.def?.shape as Record<string, unknown> | undefined;
+			if (!shape) {
+				throw new Error(`[ram-api] 契约端点 "${name}"：params 必须是 z.object（收到非 object schema）——params 与 route 参数段一一对应。`);
+			}
+			const missing = paramNames.filter(p => !(p in shape));
+			if (missing.length) {
+				throw new Error(`[ram-api] 契约端点 "${name}"：params schema 缺 route 参数段 ${missing.map(p => `{${p}}`).join("、")} 的键——两者须一一对应（缺省 params 则参数段全按 string 声明，二选一）。`);
+			}
+		}
 		endpoints.push({
 			name,
 			apiPrefix: def.apiPrefix,
@@ -144,7 +156,7 @@ export function buildIr(exports: Record<string, unknown>): IrEndpoint[] {
 			method: def.method ?? "GET",
 			// apiPrefix "/" 为框架内部根级端点（如 runtime 自带 role-list）——拼出 "//" 即错
 			fullPath: def.apiPrefix === "/" ? def.route : `${def.apiPrefix}${def.route}`,
-			paramNames: paramNamesOf(def.route),
+			paramNames,
 			querySchema: def.query,
 			paramsSchema: def.params,
 			bodySchema: def.body,

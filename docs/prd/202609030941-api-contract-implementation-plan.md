@@ -191,7 +191,7 @@ describe("defineApi", () => {
 ```
 
 - [ ] **Step 2: 跑测试确认失败** — `pnpm vitest run packages/contract`。
-- [ ] **Step 3: 实现** — `defineApi` 内 `validateDefinition`：首斜杠/`..`/参数段正则 `/^\{\*?[a-z_][a-z0-9_]*\}$/i`（段内含 `{` 必须整段匹配）/data 与 raw 互斥；报错文案含端点 route 与修法指引。`zod` 从本包 re-export（`export { z } from "zod"`）。
+- [x] **Step 3: 实现** — `defineApi` 内 `validateDefinition`：首斜杠/`..`/参数段正则 `/^\{\*?[a-z_][a-z0-9_]*\}$/i`（段内含 `{` 必须整段匹配）/data 与 raw 互斥；报错文案含端点 route 与修法指引。`zod` 从本包 re-export（`export { z } from "zod"`）。
 - [ ] **Step 4: 跑测试确认通过 + typecheck**。
 - [ ] **Step 5: Commit** — `feat(contract): 新增 @react-antd-module/contract 微包（defineapi + contractapierror，ac-d11）`
 
@@ -298,7 +298,7 @@ it("同 (目录, method) 冲突报错", () => { /* route "/item/{id}" 与 "/item
   - `client.ts`：头部 `/* eslint-disable */` + 「生成物勿手改」注释；`import { ContractApiError } from "@react-antd-module/contract"`、`import type { ScopedRequestLike } from "@react-antd-module/contract"`；
   - holder：`let req: ScopedRequestLike | undefined; export function bindRequest(r: ScopedRequestLike) { req = r; }`（`target:"internal"` 时不生成 holder，直接 `import { request } from "@react-antd-module/runtime"` 赋值）；
   - 每端点生成 `export async function fetchOrderList(query: {...}): Promise<{...}>`——URL 模板拼接（paramNames 插值 + `String()` 序列化）、query 走 `searchParams`、body 走 `json`；
-  - 信封解包内联：`const env = await res.json<{ code: number, msg?: string, data: T }>(); return env.data;`；失败通道：ky HTTPError 由 request 层 error-response 已吐司，生成 client 仅原样透传 throw（页面如需业务码，catch `HTTPError`——文档写明；不重复解信封）；
+  - 信封解包内联：`const env = await res.json<{ code: number, msg?: string, data: T }>(); return env.data;`；失败通道按设计 §6.2 归一：ky HTTPError 错误体为信封时解出 code/msg 抛 `ContractApiError`，2xx 但 code≠0 同归一（评审 F13 补齐），契约违例与原错误透传；
   - dev 校验：`if (import.meta.env.DEV) { const { schemas } = await import("./client.schemas"); const r = schemas.getOrderList.data.safeParse(env.data); if (!r.success) throw new ContractApiError(-1, \`[契约违例] getOrderList: 字段 ...\`); }`（字段路径取 `issue.path.join(".")`，只拼稳定部分）；
   - `raw: true` 端点：生成函数返回 `req.get(url)` 的原样 `Response` promise（不解包不校验）；
   - `client.schemas.ts`：`import { z } from "@react-antd-module/runtime";` + 各端点 schema 常量（Task 2.3 发射）+ `export const schemas = {...}`。
@@ -334,7 +334,7 @@ it("同 (目录, method) 冲突报错", () => { /* route "/item/{id}" 与 "/item
 - Test: `packages/cli/src/contract/emit-stub.test.ts`
 
 **Interfaces:**
-- Consumes: Task 2.2 IR（`splitRoute`）、示例值生成（Task 4.2 的 `exampleFromSchema`——本 Task 先内联最小版，4.2 收敛为共享模块）。
+- Consumes: Task 2.2 IR（`splitRoute`）。注：示例值生成两处**有意不收敛**（评审 F22 确认）——本 Task 产代码模板文本（`exampleSourceFromSchema`），Task 4.2 产 JSON 值（faker），签名与语义不同，共享反而是错配。
 - Produces: `planStubWrites(ir, opts: { apiSrcDir: string }): StubWrite[]`（纯函数，返回计划不写盘）+ `applyStubWrites(writes, fs)`；`StubWrite = { filePath: string, content: string, action: "create" | "update" | "skip", reason?: string }`。
   - 指纹：`// ram-api:stub <端点名> sha256:<hash>`，hash = 内容去指纹行 + LF 归一 + 行尾空白剔除后的 sha256；**内容先过 eslint --fix 同款规则再算 hash**（直接调用本仓 ESLint Node API 对文本 fix）。
   - stub 模板：`export default { async get() { json.ok(<示例值>); } }`，有 `.route` 尾巴时 `get.route = "{id}";`（语句起始标准赋值写法）；方法名映射 DELETE→`del`。
@@ -538,7 +538,7 @@ ctx.register.apiPrefix("/demo");
 bindRequest(ctx.utils.request);
 ```
 - [x] **Step 2: 跑 `ram api` 生成产物**（`modules/src/demo/api/client.ts` + `client.schemas.ts`），demo 页面改为 import 生成 client。
-- [ ] **Step 3: playground 测试 + 手动冒烟** — `pnpm dev`（playground）：demo 页列表渲染正常；临时把契约某字段类型改错 → 页面报「契约违例」人话红条（dev 校验生效）→ 改回。
+- [x] **Step 3: playground 测试 + 手动冒烟** — `pnpm dev`（playground）：demo 页列表渲染正常；临时把契约某字段类型改错 → 页面报「契约违例」人话红条（dev 校验生效）→ 改回。
 - [x] **Step 4: `ram api --check` 在 playground 零违规**。
 - [x] **Step 5: Commit** — `feat(playground): demo 模块接入契约机制（bindrequest holder）`
 
@@ -565,10 +565,10 @@ bindRequest(ctx.utils.request);
 
 ### Task 6.1：全量回归
 
-- [ ] `pnpm install && pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm check:circular-deps` 全绿；
-- [ ] playground e2e（现有布局 e2e 基线 `docs/prd/202608311543-layout-e2e-baseline-design.md` 对应套件）通过；
-- [ ] 生产 bundle 断言：无 zod schema 泄漏、无 fake 代码（B15）；
-- [ ] `ram api --check` 在主仓与 playground 各跑一遍零违规。
+- [x] `pnpm install && pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm check:circular-deps` 全绿；
+- [x] playground e2e（现有布局 e2e 基线 `docs/prd/202608311543-layout-e2e-baseline-design.md` 对应套件）通过；
+- [x] 生产 bundle 断言：无 zod schema 泄漏、无 fake 代码（B15）；
+- [x] `ram api --check` 在主仓与 playground 各跑一遍零违规。
 
 ### Task 6.2：集中评审 + 修复闭环
 

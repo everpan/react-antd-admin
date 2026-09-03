@@ -1,7 +1,7 @@
 /* eslint-disable */
 // 生成物：ram api 从契约生成，勿手改（改动请改契约文件后重跑 ram api）
-import { ContractApiError } from "@react-antd-module/contract";
-import type { ScopedRequestLike } from "@react-antd-module/contract";
+import { ContractApiError } from "@react-antd-module/contract/errors";
+import type { ScopedRequestLike } from "@react-antd-module/contract/errors";
 import type { z } from "@react-antd-module/runtime";
 import type { schemas } from "./client.schemas";
 
@@ -37,13 +37,16 @@ async function toApiError(e: unknown): Promise<unknown> {
 	return e;
 }
 
-export type GetTodoListQuery = z.infer<(typeof schemas)["getTodoList"]["query"]>;
+export type GetTodoListQuery = z.input<(typeof schemas)["getTodoList"]["query"]>;
 export type GetTodoListData = z.infer<(typeof schemas)["getTodoList"]["data"]>;
 
 export async function getTodoList(query: GetTodoListQuery): Promise<GetTodoListData> {
 	const client = ensureReq();
 	try {
 		const env = await client.get(`demo/todos`, { searchParams: query as Record<string, string | number | boolean> }).json<OjEnvelope<GetTodoListData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as GetTodoListData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");

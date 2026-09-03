@@ -1,7 +1,7 @@
 /* eslint-disable */
 // 生成物：ram api 从契约生成，勿手改（改动请改契约文件后重跑 ram api）
-import { ContractApiError } from "@react-antd-module/contract";
-import type { ScopedRequestLike } from "@react-antd-module/contract";
+import { ContractApiError } from "@react-antd-module/contract/errors";
+import type { ScopedRequestLike } from "@react-antd-module/contract/errors";
 import { request } from "#src/utils/request";
 import type { z } from "zod";
 import type { schemas } from "./client.schemas";
@@ -29,13 +29,16 @@ async function toApiError(e: unknown): Promise<unknown> {
 	return e;
 }
 
-export type FetchAddRoleItemBody = z.infer<(typeof schemas)["fetchAddRoleItem"]["body"]>;
+export type FetchAddRoleItemBody = z.input<(typeof schemas)["fetchAddRoleItem"]["body"]>;
 export type FetchAddRoleItemData = z.infer<(typeof schemas)["fetchAddRoleItem"]["data"]>;
 
 export async function fetchAddRoleItem(body: FetchAddRoleItemBody): Promise<FetchAddRoleItemData> {
 	const client = ensureReq();
 	try {
 		const env = await client.post(`role-item`, { json: body, ignoreLoading: true }).json<OjEnvelope<FetchAddRoleItemData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as FetchAddRoleItemData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");
@@ -50,13 +53,16 @@ export async function fetchAddRoleItem(body: FetchAddRoleItemBody): Promise<Fetc
 	}
 }
 
-export type FetchDeleteRoleItemBody = z.infer<(typeof schemas)["fetchDeleteRoleItem"]["body"]>;
+export type FetchDeleteRoleItemBody = z.input<(typeof schemas)["fetchDeleteRoleItem"]["body"]>;
 export type FetchDeleteRoleItemData = z.infer<(typeof schemas)["fetchDeleteRoleItem"]["data"]>;
 
 export async function fetchDeleteRoleItem(body: FetchDeleteRoleItemBody): Promise<FetchDeleteRoleItemData> {
 	const client = ensureReq();
 	try {
 		const env = await client.delete(`role-item`, { json: body, ignoreLoading: true }).json<OjEnvelope<FetchDeleteRoleItemData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as FetchDeleteRoleItemData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");
@@ -71,13 +77,16 @@ export async function fetchDeleteRoleItem(body: FetchDeleteRoleItemBody): Promis
 	}
 }
 
-export type FetchMenuByRoleIdQuery = z.infer<(typeof schemas)["fetchMenuByRoleId"]["query"]>;
+export type FetchMenuByRoleIdQuery = z.input<(typeof schemas)["fetchMenuByRoleId"]["query"]>;
 export type FetchMenuByRoleIdData = z.infer<(typeof schemas)["fetchMenuByRoleId"]["data"]>;
 
 export async function fetchMenuByRoleId(query: FetchMenuByRoleIdQuery): Promise<FetchMenuByRoleIdData> {
 	const client = ensureReq();
 	try {
 		const env = await client.get(`menu-by-role-id`, { searchParams: query as Record<string, string | number | boolean> }).json<OjEnvelope<FetchMenuByRoleIdData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as FetchMenuByRoleIdData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");
@@ -92,13 +101,16 @@ export async function fetchMenuByRoleId(query: FetchMenuByRoleIdQuery): Promise<
 	}
 }
 
-export type FetchRoleListQuery = z.infer<(typeof schemas)["fetchRoleList"]["query"]>;
+export type FetchRoleListQuery = z.input<(typeof schemas)["fetchRoleList"]["query"]>;
 export type FetchRoleListData = z.infer<(typeof schemas)["fetchRoleList"]["data"]>;
 
 export async function fetchRoleList(query: FetchRoleListQuery): Promise<FetchRoleListData> {
 	const client = ensureReq();
 	try {
 		const env = await client.get(`role-list`, { searchParams: query as Record<string, string | number | boolean>, ignoreLoading: true }).json<OjEnvelope<FetchRoleListData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as FetchRoleListData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");
@@ -119,6 +131,9 @@ export async function fetchRoleMenu(): Promise<FetchRoleMenuData> {
 	const client = ensureReq();
 	try {
 		const env = await client.get(`role-menu`, { ignoreLoading: true }).json<OjEnvelope<FetchRoleMenuData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as FetchRoleMenuData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");
@@ -133,13 +148,16 @@ export async function fetchRoleMenu(): Promise<FetchRoleMenuData> {
 	}
 }
 
-export type FetchUpdateRoleItemBody = z.infer<(typeof schemas)["fetchUpdateRoleItem"]["body"]>;
+export type FetchUpdateRoleItemBody = z.input<(typeof schemas)["fetchUpdateRoleItem"]["body"]>;
 export type FetchUpdateRoleItemData = z.infer<(typeof schemas)["fetchUpdateRoleItem"]["data"]>;
 
 export async function fetchUpdateRoleItem(body: FetchUpdateRoleItemBody): Promise<FetchUpdateRoleItemData> {
 	const client = ensureReq();
 	try {
 		const env = await client.put(`role-item`, { json: body, ignoreLoading: true }).json<OjEnvelope<FetchUpdateRoleItemData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as FetchUpdateRoleItemData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");

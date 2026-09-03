@@ -3,8 +3,8 @@
 exports[`emitClient（AC-D5/D6/D8/D15） > 快照：module 目标双产物（bindRequest 持有者 + 类型推导 + DEV 校验 + raw 通道） 1`] = `
 "/* eslint-disable */
 // 生成物：ram api 从契约生成，勿手改（改动请改契约文件后重跑 ram api）
-import { ContractApiError } from "@react-antd-module/contract";
-import type { ScopedRequestLike } from "@react-antd-module/contract";
+import { ContractApiError } from "@react-antd-module/contract/errors";
+import type { ScopedRequestLike } from "@react-antd-module/contract/errors";
 import type { z } from "@react-antd-module/runtime";
 import type { schemas } from "./client.schemas";
 
@@ -40,13 +40,16 @@ async function toApiError(e: unknown): Promise<unknown> {
 	return e;
 }
 
-export type GetOrderListQuery = z.infer<(typeof schemas)["getOrderList"]["query"]>;
+export type GetOrderListQuery = z.input<(typeof schemas)["getOrderList"]["query"]>;
 export type GetOrderListData = z.infer<(typeof schemas)["getOrderList"]["data"]>;
 
 export async function getOrderList(query: GetOrderListQuery): Promise<GetOrderListData> {
 	const client = ensureReq();
 	try {
 		const env = await client.get(\`order/list\`, { searchParams: query as Record<string, string | number | boolean> }).json<OjEnvelope<GetOrderListData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as GetOrderListData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");
@@ -61,13 +64,16 @@ export async function getOrderList(query: GetOrderListQuery): Promise<GetOrderLi
 	}
 }
 
-export type GetOrderDetailParams = z.infer<(typeof schemas)["getOrderDetail"]["params"]>;
+export type GetOrderDetailParams = z.input<(typeof schemas)["getOrderDetail"]["params"]>;
 export type GetOrderDetailData = z.infer<(typeof schemas)["getOrderDetail"]["data"]>;
 
 export async function getOrderDetail(params: GetOrderDetailParams): Promise<GetOrderDetailData> {
 	const client = ensureReq();
 	try {
 		const env = await client.get(\`order/item/\${encodeURIComponent(String(params.id))}\`).json<OjEnvelope<GetOrderDetailData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as GetOrderDetailData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");
@@ -82,13 +88,16 @@ export async function getOrderDetail(params: GetOrderDetailParams): Promise<GetO
 	}
 }
 
-export type CreateOrderBody = z.infer<(typeof schemas)["createOrder"]["body"]>;
+export type CreateOrderBody = z.input<(typeof schemas)["createOrder"]["body"]>;
 export type CreateOrderData = z.infer<(typeof schemas)["createOrder"]["data"]>;
 
 export async function createOrder(body: CreateOrderBody): Promise<CreateOrderData> {
 	const client = ensureReq();
 	try {
 		const env = await client.post(\`order/item\`, { json: body }).json<OjEnvelope<CreateOrderData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as CreateOrderData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");
@@ -103,14 +112,17 @@ export async function createOrder(body: CreateOrderBody): Promise<CreateOrderDat
 	}
 }
 
-export type UpdateOrderParams = z.infer<(typeof schemas)["updateOrder"]["params"]>;
-export type UpdateOrderBody = z.infer<(typeof schemas)["updateOrder"]["body"]>;
+export type UpdateOrderParams = z.input<(typeof schemas)["updateOrder"]["params"]>;
+export type UpdateOrderBody = z.input<(typeof schemas)["updateOrder"]["body"]>;
 export type UpdateOrderData = z.infer<(typeof schemas)["updateOrder"]["data"]>;
 
 export async function updateOrder(input: { params: UpdateOrderParams, body: UpdateOrderBody }): Promise<UpdateOrderData> {
 	const client = ensureReq();
 	try {
 		const env = await client.put(\`order/item/\${encodeURIComponent(String(input.params.id))}\`, { json: input.body }).json<OjEnvelope<UpdateOrderData>>();
+		// 2xx + code!==0 也是业务错误（§6.2 通道 a）：oj 不会这么发，但契约机制的价值恰是防漂移
+		if (typeof env.code === "number" && env.code !== 0)
+			throw new ContractApiError(env.code, env.msg ?? "业务错误（信封 code 非 0）");
 		const data = env.data as UpdateOrderData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");

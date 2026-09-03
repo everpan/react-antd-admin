@@ -100,6 +100,14 @@ function successResponse(ep: IrEndpoint): Record<string, unknown> {
 	};
 }
 
+/** 业务错误响应（§6.2 通道 b：HTTP status=code，信封 {code,msg}） */
+function errorResponse(): Record<string, unknown> {
+	return {
+		description: "业务错误（oj 信封：code 非 0，HTTP status=code）",
+		content: { "application/json": { schema: { type: "object", properties: { code: { type: "integer" }, msg: { type: "string" } }, required: ["code"] } } },
+	};
+}
+
 /** openapi.yaml：OpenAPI 3.1；paths/methods 排序 + 键序固定，保证字节稳定 */
 export function emitOpenapiYaml(ir: IrEndpoint[], opts: { title: string, version: string }): string {
 	const paths: Record<string, Record<string, unknown>> = {};
@@ -114,7 +122,10 @@ export function emitOpenapiYaml(ir: IrEndpoint[], opts: { title: string, version
 			op.parameters = parameters;
 		if (ep.bodySchema)
 			op.requestBody = { required: true, content: { "application/json": { schema: jsonSchema(ep.bodySchema) } } };
-		op.responses = { 200: successResponse(ep) };
+		op.responses = ep.raw
+			? { 200: successResponse(ep) }
+			// §6.2 错误通道入交付物（评审 F14/m9）：业务错误为 default 响应，信封 code 非 0
+			: { 200: successResponse(ep), default: errorResponse() };
 		const p = openapiPath(ep.fullPath);
 		(paths[p] ??= {})[ep.method.toLowerCase()] = op;
 	}

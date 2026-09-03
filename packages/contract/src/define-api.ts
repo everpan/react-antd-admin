@@ -57,6 +57,11 @@ function validateDefinition(def: ApiDefinitionInput): void {
 		fail(route, "data schema 与 response:\"raw\" 互斥——raw 端点不解包信封，不需要 data schema。");
 	if (def.response !== undefined && def.response !== "raw")
 		fail(route, `response 仅支持 "raw"（收到: ${String(def.response)}）。`);
+	// 评审 F9：方法面在定义期封顶，而不是延迟到 codegen 才炸
+	if (def.method === "OPTIONS")
+		fail(route, "OPTIONS 不在支持范围（ky/oj 均无对应方法）——预检请求由 fetch/CORS 层处理，契约不表达。");
+	if (def.method === "HEAD" && def.data)
+		fail(route, "HEAD 端点无响应体，不能声明 data schema——需要响应体请改用 GET。");
 }
 
 /**

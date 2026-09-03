@@ -18,7 +18,8 @@ function defOf(schema: unknown): ZodDef {
 
 const IDENT = /^[a-z_$][\w$]*$/i;
 
-function keyOf(name: string): string {
+/** 对象键发射：合法标识符原样，其余 JSON 引号化（emit-stub 的示例值同款复用） */
+export function keyOf(name: string): string {
 	return IDENT.test(name) ? name : JSON.stringify(name);
 }
 
@@ -64,14 +65,17 @@ function emitChecks(type: string, def: ZodDef): string {
 			case "string_format": {
 				if (cd.format === "regex") {
 					const pattern = cd.pattern as RegExp;
+					// 评审 F10：flags 丢失即语义削弱——不可保真，拒绝而非静默降级
+					if (pattern.flags && pattern.flags !== "u")
+						throw new Error(`[ram-api] schema 发射失败：regex /${pattern.source}/${pattern.flags} 带 flags 无法保真发射（白名单只支持无 flags 形态）。`);
 					out += `.regex(/${pattern.source}/)`;
 					break;
 				}
 				const method = STRING_FORMAT_METHOD[cd.format as string];
-				if (method)
-					out += `.${method}()`;
-				// 其余 string_format（ulid/cidr…）属低频，静默降级为不发射约束
-				// （校验放宽而非错发）；需要时在白名单里点名增补
+				if (!method) {
+					throw new Error(`[ram-api] schema 发射失败：string format "${String(cd.format)}" 不在可保真映射（${Object.keys(STRING_FORMAT_METHOD).join("/")}）——静默放宽校验违背白名单「检出即报错」，请改用已支持格式或纯 string。`);
+				}
+				out += `.${method}()`;
 				break;
 			}
 			default:
@@ -93,7 +97,9 @@ export function emitSchemaSource(schema: unknown): string {
 		case "boolean":
 			return "z.boolean()";
 		case "date":
-			return "z.date()";
+			// 评审 F1：线上传输本就是 ISO 串（emit-meta/mock/stub 三链一致），
+			// z.date() 期望 Date 实例会让 dev 校验对线上数据必误报——发 z.iso.datetime()
+			return "z.iso.datetime()";
 		case "literal": {
 			const values = def.values as unknown[];
 			return `z.literal(${values.length === 1 ? JSON.stringify(values[0]) : JSON.stringify(values)})`;
@@ -103,7 +109,8 @@ export function emitSchemaSource(schema: unknown): string {
 		case "union":
 			return `z.union([${(def.options as unknown[]).map(emitSchemaSource).join(", ")}])`;
 		case "array":
-			return `z.array(${emitSchemaSource(def.element)})`;
+			// min/max 等长度约束同样保真发射（评审 F10：此前静默丢弃）
+			return `z.array(${emitSchemaSource(def.element)})${emitChecks(type, def)}`;
 		case "object": {
 			const entries = Object.entries(def.shape as Record<string, unknown>)
 				.map(([k, v]) => `\n\t${keyOf(k)}: ${emitSchemaSource(v).replaceAll("\n", "\n\t")},`);

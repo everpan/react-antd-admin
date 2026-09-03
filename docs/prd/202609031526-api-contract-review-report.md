@@ -28,7 +28,7 @@
 | F11 | A-m6 | minor | emit-stub 示例值 object 键不引号化（kebab-case 键产语法错误 stub） | ✅ 复用 emit-schema 的 `keyOf()` |
 | F12 | D-9 | minor | 请求槽入参类型用 `z.infer`（输出型），带 `.default()` 字段被标必填 | ✅ query/params/body 改 `z.input`；data 保持 `z.infer` |
 | F13 | D-11 | minor | 成功路径不检查信封 `code !== 0`（2xx + 业务错误静默通过） | ✅ 生成 client 成功路径加 code 检查抛 ContractApiError |
-| F14 | A-m9 / D-20/21/22/23 | minor | 计划/设计文本漂移五处（toApiError 解信封、发现可配置未兑现、internal z 来源分叉、exampleFromSchema 收敛矛盾、openapi 缺错误响应文档） | 📝 文本回改；「发现可配置」降级为固定两档 |
+| F14 | A-m9 / D-20/21/22/23 | minor | 计划/设计文本漂移五处（toApiError 解信封、发现可配置未兑现、internal z 来源分叉、exampleFromSchema 收敛矛盾、openapi 缺错误响应文档） | ✅ 文本回改 + openapi 补 default 错误响应（§6.2 通道 b 入交付物）；「发现可配置」降级为固定两档 |
 | F15 | A-m7 | minor | apiPrefix 定义期校验过弱（`/../x`、尾斜杠放行） | 🔧 演进点（现有两道闸门间接挡住） |
 | F16 | A-m8 | minor | uni-dev 写 client 不验目标模块存在，目录打错字静默造孤儿目录 | 🔧 演进点 |
 | F17 | D-8 | minor | query 序列化 cast 撒谎（array 被逗号拼接、Date 变垃圾串） | 🔧 演进点（IR 收窄 query 字段为标量） |

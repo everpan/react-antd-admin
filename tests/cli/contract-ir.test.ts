@@ -39,6 +39,18 @@ describe("buildIr（AC-D12）", () => {
 			.toThrowError(/nested\.evil/);
 	});
 
+	it("评审 F8：params schema 键必须覆盖 route 参数段，缺键人话报错", () => {
+		expect(() => buildIr({
+			ep: defineApi({ apiPrefix: "/o", route: "/item/{id}", params: z.object({ name: z.string() }) }),
+		})).toThrowError(/\{id\}/);
+		// params 非 object → 同样定义期拒绝
+		expect(() => buildIr({
+			ep: defineApi({ apiPrefix: "/o", route: "/item/{id}", params: z.string() }),
+		})).toThrowError(/params 必须是 z\.object/);
+		// 不声明 params → 参数段全按 string（合法）
+		expect(buildIr({ ep: defineApi({ apiPrefix: "/o", route: "/item/{id}" }) })[0].paramNames).toEqual(["id"]);
+	});
+
 	it("同（目录, method）冲突报错", () => {
 		expect(() => buildIr({
 			a: defineApi({ apiPrefix: "/o", route: "/item/{id}", method: "GET" }),

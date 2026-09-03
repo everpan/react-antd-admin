@@ -56,7 +56,7 @@
 | AC-D12 | 契约 schema 走**白名单子集**：`z.object/array/enum/literal/union/optional/default` + string/number/boolean 基础约束；`transform/refine/preprocess/pipe/coerce/lazy` 由 codegen 检出并报人话错误拒绝 | 评审：契约在 codegen 期是求值后的运行时对象，反向发射源码须内省 zod 内部结构（v3 `_def` / v4 `_zod.def` 不兼容）；白名单化后 IR→发射链路才有可写的快照测试基线。params/query 声明语义类型（如 `z.number().int()`），URL 序列化由生成物负责 |
 | AC-D13 | 契约求值复用 `packages/cli/src/build.ts` 的 `readModuleDefinition` 链路（esbuild bundle + 真 import()），stub 插件换**功能版**（真 zod + 真 defineApi，zod 版本与浏览器侧严格一致） | 评审：仓内已有现成解法先例（B10）；两端 zod 版本漂移由既有版本矩阵门禁（模块手册 C4/D12）覆盖 |
 | AC-D14 | mock 按工程形态分两路：**uni-dev 全栈形态**由 stub handler 承担（stub 的 `json.ok` 直接填 schema 示例值——stub 即 mock，oj dev 热更零额外机制）；**纯前端形态**由 ram dev mock 表消费 routes.json + schema 示例值（段级 matcher：字面段优先于参数段，自研极简实现零新依赖） | 评审：全栈形态 `/api/*` 整体反代 oj，未写 handler 的端点会落 oj 404 而非前端 mock，R4 在全栈形态本不可用；stub handler 正好填这个洞 |
-| AC-D15 | zod 经 **runtime re-export** 进浏览器侧（随 runtime dist 进 shell，不新增 importmap 条目）；生成 client 的 dev 校验 schema `import { z } from "@react-antd-module/runtime"`，且 schema 定义整体包进 `import.meta.env.DEV` 守卫（生产 tree-shake 剔除，零成本） | 评审：runtime 本就是硬共享单例，re-export 省一张 importmap 条目且与 codegen Node 侧同源定版；原「zod 独立进 SHARED_DEPS」会让没用契约的模块也买单 |
+| AC-D15 | zod 经 **runtime re-export** 进浏览器侧（随 runtime dist 进 shell，不新增 importmap 条目）；生成 client 的 dev 校验 schema `import { z } from "@react-antd-module/runtime"`（**例外**：internal 目标在 runtime 树内自引包名成环，直取 `zod`——runtime dist 本就内联 zod，等价同源）；且 schema 定义整体包进 `import.meta.env.DEV` 守卫（生产 tree-shake 剔除，零成本）。另（评审 F3）：生成 client 运行期只 import `@react-antd-module/contract/errors` 这个 zod-free 子路径出口（ContractApiError/ScopedRequestLike），全量 zod 不进共享资产 | 评审：runtime 本就是硬共享单例，re-export 省一张 importmap 条目且与 codegen Node 侧同源定版；原「zod 独立进 SHARED_DEPS」会让没用契约的模块也买单 |
 | AC-D16 | **前端统一适配 oj 信封** `{code,msg,data}`（`code=0` 成功，HTTP 状态=code）作为全站唯一信封形态：`error-response.ts` 改读 `msg`（顺带修复存量 bug）；auth/user store、authProvider、生成 client 全部直接消费 oj 信封；`fake/*.fake.ts` 与 `mock/*.mock.mjs` 改发 oj 信封；旧 `ApiResponse{result}` 透传兼容**删除** | 用户拍板（2026-09-03）：双信封兼容（fake 透传通道）是临时态的永久化，每接一个端点写一遍 normalize 正是本机制要消灭的「原始」痛点；uni-dev D10 适配层随之整体退役 |
 
 ## 4. 契约 DSL
@@ -153,7 +153,7 @@ modules/src/order/api/
 └── openapi.yaml             # 生成物
 ```
 
-`ram api` 契约发现路径为可配置 glob，默认两档：`api/src/*/contract.ts`
+`ram api` 契约发现路径固定两档（评审 F14 降级：可配 glob 未兑现，按 YAGNI 固定）：`api/src/*/contract.ts`
 （uni-dev）、`modules/src/*/api/contract.ts`（纯前端）。两种位置编译到
 同一 IR，规则完全一致。
 

@@ -32,6 +32,13 @@ describe("defineApi（契约 DSL，AC-D11）", () => {
 	it("apiPrefix 无首斜杠 → 报错", () => {
 		expect(() => defineApi({ apiPrefix: "order", route: "/list" })).toThrowError(/apiPrefix/);
 	});
+
+	it("评审 F9：OPTIONS 与 HEAD+data 定义期即拒（不延迟到 codegen）", () => {
+		expect(() => defineApi({ apiPrefix: "/o", route: "/x", method: "OPTIONS" })).toThrowError(/OPTIONS/);
+		expect(() => defineApi({ apiPrefix: "/o", route: "/x", method: "HEAD", data: z.string() })).toThrowError(/HEAD/);
+		// HEAD 无 data 合法
+		expect(defineApi({ apiPrefix: "/o", route: "/x", method: "HEAD" }).method).toBe("HEAD");
+	});
 });
 
 describe("contractApiError", () => {

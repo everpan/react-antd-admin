@@ -30,8 +30,31 @@ describe("exampleFromSchema（语义启发示例值）", () => {
 		expect(String(value.site)).toMatch(/^https?:\/\//);
 		expect(String(value.at)).toMatch(/^\d{4}-\d{2}-\d{2}T/);
 		expect(value.status).toBe("open");
-		expect(value.amount).toBe(10);
+		// 评审 F4：示例值必须满足自家约束（≥min），不再是恰取 min
+		expect(value.amount as number).toBeGreaterThanOrEqual(10);
 		expect(typeof value.name).toBe("string");
+	});
+
+	it("评审 F4：max/min_length 约束被遵守（mock 不得自违例）", () => {
+		const value = exampleFromSchema(z.object({
+			small: z.number().max(5),
+			ranged: z.number().min(10).max(20),
+			long: z.string().min(10),
+		}), { seed: 7 }) as Record<string, number | string>;
+		expect(value.small).toBeLessThanOrEqual(5);
+		expect(value.ranged).toBeGreaterThanOrEqual(10);
+		expect(value.ranged).toBeLessThanOrEqual(20);
+		expect((value.long as string).length).toBeGreaterThanOrEqual(10);
+	});
+
+	it("评审 F1：mock 示例值能过生成 schema 的 safeParse（date 即 ISO 串，端到端对齐）", async () => {
+		const { emitSchemaSource } = await import("../../packages/cli/src/contract/emit-schema");
+		const source = emitSchemaSource(z.object({ day: z.date(), at: z.string().datetime() }));
+		expect(source).toContain("z.iso.datetime()");
+		// eslint-disable-next-line no-new-func -- 测试专用：还原 codegen 产物做端到端断言，非生产路径
+		const schema = new Function("z", `return (${source})`)(z) as z.ZodType;
+		const value = exampleFromSchema(z.object({ day: z.date(), at: z.string().datetime() }), { seed: 7 });
+		expect(schema.safeParse(value).success).toBe(true);
 	});
 
 	it("嵌套 array/optional/nullable/union/date", () => {

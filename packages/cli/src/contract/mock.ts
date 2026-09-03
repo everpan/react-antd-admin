@@ -35,8 +35,16 @@ function gen(schema: unknown): unknown {
 		return null;
 	switch (def.type) {
 		case "string": {
+			let min = 0;
+			let max = Number.POSITIVE_INFINITY;
 			for (const check of (def.checks as { _zod?: { def?: Record<string, unknown> } }[]) ?? []) {
-				const format = check._zod?.def?.format as string | undefined;
+				const cd = check._zod?.def;
+				// 评审 F4：示例值必须满足自家约束，否则 dev 校验对 mock 误报「契约违例」
+				if (cd?.check === "min_length")
+					min = Math.max(min, cd.minimum as number);
+				if (cd?.check === "max_length")
+					max = Math.min(max, cd.maximum as number);
+				const format = cd?.format as string | undefined;
 				if (format === "email")
 					return faker.internet.email();
 				if (format === "uuid")
@@ -48,15 +56,24 @@ function gen(schema: unknown): unknown {
 				if (format === "url")
 					return faker.internet.url();
 			}
-			return faker.lorem.word();
+			let word = faker.lorem.word();
+			if (word.length < min)
+				word = faker.string.alpha(Number.isFinite(min) && min > 0 ? min : 1);
+			if (word.length > max)
+				word = word.slice(0, max);
+			return word;
 		}
 		case "number": {
+			let min: number | undefined;
+			let max: number | undefined;
 			for (const check of (def.checks as { _zod?: { def?: Record<string, unknown> } }[]) ?? []) {
 				const cd = check._zod?.def;
 				if (cd?.check === "greater_than")
-					return cd.inclusive === false ? (cd.value as number) + 1 : cd.value;
+					min = cd.inclusive === false ? (cd.value as number) + 1 : (cd.value as number);
+				if (cd?.check === "less_than")
+					max = cd.inclusive === false ? (cd.value as number) - 1 : (cd.value as number);
 			}
-			return faker.number.int({ min: 1, max: 1000 });
+			return faker.number.int({ min: min ?? 1, max: max ?? (min !== undefined ? min + 1000 : 1000) });
 		}
 		case "boolean":
 			return true;

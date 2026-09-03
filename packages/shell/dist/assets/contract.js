@@ -37,6 +37,10 @@ function validateDefinition(def) {
     fail(route, 'data schema \u4E0E response:"raw" \u4E92\u65A5\u2014\u2014raw \u7AEF\u70B9\u4E0D\u89E3\u5305\u4FE1\u5C01\uFF0C\u4E0D\u9700\u8981 data schema\u3002');
   if (def.response !== void 0 && def.response !== "raw")
     fail(route, `response \u4EC5\u652F\u6301 "raw"\uFF08\u6536\u5230: ${String(def.response)}\uFF09\u3002`);
+  if (def.method === "OPTIONS")
+    fail(route, "OPTIONS \u4E0D\u5728\u652F\u6301\u8303\u56F4\uFF08ky/oj \u5747\u65E0\u5BF9\u5E94\u65B9\u6CD5\uFF09\u2014\u2014\u9884\u68C0\u8BF7\u6C42\u7531 fetch/CORS \u5C42\u5904\u7406\uFF0C\u5951\u7EA6\u4E0D\u8868\u8FBE\u3002");
+  if (def.method === "HEAD" && def.data)
+    fail(route, "HEAD \u7AEF\u70B9\u65E0\u54CD\u5E94\u4F53\uFF0C\u4E0D\u80FD\u58F0\u660E data schema\u2014\u2014\u9700\u8981\u54CD\u5E94\u4F53\u8BF7\u6539\u7528 GET\u3002");
 }
 var API_DEF = /* @__PURE__ */ Symbol.for("ram.api.def");
 function defineApi(def) {
