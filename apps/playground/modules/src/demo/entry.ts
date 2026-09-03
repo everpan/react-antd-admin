@@ -2,6 +2,7 @@ import { FileTextOutlined, HomeOutlined, InfoCircleOutlined } from "@ant-design/
 import { defineModule } from "@react-antd-module/runtime";
 import { createElement } from "react";
 
+import { bindRequest } from "./api/client";
 import DemoAboutPage from "./pages/about";
 import DemoDetailPage from "./pages/detail";
 import DemoPage from "./pages/index";
@@ -67,5 +68,12 @@ export default defineModule({
 	i18n: {
 		"zh-CN": () => import("./locales/zh-CN.json"),
 		"en-US": () => import("./locales/en-US.json"),
+	},
+	lifecycle: {
+		onInit: async (ctx) => {
+			// D11 前缀收敛 + AC-D8：生成 client 的请求能力由宿主注入
+			ctx.register.apiPrefix("/demo");
+			bindRequest(ctx.utils.request);
+		},
 	},
 });

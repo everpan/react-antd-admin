@@ -483,6 +483,9 @@ importers:
       '@react-antd-module/cli':
         specifier: workspace:*
         version: link:../../packages/cli
+      '@react-antd-module/contract':
+        specifier: workspace:*
+        version: link:../../packages/contract
       '@react-antd-module/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
