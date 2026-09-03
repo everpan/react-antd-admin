@@ -29,6 +29,7 @@
 		"@react-antd-module/contract": "workspace:*",
 		"esbuild": "catalog:",
 		"tsx": "catalog:",
+		"typescript": "catalog:",
 		"vite": "catalog:",
 		"yaml": "catalog:",
 		"zod": "catalog:"

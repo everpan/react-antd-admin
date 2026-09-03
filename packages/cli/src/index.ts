@@ -45,9 +45,24 @@ async function main() {
 			await printInfo(projectRoot);
 			break;
 		case "api": {
-			// --check / --docs 分别由 Task 3.2 / 4.3 接线；当前为生成主路径
-			if (process.argv.includes("--check") || process.argv.includes("--docs"))
-				throw new Error("[ram] ram api --check/--docs 尚未接线（Phase 3.2/4.3）——当前请直接 ram api 生成产物。");
+			// --docs 由 Task 4.3 接线
+			if (process.argv.includes("--docs"))
+				throw new Error("[ram] ram api --docs 尚未接线（Phase 4.3）——当前请用 ram api / ram api --check。");
+			if (process.argv.includes("--check")) {
+				const { checkApi } = await import("./contract/check");
+				const { violations, hints } = await checkApi({ cwd: projectRoot });
+				for (const v of violations)
+					console[v.level === "error" ? "error" : "warn"](`${v.level === "error" ? "✗" : "⚠"} ${v.message}`);
+				for (const h of hints)
+					console.log(h);
+				if (violations.length === 0)
+					console.log("[ram-api] --check 通过：生成物同步、route 双向对账、routes.js 均无 drift。");
+				const errors = violations.filter(v => v.level === "error").length;
+				console.log(`[ram-api] --check 结果：${errors} error / ${violations.length - errors} warn`);
+				if (errors > 0)
+					process.exit(1);
+				break;
+			}
 			const { runApi } = await import("./contract/run");
 			const result = await runApi({ cwd: projectRoot });
 			console.log(`[ram-api] 契约 ${result.contracts} 份；写入 ${result.written.length} 个文件，跳过（未变）${result.skipped.length} 个；stub 新建 ${result.stubs.created} / 更新 ${result.stubs.updated} / 跳过 ${result.stubs.skipped}`);

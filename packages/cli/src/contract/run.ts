@@ -70,12 +70,32 @@ function writeIfChanged(path: string, content: string, result: RunResult): void 
 	result.written.push(path);
 }
 
-async function runOne(found: DiscoveredContract, cwd: string, result: RunResult): Promise<void> {
+/** 单份契约的四产物落盘路径（run 与 --check 共用，DRY） */
+export function artifactPaths(found: DiscoveredContract, cwd: string): { client: string, schemas: string, routes: string, openapi: string } {
+	if (found.kind === "uni-dev") {
+		const moduleApiDir = join(cwd, "modules/src", found.module, "api");
+		return {
+			client: join(moduleApiDir, "client.ts"),
+			schemas: join(moduleApiDir, "client.schemas.ts"),
+			routes: join(dirname(found.path), "routes.json"),
+			openapi: join(dirname(found.path), "openapi.yaml"),
+		};
+	}
+	const dir = dirname(found.path);
+	return {
+		client: join(dir, "client.ts"),
+		schemas: join(dir, "client.schemas.ts"),
+		routes: join(dir, "routes.json"),
+		openapi: join(dir, "openapi.yaml"),
+	};
+}
+
+/** 契约 → IR（含 uni-dev 的 AC-D9 字面相等校验）；run 与 --check 共用 */
+export async function irOf(found: DiscoveredContract, cwd: string) {
 	const exports = await evaluateContract(found.path, cwd);
 	const ir = buildIr(exports);
 	if (ir.length === 0)
 		throw new Error(`[ram-api] ${found.path} 没有 defineApi 端点——契约文件至少导出一个端点，否则请删除该文件。`);
-
 	if (found.kind === "uni-dev") {
 		// AC-D9：uni-dev 形态 apiPrefix 字面等于 oj 模块段（= 目录名）
 		for (const ep of ir) {
@@ -84,30 +104,28 @@ async function runOne(found: DiscoveredContract, cwd: string, result: RunResult)
 			}
 		}
 	}
+	return ir;
+}
+
+async function runOne(found: DiscoveredContract, cwd: string, result: RunResult): Promise<void> {
+	const ir = await irOf(found, cwd);
 
 	const client = emitClient(ir, { target: "module" });
 	const routesJson = emitRoutesJson(ir);
 	const openapi = emitOpenapiYaml(ir, { title: `${found.module} api`, version: "0.0.0" });
 
+	const paths = artifactPaths(found, cwd);
+	writeIfChanged(paths.client, client["client.ts"], result);
+	writeIfChanged(paths.schemas, client["client.schemas.ts"], result);
+	writeIfChanged(paths.routes, routesJson, result);
+	writeIfChanged(paths.openapi, openapi, result);
 	if (found.kind === "uni-dev") {
-		const moduleApiDir = join(cwd, "modules/src", found.module, "api");
-		writeIfChanged(join(moduleApiDir, "client.ts"), client["client.ts"], result);
-		writeIfChanged(join(moduleApiDir, "client.schemas.ts"), client["client.schemas.ts"], result);
-		writeIfChanged(join(dirname(found.path), "routes.json"), routesJson, result);
-		writeIfChanged(join(dirname(found.path), "openapi.yaml"), openapi, result);
 		// stub：oj 目录镜像树（人碰过的文件永不写——plan 阶段已按指纹判好）
 		const writes = await planStubWrites(ir, { apiSrcDir: join(cwd, "api/src") });
 		const counts = applyStubWrites(writes);
 		result.stubs.created += counts.created;
 		result.stubs.updated += counts.updated;
 		result.stubs.skipped += counts.skipped;
-	}
-	else {
-		const dir = dirname(found.path);
-		writeIfChanged(join(dir, "client.ts"), client["client.ts"], result);
-		writeIfChanged(join(dir, "client.schemas.ts"), client["client.schemas.ts"], result);
-		writeIfChanged(join(dir, "routes.json"), routesJson, result);
-		writeIfChanged(join(dir, "openapi.yaml"), openapi, result);
 	}
 }
 
