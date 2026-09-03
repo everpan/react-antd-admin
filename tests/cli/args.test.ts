@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseInitArgs } from "../../packages/cli/src/args";
+import { parseApiArgs, parseInitArgs } from "../../packages/cli/src/args";
 
 /**
  * P6 实现期发现：`ram init --yes` 原先直接取 argv[3] 当目标目录，
@@ -18,5 +18,28 @@ describe("parseInitArgs", () => {
 
 	it("无参数：dest 空、yes=false（非空目录守卫生效）", () => {
 		expect(parseInitArgs([])).toEqual({ dest: "", yes: false });
+	});
+});
+
+/**
+ * ram api 指定项目目录（docs/prd/202609032019-ram-api-cwd.md）：
+ * 位置参数取首个非 flag 参数为项目目录，flag 任意位置生效。
+ */
+describe("parseApiArgs", () => {
+	it("无参数：dir 空（调用方回退 cwd），check/docs 均为 false", () => {
+		expect(parseApiArgs([])).toEqual({ dir: "", check: false, docs: false });
+	});
+
+	it("仅目录", () => {
+		expect(parseApiArgs(["apps/playground"])).toEqual({ dir: "apps/playground", check: false, docs: false });
+	});
+
+	it("目录与 flag 混排：目录取首个非 flag，flag 任意位置生效", () => {
+		expect(parseApiArgs(["--check", "apps/playground"])).toEqual({ dir: "apps/playground", check: true, docs: false });
+		expect(parseApiArgs(["apps/playground", "--docs", "--check"])).toEqual({ dir: "apps/playground", check: true, docs: true });
+	});
+
+	it("仅 flag：dir 空", () => {
+		expect(parseApiArgs(["--check"])).toEqual({ dir: "", check: true, docs: false });
 	});
 });

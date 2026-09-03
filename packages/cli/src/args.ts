@@ -10,3 +10,14 @@ export function parseInitArgs(argv: string[]): { dest: string, yes: boolean } {
 	const dest = argv.find(a => !a.startsWith("--")) ?? "";
 	return { dest, yes };
 }
+
+/**
+ * `ram api [dir] [--check] [--docs]`：位置参数为项目目录（缺省 cwd），
+ * 与 parseInitArgs 同一约定（docs/prd/202609032019-ram-api-cwd.md）。
+ */
+export function parseApiArgs(argv: string[]): { dir: string, check: boolean, docs: boolean } {
+	const check = argv.includes("--check");
+	const docs = argv.includes("--docs");
+	const dir = argv.find(a => !a.startsWith("--")) ?? "";
+	return { dir, check, docs };
+}

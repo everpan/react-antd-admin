@@ -1,6 +1,7 @@
+import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
-import { parseInitArgs } from "./args";
+import { parseApiArgs, parseInitArgs } from "./args";
 import { buildBackend, buildModules } from "./build";
 import { devServer } from "./dev";
 import { mergeManifests, printInfo } from "./info";
@@ -45,15 +46,20 @@ async function main() {
 			await printInfo(projectRoot);
 			break;
 		case "api": {
-			if (process.argv.includes("--docs")) {
+			const { dir, check, docs } = parseApiArgs(process.argv.slice(3));
+			// S5：显式目录必须先存在——否则静默在错的目录下生成/对账
+			if (dir && !fs.existsSync(path.resolve(dir)))
+				throw new Error(`[ram-api] 项目目录不存在：${dir}`);
+			const apiRoot = dir ? path.resolve(dir) : projectRoot;
+			if (docs) {
 				const { runApiDocs } = await import("./contract/run");
-				const out = await runApiDocs(projectRoot);
+				const out = await runApiDocs(apiRoot);
 				console.log(`[ram-api] 文档站已生成：${path.relative(projectRoot, out)}（浏览器直接打开即可）`);
 				break;
 			}
-			if (process.argv.includes("--check")) {
+			if (check) {
 				const { checkApi } = await import("./contract/check");
-				const { violations, hints } = await checkApi({ cwd: projectRoot });
+				const { violations, hints } = await checkApi({ cwd: apiRoot });
 				for (const v of violations)
 					console[v.level === "error" ? "error" : "warn"](`${v.level === "error" ? "✗" : "⚠"} ${v.message}`);
 				for (const h of hints)
@@ -67,10 +73,10 @@ async function main() {
 				break;
 			}
 			const { runApi } = await import("./contract/run");
-			const result = await runApi({ cwd: projectRoot });
+			const result = await runApi({ cwd: apiRoot });
 			console.log(`[ram-api] 契约 ${result.contracts} 份；写入 ${result.written.length} 个文件，跳过（未变）${result.skipped.length} 个；stub 新建 ${result.stubs.created} / 更新 ${result.stubs.updated} / 跳过 ${result.stubs.skipped}`);
 			for (const p of result.written)
-				console.log(`  + ${path.relative(projectRoot, p)}`);
+				console.log(`  + ${path.relative(apiRoot, p)}`);
 			break;
 		}
 		case "merge":
