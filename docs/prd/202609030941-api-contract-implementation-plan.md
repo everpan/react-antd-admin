@@ -517,11 +517,11 @@ it("redoc 产物包含契约端点路径", async () => {
 - Modify: `packages/runtime/src/api/system/role/index.ts`（手写 fetch* 替换为生成 client re-export，保持导出名不变——消费方零改动）
 - Test: Task 0.3 建的 role 测试改为对生成物跑（行为不变应全绿）。
 
-- [ ] **Step 1: 跑 Task 0.3 的 role 测试确认基线绿** — `pnpm vitest run packages/runtime/src/api/system/role`。
-- [ ] **Step 2: 写契约** — `packages/runtime/src/api/system/role/contract.ts` 覆盖 6 个端点（role-list/role-item POST/PUT/DELETE/role-menu/menu-by-role-id），`data` schema 按 fake 实际响应建模。
-- [ ] **Step 3: 生成并替换** — `ram api`（`target:"internal"`）产物落 `packages/runtime/src/api/system/role/api/`；`index.ts` 改为 `export { fetchRoleList, ... } from "./api/client"; export * from "./types";`，导出名与签名保持不变。
-- [ ] **Step 4: 测试仍绿 + typecheck**（重构零行为差；modules/system 页面零改动即证明接口兼容）。
-- [ ] **Step 5: Commit** — `refactor(runtime): system/role 迁移契约制试点（内部目标）`
+- [x] **Step 1: 跑 Task 0.3 的 role 测试确认基线绿** — `pnpm vitest run packages/runtime/src/api/system/role`。
+- [x] **Step 2: 写契约** — `packages/runtime/src/api/system/role/contract.ts` 覆盖 6 个端点（role-list/role-item POST/PUT/DELETE/role-menu/menu-by-role-id），`data` schema 按 fake 实际响应建模。
+- [x] **Step 3: 生成并替换** — `ram api`（`target:"internal"`）产物落 `packages/runtime/src/api/system/role/api/`；`index.ts` 改为 `export { fetchRoleList, ... } from "./api/client"; export * from "./types";`，导出名与签名保持不变。
+- [x] **Step 4: 测试仍绿 + typecheck**（重构零行为差；modules/system 页面零改动即证明接口兼容）。
+- [x] **Step 5: Commit** — `refactor(runtime): system/role 迁移契约制试点（内部目标）`
 
 ### Task 5.2：playground demo 模块契约试点（模块目标）
 
@@ -530,17 +530,17 @@ it("redoc 产物包含契约端点路径", async () => {
 - Modify: demo 页面改用生成 client
 - Test: playground 现有测试 + 手动冒烟（`pnpm dev` → demo 页列表渲染；改契约字段 → dev 页面报契约违例红条）。
 
-- [ ] **Step 1: 写 demo 契约** — 覆盖 demo 页实际调用的端点；`entry.ts` 的 `onInit` 增加：
+- [x] **Step 1: 写 demo 契约** — 覆盖 demo 页实际调用的端点；`entry.ts` 的 `onInit` 增加：
 ```ts
 import { bindRequest } from "./api/client";
 // onInit 内：
 ctx.register.apiPrefix("/demo");
 bindRequest(ctx.utils.request);
 ```
-- [ ] **Step 2: 跑 `ram api` 生成产物**（`modules/src/demo/api/client.ts` + `client.schemas.ts`），demo 页面改为 import 生成 client。
+- [x] **Step 2: 跑 `ram api` 生成产物**（`modules/src/demo/api/client.ts` + `client.schemas.ts`），demo 页面改为 import 生成 client。
 - [ ] **Step 3: playground 测试 + 手动冒烟** — `pnpm dev`（playground）：demo 页列表渲染正常；临时把契约某字段类型改错 → 页面报「契约违例」人话红条（dev 校验生效）→ 改回。
-- [ ] **Step 4: `ram api --check` 在 playground 零违规**。
-- [ ] **Step 5: Commit** — `feat(playground): demo 模块接入契约机制（bindrequest holder）`
+- [x] **Step 4: `ram api --check` 在 playground 零违规**。
+- [x] **Step 5: Commit** — `feat(playground): demo 模块接入契约机制（bindrequest holder）`
 
 ### Task 5.3：手册更新
 
@@ -548,9 +548,16 @@ bindRequest(ctx.utils.request);
 - Modify: `docs/prd/module-development-guide.md`（§3.3 依赖表加 `@react-antd-module/contract`；新增「3.7 API 契约」节：契约写法、bindRequest、ram api 命令、--check 门禁、常见问题三条）
 - Modify: `docs/prd/202609011520-uni-dev-manual.md`（工程布局图加 contract.ts/routes.json；§4 ram dev 加契约 watch 行为说明）
 
-- [ ] **Step 1: 写文档 → Step 2: Commit** — `docs(prd): 手册接入 api 契约机制（模块手册 §3.7 + uni-dev 布局）`
+- [x] **Step 1: 写文档 → Step 2: Commit** — `docs(prd): 手册接入 api 契约机制（模块手册 §3.7 + uni-dev 布局）`
 
-- [ ] **Phase 5 小结**：更新 checkbox；文末追加小结。
+- [x] **Phase 5 小结**：更新 checkbox；文末追加小结。
+
+> **Phase 5 小结**：Task 5.1（runtime internal 试点）、5.2（playground 模块试点，Step 3 手动冒烟顺延 Phase 6）、5.3（手册）完成。runtime role 模块 6 端点全部契约化，消费方（modules/system 角色页）仅一处类型随契约修正（menus: string[]→number[]，线协议真相），其余零改动；playground demo 页以契约驱动 mock 兜底跑通「无后端先写页」闭环。
+>
+> **试点暴露并修复的四处真实裂缝**（均为单测/快照盲区，首次真实消费才现形）：
+> ⑨ ScopedRequestLike.searchParams 过宽（Record<string, unknown>）导致真 ky 实例无法赋给接口——收窄为 ky 兼容形态；⑩ importmap 未覆盖 @react-antd-module/contract（internal 生成物首个运行期裸导入）——纳入 SHARED_DEPS 硬共享 + runtime peerDependencies，shell 资产 67 项校验通过；⑪ 旧手写 client 的 ignoreLoading 行为在生成物中丢失——契约 DSL 增 ignoreLoading 开关透传；⑫ 模块工程 typecheck 缺 import.meta.env 类型与 allowImportingTsExtensions——playground 补 typings.d.ts + tsconfig，已写入手册 §3.7 常见问题。
+>
+> **测试规模**：emit-client 新增 2 用例（internal z 来源 / ignoreLoading 透传）；两处产物级实证（runtime dist 与 playground demo 产物均无 client.schemas 引用、DEV 校验分支消除）。耗时约 1 小时。
 
 ---
 
