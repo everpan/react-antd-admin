@@ -449,11 +449,11 @@ it("DELETE 端点 → 方法名 del", ...);
 - Rebuild: `packages/runtime/dist` + `packages/shell/dist`（仓规：runtime 改动必须重建提交）
 - Test: drift-prevention 测试更新 + 生产 bundle 不含 zod 全量的断言（`pnpm build` 后 grep 产物，zod 只应出现在 DEV 分支可及处——实际验证 tree-shake 结果并记录）
 
-- [ ] **Step 1: 改 drift 测试白名单预期为含 `z`（先失败）**。
-- [ ] **Step 2: 跑测试确认失败**。
-- [ ] **Step 3: 实现 re-export + 依赖**。
-- [ ] **Step 4: 测试 + typecheck + 重建 dist**。
-- [ ] **Step 5: Commit** — `feat(runtime): re-export zod（ac-d15，p3 出口变更流程）`
+- [x] **Step 1: 改 drift 测试白名单预期为含 `z`（先失败）**。
+- [x] **Step 2: 跑测试确认失败**。
+- [x] **Step 3: 实现 re-export + 依赖**。
+- [x] **Step 4: 测试 + typecheck + 重建 dist**。
+- [x] **Step 5: Commit** — `feat(runtime): re-export zod（ac-d15，p3 出口变更流程）`
 
 ### Task 4.2：纯前端契约 mock（AC-D14）
 
@@ -462,11 +462,11 @@ it("DELETE 端点 → 方法名 del", ...);
 - Modify: `packages/cli/src/dev-mock.ts:53` 附近（契约路由表并入匹配链：手写 mock 精确匹配优先，契约 pattern 兜底）
 - Test: `packages/cli/src/contract/mock.test.ts`（matcher 特异性排序表 + 示例值生成快照 + 手写优先断言）
 
-- [ ] **Step 1: 写失败测试**。
-- [ ] **Step 2: 跑测试确认失败**。
-- [ ] **Step 3: 实现**。
-- [ ] **Step 4: 跑测试确认通过**。
-- [ ] **Step 5: Commit** — `feat(cli): 契约驱动 mock（段级 matcher + faker 示例值，手写优先）`
+- [x] **Step 1: 写失败测试**。
+- [x] **Step 2: 跑测试确认失败**。
+- [x] **Step 3: 实现**。
+- [x] **Step 4: 跑测试确认通过**。
+- [x] **Step 5: Commit** — `feat(cli): 契约驱动 mock（段级 matcher + faker 示例值，手写优先）`
 
 ### Task 4.3：`ram api docs`（R5）
 
@@ -478,7 +478,7 @@ it("DELETE 端点 → 方法名 del", ...);
 - Consumes: Task 2.5 `emitOpenapiYaml`、Task 3.1 `runApi`。
 - Produces: `ram api --docs`——聚合全部契约的 openapi 文档 → `redocly build-docs`（或 redoc CLI）产出 `api/docs/index.html`（纯前端形态落工程根 `docs/api/`）。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```ts
 it("redoc 产物包含契约端点路径", async () => {
@@ -488,12 +488,23 @@ it("redoc 产物包含契约端点路径", async () => {
 });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**（`--docs` 分支不存在）。
-- [ ] **Step 3: 实现** —— `runApi` 增 `docs` 分支：聚合 yaml 落临时文件 → spawn redoc build → 产物落盘；redoc 缺失时人话报错（提示 pnpm install 状态）。
-- [ ] **Step 4: 跑测试确认通过**。
-- [ ] **Step 5: Commit** — `feat(cli): ram api docs（redoc 渲染聚合 openapi）`
+- [x] **Step 2: 跑测试确认失败**（`--docs` 分支不存在）。
+- [x] **Step 3: 实现** —— `runApi` 增 `docs` 分支：聚合 yaml 落临时文件 → spawn redoc build → 产物落盘；redoc 缺失时人话报错（提示 pnpm install 状态）。
+- [x] **Step 4: 跑测试确认通过**。
+- [x] **Step 5: Commit** — `feat(cli): ram api docs（redoc 渲染聚合 openapi）`
 
-- [ ] **Phase 4 小结**：更新 checkbox；文末追加小结。
+- [x] **Phase 4 小结**：更新 checkbox；文末追加小结。
+
+> **Phase 4 小结（2026-09-03 完成）**：runtime re-export z + 契约 mock + 文档站。
+>
+> **关键过程**：
+> - 4.1 re-export z：P3 出口变更流程实证——`runtime-exports` 白名单测试先红后绿，cli build 的 RUNTIME_STUB_SOURCE 被防漂移测试强制同步补 `z`；vite.config external 白名单放行 `zod`（打进 runtime dist，不进 importmap，产物零 zod 裸导入实测验证）；runtime+shell dist 按仓规重建提交。
+> - 4.2 契约 mock：`mock.ts` 段级 matcher（字面 100 分 > 参数 10 分 > catch-all 最末，零新依赖）+ faker 语义示例值（seed 可复现）；`resolveMock` 收敛「手写精确匹配优先、契约 pattern 兜底」选择序，dev.ts 一行换接。emit-stub 保留文本版示例生成（代码模板需未引号键名，与值版 JSON 形态不同——有意不收敛，避免互相迁就）。
+> - 4.3 文档站：`runApiDocs` 聚合各契约 paths（operation 打模块 tag，撞车人话报错）→ redocly build-docs（js bin 经 createRequire 解析，缺失/失败人话）；uni-dev 落 `api/docs/`、纯前端落 `docs/api/`，聚合 `openapi.yaml` 同盘供评审直读。真实 redoc 构建进测试（2 例 120s 超时预算）。
+>
+> **测试规模**：新增 17 用例；cli 全套 187 用例绿。耗时约 1.5 小时（含 runtime/shell dist 重建）。
+>
+> **已知问题记录**：⑦ faker 示例值非跨版本稳定（seed 只保同版本复现）——测试只断言形态不断言字面值，已规避；⑧ redoc 首次构建冷启动 ~10s（测试超时预算已留），产物为单文件 html 无外部依赖。
 
 ---
 
