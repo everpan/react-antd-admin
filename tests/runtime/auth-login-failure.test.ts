@@ -4,10 +4,9 @@ import { fetchLogin } from "#src/api/user";
 import { useAuthStore } from "#src/store/auth";
 
 /**
- * 集中审阅（2026-09-01）F12：oj 业务失败是 HTTP 200 + {code:401,msg}（D10
- * 契约，api-oj-contract.test.ts 已钉），normalize 映射为 success:false、
- * mapAuth 兜底空 token。auth store 的 login() 若不检查 success，口令错误
- * 会走完「登录成功」分支并清空已持久化 token。
+ * AC-D16（原 F12 场景迁移）：业务失败 = 非 2xx + oj 信封，fetchLogin 经 ky
+ * 抛 HTTPError（吐司由 request 层 error-response 统一负责）；auth store 的
+ * login() 不再有 success 信封分支——rejection 透传，已持久化 token 不动。
  */
 
 const { messageError } = vi.hoisted(() => {
@@ -39,29 +38,21 @@ describe("auth store login 信封级失败（F12）", () => {
 		useAuthStore.setState({ token: "persisted-token", refreshToken: "persisted-refresh" });
 	});
 
-	it("success:false → login 拒绝、报错提示、不动已持久化 token", async () => {
-		vi.mocked(fetchLogin).mockResolvedValue({
-			code: 401,
-			result: { token: "", refreshToken: "" },
-			message: "账号或密码错误",
-			success: false,
-		});
+	it("fetchLogin 拒绝（业务失败=HTTPError）→ login 拒绝、不动已持久化 token", async () => {
+		vi.mocked(fetchLogin).mockRejectedValue(new Error("账号或密码错误"));
 
 		await expect(useAuthStore.getState().login({ username: "admin", password: "wrong" }))
 			.rejects
 			.toThrowError(/账号或密码错误/);
 
-		expect(messageError).toHaveBeenCalledWith("账号或密码错误");
 		expect(useAuthStore.getState().token).toBe("persisted-token");
 		expect(useAuthStore.getState().refreshToken).toBe("persisted-refresh");
 	});
 
-	it("success:true → 正常写入 token", async () => {
+	it("fetchLogin 成功 → 直返 { token, refreshToken } 正常写入", async () => {
 		vi.mocked(fetchLogin).mockResolvedValue({
-			code: 200,
-			result: { token: "new-token", refreshToken: "new-refresh" },
-			message: "ok",
-			success: true,
+			token: "new-token",
+			refreshToken: "new-refresh",
 		});
 
 		await useAuthStore.getState().login({ username: "admin", password: "123456" });

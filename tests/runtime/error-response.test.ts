@@ -29,8 +29,8 @@ describe("handleErrorResponse 错误体解析", () => {
 		expect(messageError).toHaveBeenCalledWith("Not Found");
 	});
 
-	it("t2: JSON 错误体优先取 message/errorMsg", async () => {
-		const res = new Response(JSON.stringify({ message: "boom" }), {
+	it("t2: oj 信封错误体读 msg 键（AC-D16）", async () => {
+		const res = new Response(JSON.stringify({ code: 400, msg: "boom", data: null }), {
 			status: 400,
 			statusText: "Bad Request",
 			headers: { "content-type": "application/json" },
@@ -39,6 +39,18 @@ describe("handleErrorResponse 错误体解析", () => {
 		await handleErrorResponse(res);
 
 		expect(messageError).toHaveBeenCalledWith("boom");
+	});
+
+	it("t2b: 旧 message/errorMsg 键不再读取（AC-D16 兼容删除）", async () => {
+		const res = new Response(JSON.stringify({ message: "old key" }), {
+			status: 400,
+			statusText: "Bad Request",
+			headers: { "content-type": "application/json" },
+		});
+
+		await handleErrorResponse(res);
+
+		expect(messageError).toHaveBeenCalledWith("Bad Request");
 	});
 
 	it("t3: 返回的 response body 仍可读（原 body 未被消费）", async () => {
