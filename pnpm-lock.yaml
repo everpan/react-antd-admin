@@ -228,6 +228,9 @@ catalogs:
     vitest:
       specifier: ^4.1.6
       version: 4.1.11
+    zod:
+      specifier: ^4.5.4
+      version: 4.5.4
     zustand:
       specifier: ^5.0.13
       version: 5.0.15
@@ -513,6 +516,12 @@ importers:
       vite:
         specifier: 'catalog:'
         version: 8.2.2(@types/node@25.9.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
+
+  packages/contract:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.5.4
 
   packages/runtime:
     dependencies:
@@ -6097,6 +6106,9 @@ packages:
 
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+
+  zod@4.5.4:
+    resolution: {integrity: sha512-sC95tT5iHHH9gtpj6A81kh+NEaRAUFN+qlUPDUbRfOMvNf5QCBqsb3WgvnpVtK5Y+4UfA6KqufotuTvMGiTlsA==}
 
   zrender@6.1.0:
     resolution: {integrity: sha512-oEGMDB6pOP2S6OwRR4PdVv610zrjnA3Bh+JnSG12fYJlBKjtNAoEb5fSUoCOOINlH96I2fU38/A2UpRKs67xYQ==}
@@ -11725,6 +11737,8 @@ snapshots:
       zod: 4.4.3
 
   zod@4.4.3: {}
+
+  zod@4.5.4: {}
 
   zrender@6.1.0:
     dependencies:
