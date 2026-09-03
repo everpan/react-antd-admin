@@ -14,7 +14,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 成功（oj 信封：code=0）
           content:
             application/json:
