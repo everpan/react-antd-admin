@@ -94,3 +94,7 @@ export { getRedirectPath } from "./utils/get-redirect-path";
 
 // 工具与常量
 export * from "./utils/tree";
+
+// zod re-export（AC-D15）：契约 schema 书写入口——模块 `import { z } from "@react-antd-module/runtime"`，
+// zod 打进 runtime dist（构建期 external 白名单放行），不进宿主 importmap；与 @react-antd-module/contract 同源钉版
+export { z } from "zod";

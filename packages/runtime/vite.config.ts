@@ -104,12 +104,15 @@ export default defineConfig({
 		rolldownOptions: {
 			// 所有裸说明符都交给宿主的 importmap 解析。
 			// 相对路径 / 绝对路径才是框架自身代码，需要打进产物。
-			// 例外：`#src/*` 与 `~icons/*` 由上方 alias / Icons 插件构建期内联。
+			// 例外：`#src/*` 与 `~icons/*` 由上方 alias / Icons 插件构建期内联；
+			// `zod` 同样内联（AC-D15：不进 importmap，随 runtime dist 走，模块经
+			// runtime re-export 的 `z` 写契约 schema，保证单实例与同源钉版）。
 			external: (id: string) =>
 				!id.startsWith(".")
 				&& !path.isAbsolute(id)
 				&& !id.startsWith("#src/")
-				&& !id.startsWith("~icons/"),
+				&& !id.startsWith("~icons/")
+				&& id !== "zod",
 			output: { codeSplitting: false },
 		},
 	},

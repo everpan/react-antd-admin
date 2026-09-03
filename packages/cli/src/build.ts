@@ -111,6 +111,8 @@ export const getRegisteredApiPrefix = () => undefined;
 export const loadAll = async () => [];
 export const unloadModule = async () => {};
 export const useSlotNodes = () => [];
+// AC-D15：zod re-export——stub 用可调用代理（契约 schema 不在元数据读取期求值，仅占位防 missing export）
+export const z = new Proxy({}, { get: () => _fn });
 `;
 
 /**

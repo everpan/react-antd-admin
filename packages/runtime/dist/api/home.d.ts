@@ -4,7 +4,7 @@ export interface PieDataType {
 }
 export declare function fetchPie(data: {
     by: string | number;
-}): Promise<ApiResponse<PieDataType[]>>;
+}): Promise<PieDataType[]>;
 export declare function fetchLine(data: {
     range: string;
-}): Promise<ApiResponse<string[]>>;
+}): Promise<number[]>;

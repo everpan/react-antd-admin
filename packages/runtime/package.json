@@ -48,13 +48,16 @@
 		"tailwind-merge": "catalog:",
 		"zustand": "catalog:"
 	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org/",
+		"access": "public"
+	},
+	"dependencies": {
+		"zod": "catalog:"
+	},
 	"devDependencies": {
 		"@iconify-json/ri": "catalog:",
 		"@iconify/tools": "catalog:",
 		"unplugin-icons": "catalog:"
-	},
-	"publishConfig": {
-		"registry": "https://registry.npmjs.org/",
-		"access": "public"
 	}
 }
