@@ -387,11 +387,11 @@ it("DELETE 端点 → 方法名 del", ...);
   - 写盘目标：uni-dev → `client.ts`/`client.schemas.ts` 写到**对应前端模块** `modules/src/<同名模块>/api/`（模块名 = apiPrefix 去首斜杠，AC-D9 字面相等）；纯前端 → 契约同目录。`routes.json`/`openapi.yaml` 写契约同目录。
   - 幂等：内容无变化不写盘（读旧比对），`RunResult` 报告 written/skipped 清单。
 
-- [ ] **Step 1: 写失败测试**（端到端夹具，断言四产物路径与关键内容、二次运行零写入）。
-- [ ] **Step 2: 跑测试确认失败**。
-- [ ] **Step 3: 实现**。
-- [ ] **Step 4: 跑测试确认通过**。
-- [ ] **Step 5: Commit** — `feat(cli): ram api 命令（发现 + 全产物生成，幂等写盘）`
+- [x] **Step 1: 写失败测试**（端到端夹具，断言四产物路径与关键内容、二次运行零写入）。
+- [x] **Step 2: 跑测试确认失败**。
+- [x] **Step 3: 实现**。
+- [x] **Step 4: 跑测试确认通过**。
+- [x] **Step 5: Commit** — `feat(cli): ram api 命令（发现 + 全产物生成，幂等写盘）`
 
 ### Task 3.2：`ram api --check` 三重校验
 
@@ -405,11 +405,11 @@ it("DELETE 端点 → 方法名 del", ...);
   2. route 双向对账：AST 扫描（`typescript` compiler API，cli 已有 typescript 依赖）`api/src/**/api.ts`——default export 对象的方法名 + 语句起始 `.route = "..."` 赋值；与契约路由表 diff（未实现 warn / 未登记 error / 参数段不一致 error）；
   3. routes.js diff：存在 `api/dist/**/routes.js` 时与 routes.json 规范化比对（无则 skip 并提示先 `oj build`）。
 
-- [ ] **Step 1: 写失败测试**（三类违规各一条夹具 + 全通过夹具 + warn/error 分级断言）。
-- [ ] **Step 2: 跑测试确认失败**。
-- [ ] **Step 3: 实现**。
-- [ ] **Step 4: 跑测试确认通过**。
-- [ ] **Step 5: Commit** — `feat(cli): ram api --check 三重校验（生成物同步 + route 对账 + routes.js diff）`
+- [x] **Step 1: 写失败测试**（三类违规各一条夹具 + 全通过夹具 + warn/error 分级断言）。
+- [x] **Step 2: 跑测试确认失败**。
+- [x] **Step 3: 实现**。
+- [x] **Step 4: 跑测试确认通过**。
+- [x] **Step 5: Commit** — `feat(cli): ram api --check 三重校验（生成物同步 + route 对账 + routes.js diff）`
 
 ### Task 3.3：ram dev watch 集成
 
@@ -417,13 +417,25 @@ it("DELETE 端点 → 方法名 del", ...);
 - Modify: `packages/cli/src/dev.ts`（新增 `api/src/**/contract.ts` watch 目标 + 去抖合并；契约变更 → runApi → client.ts 落 modules 树 → 触发既有重建 + SSE）
 - Test: `packages/cli/src/dev.test.ts`（或集成测试：改夹具契约 → 断言 runApi 被触发一次（去抖）且模块重建排队）
 
-- [ ] **Step 1: 写失败测试**。
-- [ ] **Step 2: 跑测试确认失败**。
-- [ ] **Step 3: 实现**（去抖 100ms 合并连续变更；watch 失败不崩 dev server，打 `[ram-api]` 前缀人话错误）。
-- [ ] **Step 4: 跑测试确认通过 + `pnpm dev`（playground）手动冒烟**。
-- [ ] **Step 5: Commit** — `feat(cli): ram dev watch 契约文件（去抖合并两轮构建）`
+- [x] **Step 1: 写失败测试**。
+- [x] **Step 2: 跑测试确认失败**。
+- [x] **Step 3: 实现**（去抖 100ms 合并连续变更；watch 失败不崩 dev server，打 `[ram-api]` 前缀人话错误）。
+- [x] **Step 4: 跑测试确认通过 + `pnpm dev`（playground）手动冒烟**。
+- [x] **Step 5: Commit** — `feat(cli): ram dev watch 契约文件（去抖合并两轮构建）`
 
-- [ ] **Phase 3 小结**：更新 checkbox；文末追加小结。
+- [x] **Phase 3 小结**：更新 checkbox；文末追加小结。
+
+> **Phase 3 小结（2026-09-03 完成）**：`ram api` 命令 + `--check` 三重校验 + dev watch 集成落地。
+>
+> **关键过程**：
+> - 3.1 run.ts：discover（api/src/*/contract.ts + modules/src/*/api/contract.ts 两档并扫）→ evaluate → IR → 四产物幂等写盘（读旧比对零写入）；uni-dev client 落 `modules/src/<同名模块>/api/`，AC-D9 字面相等约束运行期强校验。
+> - **生产级 bug 实跑暴露**：contract 微包相对导入缺 `.ts` 扩展名，经 node_modules 原生 Node ESM 解析即崩（此前测试经 vite-node 变换掩盖）；相对导入全部补 `.ts`，tsconfig 开 `allowImportingTsExtensions`——此修复对 oj 侧原生加载同样必要。
+> - 3.2 check.ts：①生成物内存重生成 vs 磁盘逐字节（含 stub 待更新）②typescript compiler API 扫 oj api.ts（default 导出方法名 + 语句起始 `.route` 字面量，与 oj build 同口径）双向对账：未实现 warn / 未登记 error / 参数段不一致 error ③routes.js 正则解析 vs routes.json 集合差；无 dist 降级为 hint 不判违规。check 永不修文件。
+> - 3.3 watch：`createContractRegen`（去抖 + running/pending 不丢变更 + 错误收敛 onError 不崩 dev）；dev.ts 双 watch 目标（模块树 contract.ts + api/src），产物落模块树后复用既有模块 watch 触发重建 + SSE，不新造通知链。
+>
+> **测试规模**：新增 3 个测试文件 13 用例；cli 全套 170 用例绿。耗时约 2 小时。
+>
+> **已知问题记录**：⑤ `pnpm dev`（playground）手动冒烟未执行（需起真服务器，留 Phase 6 集中回归一并跑）；⑥ 模块树内 contract.ts 变更会先触发一次旧 client 的重建、regen 落盘后再触发二次重建（两轮构建，去抖后影响可忽略，设计已认）。
 
 ---
 
