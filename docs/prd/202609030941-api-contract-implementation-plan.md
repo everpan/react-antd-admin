@@ -540,6 +540,16 @@ bindRequest(ctx.utils.request);
 
 > 每阶段完成后在此追加：关键过程、偏差与原因、耗时。
 
+### Phase 1：contract 微包（AC-D11）——已完成（2026-09-03，约 15 分钟）
+
+- 完成：`packages/contract`（@react-antd-module/contract）——defineApi
+  定义期校验（首斜杠/../穿越/matchit 参数段混字面/data 与 raw 互斥）、
+  ContractApiError、ScopedRequestLike 最小结构类型、zod v4 re-export；
+  zod 入 pnpm catalog 同源定版（contract/runtime/cli 三处共用）。
+- 偏差：无实质偏差；测试落 tests/contract/（沿用 Phase 0 发现的仓规）。
+  微包不加构建步骤，exports 直指 src（同 packages/cli 模式）。
+- 验证：10 条单测全过；typecheck/lint 干净。
+
 ### Phase 0：信封统一（AC-D16）——已完成（2026-09-03，约 40 分钟）
 
 - 完成：error-response 改读 oj `msg`（存量 bug 顺带修复）；api/user 删
