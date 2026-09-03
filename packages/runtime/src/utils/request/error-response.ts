@@ -24,8 +24,9 @@ export async function handleErrorResponse(response: Response) {
 	}
 
 	if (isObject(data)) {
-		const json = data as { errorMsg?: string, message?: string };
-		message.error(json.errorMsg || json.message || response.statusText);
+		// AC-D16：全站唯一信封 = oj {code,msg,data}，错误体只读 msg 键
+		const json = data as { msg?: string };
+		message.error(json.msg || response.statusText);
 	}
 	else {
 		message.error(response.statusText);
