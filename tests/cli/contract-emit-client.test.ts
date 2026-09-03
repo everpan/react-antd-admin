@@ -136,6 +136,28 @@ describe("emitClient（AC-D5/D6/D8/D15）", () => {
 		expect(files["client.ts"]).toContain("import { request } from \"#src/utils/request\"");
 	});
 
+	it("internal 目标：z 直取 zod（runtime 树内自引包名成环）；module 目标走 runtime re-export", () => {
+		const internal = emitClient(ir, { target: "internal" });
+		expect(internal["client.ts"]).toContain("from \"zod\"");
+		expect(internal["client.schemas.ts"]).toContain("import { z } from \"zod\"");
+		const module_ = emitClient(ir, { target: "module" });
+		expect(module_["client.ts"]).toContain("from \"@react-antd-module/runtime\"");
+		expect(module_["client.schemas.ts"]).toContain("import { z } from \"@react-antd-module/runtime\"");
+	});
+
+	it("ignoreLoading 契约开关透传为请求 options", () => {
+		const withFlag = buildIr({
+			getSilent: defineApi({
+				apiPrefix: "/order",
+				route: "/silent",
+				data: z.object({ ok: z.boolean() }),
+				ignoreLoading: true,
+			}),
+		});
+		const files = emitClient(withFlag, { target: "module" });
+		expect(files["client.ts"]).toContain("{ ignoreLoading: true }");
+	});
+
 	it("未 bindRequest 即调用 → 人话报错指路 entry.ts onInit", async () => {
 		const { mod } = await bundleClient(emitClient(ir, { target: "module" }), true);
 		await expect(mod.getOrderList({ page: 1 })).rejects.toThrowError(/bindRequest/);

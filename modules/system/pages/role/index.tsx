@@ -32,7 +32,7 @@ export default function Role() {
 	/* Detail Data */
 	const [isOpen, setIsOpen] = useState(false);
 	const [title, setTitle] = useState("");
-	const [detailData, setDetailData] = useState<Partial<RoleItemType> & { menus?: string[] }>({});
+	const [detailData, setDetailData] = useState<Partial<RoleItemType> & { menus?: number[] }>({});
 
 	const actionRef = useRef<ActionType>(null);
 

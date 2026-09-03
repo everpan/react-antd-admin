@@ -27,6 +27,7 @@
 		"@dnd-kit/core": "catalog:",
 		"@dnd-kit/sortable": "catalog:",
 		"@dnd-kit/utilities": "catalog:",
+		"@react-antd-module/contract": "workspace:*",
 		"ahooks": "catalog:",
 		"antd": "catalog:",
 		"antd-img-crop": "catalog:",

@@ -101,9 +101,11 @@ function emitEndpoint(ep: IrEndpoint): string {
 	// 请求 options
 	const optParts: string[] = [];
 	if (ep.querySchema)
-		optParts.push(`searchParams: ${prefix}query as Record<string, unknown>`);
+		optParts.push(`searchParams: ${prefix}query as Record<string, string | number | boolean>`);
 	if (ep.bodySchema)
 		optParts.push(`json: ${prefix}body`);
+	if (ep.ignoreLoading)
+		optParts.push("ignoreLoading: true");
 	const opts = optParts.length ? `, { ${optParts.join(", ")} }` : "";
 
 	const call = `client.${method}(${url}${opts})`;
@@ -160,7 +162,7 @@ function ensureReq(): ScopedRequestLike {
 	return `${BANNER}
 import { ContractApiError } from "@react-antd-module/contract";
 import type { ScopedRequestLike } from "@react-antd-module/contract";
-${target === "internal" ? "import { request } from \"#src/utils/request\";\n" : ""}import type { z } from "@react-antd-module/runtime";
+${target === "internal" ? "import { request } from \"#src/utils/request\";\n" : ""}import type { z } from "${zImport(target)}";
 import type { schemas } from "./client.schemas";
 
 /** oj 信封（AC-D16）：code=0 成功；非 0 时 HTTP status=code，由 toApiError 归一为 ContractApiError */
@@ -185,7 +187,12 @@ async function toApiError(e: unknown): Promise<unknown> {
 }`;
 }
 
-function emitSchemas(ir: IrEndpoint[]): string {
+/** z 导入来源：模块走 runtime re-export（AC-D15）；internal 在 runtime 树内，自引包名成环，直取 zod */
+function zImport(target: "module" | "internal"): string {
+	return target === "internal" ? "zod" : "@react-antd-module/runtime";
+}
+
+function emitSchemas(ir: IrEndpoint[], target: "module" | "internal"): string {
 	const entries = ir
 		.filter(ep => !ep.raw)
 		.map((ep) => {
@@ -203,7 +210,7 @@ function emitSchemas(ir: IrEndpoint[]): string {
 
 	return `${BANNER}
 // AC-D15：仅供 DEV 校验动态 import，生产构建不进产物
-import { z } from "@react-antd-module/runtime";
+import { z } from "${zImport(target)}";
 
 export const schemas = {
 ${entries.join("\n")}
@@ -224,6 +231,6 @@ export function emitClient(ir: IrEndpoint[], opts: { target: "module" | "interna
 	}
 	return {
 		"client.ts": `${sections.join("\n\n")}\n`,
-		"client.schemas.ts": emitSchemas(ir),
+		"client.schemas.ts": emitSchemas(ir, opts.target),
 	};
 }

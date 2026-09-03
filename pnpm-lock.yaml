@@ -570,6 +570,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: 'catalog:'
         version: 3.2.2(react@19.2.8)
+      '@react-antd-module/contract':
+        specifier: workspace:*
+        version: link:../contract
       ahooks:
         specifier: 'catalog:'
         version: 3.9.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)

@@ -35,6 +35,7 @@ import { DndContext, PointerSensor, closestCenter, useSensor } from "@dnd-kit/co
 import { SortableContext, horizontalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useShallow } from "zustand/shallow";
+import { ContractApiError } from "@react-antd-module/contract";
 import ImgCrop from "antd-img-crop";
 //#region \0rolldown/runtime.js
 var __defProp = Object.defineProperty;
@@ -159,7 +160,7 @@ function getAppInfo() {
 			"version": "0.1.0",
 			"license": "MIT"
 		},
-		"lastBuildTime": "2026-09-03 12:25:35"
+		"lastBuildTime": "2026-09-03 14:14:43"
 	};
 }
 var init_get_app_info = __esmMin((() => {}));
@@ -8910,41 +8911,80 @@ function fetchDeleteMenuItem(id) {
 	}).json());
 }
 //#endregion
-//#region src/api/system/role/index.ts
+//#region src/api/system/role/api/client.ts
 init_request();
-init_envelope();
-function fetchRoleList(data) {
-	return unwrap(request.get("role-list", {
-		searchParams: data,
-		ignoreLoading: true
-	}).json());
+function ensureReq() {
+	return request;
 }
-function fetchAddRoleItem(data) {
-	return unwrap(request.post("role-item", {
-		json: data,
-		ignoreLoading: true
-	}).json());
+/** ky HTTPError → ContractApiError（错误体为信封时取 code/msg）；契约违例与原错误原样透传 */
+async function toApiError(e) {
+	if (e instanceof ContractApiError) return e;
+	const res = e?.response;
+	if (res instanceof Response) try {
+		const env = await res.clone().json();
+		if (env && typeof env.code === "number") return new ContractApiError(env.code, env.msg ?? res.statusText);
+	} catch {}
+	return e;
 }
-function fetchUpdateRoleItem(data) {
-	return unwrap(request.put("role-item", {
-		json: data,
-		ignoreLoading: true
-	}).json());
+async function fetchAddRoleItem(body) {
+	const client = ensureReq();
+	try {
+		return (await client.post(`role-item`, {
+			json: body,
+			ignoreLoading: true
+		}).json()).data;
+	} catch (e) {
+		throw await toApiError(e);
+	}
 }
-function fetchDeleteRoleItem(id) {
-	return unwrap(request.delete("role-item", {
-		json: id,
-		ignoreLoading: true
-	}).json());
+async function fetchDeleteRoleItem(body) {
+	const client = ensureReq();
+	try {
+		return (await client.delete(`role-item`, {
+			json: body,
+			ignoreLoading: true
+		}).json()).data;
+	} catch (e) {
+		throw await toApiError(e);
+	}
 }
-function fetchRoleMenu() {
-	return unwrap(request.get("role-menu", { ignoreLoading: true }).json());
+async function fetchMenuByRoleId(query) {
+	const client = ensureReq();
+	try {
+		return (await client.get(`menu-by-role-id`, { searchParams: query }).json()).data;
+	} catch (e) {
+		throw await toApiError(e);
+	}
 }
-function fetchMenuByRoleId(data) {
-	return unwrap(request.get("menu-by-role-id", {
-		searchParams: data,
-		ignoreLoading: false
-	}).json());
+async function fetchRoleList(query) {
+	const client = ensureReq();
+	try {
+		return (await client.get(`role-list`, {
+			searchParams: query,
+			ignoreLoading: true
+		}).json()).data;
+	} catch (e) {
+		throw await toApiError(e);
+	}
+}
+async function fetchRoleMenu() {
+	const client = ensureReq();
+	try {
+		return (await client.get(`role-menu`, { ignoreLoading: true }).json()).data;
+	} catch (e) {
+		throw await toApiError(e);
+	}
+}
+async function fetchUpdateRoleItem(body) {
+	const client = ensureReq();
+	try {
+		return (await client.put(`role-item`, {
+			json: body,
+			ignoreLoading: true
+		}).json()).data;
+	} catch (e) {
+		throw await toApiError(e);
+	}
 }
 //#endregion
 //#region src/hooks/use-access/constants.ts

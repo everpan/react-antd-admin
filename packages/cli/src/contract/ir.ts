@@ -53,6 +53,7 @@ export interface IrEndpoint {
 	bodySchema?: unknown
 	dataSchema?: unknown
 	raw: boolean
+	ignoreLoading?: boolean
 	description?: string
 }
 
@@ -141,13 +142,15 @@ export function buildIr(exports: Record<string, unknown>): IrEndpoint[] {
 			apiPrefix: def.apiPrefix,
 			route: def.route,
 			method: def.method ?? "GET",
-			fullPath: `${def.apiPrefix}${def.route}`,
+			// apiPrefix "/" 为框架内部根级端点（如 runtime 自带 role-list）——拼出 "//" 即错
+			fullPath: def.apiPrefix === "/" ? def.route : `${def.apiPrefix}${def.route}`,
 			paramNames: paramNamesOf(def.route),
 			querySchema: def.query,
 			paramsSchema: def.params,
 			bodySchema: def.body,
 			dataSchema: def.data,
 			raw: def.response === "raw",
+			ignoreLoading: def.ignoreLoading,
 			description: def.description,
 		});
 	}

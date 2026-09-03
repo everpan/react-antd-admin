@@ -62,6 +62,11 @@ const runtimeNoModulesGuard = {
 export default antfu({
 	react: true,
 	markdown: false,
+	ignores: [
+		// ram api 生成物（banner 注明勿手改），不参与 lint
+		"**/api/client.ts",
+		"**/api/client.schemas.ts",
+	],
 	rules: {
 		"style/quotes": ["error", "double"],
 		"style/semi": ["error", "always"],

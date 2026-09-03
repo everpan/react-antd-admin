@@ -46,7 +46,7 @@ export type GetOrderListData = z.infer<(typeof schemas)["getOrderList"]["data"]>
 export async function getOrderList(query: GetOrderListQuery): Promise<GetOrderListData> {
 	const client = ensureReq();
 	try {
-		const env = await client.get(\`order/list\`, { searchParams: query as Record<string, unknown> }).json<OjEnvelope<GetOrderListData>>();
+		const env = await client.get(\`order/list\`, { searchParams: query as Record<string, string | number | boolean> }).json<OjEnvelope<GetOrderListData>>();
 		const data = env.data as GetOrderListData;
 		if (import.meta.env.DEV) {
 			const { schemas } = await import("./client.schemas");

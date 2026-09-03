@@ -27,6 +27,8 @@ export interface ApiDefinitionInput {
 	data?: z.ZodType
 	/** "raw" = 二进制/非信封逃生口：不解包、不校验、不进 mock 生成 */
 	response?: "raw"
+	/** true = 该端点不触发全局加载条（客户端表现层开关，非线协议，不进 OpenAPI） */
+	ignoreLoading?: boolean
 	/** 接口描述（进 OpenAPI 文档） */
 	description?: string
 }

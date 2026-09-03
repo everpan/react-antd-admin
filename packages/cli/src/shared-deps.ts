@@ -34,6 +34,10 @@ export const SHARED_DEPS: SharedDepEntry[] = [
 	{ specifier: "@tanstack/react-query", asset: "react-query", hard: true },
 	// runtime 由 shell 直接拷贝其 dist/runtime.js
 	{ specifier: "@react-antd-module/runtime", asset: "runtime", hard: true },
+	// 契约包：生成 client 运行期 import ContractApiError（instanceof 判定要求
+	// 宿主与模块单实例 → 硬共享）；其 zod 随资产内联一份，runtime 侧 zod 独立
+	// 内联（AC-D15）——两侧 z 不跨边界传 schema，双实例无影响
+	{ specifier: "@react-antd-module/contract", asset: "contract", hard: true },
 	// —— 软共享 ——
 	// 注：@rc-component/form（antd 6 Form 底层）曾尝试单例化以修 my-profile
 	// 崩溃（React #130），假说未证实——多副本并非充分根因，已回退；见

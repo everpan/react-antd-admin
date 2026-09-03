@@ -11,7 +11,8 @@ export interface ResponsePromiseLike extends Promise<Response> {
 
 export interface RequestCall {
 	(url: string, options?: {
-		searchParams?: Record<string, unknown>
+		/** 与 ky SearchParamsOption 的 Record 形态对齐——宽于它则真 ky 实例无法赋给本接口 */
+		searchParams?: Record<string, string | number | boolean>
 		json?: unknown
 		ignoreLoading?: boolean
 	}): ResponsePromiseLike
