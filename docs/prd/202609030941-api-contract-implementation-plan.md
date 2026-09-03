@@ -213,11 +213,11 @@ describe("defineApi", () => {
 - Consumes: `packages/cli/src/build.ts` 的 esbuild 链路模式（`runtimeStubPlugin`/`dynamicImportStubPlugin` 参照物，不直接复用其 stub 内容）。
 - Produces: `evaluateContract(contractFile: string, projectRoot: string): Promise<Record<string, ApiDefinitionInput | unknown>>`——bundle 后真 import()，返回模块全部具名导出（`defineApi` 产物 + zod schema 导出）。stub 插件把 `@react-antd-module/contract` 解析为**真实现**（packages: external 时直接命中 node_modules 即可，需 pnpm workspace link）；`@react-antd-module/runtime` 若被契约误 import 则用空壳 stub 并报人话警告。
 
-- [ ] **Step 1: 写失败测试** — 夹具契约含 2 个 `defineApi` + 1 个 zod schema 导出；断言 evaluate 返回对象含端点描述符（`.route === "/item/{id}"`）且 schema 导出是 zod 实例（`._zod` 存在）。
-- [ ] **Step 2: 跑测试确认失败**（模块不存在）。
-- [ ] **Step 3: 实现** — esbuild bundle（format esm / platform node / jsx automatic / `.json` loader），`@react-antd-module/contract` 保持 external（Node 直解），写 `.ram-tmp-` 临时目录（复用 build.ts 的落盘理由注释），import() 后清理目录。
-- [ ] **Step 4: 跑测试确认通过**。
-- [ ] **Step 5: Commit** — `feat(cli): 契约求值链路（esbuild bundle + 真 import，ac-d13）`
+- [x] **Step 1: 写失败测试** — 夹具契约含 2 个 `defineApi` + 1 个 zod schema 导出；断言 evaluate 返回对象含端点描述符（`.route === "/item/{id}"`）且 schema 导出是 zod 实例（`._zod` 存在）。
+- [x] **Step 2: 跑测试确认失败**（模块不存在）。
+- [x] **Step 3: 实现** — esbuild bundle（format esm / platform node / jsx automatic / `.json` loader），`@react-antd-module/contract` 保持 external（Node 直解），写 `.ram-tmp-` 临时目录（复用 build.ts 的落盘理由注释），import() 后清理目录。
+- [x] **Step 4: 跑测试确认通过**。
+- [x] **Step 5: Commit** — `feat(cli): 契约求值链路（esbuild bundle + 真 import，ac-d13）`
 
 ### Task 2.2：IR 构建 + schema 白名单（AC-D12）
 
@@ -246,7 +246,7 @@ export function buildIr(exports: Record<string, unknown>): IrEndpoint[];
 
 白名单：`object/array/enum/literal/union/optional/nullable/default/string/number/boolean/date`；拒绝 `transform/refine/preprocess/pipe/coerce/lazy/custom/template_literal`——遍历时读 zod v4 的 `schema._zod.def.type`。
 
-- [ ] **Step 1: 写失败测试**（数据表格驱动）：
+- [x] **Step 1: 写失败测试**（数据表格驱动）：
 
 ```ts
 it.each([
@@ -264,10 +264,10 @@ it("参数段名提取：/item/{id} → [id]，/file/{*path} → [path]", () => 
 it("同 (目录, method) 冲突报错", () => { /* route "/item/{id}" 与 "/item/{name}" 同 GET → throw */ });
 ```
 
-- [ ] **Step 2: 跑测试确认失败**。
-- [ ] **Step 3: 实现** — 遍历导出收集 `defineApi` 产物（duck-typing：有 `apiPrefix`+`route` 即端点）；递归白名单校验（错误文案含端点名 + 字段路径 + 被拒绝的 def.type）；route 切分算法（静态前缀段→目录，首个参数段起→`.route` 尾巴）实现为 `splitRoute(route): { dir: string, routeTail: string }` 同文件导出（Task 2.6/3.2 复用）。
-- [ ] **Step 4: 跑测试确认通过**。
-- [ ] **Step 5: Commit** — `feat(cli): 契约 ir 构建 + schema 白名单 + route 切分算法（ac-d12）`
+- [x] **Step 2: 跑测试确认失败**。
+- [x] **Step 3: 实现** — 遍历导出收集 `defineApi` 产物（duck-typing：有 `apiPrefix`+`route` 即端点）；递归白名单校验（错误文案含端点名 + 字段路径 + 被拒绝的 def.type）；route 切分算法（静态前缀段→目录，首个参数段起→`.route` 尾巴）实现为 `splitRoute(route): { dir: string, routeTail: string }` 同文件导出（Task 2.6/3.2 复用）。
+- [x] **Step 4: 跑测试确认通过**。
+- [x] **Step 5: Commit** — `feat(cli): 契约 ir 构建 + schema 白名单 + route 切分算法（ac-d12）`
 
 ### Task 2.3：schema → TS 源码发射器
 
@@ -279,11 +279,11 @@ it("同 (目录, method) 冲突报错", () => { /* route "/item/{id}" 与 "/item
 - Consumes: Task 2.2 的 `IrEndpoint`（其 schema 运行时对象）。
 - Produces: `emitSchemaSource(schema: ZodType): string`——把 zod 运行时对象反向发射为 `z.object({...})` 源码文本（读 `_zod.def`：object→`shape` 递归；string/number→带 `.min()/.max()/.int()/.regex()` 等 checks 从 `def.checks` 还原；enum→`z.enum([...])`；optional/default→包裹）。白名单外不可能到达（2.2 已拦）。
 
-- [ ] **Step 1: 写失败测试** — 快照：`z.object({ id: z.number().int(), name: z.string().max(10), tags: z.array(z.string()).optional(), status: z.enum(["open","closed"]).default("open") })` → 断言发射文本 `expect(src).toMatchSnapshot()`，且 `eval` 级等价：把发射文本交给 evaluate 再 safeParse 同一数据，两端结果一致（往返保真）。
-- [ ] **Step 2: 跑测试确认失败**。
-- [ ] **Step 3: 实现**（递归下降，每 def.type 一个 case）。
-- [ ] **Step 4: 跑测试确认通过**。
-- [ ] **Step 5: Commit** — `feat(cli): schema 源码发射器（白名单内往返保真）`
+- [x] **Step 1: 写失败测试** — 快照：`z.object({ id: z.number().int(), name: z.string().max(10), tags: z.array(z.string()).optional(), status: z.enum(["open","closed"]).default("open") })` → 断言发射文本 `expect(src).toMatchSnapshot()`，且 `eval` 级等价：把发射文本交给 evaluate 再 safeParse 同一数据，两端结果一致（往返保真）。
+- [x] **Step 2: 跑测试确认失败**。
+- [x] **Step 3: 实现**（递归下降，每 def.type 一个 case）。
+- [x] **Step 4: 跑测试确认通过**。
+- [x] **Step 5: Commit** — `feat(cli): schema 源码发射器（白名单内往返保真）`
 
 ### Task 2.4：client.ts + client.schemas.ts 发射器（AC-D5/D6/D8/D15）
 
@@ -303,11 +303,11 @@ it("同 (目录, method) 冲突报错", () => { /* route "/item/{id}" 与 "/item
   - `raw: true` 端点：生成函数返回 `req.get(url)` 的原样 `Response` promise（不解包不校验）；
   - `client.schemas.ts`：`import { z } from "@react-antd-module/runtime";` + 各端点 schema 常量（Task 2.3 发射）+ `export const schemas = {...}`。
 
-- [ ] **Step 1: 写失败测试** — 快照测试两产物；行为测试：stub `ScopedRequestLike` 返回 `{code:0,msg:"ok",data:{id:1}}`→断言 typed 返回；stub 返回不符 schema 的 data（dev 下）→断言抛 `ContractApiError` 且 message 含端点名；`bindRequest` 未调用时调用 fetch →人话报错「未 bindRequest」。
-- [ ] **Step 2: 跑测试确认失败**。
-- [ ] **Step 3: 实现发射器**（字符串模板 + Prettier 无——本仓 ESLint only，模板直接按 tabs/双引号风格写死）。
-- [ ] **Step 4: 跑测试确认通过 + 生产剔除验证**：把生成物经 vite build 模式打 prod bundle，断言产物文本不含 `"client.schemas"` chunk 内容（B15 测试模式参照 `packages/runtime` 既有 fake-prod 断言写法）。
-- [ ] **Step 5: Commit** — `feat(cli): client 生成器（bindrequest holder + 信封解包 + dev 校验，ac-d5/d8/d15）`
+- [x] **Step 1: 写失败测试** — 快照测试两产物；行为测试：stub `ScopedRequestLike` 返回 `{code:0,msg:"ok",data:{id:1}}`→断言 typed 返回；stub 返回不符 schema 的 data（dev 下）→断言抛 `ContractApiError` 且 message 含端点名；`bindRequest` 未调用时调用 fetch →人话报错「未 bindRequest」。
+- [x] **Step 2: 跑测试确认失败**。
+- [x] **Step 3: 实现发射器**（字符串模板 + Prettier 无——本仓 ESLint only，模板直接按 tabs/双引号风格写死）。
+- [x] **Step 4: 跑测试确认通过 + 生产剔除验证**：把生成物经 vite build 模式打 prod bundle，断言产物文本不含 `"client.schemas"` chunk 内容（B15 测试模式参照 `packages/runtime` 既有 fake-prod 断言写法）。
+- [x] **Step 5: Commit** — `feat(cli): client 生成器（bindrequest holder + 信封解包 + dev 校验，ac-d5/d8/d15）`
 
 ### Task 2.5：routes.json + openapi.yaml 发射器（AC-D1/D9）
 
@@ -321,11 +321,11 @@ it("同 (目录, method) 冲突报错", () => { /* route "/item/{id}" 与 "/item
   - `emitRoutesJson(ir): string`——`[{ "method": "GET", "pattern": "order/item/{id}" }]`（规范化：去 apiPrefix 首斜杠、不含 base、含模块段，按 method+pattern 排序保证字节稳定）；
   - `emitOpenapiYaml(ir): string`——每端点 `z.toJSONSchema(dataSchema)` 等 → OpenAPI 3.1 document（paths 键 = fullPath，`/{id}` 参数段转 OpenAPI parameters），yaml 序列化用 `yaml` 包（cli 新增 dependency）。
 
-- [ ] **Step 1: 写失败测试** — routes.json 文本快照（含排序稳定性：同输入两次发射字节一致）；openapi 快照 + `z.toJSONSchema` 输出结构断言（`doc.openapi === "3.1.0"`，path 参数在 `parameters` 内）。
-- [ ] **Step 2: 跑测试确认失败**。
-- [ ] **Step 3: 实现**。
-- [ ] **Step 4: 跑测试确认通过**。
-- [ ] **Step 5: Commit** — `feat(cli): routes.json 与 openapi 3.1 发射器（ac-d1/d9）`
+- [x] **Step 1: 写失败测试** — routes.json 文本快照（含排序稳定性：同输入两次发射字节一致）；openapi 快照 + `z.toJSONSchema` 输出结构断言（`doc.openapi === "3.1.0"`，path 参数在 `parameters` 内）。
+- [x] **Step 2: 跑测试确认失败**。
+- [x] **Step 3: 实现**。
+- [x] **Step 4: 跑测试确认通过**。
+- [x] **Step 5: Commit** — `feat(cli): routes.json 与 openapi 3.1 发射器（ac-d1/d9）`
 
 ### Task 2.6：handler stub 发射器 + 指纹幂等（AC-D10，§9.1）
 
@@ -339,7 +339,7 @@ it("同 (目录, method) 冲突报错", () => { /* route "/item/{id}" 与 "/item
   - 指纹：`// ram-api:stub <端点名> sha256:<hash>`，hash = 内容去指纹行 + LF 归一 + 行尾空白剔除后的 sha256；**内容先过 eslint --fix 同款规则再算 hash**（直接调用本仓 ESLint Node API 对文本 fix）。
   - stub 模板：`export default { async get() { json.ok(<示例值>); } }`，有 `.route` 尾巴时 `get.route = "{id}";`（语句起始标准赋值写法）；方法名映射 DELETE→`del`。
 
-- [ ] **Step 1: 写失败测试**（表格驱动 §9.1 五场景）：
+- [x] **Step 1: 写失败测试**（表格驱动 §9.1 五场景）：
 
 ```ts
 it("handler 不存在 → action create", ...);
@@ -349,12 +349,26 @@ it("指纹不匹配（人已编辑）→ skip 且 reason 提示走 --check", ...
 it("DELETE 端点 → 方法名 del", ...);
 ```
 
-- [ ] **Step 2: 跑测试确认失败**。
-- [ ] **Step 3: 实现**。
-- [ ] **Step 4: 跑测试确认通过**。
-- [ ] **Step 5: Commit** — `feat(cli): handler stub 生成器 + 指纹幂等（ac-d10）`
+- [x] **Step 2: 跑测试确认失败**。
+- [x] **Step 3: 实现**。
+- [x] **Step 4: 跑测试确认通过**。
+- [x] **Step 5: Commit** — `feat(cli): handler stub 生成器 + 指纹幂等（ac-d10）`
 
-- [ ] **Phase 2 小结**：更新 checkbox；文末追加小结。
+- [x] **Phase 2 小结**：更新 checkbox；文末追加小结。
+
+> **Phase 2 小结（2026-09-03 完成）**：codegen 核心六个发射器全部落地，commits 见 `git log --oneline feat/ram`（2.1 契约求值 → 2.6 stub 幂等）。
+>
+> **关键过程**：
+> - 2.1 evaluate：esbuild bundle → `.ram-tmp-` 真 import；contract 包 external 走真实实现，runtime 用空桩 + console.warn 挡住「契约文件误引浏览器代码」。
+> - 2.2 IR：`API_DEF` Symbol.for 品牌（非枚举，跨实例稳定）识别端点；白名单递归校验报错含端点名 + 字段路径；`splitRoute` 静态前缀→目录/首个参数段起→`.route` 尾巴，stub 生成与 --check 对账共用同一实现。
+> - 2.3 schema 发射：白名单内往返保真（发射文本重建后与原始 schema safeParse 结果一致）为硬断言；zod v4 惰性 default 求值行为实测后按「求值结果发射」定案。
+> - 2.4 client 发射：bindRequest 能力持有者（零新增 runtime 导出）；行为测试把生成物落盘 → esbuild bundle（runtime 打桩仅出 z）→ 真 import 跑 stub request，覆盖成功/业务错误归一 ContractApiError/dev 契约违例/raw 通道/**产物 zod 排除**（DEV=false 时 client.schemas chunk 整体消失，AC-D15 实证）。
+> - 2.5 meta 发射：routes.json 按 oj routes.js 规范化 + method+pattern 排序字节稳定；openapi.yaml 走 z.toJSONSchema——实测 `z.date()` 不可转 JSON Schema，发射前递归降级为 datetime string（线上本就是 ISO 串）。
+> - 2.6 stub 发射：同目录多端点归并一个 api.ts（oj 一文件一方法一 handler）；指纹 = 去指纹行 + LF/行尾空白归一后 sha256，**先过 ESLint fix 再算哈希**防 lint-staged 重排静默失配；人编辑过的文件永不写永不删。
+>
+> **测试规模**：六个测试文件 50+ 用例全绿；typecheck/lint 零 error。耗时约半个工作日（含 zod v4 内部结构探测）。
+>
+> **已知问题记录**：① raw 端点无 params schema 时槽位由 route 参数段推导（实现期发现，原设计按 schema 定槽位会让 URL 插值悬空）；② oj stub 的 `json.ok()` 无参写法合法（无 data schema 端点）；③ 测试文件放根 `tests/`（vitest 只收 `tests/**`，与计划写的同包 colocate 不符，已在执行期纠正）；④ 全量 `pnpm test` 高负载下 playground e2e 偶发超时 flake（单跑全绿，复跑消失）；uni-dev-smoke 2 例失败为基线既有环境问题（oj 二进制缺失，CI 跳过），与本阶段无关。
 
 ---
 
